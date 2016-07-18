@@ -1205,6 +1205,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         map.newVer = newSnapVer
         map.tenant = padTenant(c, appId.tenant)
         map.create_dt = nowAsTimestamp()
+        map.tenant = padTenant(c, appId.tenant)
         return sql.executeUpdate(map, "/* releaseCubes */ UPDATE n_cube SET create_dt = :create_dt, status_cd = 'RELEASE' WHERE app_cd = :app AND version_no_cd = :version AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = 'HEAD'")
     }
 
