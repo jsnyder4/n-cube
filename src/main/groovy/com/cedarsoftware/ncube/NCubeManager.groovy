@@ -10,6 +10,7 @@ import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.SystemUtilities
 import com.cedarsoftware.util.TrackingMap
+import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -930,6 +931,7 @@ class NCubeManager
         List<NCubeInfoDto> dtosMerged = []
 
         Map<String, Map> errors = [:]
+        long txId = UniqueIdGenerator.getUniqueId()
 
         for (Object dto : infoDtos)
         {
@@ -992,7 +994,7 @@ class NCubeManager
                 NCube mergedCube = checkForConflicts(appId, errors, message, branchCubeInfo, headCubeInfo, false)
                 if (mergedCube != null)
                 {
-                    NCubeInfoDto mergedDto = getPersister().commitMergedCubeToHead(appId, mergedCube, username)
+                    NCubeInfoDto mergedDto = getPersister().commitMergedCubeToHead(appId, mergedCube, username, txId)
                     dtosMerged.add(mergedDto)
                 }
             }
@@ -1011,7 +1013,7 @@ class NCubeManager
             ids[i++] = dto.id
         }
 
-        committedCubes.addAll(getPersister().commitCubes(appId, ids, username))
+        committedCubes.addAll(getPersister().commitCubes(appId, ids, username, txId))
         committedCubes.addAll(dtosMerged)
         clearCache(appId)
         clearCache(headAppId)
@@ -1204,6 +1206,7 @@ class NCubeManager
         long infoRev = Converter.convert(info.revision, long.class) as long
         long srcRev = Converter.convert(srcDto.revision, long.class) as long
         boolean activeStatusMatches = (infoRev < 0) == (srcRev < 0)
+        long txId = UniqueIdGenerator.getUniqueId()
 
         if (branch.equalsIgnoreCase(ApplicationID.HEAD))
         {   // Update from HEAD branch is done differently than update from neighbor branch
@@ -1234,7 +1237,7 @@ class NCubeManager
 
                     if (cube != null)
                     {
-                        NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, srcDto.sha1, username)
+                        NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, srcDto.sha1, username, txId)
                         dtosMerged.add(mergedDto)
                     }
                 }
@@ -1249,7 +1252,7 @@ class NCubeManager
 
                 if (cube != null)
                 {
-                    NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, info.headSha1, username)
+                    NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, info.headSha1, username, txId)
                     dtosMerged.add(mergedDto)
                 }
             }
@@ -1263,7 +1266,7 @@ class NCubeManager
         {
             ids[i++] = dto.id
         }
-        finalUpdates.addAll(getPersister().pullToBranch(appId, ids, username))
+        finalUpdates.addAll(getPersister().pullToBranch(appId, ids, username, txId))
         clearCache(appId)
         ret[BRANCH_UPDATES] = finalUpdates
         return ret
@@ -1300,6 +1303,7 @@ class NCubeManager
         List<NCubeInfoDto> dtosMerged = []
         Map<String, Map> conflicts = new CaseInsensitiveMap<>()
         List<NCubeInfoDto> headRecords = search(headAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        long txId = UniqueIdGenerator.getUniqueId()
 
         for (NCubeInfoDto head : headRecords)
         {
@@ -1342,7 +1346,7 @@ class NCubeManager
 
                     if (cube != null)
                     {
-                        NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, head.sha1, username)
+                        NCubeInfoDto mergedDto = getPersister().commitMergedCubeToBranch(appId, cube, head.sha1, username, txId)
                         dtosMerged.add(mergedDto)
                     }
                 }
@@ -1357,7 +1361,7 @@ class NCubeManager
         {
             ids[i++] = dto.id
         }
-        finalUpdates.addAll(getPersister().pullToBranch(appId, ids, username))
+        finalUpdates.addAll(getPersister().pullToBranch(appId, ids, username, txId))
 
         clearCache(appId)
 

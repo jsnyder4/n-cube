@@ -1,4 +1,6 @@
 package com.cedarsoftware.ncube
+
+import com.cedarsoftware.util.UniqueIdGenerator
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -152,7 +154,7 @@ class TestNCubeJdbcPersister
         when(rs.getDate(anyString())).thenReturn(new java.sql.Date(System.currentTimeMillis()))
 
         Object[] ids = [0] as Object[]
-        assert new NCubeJdbcPersister().pullToBranch(c, defaultSnapshotApp, ids, USER_ID).isEmpty()
+        assert new NCubeJdbcPersister().pullToBranch(c, defaultSnapshotApp, ids, USER_ID, UniqueIdGenerator.uniqueId).isEmpty()
     }
 
     @Test
@@ -179,7 +181,7 @@ class TestNCubeJdbcPersister
     @Test
     void testCommitCubeWithInvalidRevision()
     {
-        assert 0 == new NCubeJdbcPersister().commitCubes(null, defaultSnapshotApp, null, USER_ID).size()
+        assert 0 == new NCubeJdbcPersister().commitCubes(null, defaultSnapshotApp, null, USER_ID, UniqueIdGenerator.uniqueId).size()
     }
 
     @Test
@@ -195,7 +197,7 @@ class TestNCubeJdbcPersister
         when(rs.next()).thenReturn(false)
         when(rs.getBytes("cube_value_bin")).thenReturn("".getBytes("UTF-8"))
 
-        assert new NCubeJdbcPersister().commitCubes(c, defaultSnapshotApp, [1L] as Object[], USER_ID).size() == 0
+        assert new NCubeJdbcPersister().commitCubes(c, defaultSnapshotApp, [1L] as Object[], USER_ID, UniqueIdGenerator.uniqueId).size() == 0
     }
 
     @Test
@@ -242,7 +244,7 @@ class TestNCubeJdbcPersister
     @Test
     void testUpdateBranchCubeWithNull()
     {
-        List<NCubeInfoDto> list = new NCubeJdbcPersister().pullToBranch((Connection)null, (ApplicationID) null,(Object[]) null, null)
+        List<NCubeInfoDto> list = new NCubeJdbcPersister().pullToBranch((Connection)null, (ApplicationID) null,(Object[]) null, null, UniqueIdGenerator.uniqueId)
         assert 0 == list.size()
     }
 
@@ -252,7 +254,7 @@ class TestNCubeJdbcPersister
         NCubeJdbcPersisterAdapter adapter = new NCubeJdbcPersisterAdapter(TestingDatabaseHelper.createJdbcConnectionProvider())
         try
         {
-            adapter.commitMergedCubeToHead(ApplicationID.testAppId, null, "yo")
+            adapter.commitMergedCubeToHead(ApplicationID.testAppId, null, "yo", UniqueIdGenerator.uniqueId)
             fail()
         }
         catch (NullPointerException e)
@@ -260,7 +262,7 @@ class TestNCubeJdbcPersister
 
         try
         {
-            adapter.commitMergedCubeToBranch(ApplicationID.testAppId, null, "", "yo")
+            adapter.commitMergedCubeToBranch(ApplicationID.testAppId, null, "", "yo", UniqueIdGenerator.uniqueId)
             fail()
         }
         catch (NullPointerException e)

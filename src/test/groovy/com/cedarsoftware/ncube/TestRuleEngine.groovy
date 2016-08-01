@@ -46,66 +46,6 @@ class TestRuleEngine
         TestingDatabaseHelper.tearDownDatabase()
     }
 
-    @Test
-    void testLoadRuleFromUrl()
-    {
-        NCube n1 = NCubeManager.getNCubeFromResource 'rule-column-loaded-with-url.json'
-        Map<String, Object> output = [:]
-        n1.getCell([age:17, weight:99], output)
-
-        assertEquals 'light-weight', output.weight
-        assertEquals 'young', output.age
-
-        List<NCubeTest> list = n1.generateNCubeTests()
-        int weight = 0
-        int age = 0
-        for (NCubeTest pt : list)
-        {
-            StringValuePair<CellInfo>[] c = pt.coord
-
-            if (Arrays.asList(c).contains(new StringValuePair<CellInfo>('age', null)))
-            {
-                age++
-            }
-            if (Arrays.asList(c).contains(new StringValuePair<CellInfo>('weight', null)))
-            {
-                weight++
-            }
-        }
-
-        assert 9 == age
-        assert 9 == weight
-    }
-
-    @Test
-    void testContainsCellRuleAxis()
-    {
-        NCube n1 = NCubeManager.getNCubeFromResource 'multiRule.json'
-        boolean b = n1.containsCell([condition1:'youngster', condition2:'light'])
-        assertTrue b
-
-        List<NCubeTest> list = n1.generateNCubeTests()
-
-        int weight = 0
-        int age = 0
-
-        for (NCubeTest pt : list)
-        {
-            StringValuePair<CellInfo>[] c = pt.coord
-            if (Arrays.asList(c).contains(new StringValuePair<CellInfo>('age', null)))
-            {
-                age++
-            }
-            if (Arrays.asList(c).contains(new StringValuePair<CellInfo>('weight', null)))
-            {
-                weight++
-            }
-        }
-
-        assert age == 0
-        assert weight == 0
-    }
-
     // This test also tests ID-based ncube's specified in simple JSON format
     @Test
     void testRuleCube()

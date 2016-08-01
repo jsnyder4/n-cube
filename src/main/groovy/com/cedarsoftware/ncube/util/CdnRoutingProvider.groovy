@@ -1,6 +1,6 @@
-package com.cedarsoftware.ncube.util;
+package com.cedarsoftware.ncube.util
 
-import java.util.Map;
+import groovy.transform.CompileStatic
 
 /**
  * Implement this interface to set up the coordinate used to
@@ -30,8 +30,9 @@ import java.util.Map;
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 public interface CdnRoutingProvider
 {
-    void setupCoordinate(Map coord);
-    boolean isAuthorized(String type);
+    void setupCoordinate(Map coord)
+    boolean isAuthorized(String type)
 }

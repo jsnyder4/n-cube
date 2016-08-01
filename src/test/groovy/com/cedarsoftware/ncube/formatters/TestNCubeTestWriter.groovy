@@ -2,7 +2,7 @@ package com.cedarsoftware.ncube.formatters
 
 import com.cedarsoftware.ncube.CellInfo
 import com.cedarsoftware.ncube.NCubeTest
-import com.cedarsoftware.ncube.StringValuePair
+import com.cedarsoftware.util.CaseInsensitiveMap
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals
  */
 class TestNCubeTestWriter
 {
-    private NCubeTest verySimpleTest = new NCubeTest("foo", new StringValuePair[0], [] as CellInfo[])
+    private NCubeTest verySimpleTest = new NCubeTest("foo", new CaseInsensitiveMap<String, CellInfo>(), [] as CellInfo[])
 
     @Test
     void testVerySimpleCase()

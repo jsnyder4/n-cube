@@ -267,19 +267,6 @@ class TestNCube
     }
 
     @Test
-    void testBig5D()
-    {
-        NCube ncube = NCubeManager.getNCubeFromResource("big5D.json")
-        long start = System.nanoTime()
-        List list = ncube.generateNCubeTests()
-        long end = System.nanoTime()
-        assertTrue((end - start) / 1000000.0 < 1000)   // verify that it runs in under 1 second (actual 87ms)
-        NCubeTest test = (NCubeTest)list.get(0)
-        assertEquals(5, test.coord.length)
-        assertEquals("test-001", test.name)
-    }
-
-    @Test
     void testClearCells()
     {
         NCube<Boolean> ncube = new NCube<Boolean>("Test.Default.Column")
@@ -3810,23 +3797,6 @@ class TestNCube
         {
             assertEquals(EOFException.class, e.cause.class)
             assert e.message.toLowerCase().contains("error reading cube from stream")
-        }
-    }
-
-    @Test
-    void testCoordinateGetter()
-    {
-        NCube ncube = NCubeManager.getNCubeFromResource("arrays.json")
-        Set cellKeys = ncube.getCellMap().keySet()
-        for (Collection<Long> colIds : cellKeys)
-        {
-            // This code is not generalized and intentionally relies on arrays.json being 1-dimensional
-            Long col = colIds.iterator().next()
-            Set<Long> coord = new HashSet<>()
-            coord.add(col)
-            Map<String, CellInfo> coordinate = new CaseInsensitiveMap<>()
-            coordinate = ncube.getTestInputCoordinateFromIds(coord)
-            assertTrue(coordinate.containsKey("code"))
         }
     }
 

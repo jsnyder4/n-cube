@@ -199,21 +199,21 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 'getTestData(' + appId.cacheKey(cubeName) + ')')
     }
 
-    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username)
+    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, long txId)
     {
-        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToHead(c, appId, cube, username) },
+        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToHead(c, appId, cube, username, txId) },
                 'commitMergedCubeToHead(' + appId.cacheKey(cube.name) + ')')
     }
 
-    NCubeInfoDto commitMergedCubeToBranch(ApplicationID appId, NCube cube, String headSha1, String username)
+    NCubeInfoDto commitMergedCubeToBranch(ApplicationID appId, NCube cube, String headSha1, String username, long txId)
     {
-        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToBranch(c, appId, cube, headSha1, username) },
+        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToBranch(c, appId, cube, headSha1, username, txId) },
                 'commitMergedCubeToBranch(' + appId.cacheKey(cube.name) + ', headSHA1=' + headSha1 + ')')
     }
 
-    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username)
+    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, long txId)
     {
-        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.commitCubes(c, appId, cubeIds, username) },
+        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.commitCubes(c, appId, cubeIds, username, txId) },
                 'commitCubes(' + appId + ')')
     }
 
@@ -223,9 +223,9 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 'rollbackCubes(' + appId + ')')
     }
 
-    List<NCubeInfoDto> pullToBranch(ApplicationID appId, Object[] cubeIds, String username)
+    List<NCubeInfoDto> pullToBranch(ApplicationID appId, Object[] cubeIds, String username, long txId)
     {
-        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.pullToBranch(c, appId, cubeIds, username) },
+        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.pullToBranch(c, appId, cubeIds, username, txId) },
                 'pullToBranch(' + appId + ')')
     }
 

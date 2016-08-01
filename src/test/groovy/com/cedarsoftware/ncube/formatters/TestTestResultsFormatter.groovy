@@ -7,8 +7,8 @@ import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.ncube.NCubeTest
 import com.cedarsoftware.ncube.RuleInfo
-import com.cedarsoftware.ncube.StringValuePair
 import com.cedarsoftware.ncube.TestingDatabaseHelper
+import com.cedarsoftware.util.CaseInsensitiveMap
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -82,7 +82,7 @@ class TestTestResultsFormatter
     @Test
     void testOutput()
     {
-        StringValuePair<CellInfo>[] coord = new StringValuePair[0]
+        Map<String, CellInfo> coord = new CaseInsensitiveMap<>()
         CellInfo[] expected = new CellInfo[3]
         expected[0] = new CellInfo(3.0d)
         expected[1] = new CellInfo(3.0f)

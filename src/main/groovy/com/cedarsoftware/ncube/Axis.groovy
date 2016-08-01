@@ -561,9 +561,9 @@ class Axis
      * internal value for comparison, and so on.
      * @param value Comparable typically a primitive, but can also be an n-cube Range, RangeSet, CommandCell,
      * or 2D, 3D, or LatLon.
-     * @param suggestedId Long suggested column ID.  Can be null, in which case an ID will be generated. If not null,
-     * then if the ID < BASE_AXIS_ID, the ID will be used (and shifted by the axis ID * BASE_AXIS_ID), otherwise the
-     * ID will be used as-is.
+     * @param suggestedId Long suggested column ID.  Can be null or 0, in which case an ID will be generated. If not,
+     * then the ID will be used (only the column portion, not the Axis ID portion).  If that matches an existing ID
+     * on the Axis, then an ID will be generated.
      * @return a Column with the up-promoted value as the column's value, and a unique ID on the column.  If
      * the original value is a Range or RangeSet, the components in the Range or RangeSet are also up-promoted.
      */

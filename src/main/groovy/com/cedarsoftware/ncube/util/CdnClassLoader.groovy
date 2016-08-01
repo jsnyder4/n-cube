@@ -1,20 +1,13 @@
-package com.cedarsoftware.ncube.util;
+package com.cedarsoftware.ncube.util
 
-import groovy.lang.GroovyClassLoader;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.NoSuchElementException;
+import groovy.transform.CompileStatic
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
  *         <br><br>
- *         Licensed under the Apache License, Version 2.0 (the "License");
+ *         Licensed under the Apache License, Version 2.0 (the "License")
  *         you may not use this file except in compliance with the License.
  *         You may obtain a copy of the License at
  *         <br><br>
@@ -26,56 +19,57 @@ import java.util.NoSuchElementException;
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-public class CdnClassLoader extends GroovyClassLoader
+@CompileStatic
+class CdnClassLoader extends GroovyClassLoader
 {
-    private final boolean _preventRemoteBeanInfo;
-    private final boolean _preventRemoteCustomizer;
-    private final ClassLoader parentClassLoader = super.getParent();
+    private final boolean _preventRemoteBeanInfo
+    private final boolean _preventRemoteCustomizer
+    private final ClassLoader parentClassLoader = super.getParent()
 
     /**
      * creates a GroovyClassLoader using the given ClassLoader as parent
      */
-    public CdnClassLoader(ClassLoader loader, boolean preventRemoteBeanInfo, boolean preventRemoteCustomizer)
+    CdnClassLoader(ClassLoader loader, boolean preventRemoteBeanInfo, boolean preventRemoteCustomizer)
     {
-        super(loader, null);
-        _preventRemoteBeanInfo = preventRemoteBeanInfo;
-        _preventRemoteCustomizer = preventRemoteCustomizer;
+        super(loader, null)
+        _preventRemoteBeanInfo = preventRemoteBeanInfo
+        _preventRemoteCustomizer = preventRemoteCustomizer
     }
 
-    public CdnClassLoader(List<String> list)
+    CdnClassLoader(List<String> list)
     {
-        this(CdnClassLoader.class.getClassLoader(), true, true);
-        addURLs(list);
+        this(CdnClassLoader.class.getClassLoader(), true, true)
+        addURLs(list)
     }
 
     protected Class<?> findClass(final String name) throws ClassNotFoundException
     {
-        return parentClassLoader.loadClass(name);
+        return parentClassLoader.loadClass(name)
     }
 
     private void addURLs(List<String> list)
     {
-        for (String url : list)
+        for (url in list)
         {
-            addURL(url);
+            addURL(url)
         }
     }
 
-    public void addURL(String url)
+    void addURL(String url)
     {
-        if (url != null)
+        if (url)
         {
             try
             {
                 if (!url.endsWith("/"))
                 {
-                    url += "/";
+                    url += '/'
                 }
-                addURL(new URL(url));
+                addURL(new URL(url))
             }
             catch (MalformedURLException e)
             {
-                throw new IllegalArgumentException("added url was malformed: " + url, e);
+                throw new IllegalArgumentException("added url was malformed: " + url, e)
             }
         }
 
@@ -85,40 +79,40 @@ public class CdnClassLoader extends GroovyClassLoader
      * @param name Name of resource
      * @return true if we should only look locally.
      */
-    boolean isLocalOnlyResource(String name)
+    protected boolean isLocalOnlyResource(String name)
     {
         if (name.endsWith(".class"))
         {
-            return true;
+            return true
         }
 
         //  Groovy ASTTransform Service
         if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation"))
         {
-            return true;
+            return true
         }
 
         if (name.startsWith("META-INF") ||
-            name.startsWith("ncube/grv/") ||
-            name.startsWith("java/") ||
-            name.startsWith("groovy/") ||
-            name.startsWith("org/") ||
-            name.startsWith("net/") ||
-            name.startsWith("com/google/") ||
-            name.startsWith("com/cedarsoftware/"))
+                name.startsWith("ncube/grv/") ||
+                name.startsWith("java/") ||
+                name.startsWith("groovy/") ||
+                name.startsWith("org/") ||
+                name.startsWith("net/") ||
+                name.startsWith("com/google/") ||
+                name.startsWith("com/cedarsoftware/"))
         {
             if (name.startsWith("ncube/grv/closure/"))
             {
-                return false;
+                return false
             }
-            return true;
+            return true
         }
 
         if (_preventRemoteBeanInfo)
         {
             if (name.endsWith("BeanInfo.groovy"))
             {
-                return true;
+                return true
             }
         }
 
@@ -126,39 +120,38 @@ public class CdnClassLoader extends GroovyClassLoader
         {
             if (name.endsWith("Customizer.groovy"))
             {
-                return true;
+                return true
             }
         }
 
-        return false;
+        return false
     }
 
-    public Enumeration<URL> getResources(String name) throws IOException
+    Enumeration<URL> getResources(String name)
     {
         if (isLocalOnlyResource(name))
         {
-            return new Enumeration<URL>()
-            {
+            return new Enumeration<URL>() {
                 public boolean hasMoreElements()
                 {
-                    return false;
+                    return false
                 }
 
                 public URL nextElement()
                 {
-                    throw new NoSuchElementException();
+                    throw new NoSuchElementException()
                 }
-            };
+            }
         }
-        return super.getResources(name);
+        return super.getResources(name)
     }
 
-    public URL getResource(String name)
+    URL getResource(String name)
     {
         if (isLocalOnlyResource(name))
         {
-            return null;
+            return null
         }
-        return super.getResource(name);
+        return super.getResource(name)
     }
 }

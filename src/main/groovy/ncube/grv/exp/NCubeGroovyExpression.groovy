@@ -44,10 +44,12 @@ class NCubeGroovyExpression
     /**
      * Fetch the named n-cube from the NCubeManager.  It looks at the same
      * account, app, and version as the running n-cube.
-     * @param name String n-cube name.
+     * @param name String n-cube name (optional, defaults to name of currently executing cube).
+     * @param quiet boolean (optional, defaults to false).  Set to true if you want null returned
+     * when the cube is not found (as opposed to an exception being thrown).
      * @return NCube with the given name.
      */
-    NCube getCube(String name, boolean quiet = false)
+    NCube getCube(String name = ncube.name, boolean quiet = false)
     {
         if (StringUtilities.equalsIgnoreCase(ncube.name, name))
         {

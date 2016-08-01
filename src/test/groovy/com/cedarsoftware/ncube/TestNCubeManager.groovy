@@ -61,7 +61,7 @@ class TestNCubeManager
     {
         CellInfo foo = new CellInfo('int', '5', false, false)
         CellInfo bar = new CellInfo('string', 'none', false, false)
-        StringValuePair[] pairs = [new StringValuePair('foo', foo), new StringValuePair('bar', bar)] as StringValuePair[]
+        Map<String, CellInfo> pairs = ['foo': foo, 'bar': bar]
         CellInfo[] cellInfos = [foo, bar] as CellInfo[]
 
         return [new NCubeTest('foo', pairs, cellInfos)] as NCubeTest[]

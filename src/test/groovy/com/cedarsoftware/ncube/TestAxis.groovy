@@ -1379,32 +1379,6 @@ class TestAxis
             CellInfo info = entry.value
             assertTrue("M2A".equals(info.value) || "van".equals(info.value) || "SHS".equals(info.value))
         }
-
-        Column t2 = trailor.findColumn("L3A")
-        longCoord.add(t2.id as Long)
-        try
-        {
-            coord = cube.getTestInputCoordinateFromIds(longCoord)
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertTrue(e.message.contains("more than one column"))
-            assertTrue(e.message.contains("per axis"))
-        }
-
-        try
-        {
-            longCoord.remove(t2.id)
-            longCoord.remove(t.id)
-            cube.getTestInputCoordinateFromIds(longCoord)
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertTrue(e.message.toLowerCase().contains("column id"))
-            assertTrue(e.message.toLowerCase().contains("missing"))
-        }
     }
 
     @Test

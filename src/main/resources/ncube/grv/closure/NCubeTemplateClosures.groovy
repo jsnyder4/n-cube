@@ -10,16 +10,16 @@ import com.google.common.collect.*
 import com.google.common.net.*
 
 
-NCube getCube(cubeName = ncube.name)
+NCube getCube(String name = ncube.name, boolean quiet = false)
 {
-    if (cubeName == ncube.name)
+    if (StringUtilities.equalsIgnoreCase(ncube.name, name))
     {
         return ncube
     }
-    NCube cube = NCubeManager.getCube(ncube.applicationID, cubeName)
-    if (cube == null)
+    NCube cube = NCubeManager.getCube(ncube.applicationID, name)
+    if (cube == null && !quiet)
     {
-        throw new IllegalArgumentException('n-cube: ' + cubeName + ', does not exist in app: ' + ncube.applicationID)
+        throw new IllegalArgumentException('n-cube: ' + name + ' not found.')
     }
     return cube
 }
@@ -45,7 +45,7 @@ def at(Map coord, String cubeName = ncube.name, def defaultValue = null)
     return getCube(cubeName).getCell(input, output, defaultValue)
 }
 
-def at(Map coord, String cubeName = ncube.name, def defaultValue = null, ApplicationID appId)
+def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = NCubeManager.getCube(appId, cubeName)
     input.putAll(coord)
@@ -57,7 +57,7 @@ def go(Map coord, String cubeName = ncube.name, def defaultValue = null)
     return getCube(cubeName).getCell(coord, output, defaultValue)
 }
 
-def go(Map coord, String cubeName = ncube.name, def defaultValue = null, ApplicationID appId)
+def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = NCubeManager.getCube(appId, cubeName)
     return target.getCell(coord, output, defaultValue)
