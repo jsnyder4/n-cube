@@ -6,7 +6,7 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, CDN 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.79</version>
+  <version>3.4.81</version>
 </dependency>
 ```
 Like **n-cube** and find it useful? **Tip** bitcoin: 1MeozsfDpUALpnu3DntHWXxoPJXvSAXmQA
@@ -96,6 +96,10 @@ Licensed under the Apache License, Version 2.0
 
 ___
 ### Version History
+* 3.4.81
+ * Fixed column ambiguously defined issue with updated search query.
+* 3.4.80
+ * Improved search query for SQL persister (uses left outer join instead of sub-select.  Sub-select was causing flip-flopping execution plan with Oracle query optimizer).
 * 3.4.79
  * Converted remaining .java files to .groovy
 * 3.4.78 
