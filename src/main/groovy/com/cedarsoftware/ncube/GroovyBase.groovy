@@ -354,17 +354,39 @@ abstract class GroovyBase extends UrlCommandCell
         }
     }
 
-    static Set<String> getImports(String text, StringBuilder newGroovy)
+    static Set<String> extractImportsAndAnnotations(String text, StringBuilder newGroovy)
     {
-        Matcher m = Regexes.importPattern.matcher(text)
-        Set<String> importNames = new LinkedHashSet<>()
-        while (m.find())
+        // imports
+        Matcher m1 = Regexes.importPattern.matcher(text)
+        Set<String> extractedLines = new LinkedHashSet<>()
+        while (m1.find())
         {
-            importNames.add(m.group(0))  // based on Regex pattern - if pattern changes, this could change
+            extractedLines.add(m1.group(0))  // based on Regex pattern - if pattern changes, this could change
+        }
+        m1.reset()
+        String sourceWithoutImports = m1.replaceAll('')
+
+        // @Grapes
+        Matcher m2 = Regexes.grapePattern.matcher(sourceWithoutImports)
+        while (m2.find())
+        {
+            extractedLines.add(m2.group(0))  // based on Regex pattern - if pattern changes, this could change
         }
 
-        m.reset()
-        newGroovy.append(m.replaceAll(''))
-        return importNames
+        m2.reset()
+        String sourceWithoutGrape = m2.replaceAll('')
+
+        // @Grab, @GrabResolver, @GrabExclude, @GrabConfig
+        Matcher m3 = Regexes.grabPattern.matcher(sourceWithoutGrape)
+        while (m3.find())
+        {
+            extractedLines.add(m3.group(0))  // based on Regex pattern - if pattern changes, this could change
+        }
+
+        m3.reset()
+        String sourceWithoutGrab = m3.replaceAll('')
+
+        newGroovy.append(sourceWithoutGrab)
+        return extractedLines
     }
 }

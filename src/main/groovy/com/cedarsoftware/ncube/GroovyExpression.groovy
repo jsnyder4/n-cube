@@ -64,8 +64,8 @@ class GroovyExpression extends GroovyBase
             return theirGroovy
         }
 
-        StringBuilder groovyCodeWithoutImportStatements = new StringBuilder()
-        Set<String> imports = getImports(theirGroovy, groovyCodeWithoutImportStatements)
+        StringBuilder groovyCodeWithoutImportsAndAnnotations = new StringBuilder()
+        Set<String> lines = extractImportsAndAnnotations(theirGroovy, groovyCodeWithoutImportsAndAnnotations)
         StringBuilder groovy = new StringBuilder("""\
 package ncube.grv.exp
 import com.cedarsoftware.ncube.*
@@ -80,18 +80,11 @@ import com.google.common.collect.*
 import com.google.common.net.*
 """)
 
-        // Add in import statements extracted from the expression cell
-        // Note: we may drop this support in the future.  Thinking on it.
-        for (String importLine : imports)
-        {
-            groovy.append(importLine)
-            groovy.append('\n')
-        }
-
         // Attempt to load sys.prototype cube
         // If loaded, add the import statement list from this cube to the list of imports for generated cells
         String expClassName = null
         NCube ncube = getNCube(ctx)
+
         if (!NCubeManager.SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
         {
             NCube prototype = getSysPrototype(ncube.applicationID)
@@ -105,6 +98,13 @@ import com.google.common.net.*
             }
         }
 
+        // Add in import and annotations extracted from the expression cell
+        for (String line : lines)
+        {
+            groovy.append(line)
+            groovy.append('\n')
+        }
+
         if (StringUtilities.isEmpty(expClassName))
         {
             expClassName = "ncube.grv.exp.NCubeGroovyExpression"
@@ -116,7 +116,7 @@ import com.google.common.net.*
         groovy.append(" extends ")
         groovy.append(expClassName)
         groovy.append("\n{\n\tdef run()\n\t{\n\t")
-        groovy.append(groovyCodeWithoutImportStatements.toString())
+        groovy.append(groovyCodeWithoutImportsAndAnnotations.toString())
         groovy.append("\n\t}\n}")
         return groovy.toString()
     }
