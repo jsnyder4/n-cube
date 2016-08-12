@@ -6,7 +6,7 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.81</version>
+  <version>3.4.82</version>
 </dependency>
 ```
 Like **n-cube** and find it useful? **Tip** bitcoin: 1MeozsfDpUALpnu3DntHWXxoPJXvSAXmQA
@@ -96,6 +96,9 @@ Licensed under the Apache License, Version 2.0
 
 ___
 ### Version History
+* 3.4.82
+ * Content search now supports wildcards.
+ * Grape annotations extracted from inline Groovy to outside class definition.  This is to support Groovy's @Grab (dependency support). Additional changes forthcoming.
 * 3.4.81
  * Fixed column ambiguously defined issue with updated search query.
 * 3.4.80

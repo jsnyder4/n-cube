@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
+ *          John DeRegnaucourt (jdereg@gmail.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
  *         <br><br>
@@ -24,7 +25,6 @@ class CdnClassLoader extends GroovyClassLoader
 {
     private final boolean _preventRemoteBeanInfo
     private final boolean _preventRemoteCustomizer
-    private final ClassLoader parentClassLoader = super.getParent()
 
     /**
      * creates a GroovyClassLoader using the given ClassLoader as parent
@@ -40,11 +40,6 @@ class CdnClassLoader extends GroovyClassLoader
     {
         this(CdnClassLoader.class.getClassLoader(), true, true)
         addURLs(list)
-    }
-
-    protected Class<?> findClass(final String name) throws ClassNotFoundException
-    {
-        return parentClassLoader.loadClass(name)
     }
 
     private void addURLs(List<String> list)
@@ -72,7 +67,6 @@ class CdnClassLoader extends GroovyClassLoader
                 throw new IllegalArgumentException("added url was malformed: " + url, e)
             }
         }
-
     }
 
     /**
@@ -81,25 +75,10 @@ class CdnClassLoader extends GroovyClassLoader
      */
     protected boolean isLocalOnlyResource(String name)
     {
-        if (name.endsWith(".class"))
-        {
-            return true
-        }
-
-        //  Groovy ASTTransform Service
-        if (name.endsWith("org.codehaus.groovy.transform.ASTTransformation"))
-        {
-            return true
-        }
-
-        if (name.startsWith("META-INF") ||
-                name.startsWith("ncube/grv/") ||
-                name.startsWith("java/") ||
-                name.startsWith("groovy/") ||
-                name.startsWith("org/") ||
-                name.startsWith("net/") ||
-                name.startsWith("com/google/") ||
-                name.startsWith("com/cedarsoftware/"))
+        if (name.startsWith("ncube/grv/") ||
+            name.startsWith("java/") ||
+            name.startsWith("groovy/") ||
+            name.startsWith("com/cedarsoftware/"))
         {
             if (name.startsWith("ncube/grv/closure/"))
             {

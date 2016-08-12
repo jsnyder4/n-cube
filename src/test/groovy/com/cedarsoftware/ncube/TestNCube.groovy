@@ -3710,7 +3710,7 @@ class TestNCube
 //        List urls = new ArrayList()
 //        URL url = NCubeManager.class.getResource("/")
 //        urls.add(url.toString())
-//        urls.add("http://www.cedarsoftware.com")
+//        urls.add("http://files.cedarsoftware.com")
 
 //        NCube classpathCube = NCubeManager.getNCubeFromResource("sys.classpath.testing")
 //        NCubeManager.addCube(new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name()), cube)
@@ -3736,7 +3736,7 @@ class TestNCube
         cpCube.addAxis(axis)
 
         String base = System.getProperty("java.io.tmpdir")
-        cpCube.setCell(new GroovyExpression("new com.cedarsoftware.ncube.util.CdnClassLoader(['" + new File(base).toURI().toURL().toString() + "','http://www.cedarsoftware.com'])", null, false), new HashMap())
+        cpCube.setCell(new GroovyExpression("new com.cedarsoftware.ncube.util.CdnClassLoader(['" + new File(base).toURI().toURL().toString() + "','http://files.cedarsoftware.com'])", null, false), new HashMap())
         return cpCube
     }
 

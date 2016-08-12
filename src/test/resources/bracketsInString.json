@@ -1,0 +1,35 @@
+{
+    "ncube":"bracketsInString",
+    "axes":
+        [
+            {
+                "name":"axis1",
+                "type":"DISCRETE",
+                "valueType":"STRING",
+                "hasDefault":false,
+                "preferredOrder":0,
+                "columns":
+                    [
+                        {"id":"column1"}
+                    ]
+            },
+            {
+                "name":"axis2",
+                "type":"DISCRETE",
+                "valueType":"STRING",
+                "hasDefault":false,
+                "preferredOrder":1,
+                "columns":
+                    [
+                        {"id":"column2"}
+                    ]
+            }
+        ],
+    "cells":
+        [
+            {
+                "id":["column1","column2"],
+                "value":"testValue[A]"
+            }
+        ]
+}

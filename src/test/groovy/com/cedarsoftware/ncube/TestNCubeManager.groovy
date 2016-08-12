@@ -727,7 +727,7 @@ class TestNCubeManager
     void testUpdateCubeWithSysClassPath()
     {
         String name = 'Fire'
-        //  from setup, assert initial classloader condition (www.cedarsoftware.com)
+        //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'updateCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         assertNotNull(NCubeManager.getUrlClassLoader(customId, [:]))
         assertEquals(1, NCubeManager.getCacheForApp(customId).size())
@@ -761,7 +761,7 @@ class TestNCubeManager
     void testRenameCubeWithSysClassPath()
     {
         String name = 'Dude'
-        //  from setup, assert initial classloader condition (www.cedarsoftware.com)
+        //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'renameCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         final URLClassLoader urlClassLoader1 = NCubeManager.getUrlClassLoader(customId, [:])
         assertNotNull(urlClassLoader1)
@@ -801,7 +801,7 @@ class TestNCubeManager
     void testDuplicateCubeWithSysClassPath()
     {
         String name = 'Dude'
-        //  from setup, assert initial classloader condition (www.cedarsoftware.com)
+        //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'renameCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         final URLClassLoader urlClassLoader1 = NCubeManager.getUrlClassLoader(customId, [:])
         assertNotNull(urlClassLoader1)
@@ -1330,23 +1330,23 @@ class TestNCubeManager
         Map map = [env:'DEV']
         NCube baseCube = NCubeManager.getCube(defaultSnapshotApp, 'sys.classpath.base')
 
-        assertEquals('http://www.cedarsoftware.com/tests/ncube/cp1/', baseCube.getCell(map))
+        assertEquals('http://files.cedarsoftware.com/tests/ncube/cp1/', baseCube.getCell(map))
         map.env = 'CERT'
-        assertEquals('http://www.cedarsoftware.com/tests/ncube/cp2/', baseCube.getCell(map))
+        assertEquals('http://files.cedarsoftware.com/tests/ncube/cp2/', baseCube.getCell(map))
 
         NCube classPathCube = NCubeManager.getCube(defaultSnapshotApp, 'sys.classpath')
         URLClassLoader loader = (URLClassLoader) classPathCube.getCell(map)
         assertEquals(1, loader.URLs.length);
-        assertEquals('http://www.cedarsoftware.com/tests/ncube/cp2/', loader.URLs[0].toString());
+        assertEquals('http://files.cedarsoftware.com/tests/ncube/cp2/', loader.URLs[0].toString());
     }
 
     @Test
     void testResolveRelativeUrl()
     {
-        // Sets App classpath to http://www.cedarsoftware.com
+        // Sets App classpath to http://files.cedarsoftware.com
         NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
 
-        // Rule cube that expects tests/ncube/hello.groovy to be relative to http://www.cedarsoftware.com
+        // Rule cube that expects tests/ncube/hello.groovy to be relative to http://files.cedarsoftware.com
         NCube hello = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'resolveRelativeHelloGroovy.json')
 
         // When run, it will set up the classpath (first cube loaded for App), and then
@@ -1357,7 +1357,7 @@ class TestNCubeManager
         assertEquals('Hello, world.', s)
 
         URL absUrl = NCubeManager.getActualUrl(ApplicationID.testAppId, 'tests/ncube/hello.groovy', [:])
-        assertEquals('http://www.cedarsoftware.com/tests/ncube/hello.groovy', absUrl.toString())
+        assertEquals('http://files.cedarsoftware.com/tests/ncube/hello.groovy', absUrl.toString())
     }
 
     @Test
@@ -1380,11 +1380,11 @@ class TestNCubeManager
     @Test
     void testResolveUrlFullyQualified()
     {
-        String url = 'http://www.cedarsoftware.com'
+        String url = 'http://files.cedarsoftware.com'
         URL ret = NCubeManager.getActualUrl(ApplicationID.testAppId, url, [:])
         assertEquals(url, ret.toString())
 
-        url = 'https://www.cedarsoftware.com'
+        url = 'https://files.cedarsoftware.com'
         ret = NCubeManager.getActualUrl(ApplicationID.testAppId, url, [:])
         assertEquals(url, ret.toString())
 

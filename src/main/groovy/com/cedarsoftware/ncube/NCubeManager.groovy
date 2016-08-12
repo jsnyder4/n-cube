@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
+import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -335,7 +336,7 @@ class NCubeManager
         GroovyClassLoader gcl = localClassLoaders[appId]
         if (gcl == null)
         {
-            gcl = new GroovyClassLoader()
+            gcl = new CdnClassLoader(NCubeManager.class.getClassLoader(), true, true)
             GroovyClassLoader classLoaderRef = localClassLoaders.putIfAbsent(appId, gcl)
             if (classLoaderRef != null)
             {
@@ -1719,6 +1720,13 @@ class NCubeManager
             options = [:]
         }
 
+        if (!options[NCubeManager.SEARCH_EXACT_MATCH_NAME])
+        {
+            cubeNamePattern = handleWildCard(cubeNamePattern)
+        }
+
+        content = handleWildCard(content)
+
         Map permInfo = getPermInfo(appId)
         List<NCubeInfoDto> cubes = getPersister().search(appId, cubeNamePattern, content, options)
         if (!permInfo.skipPermCheck)
@@ -2560,5 +2568,26 @@ class NCubeManager
     static String getUserId()
     {
         return userId.get()
+    }
+
+    /**
+     * Add wild card symbol at beginning and at end of string if not already present.
+     * Remove wild card symbol if only character present.
+     * @return String
+    */
+    private static String handleWildCard(String value)
+    {
+        if (value) {
+            if (!value.startsWith('*')) {
+                value = '*' + value
+            }
+            if (!value.endsWith('*')) {
+                value = value + '*'
+            }
+            if ('*' == value) {
+                value = null
+            }
+        }
+        return value
     }
 }

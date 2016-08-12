@@ -337,6 +337,6 @@ class NCubeGroovyExpression
 
     def run()
     {
-        throw new IllegalStateException('run() should never be called on ' + getClass().getName())
+        throw new IllegalStateException('run() should never be called on ' + getClass().getName() + '. This can occur for a cell marked GroovyExpression which should be set to GroovyMethod.')
     }
 }
