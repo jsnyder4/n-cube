@@ -51,6 +51,7 @@ class GroovyExpression extends GroovyBase
 
     //  Private constructor only for serialization.
     private GroovyExpression() { }
+
     GroovyExpression(String cmd, String url, boolean cache)
     {
         super(cmd, url, cache)
@@ -66,6 +67,9 @@ class GroovyExpression extends GroovyBase
 
         StringBuilder groovyCodeWithoutImportsAndAnnotations = new StringBuilder()
         Set<String> lines = extractImportsAndAnnotations(theirGroovy, groovyCodeWithoutImportsAndAnnotations)
+
+        // NOTE: CdnClassLoader needs to exclude the imports listed below with '*' (it will 'bike-lock' search these for
+        // all unexpected tokens in the source being compiled.
         StringBuilder groovy = new StringBuilder("""\
 package ncube.grv.exp
 import com.cedarsoftware.ncube.*

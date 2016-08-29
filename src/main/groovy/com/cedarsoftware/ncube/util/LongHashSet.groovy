@@ -3,7 +3,9 @@ package com.cedarsoftware.ncube.util
 import groovy.transform.CompileStatic
 
 /**
- * Special Set instance that hashes the Set<Long> column IDs with excellent dispersion.
+ * Special Set instance that hashes the Set<Long> column IDs with excellent dispersion,
+ * while at the same time, using only a single primitive long (8 bytes) per entry.
+ * This set is backed by a long[], so adding and removing items is O(n).
  *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br>

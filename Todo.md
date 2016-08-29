@@ -1,6 +1,5 @@
 n-cube 'ToDo' list
 ======
-
 ### n-cube engine
 * Datatypes
  * Add support for RULE-SET axis (RangeMap with Range and RangeSet).  Allows multi-match ranges with O(Log n) performance.
@@ -28,5 +27,6 @@ n-cube 'ToDo' list
 ### n-cube editor (NCE)
 * TODO: create visualization of n-cube in NCE
 * Run all tests
-
-* TODO: Figure out what tabs have changed on the backend and return any that need updating.
+* Merge between non-HEAD branches
+* Side-by-side comparison of two cubes using HtmlFormatter to generate display, add blank columns to ensure diff is same size
+* Allow moving each delta from one n-cube to the other.

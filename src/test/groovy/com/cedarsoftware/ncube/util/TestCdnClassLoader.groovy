@@ -29,14 +29,14 @@ class TestCdnClassLoader
     void testLocalResources()
     {
         CdnClassLoader testLoader1 = new CdnClassLoader(TestCdnClassLoader.class.classLoader, true, true)
-        assert testLoader1.isLocalOnlyResource("META-INF/org.codehaus.groovy.transform.ASTTransformation")
+        assert !testLoader1.isLocalOnlyResource("META-INF/org.codehaus.groovy.transform.ASTTransformation")
         assert testLoader1.isLocalOnlyResource("ncube/grv/exp/GroovyExpression")
         assert testLoader1.isLocalOnlyResource("ncube/grv/method/GroovyMethod")
         assert testLoader1.isLocalOnlyResource("FooBeanInfo.groovy")
         assert testLoader1.isLocalOnlyResource("FooCustomizer.groovy")
 
         CdnClassLoader testLoader2 = new CdnClassLoader(TestCdnClassLoader.class.classLoader, false, false)
-        assert testLoader2.isLocalOnlyResource("META-INF/org.codehaus.groovy.transform.ASTTransformation")
+        assert !testLoader2.isLocalOnlyResource("META-INF/org.codehaus.groovy.transform.ASTTransformation")
         assert testLoader2.isLocalOnlyResource("ncube/grv/exp/NCubeGroovyExpression.groovy")
         assert testLoader2.isLocalOnlyResource("ncube/grv/method/NCubeGroovyController.groovy")
         assert !testLoader2.isLocalOnlyResource("FooBeanInfo.groovy")
@@ -44,26 +44,32 @@ class TestCdnClassLoader
     }
 
     @Test
-    void testGetResource()
+    void testFindResource()
     {
         CdnClassLoader testLoader1 = new CdnClassLoader(TestCdnClassLoader.class.classLoader, true, true)
-        assertNotNull testLoader1.getResource("cdnRouter.json")
-        assertNull testLoader1.getResource("ncube/grv/method/NCubeGroovyController.class")
+        assertNull testLoader1.findResource("cdnRouter.json")
+        assertNull testLoader1.findResource("ncube/grv/method/NCubeGroovyController.class") // .class not allowed
         assertNotNull TestCdnClassLoader.class.classLoader.getResource("ncube/grv/method/NCubeGroovyController.class")
     }
 
     @Test
-    void testGetResources()
+    void testFindResources()
     {
         CdnClassLoader testLoader1 = new CdnClassLoader(TestCdnClassLoader.class.classLoader, true, true)
-        assert testLoader1.getResources("cdnRouter.json").hasMoreElements()
-        assert !testLoader1.getResources("ncube/grv/method/NCubeGroovyController.class").hasMoreElements()
+        assert !testLoader1.findResources("cdnRouter.json").hasMoreElements()
+        assert !testLoader1.findResources("ncube/grv/method/NCubeGroovyController.class").hasMoreElements() // .class not alloweds
         assert TestCdnClassLoader.class.classLoader.getResources("ncube/grv/method/NCubeGroovyController.class").hasMoreElements()
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     void testGetResourcesWithLocalResource()
     {
         new CdnClassLoader(TestCdnClassLoader.class.classLoader, true, true).getResources("ncube/grv/method/NCubeGroovyController.class").nextElement()
+        try
+        {
+            new CdnClassLoader(TestCdnClassLoader.class.classLoader, true, true).getResources("ncube/grv/method/NCubeGroovyController_x.class").nextElement()
+        }
+        catch (NoSuchElementException ignore)
+        { }
     }
 }

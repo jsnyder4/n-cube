@@ -857,11 +857,11 @@ class NCubeManager
         validateAppId(targetAppId)
         targetAppId.validateStatusIsNotRelease()
         assertNotLockBlocked(targetAppId)
-        int rows = getPersister().copyBranch(srcAppId, targetAppId)
-        if (!targetAppId.isHead())
+        if (targetAppId.version != '0.0.0')
         {
-            addBranchPermissionsCube(targetAppId);
+            detectNewAppId(targetAppId)
         }
+        int rows = getPersister().copyBranch(srcAppId, targetAppId)
         clearCache(targetAppId)
         broadcast(targetAppId)
         return rows
@@ -1527,7 +1527,7 @@ class NCubeManager
         NCube.validateCubeName(oldName)
         NCube.validateCubeName(newName)
 
-        if (oldName.equalsIgnoreCase(newName))
+        if (oldName.equals(newName))
         {
             throw new IllegalArgumentException('Could not rename, old name cannot be the same as the new name, name: ' + oldName + ', app: ' + appId)
         }
@@ -2313,7 +2313,10 @@ class NCubeManager
         if (search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false]).size() == 0)
         {
             addAppPermissionsCubes(appId)
-            addBranchPermissionsCube(appId)
+            if (!appId.isHead())
+            {
+                addBranchPermissionsCube(appId)
+            }
         }
     }
 

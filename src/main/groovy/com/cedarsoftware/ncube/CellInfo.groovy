@@ -846,14 +846,9 @@ class CellInfo
         {
             return '"' + getDateAsString((Date)val) + '"'
         }
-        else if (val instanceof Double || val instanceof Float)
+        else if (val instanceof Double || val instanceof Float || val instanceof BigDecimal)
         {
-            DecimalFormat fmt = new DecimalFormat("#0.0##############")
-            return fmt.format(((Number)val).doubleValue())
-        }
-        else if (val instanceof BigDecimal)
-        {
-            return (val as BigDecimal).stripTrailingZeros().toPlainString()
+            return Converter.convert(val, String.class)
         }
         else if (val instanceof Range)
         {

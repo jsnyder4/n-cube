@@ -1,16 +1,17 @@
 n-cube
 ======
+[![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube)
+
 n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and Enterprise Spreadsheet, built as a hyper-space.  The Domain Specific Language (**DSL**) for rules is [**Groovy**](http://www.groovy-lang.org/). To include in your project:
 
 ```
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.82</version>
+  <version>3.4.87</version>
 </dependency>
 ```
-Like **n-cube** and find it useful? **Tip** bitcoin: 1MeozsfDpUALpnu3DntHWXxoPJXvSAXmQA
-
 ### Sponsors
 [![Alt text](https://www.yourkit.com/images/yklogo.png "YourKit")](https://www.yourkit.com/.net/profiler/index.jsp)
 
@@ -19,9 +20,10 @@ YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/in
 and <a href="https://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>,
 innovative and intelligent tools for profiling Java and .NET applications.
 
-[![Alt text](https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcS-ZOCfy4ezfTmbGat9NYuyfe-aMwbo3Czx3-kUfKreRKche2f8fg "IntellijIDEA")](https://www.jetbrains.com/idea/)
-
-The image below is a Visual Summary of the main capabilities of n-cube.
+<a href="https://www.jetbrains.com/idea/"><img alt="Intellij IDEA from JetBrains" src="https://s-media-cache-ak0.pinimg.com/236x/bd/f4/90/bdf49052dd79aa1e1fc2270a02ba783c.jpg" data-canonical-src="https://s-media-cache-ak0.pinimg.com/236x/bd/f4/90/bdf49052dd79aa1e1fc2270a02ba783c.jpg" width="100" height="100" /></a>
+**Intellij IDEA**
+___
+####The image below is a Visual Summary of the main capabilities of n-cube.
 ![Alt text](https://raw.githubusercontent.com/jdereg/n-cube/master/n-cubeImage.png "n-cube Capabilities")
 
 What are the components of an n-cube?
@@ -96,6 +98,21 @@ Licensed under the Apache License, Version 2.0
 
 ___
 ### Version History
+* 3.4.87
+ * Minor tweak [removed one use of LOWER()]to main SELECT statement in the NCubePersister which fetches n-cubes matching various patterns.
+* 3.4.86
+ * Rename cube - now allows name to be only changed by case.
+ * Bug fix: Meta-property values that have the URL or CACHE flag set to true now retain the setting.
+* 3.4.85
+ * The value-side of meta-properties on n-cube, axis, or column can now be any Java primitive type, String, Date, BigDecimal, BigInteger, Point2D, Point3D, LatLon, byte[], or any CommandCell     
+* 3.4.84
+ * A default cell value can be specified by a column meta-property ('default_value').  If columns on different axes specify a default value, then the value at the intersection is the same as the column default if the intersecting columns have the same value, otherwise the n-cube level default is returned.
+ * The priority for cell value is 1) specified cell value, 2) column-level default, 3) n-cube default, 4) passed in default value to `at()`, `getCell()`.
+* 3.4.83
+ * `CdnClassLoader` updated to allow Groovy Grape annotations to fetch external content.
+ * `CdnClassLoader` caches resource URLs (relative URL Strings that were expanded to fully qualified URLs against the classpath).  These are cleared when the class loader cache is cleared.
+ * `CdnClassLoader` caches classes (dynamically loaded classes - using Groovy's @Grab as well as failed attempts [ClassNotFoundException]).  These are cleared when the class loader cache is cleared.
+ * `CdnClassLoader` cache is per `ApplicationID`, therefore it's internal caches are non-static (NCube uses a classpath per ApplicationID - allowing for variations in the same class between versions - multi-tenant support).
 * 3.4.82
  * Content search now supports wildcards.
  * Grape annotations extracted from inline Groovy to outside class definition.  This is to support Groovy's @Grab (dependency support). Additional changes forthcoming.

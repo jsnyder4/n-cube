@@ -1845,7 +1845,7 @@ class TestNCubeManager
         }
         catch (SecurityException e)
         {
-            assertTrue(e.message.contains('not performed'))
+            assertTrue(e.message.contains('Application is not locked by you'))
         }
         NCubeManager.setUserId(currUser)
     }

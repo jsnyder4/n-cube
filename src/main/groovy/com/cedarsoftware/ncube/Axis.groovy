@@ -69,7 +69,7 @@ class Axis
     public static final int SORTED = 0
     public static final int DISPLAY = 1
     private static final AtomicLong baseAxisIdForTesting = new AtomicLong(1)
-    private static final long BASE_AXIS_ID = 1000000000000L
+    protected static final long BASE_AXIS_ID = 1000000000000L
 
     private String name
     private AxisType type

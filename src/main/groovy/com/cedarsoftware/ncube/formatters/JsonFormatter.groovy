@@ -10,6 +10,7 @@ import com.cedarsoftware.ncube.RangeSet
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
+import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
@@ -51,7 +52,9 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_VERSION
 public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 {
     private static final String MAX_INT = Long.toString(Integer.MAX_VALUE)
-    public JsonFormatter() { }
+
+    public JsonFormatter() {}
+
     public JsonFormatter(OutputStream stream) { super(stream) }
 
     /**
@@ -143,26 +146,35 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         while (i.hasNext())
         {
             Map.Entry<String, Object> entry = i.next()
-            final String key = entry.getKey()
-            Object value = entry.getValue()
+            final String key = entry.key
+            Object value = entry.value
+
             if (value instanceof String || value instanceof Boolean || value instanceof Long || value == null)
-            {   // Allows for simple key ==> value associations to be written when value is very simple type
+            {   // Allows for simple key ==> value associations to be written when value is JSON supported type
                 writeObjectKeyValue(key, value, false)
+            }
+            else if (value instanceof Double)
+            {   // Doubles are also supported natively in JSON
+                writeObjectKey(key)
+                append(Converter.convert(value, String.class) as String)
+            }
+            else if (value instanceof CellInfo)
+            {   // If meta-prop value already a cell info, then write it out as-is
+                CellInfo cell = (CellInfo) value
+                writeObjectKey(key)
+                startObject()
+                writeType(cell.dataType)
+                writeCellValue(cell.recreate())
+                endObject()
             }
             else
             {
+                // Convert unknown value to CellInfo (handles, all primitives, CommandCells, and Point2D, Point3D, and LatLon)
+                CellInfo cell = new CellInfo(value)
                 writeObjectKey(key)
                 startObject()
-                writeType(CellInfo.getType(value, "meta property"))
-
-                if ((value instanceof CommandCell))
-                {
-                    writeCommandCell(value as CommandCell)
-                }
-                else
-                {
-                    writeObjectKeyValue("value", value, false)
-                }
+                writeType(cell.dataType)
+                writeCellValue(cell.recreate())
                 endObject()
             }
 
@@ -305,7 +317,8 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         {
             if (!column.isDefault())
             {
-                if (!firstPass) {
+                if (!firstPass)
+                {
                     comma()
                 }
                 writeColumn(column, options)
@@ -372,7 +385,8 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
      */
     void writeType(String type) throws IOException
     {
-        if (type == null) {
+        if (type == null)
+        {
             return
         }
 
@@ -496,7 +510,8 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 
     public static String getColumnType(Object o)
     {
-        if (o instanceof Range || o instanceof RangeSet) {
+        if (o instanceof Range || o instanceof RangeSet)
+        {
             return null
         }
 
@@ -577,7 +592,8 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             boolean firstPass = true
             while (i.hasNext())
             {
-                if (!firstPass) {
+                if (!firstPass)
+                {
                     comma()
                 }
                 writeObjectValue(i.next())

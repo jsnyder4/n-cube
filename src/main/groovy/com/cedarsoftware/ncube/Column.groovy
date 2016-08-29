@@ -35,7 +35,8 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class Column implements Comparable<Comparable>
 {
-    public static final String NAME = "name"
+    public static final String NAME = 'name'
+    public static final String DEFAULT_VALUE = 'default_value'
     protected long id
     private int displayOrder
     private Comparable value
@@ -147,7 +148,7 @@ class Column implements Comparable<Comparable>
      */
     String getColumnName()
     {
-        Object name = getMetaProperty("name")
+        Object name = getMetaProperty('name')
         if (name instanceof String && StringUtilities.hasContent((String)name))
         {
             return (String) name
@@ -163,7 +164,7 @@ class Column implements Comparable<Comparable>
      */
     void setColumnName(String name)
     {
-        setMetaProperty("name", name)
+        setMetaProperty(NAME, name)
     }
 
     int hashCode()

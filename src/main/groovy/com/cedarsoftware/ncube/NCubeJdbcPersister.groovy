@@ -579,7 +579,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         Long oldRevision = null
         String oldSha1 = null
         String oldHeadSha1 = null
-        byte[] oldTestData = null
+        byte[] testData = null
 
         Map<String, Object> options = [
                 (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
@@ -590,7 +590,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         runSelectCubesStatement(c, appId, oldName, options, 1, { ResultSet row ->
             oldBytes = row.getBytes(CUBE_VALUE_BIN)
             oldRevision = row.getLong('revision_number')
-            oldTestData = row.getBytes(TEST_DATA_BIN)
+            testData = row.getBytes(TEST_DATA_BIN)
             oldSha1 = row.getString('sha1')
             oldHeadSha1 = row.getString('head_sha1')
         })
@@ -602,7 +602,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         if (oldRevision != null && oldRevision < 0)
         {
-            throw new IllegalArgumentException("Deleted cubes cannot be renamed.  AppId:  " + appId + ", " + oldName + " -> " + newName)
+            throw new IllegalArgumentException("Deleted cubes cannot be renamed (restore it first).  AppId:  " + appId + ", " + oldName + " -> " + newName)
         }
 
         Long newRevision = null
@@ -616,18 +616,22 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             newHeadSha1 = row.getString(HEAD_SHA_1)
         })
 
-        if (newRevision != null && newRevision >= 0)
-        {
-            throw new IllegalArgumentException("Unable to rename cube, a cube already exists with that name, app:  " + appId + ", name: " + newName)
-        }
-
         NCube ncube = NCube.createCubeFromBytes(oldBytes)
         ncube.setName(newName)
         String notes = "renamed: " + oldName + " -> " + newName
 
-        Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
-        insertCube(c, appId, ncube, rev, oldTestData, notes, true, newHeadSha1, username, 'renameCube')
-        insertCube(c, appId, oldName, -(oldRevision + 1), oldBytes, oldTestData, notes, true, oldSha1, oldHeadSha1, username, 'renameCube')
+        if (oldName.equalsIgnoreCase(newName))
+        {   // Changing case
+            Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L    // New n-cube will start at 0 (unless we are re-using the name of a deleted cube, in which case it will start +1 from that)
+            insertCube(c, appId, ncube, rev, testData, notes, true, newHeadSha1, username, 'renameCube')                                        // create new cube
+        }
+        else
+        {   // Changing name (mark cube deleted, create / restore new one)
+            Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L    // New n-cube will start at 0 (unless we are re-using the name of a deleted cube, in which case it will start +1 from that)
+            insertCube(c, appId, oldName, -(oldRevision + 1), oldBytes, testData, notes, true, oldSha1, oldHeadSha1, username, 'renameCube')    // delete cube being renamed
+            insertCube(c, appId, ncube, rev, testData, notes, true, newHeadSha1, username, 'renameCube')                                        // create new cube
+
+        }
         return true
     }
 
@@ -1064,7 +1068,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         if (hasNamePattern)
         {
             nameCondition1 = ' AND ' + buildNameCondition('n_cube_nm') + (exactMatchName ? ' = :name' : ' LIKE :name')
-            nameCondition2 = ' AND ' + buildNameCondition('m.n_cube_nm') + (exactMatchName ? ' = :name' : ' LIKE :name')
+            nameCondition2 = ' AND m.low_name ' + (exactMatchName ? '= :name' : 'LIKE :name')
         }
 
         String revisionCondition = activeRecordsOnly ? ' AND n.revision_number >= 0' : deletedRecordsOnly ? ' AND n.revision_number < 0' : ''
@@ -1079,25 +1083,25 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
 /* ${methodName} */
 SELECT n.n_cube_id, n.n_cube_nm, n.app_cd, n.notes_bin, n.version_no_cd, n.status_cd, n.create_dt, n.create_hid, n.revision_number, n.branch_id, n.changed, n.sha1, n.head_sha1 ${testCondition} ${cubeCondition} ${notesCondition}
 FROM n_cube n,
-( SELECT n_cube_nm, max(abs(revision_number)) AS max_rev
+( SELECT LOWER(n_cube_nm) as low_name, max(abs(revision_number)) AS max_rev
  FROM n_cube
  WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch
  ${nameCondition1}
- GROUP BY n_cube_nm ) m
-WHERE m.n_cube_nm = n.n_cube_nm AND m.max_rev = abs(n.revision_number) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status AND tenant_cd = :tenant AND n.branch_id = :branch
+ GROUP BY LOWER(n_cube_nm) ) m
+WHERE m.low_name = LOWER(n.n_cube_nm) AND m.max_rev = abs(n.revision_number) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status AND tenant_cd = :tenant AND n.branch_id = :branch
 ${revisionCondition} ${changedCondition} ${nameCondition2}"""
 
         if (max >= 1)
         {   // Use pre-closure to fiddle with batch fetchSize and to monitor row count
             long count = 0
-            sql.eachRow(map, select, 0, max + 1, { ResultSet row ->
+            sql.eachRow(map, select, 0, max, { ResultSet row ->
                 if (row.getFetchSize() < FETCH_SIZE)
                 {
                     row.setFetchSize(FETCH_SIZE)
                 }
                 if (count > max)
                 {
-                    throw new IllegalStateException('More than one result returned, expecting only 1')
+                    throw new IllegalStateException('More results returned than expected, expecting only ' + max)
                 }
                 count++
                 closure(row)

@@ -216,21 +216,21 @@ return ret
         assert 'hello' == ncube.getCell([day:'mon'] as Map)
         assert 'world' == ncube.getCell([day:'tue'] as Map)
 
-        GroovyExpression exp = ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'mon'] as Map))
+        GroovyExpression exp = (GroovyExpression) ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'mon'] as Map))
         assert "return 'hello'" == exp.cmd
         assert exp.cacheable == false
         assert exp.getRunnableCode() != null
         assert NCubeGroovyExpression.class.isAssignableFrom(exp.getRunnableCode())
 
-        GroovyExpression exp1 = ncube.getCellNoExecute([day:'mon'] as Map)
+        GroovyExpression exp1 = (GroovyExpression) ncube.getCellNoExecute([day:'mon'] as Map)
         assert exp1.equals(exp)
 
-        exp = ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'tue'] as Map))
+        exp = (GroovyExpression) ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'tue'] as Map))
         assert exp.cmd == "return 'world'"
         assert exp.cacheable == true
         assert exp.getRunnableCode() == null
 
-        exp1 = ncube.getCellNoExecute([day:'tue'] as Map)
+        exp1 = (GroovyExpression) ncube.getCellNoExecute([day:'tue'] as Map)
         assert exp1.equals(exp)
     }
 

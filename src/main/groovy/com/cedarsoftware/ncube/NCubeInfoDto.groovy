@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
 /**
@@ -43,6 +44,10 @@ class NCubeInfoDto
 
     ApplicationID getApplicationID()
 	{
+        if (StringUtilities.isEmpty(tenant))
+        {
+            tenant = ApplicationID.DEFAULT_TENANT
+        }
 		return new ApplicationID(tenant, app, version, status, branch)
 	}
 
