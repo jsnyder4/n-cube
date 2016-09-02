@@ -126,7 +126,16 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         List<Column> columns = output.columns as List
         for (Column column : columns)
         {
-            axis.addColumn(column.value, column.columnName, column.id)
+            Column colAdded = axis.addColumn(column.value, column.columnName, column.id)
+
+            // Bring over referenced column meta properties
+            for (Map.Entry<String, Object> entry : column.getMetaProperties().entrySet())
+            {
+                if (colAdded.getMetaProperty(entry.key) == null)
+                {   // only override properties not already set.
+                    colAdded.setMetaProperty(entry.key, entry.value)
+                }
+            }
         }
     }
 

@@ -5,20 +5,10 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>3.4.87</version>
+	<version>3.4.89</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
-        <profile>
-            <id>doclint-java8-disable</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <javadoc.opts>-Xdoclint:none</javadoc.opts>
-            </properties>
-        </profile>
-
         <profile>
             <id>release-sign-artifacts</id>
             <activation>
@@ -76,7 +66,7 @@
     </developers>
 
     <properties>
-        <version.json-io>4.6.0</version.json-io>
+        <version.json-io>4.7.0</version.json-io>
         <version.java-util>1.24.0</version.java-util>
         <version.log4j>2.5</version.log4j>
         <version.junit>4.12</version.junit>
@@ -203,29 +193,11 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>groovydoc</id>
+                        <id>javadoc</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>empty-javadoc-jar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <classifier>javadoc</classifier>
-                            <classesDirectory>${basedir}/javadoc</classesDirectory>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -247,7 +219,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.plugin.surefire}</version>
                 <configuration>
-                    <forkCount>3</forkCount>
+                    <forkCount>2</forkCount>
                 </configuration>
             </plugin>
         </plugins>

@@ -1285,6 +1285,29 @@ class TestNCubeManager
     }
 
     @Test
+    void testRevisionHistoryIgnoreVersion()
+    {
+        NCube cube = createCube()
+        Object[] his = NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name)
+        NCubeInfoDto[] history = (NCubeInfoDto[]) his;
+        assertEquals(1, history.length)
+        assert history[0].name == 'test.Age-Gender'
+        assert history[0].revision == '0'
+        assert history[0].createHid == USER_ID
+        assert history[0].notes == 'notes follow'
+        assertNotNull history[0].toString()
+
+        Axis oddAxis = NCubeBuilder.getOddAxis(true)
+        cube.addAxis(oddAxis)
+
+        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
+        NCubeManager.commitBranch(defaultSnapshotApp, his, USER_ID)
+        NCubeManager.releaseVersion(defaultSnapshotApp, '2.0.0')
+        List<NCubeInfoDto> fullHistory = NCubeManager.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
+        assert fullHistory.size() == 1
+    }
+
+    @Test
     void testNCubeInfoDto()
     {
         NCube cube = createCube()

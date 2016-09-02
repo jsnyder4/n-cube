@@ -97,9 +97,9 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 'restoreCubes(' + appId + ')')
     }
 
-    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName)
+    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion)
     {
-        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.getRevisions(c, appId, cubeName) },
+        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.getRevisions(c, appId, cubeName, ignoreVersion) },
                 'getRevisions(' + appId.cacheKey(cubeName) + ')')
     }
 

@@ -7,8 +7,8 @@ import com.cedarsoftware.util.DeepEquals
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 /**
- * This class represents any cell that needs to return content from a URL.
- * For example, String or Binary content.
+ * This class is used for comparing n-cubes, generating delta objects that
+ * describe the difference.
  *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -78,6 +78,9 @@ class DeltaProcessor
         {
             return null
         }
+
+        // TODO: Need to add DELTA_NCUBE (default value), meta-properties so that merge brings
+        // these over.
 
         // Build axis differences
         Map<String, Map<String, Object>> axisDeltaMap = [:] as CaseInsensitiveMap
@@ -542,26 +545,35 @@ class DeltaProcessor
 
     /**
      * Return a list of Delta objects describing the differences between two n-cubes.
-     * @param other NCube to compare 'this' n-cube to
+     * @param source NCube to compare 'this' n-cube to
      * @return List<Delta> object.  The Delta class contains a Location (loc) which describes the
      * part of an n-cube that differs (ncube, axis, column, or cell) and the Type (type) of difference
-     * (ADD, UPDATE, or DELETE).  Finally, it includes an English description of the difference as well.
+     * (ADD, UPDATE, or DELETE).  Finally, it includes an English description of the difference.
      */
-    public static List<Delta> getDeltaDescription(NCube thisCube, NCube other)
+    public static List<Delta> getDeltaDescription(NCube target, NCube source)
     {
         List<Delta> changes = []
 
-        if (!thisCube.name.equalsIgnoreCase(other.name))
+        if (!target.name.equalsIgnoreCase(source.name))
         {
-            String s = "Name changed from '" + other.name + "' to '" + thisCube.name + "'"
+            String s = "Name changed from '" + source.name + "' to '" + target.name + "'"
             changes.add(new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, s))
         }
 
-        List<Delta> metaChanges = compareMetaProperties(other.metaProperties, thisCube.metaProperties, Delta.Location.NCUBE_META, "n-cube '" + thisCube.name + "'")
+        if (target.defaultCellValue != source.defaultCellValue)
+        {
+            String s = "Default cell value changed from '" +
+                    CellInfo.formatForDisplay((Comparable)source.defaultCellValue) +
+                    "' to '" +
+                    CellInfo.formatForDisplay((Comparable)target.defaultCellValue) + "'"
+            changes.add(new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, s))
+        }
+
+        List<Delta> metaChanges = compareMetaProperties(source.metaProperties, target.metaProperties, Delta.Location.NCUBE_META, "n-cube '" + target.name + "'")
         changes.addAll(metaChanges)
 
-        Set<String> a1 = thisCube.getAxisNames()
-        Set<String> a2 = other.getAxisNames()
+        Set<String> a1 = target.getAxisNames()
+        Set<String> a2 = source.getAxisNames()
         a1.removeAll(a2)
 
         boolean axesChanged = false
@@ -572,7 +584,7 @@ class DeltaProcessor
             axesChanged = true
         }
 
-        a1 = thisCube.getAxisNames()
+        a1 = target.getAxisNames()
         a2.removeAll(a1)
         if (!a2.isEmpty())
         {
@@ -581,9 +593,9 @@ class DeltaProcessor
             axesChanged = true
         }
 
-        for (Axis newAxis : thisCube.axes)
+        for (Axis newAxis : target.axes)
         {
-            Axis oldAxis = other.getAxis(newAxis.name)
+            Axis oldAxis = source.getAxis(newAxis.name)
             if (oldAxis == null)
             {
                 continue
@@ -636,16 +648,16 @@ class DeltaProcessor
             return changes
         }
 
-        thisCube.cellMap.each { key, value ->
+        target.cellMap.each { key, value ->
             LongHashSet newCellKey = key as LongHashSet
             Object newCellValue = value
 
-            if (other.cellMap.containsKey(newCellKey))
+            if (source.cellMap.containsKey(newCellKey))
             {
-                Object oldCellValue = other.cellMap[newCellKey]
+                Object oldCellValue = source.cellMap[newCellKey]
                 if (!DeepEquals.deepEquals(newCellValue, oldCellValue))
                 {
-                    Map<String, Object> properCoord = thisCube.getDisplayCoordinateFromIds(newCellKey)
+                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(newCellKey)
                     String s = "Cell changed at location: " + properCoord + ", from: " +
                             (oldCellValue == null ? null : oldCellValue.toString()) + ", to: " +
                             (newCellValue == null ? null : newCellValue.toString())
@@ -654,21 +666,21 @@ class DeltaProcessor
             }
             else
             {
-                Map<String, Object> properCoord = thisCube.getDisplayCoordinateFromIds(newCellKey)
+                Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(newCellKey)
                 String s = "Cell added at location: " + properCoord + ", value: " + (newCellValue == null ? null : newCellValue.toString())
                 changes.add(new Delta(Delta.Location.CELL, Delta.Type.ADD, s))
             }
         }
 
-        other.cellMap.each { key, value ->
+        source.cellMap.each { key, value ->
             LongHashSet oldCellKey = key as LongHashSet
 
-            if (!thisCube.cellMap.containsKey(oldCellKey))
+            if (!target.cellMap.containsKey(oldCellKey))
             {
                 boolean allColsStillExist = true
                 for (Long colId : oldCellKey)
                 {
-                    Axis axis = thisCube.getAxisFromColumnId(colId)
+                    Axis axis = target.getAxisFromColumnId(colId)
                     if (axis == null)
                     {
                         allColsStillExist = false
@@ -680,7 +692,7 @@ class DeltaProcessor
                 // dropped column would report a ton of removed cells.
                 if (allColsStillExist)
                 {
-                    Map<String, Object> properCoord = thisCube.getDisplayCoordinateFromIds(oldCellKey)
+                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(oldCellKey)
                     String s = "Cell removed at location: " + properCoord + ", value: " + (value == null ? null : value.toString())
                     changes.add(new Delta(Delta.Location.CELL, Delta.Type.DELETE, s))
                 }

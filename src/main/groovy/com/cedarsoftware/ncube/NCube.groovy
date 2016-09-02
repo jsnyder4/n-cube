@@ -39,6 +39,8 @@ import java.util.zip.GZIPOutputStream
  * of Columns that denote discrete nodes along an axis.  Use NCubeManager
  * to manage a list of NCubes.  Documentation on Github.
  *
+ * Useful for pricing, rating, and configuration modeling.
+ *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
@@ -785,11 +787,8 @@ class NCube<T>
 //                LOG.info("  coord Map: " + coordinate)
 //            }
 
-            if (cells.containsKey(colIds))
-            {   // If there is content at the given coordinate...
-                cellValue = cells.get(colIds)
-            }
-            else
+            cellValue = cells.get(colIds)
+            if (cellValue == null && !cells.containsKey(colIds))
             {   // No cell, look for default
                 cellValue = (T) getColumnDefault(colIds)
                 if (cellValue == null)

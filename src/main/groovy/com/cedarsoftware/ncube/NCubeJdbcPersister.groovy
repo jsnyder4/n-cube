@@ -126,21 +126,37 @@ ORDER BY abs(revision_number) DESC""", 0, 1, { ResultSet row ->
         throw new IllegalArgumentException('Unable to find cube: ' + cubeName + ', app: ' + appId + ' with SHA-1: ' + sha1)
     }
 
-    List<NCubeInfoDto> getRevisions(Connection c, ApplicationID appId, String cubeName)
+    List<NCubeInfoDto> getRevisions(Connection c, ApplicationID appId, String cubeName, boolean ignoreVersion)
     {
-        List<NCubeInfoDto> records = []
         Map map = appId as Map
         map.tenant = padTenant(c, appId.tenant)
         map.cube = buildName(cubeName)
         Sql sql = new Sql(c)
+        String sqlStatement
 
-        sql.eachRow(map, """\
+        if (ignoreVersion)
+        {
+            sqlStatement = """\
+/* getRevisions */
+SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, cube_value_bin, sha1, head_sha1, changed
+FROM n_cube
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch
+ORDER BY version_no_cd DESC, revision_number DESC
+"""
+        }
+        else
+        {
+            sqlStatement = """\
 /* getRevisions */
 SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, cube_value_bin, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND status_cd = :status AND branch_id = :branch
 ORDER BY abs(revision_number) DESC
-""", {   ResultSet row -> getCubeInfoRecords(appId, null, records, row) })
+"""
+        }
+
+        List<NCubeInfoDto> records = []
+        sql.eachRow(map, sqlStatement, {   ResultSet row -> getCubeInfoRecords(appId, null, records, row) })
 
         if (records.isEmpty())
         {
@@ -1451,7 +1467,7 @@ ORDER BY abs(revision_number) DESC"""
             }
             catch (Exception ignored) { }
             dto.notes = new String(notes == null ? "".getBytes() : notes, 'UTF-8')
-            dto.version = appId.version
+            dto.version = row.getString('version_no_cd')
             dto.status = row.getString('status_cd')
             dto.app = appId.app
             dto.createDate = new Date(row.getTimestamp('create_dt').getTime())

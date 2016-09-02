@@ -2,6 +2,7 @@ n-cube
 ======
 [![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube)
+[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.cedarsoftware/n-cube/badge.svg)](http://www.javadoc.io/doc/com.cedarsoftware/n-cube)
 
 n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and Enterprise Spreadsheet, built as a hyper-space.  The Domain Specific Language (**DSL**) for rules is [**Groovy**](http://www.groovy-lang.org/). To include in your project:
 
@@ -9,9 +10,10 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.87</version>
+  <version>3.4.89</version>
 </dependency>
 ```
+
 ### Sponsors
 [![Alt text](https://www.yourkit.com/images/yklogo.png "YourKit")](https://www.yourkit.com/.net/profiler/index.jsp)
 
@@ -98,6 +100,12 @@ Licensed under the Apache License, Version 2.0
 
 ___
 ### Version History
+* 3.4.89
+ * Meta-properties on columns now 'pull through' on Axis reference.
+ * HtmlFormatter differentiates null as a cell value from an empty cell.
+ * NCubeJdbcPersister now retrieves full revision history when branch is HEAD (all versions).
+* 3.4.88
+ * Packaging of JavaDoc into javadoc.jar not groovydoc.jar
 * 3.4.87
  * Minor tweak [removed one use of LOWER()]to main SELECT statement in the NCubePersister which fetches n-cubes matching various patterns.
 * 3.4.86

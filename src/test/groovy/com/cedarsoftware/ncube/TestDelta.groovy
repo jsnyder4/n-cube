@@ -1117,6 +1117,25 @@ class TestDelta
         { }
     }
 
+    @Test
+    void testDefaultCellDelta()
+    {
+        NCube ncube1 = NCubeBuilder.discrete1D
+        ncube1.defaultCellValue = 10
+        NCube ncube2 = ncube1.duplicate(ncube1.name)
+        ncube2.defaultCellValue = 3.14
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(ncube2, ncube1)
+        println deltas
+        assert deltas.size() == 1
+        Delta delta = deltas[0]
+        delta.type == Delta.Type.UPDATE
+        delta.location == Delta.Location.NCUBE
+        String desc = delta.description.toLowerCase()
+        assert desc.contains('default cell')
+        assert desc.contains('changed from')
+        assert desc.contains("'10' to '3.14'")
+    }
+
     // TODO: Swap order of above test
     // TODO: Have jdereg break reference and merge to HEAD
     // TODO: Then, kpartlow should be able to updated from HEAD because it will have a super set of columns

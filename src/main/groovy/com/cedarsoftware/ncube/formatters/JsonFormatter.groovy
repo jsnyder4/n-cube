@@ -149,14 +149,9 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             final String key = entry.key
             Object value = entry.value
 
-            if (value instanceof String || value instanceof Boolean || value instanceof Long || value == null)
+            if (value instanceof String || value instanceof Boolean || value == null)
             {   // Allows for simple key ==> value associations to be written when value is JSON supported type
                 writeObjectKeyValue(key, value, false)
-            }
-            else if (value instanceof Double)
-            {   // Doubles are also supported natively in JSON
-                writeObjectKey(key)
-                append(Converter.convert(value, String.class) as String)
             }
             else if (value instanceof CellInfo)
             {   // If meta-prop value already a cell info, then write it out as-is

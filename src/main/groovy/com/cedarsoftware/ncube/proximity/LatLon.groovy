@@ -106,10 +106,10 @@ class LatLon implements Distance<LatLon>
         double earthRadius = EARTH_RADIUS;
         double dLat = toRadians(that.lat - lat)
         double dLng = toRadians(that.lon - lon)
-        double sinDlat2 = sin(dLat / 2.0)
-        double sinDlng2 = sin(dLng/2)
+        double sinDlat2 = sin(dLat / 2.0d)
+        double sinDlng2 = sin(dLng / 2.0d)
         double a = sinDlat2 * sinDlat2 + cos(toRadians(lat)) * cos(toRadians(that.lat)) * sinDlng2 * sinDlng2
-        double c = 2 * atan2(sqrt(a), sqrt(1-a))
+        double c = 2.0d * atan2(sqrt(a), sqrt(1.0d - a))
         double dist = earthRadius * c
         return dist
 	}

@@ -4851,6 +4851,21 @@ class TestNCube
         assert 888 == ncube.at([state: 'AZ'], [:], '999')
     }
 
+    @Test
+    void testNullCell()
+    {
+        NCube ncube = NCubeBuilder.getDiscrete1D()
+        ncube.clearCells()
+        Map input = [state:'OH']
+        ncube.setCell(null, input)
+        assert null == ncube.at(input)
+        assert ncube.numCells == 1
+        input.state = 'TX'
+        ncube.setCell('null', input)
+        assert ncube.numCells == 2
+        assert ncube.toHtml() != null
+    }
+
     // ---------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------
 

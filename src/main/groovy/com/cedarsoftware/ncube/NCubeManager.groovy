@@ -734,12 +734,12 @@ class NCubeManager
     /**
      * Get a List<NCubeInfoDto> containing all history for the given cube.
      */
-    static List<NCubeInfoDto> getRevisionHistory(ApplicationID appId, String cubeName)
+    static List<NCubeInfoDto> getRevisionHistory(ApplicationID appId, String cubeName, boolean ignoreVersion = false)
     {
         validateAppId(appId)
         NCube.validateCubeName(cubeName)
         assertPermissions(appId, cubeName)
-        List<NCubeInfoDto> revisions = getPersister().getRevisions(appId, cubeName)
+        List<NCubeInfoDto> revisions = getPersister().getRevisions(appId, cubeName, ignoreVersion)
         return revisions
     }
 
