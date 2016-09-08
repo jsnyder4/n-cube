@@ -87,7 +87,11 @@ class NCubeJdbcPersister
         Map map = [id: cubeId]
         Sql sql = new Sql(c)
         NCube cube = null
-        sql.eachRow(map, "/* loadCubeById */ SELECT n_cube_nm, tenant_cd, app_cd, version_no_cd, status_cd, revision_number, branch_id, cube_value_bin, changed, sha1, head_sha1 FROM n_cube where n_cube_id = :id", 0, 1, { ResultSet row ->
+        sql.eachRow(map, """\
+/* loadCubeById */
+SELECT tenant_cd, app_cd, version_no_cd, status_cd, branch_id, cube_value_bin, sha1
+FROM n_cube
+WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
             String tenant = row.getString('tenant_cd')
             String status = row.getString('status_cd')
             String app = row.getString('app_cd')
@@ -113,7 +117,7 @@ class NCubeJdbcPersister
 
         new Sql(c).eachRow(map, """\
 /* loadCubeBySha1 */
-SELECT n_cube_id, n_cube_nm, app_cd, version_no_cd, status_cd, revision_number, branch_id, cube_value_bin, test_data_bin, notes_bin, changed, sha1, head_sha1, create_dt
+SELECT cube_value_bin, sha1
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1
 ORDER BY abs(revision_number) DESC""", 0, 1, { ResultSet row ->
@@ -156,7 +160,7 @@ ORDER BY abs(revision_number) DESC
         }
 
         List<NCubeInfoDto> records = []
-        sql.eachRow(map, sqlStatement, {   ResultSet row -> getCubeInfoRecords(appId, null, records, row) })
+        sql.eachRow(map, sqlStatement, { ResultSet row -> getCubeInfoRecords(appId, null, records, row) })
 
         if (records.isEmpty())
         {
@@ -173,7 +177,7 @@ ORDER BY abs(revision_number) DESC
         try
         {
             s = c.prepareStatement("""\
-/* ${methodName}.insertCube */
+/* ${methodName}.insertCubeBytes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
 sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -439,7 +443,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             return infoRecs
         }
 
-        String sql = "/* pullToBranch */ SELECT n_cube_nm, app_cd, version_no_cd, status_cd, revision_number, branch_id, cube_value_bin, test_data_bin, notes_bin, sha1, head_sha1, create_dt from n_cube WHERE n_cube_id = ?"
+        String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = ?"
         PreparedStatement stmt = null
         try
         {
@@ -724,7 +728,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         for (int i = 0; i < cubeIds.length; i++)
         {
             map.id = Converter.convert(cubeIds[i], Long.class)
-            sql.eachRow("/* commitCubes */ SELECT n_cube_nm, app_cd, version_no_cd, status_cd, revision_number, branch_id, cube_value_bin, test_data_bin, notes_bin, sha1, head_sha1 from n_cube WHERE n_cube_id = :id",
+            sql.eachRow("/* commitCubes */ SELECT n_cube_nm, revision_number, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id",
                     map, 0, 1, { ResultSet row ->
                 byte[] jsonBytes = row.getBytes(CUBE_VALUE_BIN)
                 String sha1 = row.getString('sha1')
@@ -806,11 +810,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         {
             c.setAutoCommit(false)
             ins = c.prepareStatement("""\
-/* rollbackCubes */ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
+/* rollbackCubes */
+INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
  sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
-            // TODO: Extract AppId to Map outside .each
             Map map = appId as Map
             map.tenant = padTenant(c, appId.tenant)
             long txId = UniqueIdGenerator.getUniqueId()
@@ -832,7 +836,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
                     sql.eachRow(map, """\
 /* rollbackCubes */
-SELECT n_cube_id, n_cube_nm, app_cd, version_no_cd, status_cd, revision_number, branch_id, cube_value_bin, test_data_bin, notes_bin, changed, sha1, head_sha1, create_dt
+SELECT cube_value_bin, test_data_bin, changed, sha1, head_sha1
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
 AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0, 1, { ResultSet row ->

@@ -591,6 +591,15 @@ class NCubeManager
         }
     }
 
+    // TODO: Need to get all 'appId' cubes
+    // TODO: Need to get all otherBranch cubes
+    // TODO: figure out:
+    // TODO: 1. How many you've added
+    // TODO: 2. How many you've deleted
+    // TODO: 3. How many you've changed
+    // TODO: 4. How many they've changed
+    // TODO: so on and so on.
+
     /**
      * Get List<NCubeInfoDto> of n-cube record DTOs for the given ApplicationID (branch only).  If using
      * For any cube record loaded, for which there is no entry in the app's cube cache, an entry
@@ -598,7 +607,95 @@ class NCubeManager
      * by an NCube if more than the name is required.
      * one (1) character.  This is universal whether using a SQL perister or Mongo persister.
      */
-    static List<NCubeInfoDto> getBranchChangesFromDatabase(ApplicationID appId, String otherBranch = ApplicationID.HEAD)
+    static List<NCubeInfoDto> getBranchChangesFromBranch(ApplicationID appId, String branch)
+    {
+        validateAppId(appId)
+        if (ApplicationID.HEAD == branch)
+        {
+            throw new IllegalArgumentException('HEAD cannot be passed to getBranchChangesFromBranch()')
+        }
+
+        ApplicationID headAppId = appId.asHead()
+        Map<String, NCubeInfoDto> headMap = new TreeMap<>()
+
+        List<NCubeInfoDto> branchList = search(appId, null, null, [(SEARCH_CHANGED_RECORDS_ONLY):true])
+        List<NCubeInfoDto> headList = search(headAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> list = []
+
+        //  build map of head objects for reference.
+        for (NCubeInfoDto info : headList)
+        {
+            headMap[info.name] = info
+        }
+
+        // Loop through changed (added, deleted, created, restored, updated) records
+        for (NCubeInfoDto info : branchList)
+        {
+            long revision = (long) Converter.convert(info.revision, long.class)
+            NCubeInfoDto head = headMap[info.name]
+
+            if (head == null)
+            {
+                if (revision >= 0)
+                {
+                    info.changeType = ChangeType.CREATED.getCode()
+                    list.add(info)
+                }
+            }
+            else if (info.headSha1 == null)
+            {   //  we created this guy locally
+                // someone added this one to the head already
+                info.changeType = ChangeType.CONFLICT.getCode()
+                list.add(info)
+            }
+            else
+            {
+                if (StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
+                {
+                    if (StringUtilities.equalsIgnoreCase(info.sha1, info.headSha1))
+                    {
+                        // only net change could be revision deleted or restored.  check head.
+                        long headRev = Long.parseLong(head.revision)
+
+                        if (headRev < 0 != revision < 0)
+                        {
+                            if (revision < 0)
+                            {
+                                info.changeType = ChangeType.DELETED.getCode()
+                            }
+                            else
+                            {
+                                info.changeType = ChangeType.RESTORED.getCode()
+                            }
+
+                            list.add(info)
+                        }
+                    }
+                    else
+                    {
+                        info.changeType = ChangeType.UPDATED.getCode()
+                        list.add(info)
+                    }
+                }
+                else
+                {
+                    info.changeType = ChangeType.CONFLICT.getCode()
+                    list.add(info)
+                }
+            }
+        }
+
+        return list
+    }
+
+    /**
+     * Get List<NCubeInfoDto> of n-cube record DTOs for the given ApplicationID (branch only).  If using
+     * For any cube record loaded, for which there is no entry in the app's cube cache, an entry
+     * is added mapping the cube name to the cube record (NCubeInfoDto).  This will be replaced
+     * by an NCube if more than the name is required.
+     * one (1) character.  This is universal whether using a SQL perister or Mongo persister.
+     */
+    static List<NCubeInfoDto> getBranchChangesFromHead(ApplicationID appId)
     {
         validateAppId(appId)
         if (appId.getBranch().equals(ApplicationID.HEAD))
@@ -606,23 +703,15 @@ class NCubeManager
             throw new IllegalArgumentException('Cannot get branch changes from HEAD')
         }
 
-        // TODO: Need to get all 'appId' cubes
-        // TODO: Need to get all otherBranch cubes
-        // TODO: figure out:
-        // TODO: 1. How many you've added
-        // TODO: 2. How many you've deleted
-        // TODO: 3. How many you've changed
-        // TODO: 4. How many they've changed
-        // TODO: so on and so on.
-        ApplicationID otherBranchId = appId.asBranch(otherBranch)
+        ApplicationID headAppId = appId.asHead()
         Map<String, NCubeInfoDto> headMap = new TreeMap<>()
 
         List<NCubeInfoDto> branchList = search(appId, null, null, [(SEARCH_CHANGED_RECORDS_ONLY):true])
-        List<NCubeInfoDto> otherBranchList = search(otherBranchId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> headList = search(headAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
         List<NCubeInfoDto> list = []
 
         //  build map of head objects for reference.
-        for (NCubeInfoDto info : otherBranchList)
+        for (NCubeInfoDto info : headList)
         {
             headMap[info.name] = info
         }
@@ -1720,7 +1809,7 @@ class NCubeManager
             options = [:]
         }
 
-        if (!options[NCubeManager.SEARCH_EXACT_MATCH_NAME])
+        if (!options[SEARCH_EXACT_MATCH_NAME])
         {
             cubeNamePattern = handleWildCard(cubeNamePattern)
         }

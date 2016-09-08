@@ -41,11 +41,11 @@ import static java.lang.Math.abs
  *
  * Five types of axes are supported, DISCRETE, RANGE, SET, NEAREST, and RULE.
  * DISCRETE matches discrete values with .equals().  Locates items in O(1)
- * RANGE matches [low, high) values in O(Log N) time.
- * SET matches repeating DISCRETE and RANGE values in O(Log N) time.
+ * RANGE matches [low, high) values in O(Log n) time.
+ * SET matches repeating DISCRETE and RANGE values in O(Log n) time.
  * NEAREST finds the column matching the closest value to the input.  Runs in O(Log n) for
  * Number and Date types, O(n) for String, Point2D, Point3D, LatLon.
- * RULE fires all conditions that evaluate to true.  Runs in O(N).</pre>
+ * RULE fires all conditions that evaluate to true.  Runs in O(n).</pre>
  *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br>

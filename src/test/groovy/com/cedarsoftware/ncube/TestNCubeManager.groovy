@@ -469,7 +469,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getBranchChangesFromDatabase(defaultSnapshotApp.asHead())
+            NCubeManager.getBranchChangesFromHead(defaultSnapshotApp.asHead())
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
@@ -1079,12 +1079,12 @@ class TestNCubeManager
         NCubeManager.updateCube(appId, cube4, true)
         String sha4 = cube4.sha1()
 
-        List<NCubeInfoDto> changes = NCubeManager.getBranchChangesFromDatabase(appId)
+        List<NCubeInfoDto> changes = NCubeManager.getBranchChangesFromHead(appId)
         assert 4 == changes.size()
 
         Object[] cubes = [cube1.name, cube2.name, cube3.name, cube4.name].toArray()
         assert 4 == NCubeManager.rollbackCubes(appId, cubes)
-        changes = NCubeManager.getBranchChangesFromDatabase(appId)
+        changes = NCubeManager.getBranchChangesFromHead(appId)
         assert 0 == changes.size()  // Looks like we've got no cubes (4 deleted ones but 0 active)
 
         List<NCubeInfoDto> deleted = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_DELETED_RECORDS_ONLY): true])
@@ -1093,7 +1093,7 @@ class TestNCubeManager
         NCubeManager.restoreCubes(appId, cubes)
         assert 4 == NCubeManager.getCubeNames(appId).size()
 
-        changes = NCubeManager.getBranchChangesFromDatabase(appId)
+        changes = NCubeManager.getBranchChangesFromHead(appId)
         assert 4 == changes.size()
 
         NCubeManager.loadCube(appId, cubes[0]).sha1() == sha1
@@ -1463,7 +1463,7 @@ class TestNCubeManager
         ApplicationID johnAppId = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'jdereg')
         NCube cube = NCubeManager.getNCubeFromResource(johnAppId, 'testCube6.json')
         NCubeManager.updateCube(johnAppId, cube, true)
-        List<NCubeInfoDto> cubes = NCubeManager.getBranchChangesFromDatabase(johnAppId)
+        List<NCubeInfoDto> cubes = NCubeManager.getBranchChangesFromHead(johnAppId)
         NCubeManager.commitBranch(johnAppId, cubes.toArray())
         ApplicationID kenAppId  = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'ken')
         NCubeManager.copyBranch(kenAppId.asHead(), kenAppId)
@@ -1484,7 +1484,7 @@ class TestNCubeManager
         cube.setCell('foo', [gender:'male'])
         String kenSha1 = cube.sha1()
         NCubeManager.updateCube(kenAppId, cube, true)
-        cubes = NCubeManager.getBranchChangesFromDatabase(kenAppId)
+        cubes = NCubeManager.getBranchChangesFromHead(kenAppId)
         assert cubes.size() == 1
         NCubeManager.commitBranch(kenAppId, cubes.toArray())
         NCube cubeHead = NCubeManager.loadCube(kenAppId.asHead(), 'TestCube')
@@ -1502,7 +1502,7 @@ class TestNCubeManager
         assert kenSha1 == johnCube.sha1()
 
         // Verify that before the Update Branch, we show one (1) branch change
-        cubes = NCubeManager.getBranchChangesFromDatabase(johnAppId)
+        cubes = NCubeManager.getBranchChangesFromHead(johnAppId)
         assert cubes.size() == 1
 
         // Update john branch (no changes are shown - it auto-merged)
@@ -1511,7 +1511,7 @@ class TestNCubeManager
         assert map.merges.size() == 0
         assert map.conflicts.size() == 0
 
-        cubes = NCubeManager.getBranchChangesFromDatabase(johnAppId)
+        cubes = NCubeManager.getBranchChangesFromHead(johnAppId)
         assert cubes.size() == 0    // No changes being returned
 
         cubes = NCubeManager.search(johnAppId, null, null, null)

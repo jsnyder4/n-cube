@@ -185,13 +185,13 @@ class TestWithPreloadedDatabase
 
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
 
         // ensure that there are no more branch changes after create
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         ApplicationID headId = branch1.asHead()
@@ -207,10 +207,10 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube1, true)
         NCubeManager.updateCube(branch2, cube2, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         Map merge = NCubeManager.updateBranchCube(branch2, cube1.name, branch1.branch)
@@ -229,13 +229,13 @@ class TestWithPreloadedDatabase
 
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertTrue(NCubeManager.deleteBranch(branch1))
 
         // ensure that there are no more branch changes after delete
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
     }
 
@@ -246,7 +246,7 @@ class TestWithPreloadedDatabase
 
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         Map<String, Object> result = NCubeManager.updateBranch(branch1)
@@ -261,7 +261,7 @@ class TestWithPreloadedDatabase
         assert result[NCubeManager.BRANCH_CONFLICTS].size() == 0
 
         //  update didn't affect item added locally
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
     }
 
@@ -273,12 +273,12 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
         Object[] names = [dtos[0].name]
         NCubeManager.rollbackCubes(branch1, names)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertEquals(0, NCubeManager.commitBranch(branch1, dtos).size())
@@ -295,14 +295,14 @@ class TestWithPreloadedDatabase
 
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         Object[] names = [dtos[0].name]
         assertEquals(1, dtos.length)
 
         // undo delete
         NCubeManager.rollbackCubes(branch1, names)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertEquals(0, NCubeManager.commitBranch(branch1, dtos).size())
@@ -315,7 +315,7 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube, true)
         NCubeManager.deleteCubes(branch1, ['TestAge'].toArray())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertEquals(0, NCubeManager.commitBranch(branch1, dtos).size())
@@ -332,7 +332,7 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube, true)
         NCubeManager.deleteCubes(branch1, ['TestAge'].toArray(),)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         Map<String, Object> result = NCubeManager.updateBranch(branch1)
@@ -373,7 +373,7 @@ class TestWithPreloadedDatabase
         NCubeManager.copyBranch(branch2.asHead(), branch2)
         NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
 
         assertEquals(1, dtos.length)
         assertEquals(1, NCubeManager.commitBranch(branch2, dtos).size())
@@ -399,7 +399,7 @@ class TestWithPreloadedDatabase
         NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
 
         assertEquals(1, dtos.length)
         assertEquals(1, NCubeManager.commitBranch(branch2, dtos).size())
@@ -488,7 +488,7 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(head, "TestAge"))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
@@ -544,7 +544,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
         NCubeManager.commitBranch(branch1, dtos)
 
@@ -641,7 +641,7 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
@@ -685,7 +685,7 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2")
@@ -693,7 +693,7 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch2"))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -705,12 +705,12 @@ class TestWithPreloadedDatabase
         // No changes have happened yet, even though sha1 is incorrect,
         // we just copy the sha1 when we create the branch so the headsha1 won't
         // differ until we make a change.
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertEquals(0, NCubeManager.commitBranch(branch1, dtos).size())
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
     }
 
@@ -740,7 +740,7 @@ class TestWithPreloadedDatabase
         assertTrue(NCubeManager.updateCube(branch1, cube, true))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
         ((NCubeInfoDto)dtos[0]).revision = Long.toString(100)
 
@@ -818,14 +818,14 @@ class TestWithPreloadedDatabase
         assertEquals(5, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
         dtos[0] = dtos[0].name
         assertEquals(1, NCubeManager.rollbackCubes(branch1, dtos))
 
         assertEquals(6, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
     }
 
@@ -885,7 +885,7 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch though only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
@@ -911,13 +911,13 @@ class TestWithPreloadedDatabase
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
         NCubeManager.deleteCubes(branch1, ['TestAge'].toArray())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
         NCubeManager.commitBranch(branch1, dtos)
 
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch1, cube, true)
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
         NCubeManager.commitBranch(branch1, dtos)
 
@@ -1085,7 +1085,7 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch though only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -1337,7 +1337,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
 
@@ -1361,7 +1361,7 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNotNull(NCubeManager.getCube(branch1, "TestAge"))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1374,7 +1374,7 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestAge"))
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1396,7 +1396,7 @@ class TestWithPreloadedDatabase
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
@@ -1406,7 +1406,7 @@ class TestWithPreloadedDatabase
         assertNotNull(NCubeManager.getCube(branch1, "TestAge"))
 
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1429,7 +1429,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
 
@@ -1515,12 +1515,12 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(2, NCubeManager.getBranchChangesFromHead(branch1).size())
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch2", "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
@@ -1550,9 +1550,9 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(2, NCubeManager.getBranchChangesFromHead(branch1).size())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         dtos[0] = dtos[0].name
         dtos[1] = dtos[1].name
         assertEquals(2, dtos.length)
@@ -1588,7 +1588,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch, "*").size())
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch, dtos).size())
@@ -1605,7 +1605,7 @@ class TestWithPreloadedDatabase
 
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch)
+        dtos = NCubeManager.getBranchChangesFromHead(branch)
 
         assertEquals(2, dtos.length)
         assertEquals(2, NCubeManager.commitBranch(branch, dtos).size())
@@ -1640,7 +1640,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch, "*").size())
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch)
         assertEquals(2, dtos.length)
 
         assertTrue(NCubeManager.renameCube(branch, "TestBranch2", "TestBranch"))
@@ -1651,7 +1651,7 @@ class TestWithPreloadedDatabase
 
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch)
+        dtos = NCubeManager.getBranchChangesFromHead(branch)
         assertEquals(0, dtos.length)
 
         //  techniacally don't have to do this since there aren't any changes,
@@ -1675,18 +1675,18 @@ class TestWithPreloadedDatabase
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(2, NCubeManager.getBranchChangesFromHead(branch1).size())
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch2", "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
@@ -1721,7 +1721,7 @@ class TestWithPreloadedDatabase
 
         testValuesOnBranch(head)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1747,12 +1747,12 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube2, true)
         testValuesOnBranch(branch1)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1825,7 +1825,7 @@ class TestWithPreloadedDatabase
         } catch (IllegalArgumentException e) { }
 
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         dtos[0] = dtos[0].name
         dtos[1] = dtos[1].name
         assertEquals(2, dtos.length)
@@ -1835,7 +1835,7 @@ class TestWithPreloadedDatabase
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, null).size())
 
-        assertEquals(0, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(0, NCubeManager.getBranchChangesFromHead(branch1).size())
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -1870,7 +1870,7 @@ class TestWithPreloadedDatabase
             fail()
         } catch (IllegalArgumentException e) { }
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(2, dtos.length)
 
         assertEquals(2, NCubeManager.commitBranch(branch1, dtos).size())
@@ -1951,7 +1951,7 @@ class TestWithPreloadedDatabase
         }
 
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         dtos[0] = dtos[0].name
         assertEquals(1, dtos.length)
 
@@ -1960,7 +1960,7 @@ class TestWithPreloadedDatabase
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(branch1, null).size())
 
-        assertEquals(0, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(0, NCubeManager.getBranchChangesFromHead(branch1).size())
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -2002,7 +2002,7 @@ class TestWithPreloadedDatabase
         } catch (IllegalArgumentException e) {
         }
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch2, dtos).size())
@@ -2147,7 +2147,7 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
         NCubeManager.commitBranch(branch2, dtos)
 
@@ -2157,7 +2157,7 @@ class TestWithPreloadedDatabase
 
 
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2204,7 +2204,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
         NCubeManager.commitBranch(branch2, dtos)
 
@@ -2212,7 +2212,7 @@ class TestWithPreloadedDatabase
         cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         NCubeManager.commitBranch(branch1, dtos)
@@ -2224,7 +2224,7 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch2, cube, true)
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
@@ -2242,7 +2242,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2282,7 +2282,7 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch2, cube, true)
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
@@ -2300,7 +2300,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2336,7 +2336,7 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.commitBranch(branch1, dtos).size())
@@ -2349,7 +2349,7 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
@@ -2365,7 +2365,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2424,7 +2424,7 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
@@ -2441,7 +2441,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2582,12 +2582,12 @@ class TestWithPreloadedDatabase
         cube2.setName('merge2')
         NCubeManager.updateCube(branch2, cube2, true)
 
-        Object[] branch1Changes = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] branch1Changes = NCubeManager.getBranchChangesFromHead(branch1)
         NCubeManager.commitBranch(branch1, branch1Changes)
 
 
         try {
-            Object[] branch2Changes = NCubeManager.getBranchChangesFromDatabase(branch2)
+            Object[] branch2Changes = NCubeManager.getBranchChangesFromHead(branch2)
     NCubeManager.commitBranch(branch2, branch2Changes)
             fail()
         } catch (BranchMergeException bme) {
@@ -2633,10 +2633,10 @@ class TestWithPreloadedDatabase
         cube1.removeCell([row:5, column:'E'])
         NCubeManager.updateCube(branch2, cube1, true)
 
-        Object[] changes = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] changes = NCubeManager.getBranchChangesFromHead(branch1)
         NCubeManager.commitBranch(branch1, changes)
 
-        changes = NCubeManager.getBranchChangesFromDatabase(branch2)
+        changes = NCubeManager.getBranchChangesFromHead(branch2)
         NCubeManager.commitBranch(branch2, changes)
 
         cube1 = NCubeManager.getCube(head, "merge1")
@@ -2672,14 +2672,14 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.size)
         NCubeManager.commitBranch(branch2, dtos as Object[])
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.size)
         String newSha1 = dtos[0].sha1;
 
@@ -2702,7 +2702,7 @@ class TestWithPreloadedDatabase
 
         NCubeManager.mergeAcceptMine(branch1, ["TestAge"] as Object[])
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         String branchHeadSha1 = dtos[0].headSha1
         assertEquals(1, dtos.size)
 
@@ -2723,14 +2723,14 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         Map<String, Object> results = NCubeManager.updateBranch(branch1)
@@ -2765,14 +2765,14 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
         NCubeManager.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         Map<String, Object> result = NCubeManager.updateBranch(branch1)
@@ -2797,7 +2797,7 @@ class TestWithPreloadedDatabase
 
         NCubeManager.mergeAcceptTheirs(branch1, ["TestAge"] as Object[], [sha1] as Object[])
 
-        assertEquals(0, NCubeManager.getBranchChangesFromDatabase(branch1).size())
+        assertEquals(0, NCubeManager.getBranchChangesFromHead(branch1).size())
 
     }
 
@@ -2817,7 +2817,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.getCellMap().size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         NCubeManager.commitBranch(branch2, dtos)
@@ -2828,7 +2828,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.getCellMap().size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
 
@@ -2855,7 +2855,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         NCubeManager.commitBranch(branch2, dtos)
@@ -2866,7 +2866,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -2915,7 +2915,7 @@ class TestWithPreloadedDatabase
         cube.setCell(18L, [Code: 15])
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         NCubeManager.commitBranch(branch2, dtos)
@@ -2937,7 +2937,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.getCellMap().size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         closure()
@@ -2965,7 +2965,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.getCellMap().size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch2)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch2)
         assertEquals(1, dtos.length)
 
         NCubeManager.commitBranch(branch2, dtos)
@@ -2976,7 +2976,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.getCellMap().size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         try
@@ -3013,7 +3013,7 @@ class TestWithPreloadedDatabase
         //  create the branch (TestAge, TestBranch)
         assertEquals(2, NCubeManager.copyBranch(branch1.asHead(), branch1))
 
-        Object[] dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        Object[] dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         //  test values on branch
@@ -3042,7 +3042,7 @@ class TestWithPreloadedDatabase
         // update the new edited cube.
         assertTrue(NCubeManager.updateCube(branch1, cube, true))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
 
@@ -3063,7 +3063,7 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10]))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(1, dtos.length)
 
         Object[] values = NCubeManager.commitBranch(branch1, dtos)
@@ -3079,7 +3079,7 @@ class TestWithPreloadedDatabase
         cube = NCubeManager.getCube(head, "TestBranch")
         assertEquals("ZZZ", cube.getCell([Code : 10]))
 
-        dtos = NCubeManager.getBranchChangesFromDatabase(branch1)
+        dtos = NCubeManager.getBranchChangesFromHead(branch1)
         assertEquals(0, dtos.length)
 
         assertEquals(1, values.length)
