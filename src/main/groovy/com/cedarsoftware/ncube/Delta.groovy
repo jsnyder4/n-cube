@@ -88,7 +88,7 @@ class Delta implements Comparable
 
     boolean equals(Object other)
     {
-        if (this == other)
+        if (this.is(other))
         {
             return true
         }

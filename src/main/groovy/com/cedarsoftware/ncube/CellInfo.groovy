@@ -59,6 +59,8 @@ class CellInfo
     private static final UNSUPPORTED_TYPE = 'bogusType'
     private static final Pattern DECIMAL_REGEX = Pattern.compile("[.]")
     private static final Pattern HEX_DIGIT = Pattern.compile("[0-9a-fA-F]+")
+    private static final Map NULL_CELL = [type:'string', value:null]
+
     private static final ThreadLocal<DecimalFormat> decimalIntFormat = new ThreadLocal<DecimalFormat>() {
         public DecimalFormat initialValue()
         {
@@ -311,24 +313,39 @@ class CellInfo
         return type
     }
 
+    /**
+     * Support the 'as' operator so that the following expression works:<br>
+     * CellInfo cellInfo = new CellInfo('hey')<br>
+     * Map cellInfoMap = cellInfo as Map<br>
+     * @param c Class to convert CellInfo to
+     * @return CellInfo converted into an instance of the passed in class (c), or
+     * throw an IllegalArgumentException is it cannot be coerced into the type.
+     */
     Object asType(Class c)
     {
         if (Map.class.isAssignableFrom(c))
         {
-            Map ret = [type: dataType]
-            if (isUrl)
+            if (value == null)
             {
-                ret.url = value
+                return NULL_CELL
             }
             else
             {
-                ret.value = value
+                Map ret = [type: dataType]
+                if (isUrl)
+                {
+                    ret.url = value
+                }
+                else
+                {
+                    ret.value = value
+                }
+                if (isCached)
+                {   // Only add 'cache' to Map if cache=true
+                    ret.cache = true
+                }
+                return ret
             }
-            if (isCached)
-            {   // Only add 'cache' to Map if cache=true
-                ret.cache = true
-            }
-            return ret
         }
         else if (CellInfo.isAssignableFrom(c))
         {
@@ -352,7 +369,7 @@ class CellInfo
     static String getType(Object cell)
     {
         if (cell == null) {
-            return null
+            return 'string'
         }
 
         if (cell instanceof String) {

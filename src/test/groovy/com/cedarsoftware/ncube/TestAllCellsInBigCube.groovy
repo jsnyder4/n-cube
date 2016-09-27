@@ -106,6 +106,7 @@ class TestAllCellsInBigCube
         }
     }
 
+    // Uncomment for memory size testing
     @Ignore
     void testLarge1D()
     {
@@ -138,6 +139,7 @@ class TestAllCellsInBigCube
         println("time to test large 1D = " + diff)
     }
 
+    // Uncomment for memory size testing
     @Ignore
     void testCubeToBlowupMemory()
     {

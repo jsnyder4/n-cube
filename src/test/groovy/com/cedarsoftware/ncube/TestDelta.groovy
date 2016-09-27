@@ -1139,6 +1139,92 @@ class TestDelta
     // TODO: Have jdereg break reference and merge to HEAD
     // TODO: Then, kpartlow should be able to updated from HEAD because it will have a super set of columns
 
+    @Test
+    void testDeltaClass()
+    {
+        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis')
+        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'delete axis')
+        assert !delta1.equals(delta2)
+
+        Map map = [:]
+        map[(delta1)] = 'd1'
+        map[(delta2)] = 'd2'
+
+        assert map[(delta1)] == 'd1'
+        assert map[(delta2)] == 'd2'
+
+        assert delta1.equals(delta1)
+    }
+
+    @Test
+    void testDeltaLocationOrder()
+    {
+        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'updated default')
+        Delta delta2 = new Delta(Delta.Location.NCUBE_META, Delta.Type.ADD, 'added meta-property')
+        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis')
+        Delta delta4 = new Delta(Delta.Location.AXIS_META, Delta.Type.UPDATE, 'updated axis meta-prop')
+        Delta delta5 = new Delta(Delta.Location.COLUMN, Delta.Type.UPDATE, 'updated column value')
+        Delta delta6 = new Delta(Delta.Location.COLUMN_META, Delta.Type.DELETE, 'deleted column meta-prop')
+        Delta delta7 = new Delta(Delta.Location.CELL, Delta.Type.ADD, 'added cell')
+        Delta delta8 = new Delta(Delta.Location.CELL_META, Delta.Type.DELETE, 'added cell meta-prop')
+
+        Set<Delta> set = [delta8, delta7, delta6, delta5, delta4, delta3, delta2, delta1] as TreeSet
+        List<Delta> items = set.toList()
+        assert items[0].location == Delta.Location.NCUBE
+        assert items[1].location == Delta.Location.NCUBE_META
+        assert items[2].location == Delta.Location.AXIS
+        assert items[3].location == Delta.Location.AXIS_META
+        assert items[4].location == Delta.Location.COLUMN
+        assert items[5].location == Delta.Location.COLUMN_META
+        assert items[6].location == Delta.Location.CELL
+        assert items[7].location == Delta.Location.CELL_META
+    }
+
+    @Test
+    void testDeltaMessageOrder()
+    {
+        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'alpha')
+        Delta delta2 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'bravo')
+        Delta delta3 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'charlie')
+        Set<Delta> set = [delta3, delta2, delta1] as TreeSet
+        List<Delta> items = set.toList()
+        assert items[0].description == 'alpha'
+        assert items[1].description == 'bravo'
+        assert items[2].description == 'charlie'
+    }
+
+    @Test
+    void testDeltaTypeOrder()
+    {
+        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'z')
+        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'm')
+        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.UPDATE, 'a')
+        Set<Delta> set = [delta3, delta1, delta2] as TreeSet
+        List<Delta> items = set.toList()
+        assert items[0] == delta1
+        assert items[1] == delta2
+        assert items[2] == delta3
+    }
+
+    @Test
+    void testEmptyDeltaHashCode()
+    {
+        Delta empty = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, null)
+        assert empty.hashCode() == 0
+        assert empty.compareTo(empty) == 0
+
+        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, "hey")
+        assert empty.compareTo(delta) == -1
+    }
+
+    @Test
+    void testDeltaEqualsNull()
+    {
+        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, 'foo')
+        assert !delta.equals(null)
+        assert delta.compareTo(null) != 0
+    }
+
     static void setupLibrary()
     {
         NCube<String> states4 = (NCube<String>) NCubeBuilder.get4StatesNotSorted()

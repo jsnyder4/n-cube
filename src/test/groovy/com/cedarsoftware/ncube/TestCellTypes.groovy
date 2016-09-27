@@ -65,12 +65,12 @@ class TestCellTypes
     @Test
     void testGetType()
     {
-        assertEquals 'boolean', CellInfo.getType(Boolean.TRUE, 'cells')
-        assertEquals 'int', CellInfo.getType(Integer.MAX_VALUE, 'cells')
-        assertEquals 'long', CellInfo.getType(Long.MAX_VALUE, 'cells')
-        assertEquals 'double', CellInfo.getType(Double.MAX_VALUE, 'cells')
-        assertEquals 'float', CellInfo.getType(Float.MAX_VALUE, 'cells')
-        assertNull 'float', CellInfo.getType(null, 'cells')
+        assert 'boolean' == CellInfo.getType(Boolean.TRUE, 'cells')
+        assert 'int' == CellInfo.getType(Integer.MAX_VALUE, 'cells')
+        assert 'long' == CellInfo.getType(Long.MAX_VALUE, 'cells')
+        assert 'double' == CellInfo.getType(Double.MAX_VALUE, 'cells')
+        assert 'float' == CellInfo.getType(Float.MAX_VALUE, 'cells')
+        assert 'string' == CellInfo.getType(null, 'cells')
     }
 
     @Test

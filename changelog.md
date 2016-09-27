@@ -1,4 +1,27 @@
 ### Revision History
+* 3.4.97
+ * `CdnClassLoader` supports Grapes (dynamic class loader).  White-list of accepted domains must be specified (via `CdnClassLoader` constructor or environment variable `NCUBE_ACCEPTED_DOMAINS`).
+ * When a cell is set to `null` (meaning it exists with 'key' for it, but the associated value is null), the JSON version of that looks like `{"type":"string", "value": null}` as opposed to an empty cell which is `{"type":null, "value":null}`
+ * Advice that matches an n-cube that has no method specified, will match the run() method, allowing support for Advice around expressions.
+* 3.4.96
+ * `CdnClassLoader` without Grapes support, but with resource cache (relative to full qualified URL map).
+ * Uses Groovy 2.4.7
+* 3.4.95
+ * `CdnClassLoader` supports dynamic class loading (Groovy Grapes).
+ * Uses Groovy 2.4.7
+* 3.4.94 
+ * `CdnClassLoader` same as in 3.4.93, plus `@CompileStatic` added, and `findClass()` always throws `ClassNotFoundException(name)`.
+ * Gauva imports removed from `GroovyExpression`'s 'wrapper'
+ * Uses Groovy 2.4.3
+* 3.4.93 
+ * `CdnClassLoader` restored to version from back in Feb 2016.  This fixes performance issues, but prevents code from using Groovy Grapes (`@Grab`).
+* 3.4.92
+ * `CdnClassLoader` looks first in local cache / parent class loader, and if not found, then does a super.findClass().  It was spamming the network for local classes when a URL was in the classpath.
+* 3.4.91
+ * NCubeManager.updateBranch(appId, Object[] cubeNames, String sourceBranch) added.  This API allows a subset (cubeNames) to be updated from HEAD (or source branch - not yet supported, but coming soon)
+ * NCubeManager.updateBranch(appId) is also available, in which case it acts as before, all cubes that can be updated, will be.
+ * NCubeManager.updateBranch(...) returns adds, deletes, updates, merges, and conflicts.  Before adds, updates, and deletes were all considered 'updates'.
+ * `CdnClassLoader` only looks for classes remotely, if and only if, the system property (or environment variable) NCUBE_GRAPES_SUPPORT=true.   
 * 3.4.90
  * NCubeManager.getHeadChangesForBranch() added to allow fetching the 'update' changes from HEAD (only fetches the change list, does not auto-merge them).
 * 3.4.89
@@ -492,7 +515,7 @@
  * Axis.promoteValue() has been made public.
 * 2.3.0
  * Groovy expression, method, and template cells can be loaded from 'url' instead of having content directly in 'value' field.  In addition, the 'cacheable' attribute can be added.  When 'true', the template, expression, or method, is loaded and compiled once, and then stored in memory. If 'cacheable' attribute is 'false', then the content is retrieved on each access.
- * Within the url, other n-cubes can be referenced.  For example, @settings[:]/html/index.html.  In this example, the current input coordinate that directed access to the cell containing the URL reference, is passed as input to the referenced n-cube(s).  This allows a 'settings-type' n-cube to be used to keep track of actual domains, ports, contexts, etc., leaving the URLs in all the other cubes not needed to be changed when the domain, port, etc. is changed.
+ * Within the url, other n-cubes can be referenced.  For example, `@settings[:]/html/index.html`.  In this example, the current input coordinate that directed access to the cell containing the URL reference, is passed as input to the referenced n-cube(s).  This allows a 'settings-type' n-cube to be used to keep track of actual domains, ports, contexts, etc., leaving the URLs in all the other cubes not needed to be changed when the domain, port, etc. is changed.
 * 2.2.0
  * Axis update column value(s) support added
  * NCubeInfoDto ncube id changed from long to String

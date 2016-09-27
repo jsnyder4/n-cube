@@ -1038,7 +1038,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, [] as Object[])
+            NCubeManager.restoreCubes(defaultSnapshotApp)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -1123,7 +1123,7 @@ class TestNCubeManager
         NCube cube = createCube()
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, [cube.name] as Object[])
+            NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
             fail('should not make it here')
         }
         catch (IllegalArgumentException e)
@@ -1154,7 +1154,7 @@ class TestNCubeManager
         records = NCubeManager.search(defaultSnapshotApp, '', null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(1, records.length)
 
-        NCubeManager.restoreCubes(defaultSnapshotApp, [cube.name] as Object[])
+        NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
         records = NCubeManager.search(defaultSnapshotApp, 'test*', null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(1, records.length)
 
@@ -1178,7 +1178,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, ['foo'] as Object[])
+            NCubeManager.restoreCubes(defaultSnapshotApp, 'foo')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -1234,7 +1234,7 @@ class TestNCubeManager
         assertEquals(1, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
         assertEquals(4, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
 
-        NCubeManager.restoreCubes(defaultSnapshotApp, [cube.name] as Object[])
+        NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
         NCube restored = NCubeManager.loadCube(defaultSnapshotApp, cube.name)
         assert cube.sha1() == restored.sha1()
 
@@ -1301,7 +1301,7 @@ class TestNCubeManager
         cube.addAxis(oddAxis)
 
         NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        NCubeManager.commitBranch(defaultSnapshotApp, his, USER_ID)
+        NCubeManager.commitBranch(defaultSnapshotApp, his)
         NCubeManager.releaseVersion(defaultSnapshotApp, '2.0.0')
         List<NCubeInfoDto> fullHistory = NCubeManager.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
         assert fullHistory.size() == 1
@@ -1505,6 +1505,10 @@ class TestNCubeManager
         cubes = NCubeManager.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 1
 
+        List dtos2 = NCubeManager.getHeadChangesForBranch(johnAppId)
+        assert dtos2.size() == 1
+        assert dtos2[0].name == 'TestCube'
+
         // Update john branch (no changes are shown - it auto-merged)
         Map map = NCubeManager.updateBranch(johnAppId)
         assert map.updates.size() == 0
@@ -1543,6 +1547,21 @@ class TestNCubeManager
         NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
         NCube copiedCube = NCubeManager.loadCube(copyAppId, cube.name)
         assertNotNull(copiedCube);
+    }
+
+    @Test
+    void testCopyBranchWhenReleaseVersionAlreadyExists()
+    {
+        NCubeManager.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, null, null, null).toArray())
+        NCubeManager.releaseCubes(defaultSnapshotApp, '2.0.0')
+        ApplicationID copyAppId = defaultSnapshotApp.asBranch('copy')
+        try
+        {
+            NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
+            fail()
+        } catch(IllegalArgumentException e) {
+            assertTrue(e.message.contains('exists'))
+        }
     }
 
     @Test
@@ -1670,7 +1689,7 @@ class TestNCubeManager
 
         try
         {
-            NCubeManager.restoreCubes(defaultReleaseApp, [cube.name] as Object[])
+            NCubeManager.restoreCubes(defaultReleaseApp, cube.name)
             fail()
         }
         catch (IllegalArgumentException e)
