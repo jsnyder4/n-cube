@@ -1173,9 +1173,16 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
-                insert.setBoolean(14, false)
+                insert.setBoolean(14, targetAppId.isHead() ? false : (boolean)row.getBoolean('changed'))
                 insert.setString(15, sha1)
-                insert.setString(16, targetAppId.branch == 'HEAD' ? null : sha1)    // HEAD branch's HEAD_SHA1 column should always contain null
+
+                String headSha1 = null
+                if (!targetAppId.isHead())
+                {
+                    headSha1 = row.getString(srcAppId.isHead() ? 'sha1' : 'head_sha1')
+                }
+                insert.setString(16, headSha1)
+
                 insert.addBatch()
                 count++
                 if (count % EXECUTE_BATCH_CONSTANT == 0)

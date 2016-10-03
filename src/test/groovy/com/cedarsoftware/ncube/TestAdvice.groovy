@@ -717,8 +717,7 @@ class TestAdvice
         ncube.clearAdvices()
     }
 
-    // Remove @ignore once the NCubeManager.addAdviceToMatchedCube() is converted to the correct one.
-    @Ignore
+    @Test
     @TypeChecked(TypeCheckingMode.SKIP)
     void testMultiAdviceLateLoadWithMethodThatThrowsException()
     {

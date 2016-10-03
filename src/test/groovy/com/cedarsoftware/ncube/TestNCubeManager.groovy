@@ -474,7 +474,7 @@ class TestNCubeManager
         }
         catch (IllegalArgumentException e)
         {
-            assertEquals(e.message, 'Cannot get branch changes from HEAD')
+            assertEquals(e.message, "Branch cannot be 'HEAD'")
         }
     }
 
@@ -1508,6 +1508,7 @@ class TestNCubeManager
         List dtos2 = NCubeManager.getHeadChangesForBranch(johnAppId)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestCube'
+        assert dtos2[0].changeType == ChangeType.FASTFORWARD.name()
 
         // Update john branch (no changes are shown - it auto-merged)
         Map map = NCubeManager.updateBranch(johnAppId)

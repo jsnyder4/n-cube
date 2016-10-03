@@ -28,7 +28,8 @@ enum ChangeType
     RESTORED("R"),
     UPDATED("U"),
     DELETED("D"),
-    CONFLICT("X")
+    CONFLICT("X"),
+    FASTFORWARD("F")
 
     private final String code
 

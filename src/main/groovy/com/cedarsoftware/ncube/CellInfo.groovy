@@ -54,24 +54,23 @@ class CellInfo
     public String dataType
     public boolean isUrl
     public boolean isCached
-    static final SafeSimpleDateFormat dateFormat = new SafeSimpleDateFormat("yyyy-MM-dd")
-    static final SafeSimpleDateFormat dateTimeFormat = new SafeSimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    static final SafeSimpleDateFormat dateFormat = new SafeSimpleDateFormat('yyyy-MM-dd')
+    static final SafeSimpleDateFormat dateTimeFormat = new SafeSimpleDateFormat('yyyy-MM-dd HH:mm:ss')
     private static final UNSUPPORTED_TYPE = 'bogusType'
-    private static final Pattern DECIMAL_REGEX = Pattern.compile("[.]")
-    private static final Pattern HEX_DIGIT = Pattern.compile("[0-9a-fA-F]+")
-    private static final Map NULL_CELL = [type:'string', value:null]
+    private static final Pattern DECIMAL_REGEX = ~/[.]/
+    private static final Pattern HEX_DIGIT = ~/[0-9a-fA-F]+/
 
     private static final ThreadLocal<DecimalFormat> decimalIntFormat = new ThreadLocal<DecimalFormat>() {
         public DecimalFormat initialValue()
         {
-            return new DecimalFormat("#,##0")
+            return new DecimalFormat('#,##0')
         }
     }
 
     private static final ThreadLocal<DecimalFormat> decimalFormat = new ThreadLocal<DecimalFormat>() {
         public DecimalFormat initialValue()
         {
-            return new DecimalFormat("#,##0.0##############")
+            return new DecimalFormat('#,##0.0##############')
         }
     }
 
@@ -103,11 +102,7 @@ class CellInfo
         value = null
         dataType = null
 
-        if (cell == null)
-        {
-            return
-        }
-        else if (cell instanceof String)
+        if (cell == null || cell instanceof String)
         {
             value = (String) cell
             dataType = 'string'
@@ -257,7 +252,7 @@ class CellInfo
                     {
                         builder.append('"')
                     }
-                    builder.append(", ")
+                    builder.append(', ')
                     if (needsQuoted)
                     {
                         builder.append('"')
@@ -267,7 +262,7 @@ class CellInfo
                     {
                         builder.append('"')
                     }
-                    builder.append("]")
+                    builder.append(']')
                 }
                 else
                 {
@@ -306,7 +301,7 @@ class CellInfo
     static String getType(Object cell, String section)
     {
         String type = getType(cell)
-        if (UNSUPPORTED_TYPE.equals(type))
+        if (UNSUPPORTED_TYPE == type)
         {
             throw new IllegalArgumentException(MessageFormat.format('Unsupported type {0} found in {1}', cell.getClass().getName(), section))
         }
@@ -319,33 +314,26 @@ class CellInfo
      * Map cellInfoMap = cellInfo as Map<br>
      * @param c Class to convert CellInfo to
      * @return CellInfo converted into an instance of the passed in class (c), or
-     * throw an IllegalArgumentException is it cannot be coerced into the type.
+     * throw an IllegalArgumentException if it cannot be coerced into the type.
      */
     Object asType(Class c)
     {
         if (Map.class.isAssignableFrom(c))
         {
-            if (value == null)
+            Map ret = [type: dataType]
+            if (isUrl)
             {
-                return NULL_CELL
+                ret.url = value
             }
             else
             {
-                Map ret = [type: dataType]
-                if (isUrl)
-                {
-                    ret.url = value
-                }
-                else
-                {
-                    ret.value = value
-                }
-                if (isCached)
-                {   // Only add 'cache' to Map if cache=true
-                    ret.cache = true
-                }
-                return ret
+                ret.value = value
             }
+            if (isCached)
+            {   // Only add 'cache' to Map if cache=true
+                ret.cache = true
+            }
+            return ret
         }
         else if (CellInfo.isAssignableFrom(c))
         {
@@ -482,15 +470,15 @@ class CellInfo
      */
     void collapseToUiSupportedTypes()
     {
-        if ('byte'.equals(dataType) || 'short'.equals(dataType) || 'int'.equals(dataType))
+        if ('byte' == dataType || 'short' == dataType || 'int' == dataType)
         {
             dataType = 'long'
         }
-        else if ('float'.equals(dataType))
+        else if ('float' == dataType)
         {
             dataType = 'double'
         }
-        else if ('bigint'.equals(dataType))
+        else if ('bigint' == dataType)
         {
             dataType = 'bigdec'
         }
@@ -523,19 +511,19 @@ class CellInfo
     {
         if (url != null)
         {
-            if ('exp'.equals(type))
+            if ('exp' == type)
             {
                 return new GroovyExpression(null, url, cache)
             }
-            else if ('method'.equals(type))
+            else if ('method' == type)
             {
                 return new GroovyMethod(null, url, cache)
             }
-            else if ('template'.equals(type))
+            else if ('template' == type)
             {
                 return new GroovyTemplate(null, url, cache)
             }
-            else if ('string'.equals(type))
+            else if ('string' == type)
             {
                 return new StringUrlCmd(url, cache)
             }
@@ -554,17 +542,17 @@ class CellInfo
 
     protected static Object parseJsonValue(String type, Object val, boolean cache)
     {
-        if ('null'.equals(val) || val == null)
+        if ('null' == val || val == null)
         {
             return null
         }
         else if (val instanceof Double)
         {
-            if ('bigdec'.equals(type))
+            if ('bigdec' == type)
             {
                 return new BigDecimal(val as double)
             }
-            else if ('float'.equals(type))
+            else if ('float' == type)
             {
                 return (val as Double).floatValue()
             }
@@ -572,23 +560,23 @@ class CellInfo
         }
         else if (val instanceof Long)
         {
-            if ('int'.equals(type))
+            if ('int' == type)
             {
                 return ((Long)val).intValue()
             }
-            else if ('bigint'.equals(type))
+            else if ('bigint' == type)
             {
                 return new BigInteger(val.toString())
             }
-            else if ('byte'.equals(type))
+            else if ('byte' == type)
             {
                 return (val as Long).byteValue()
             }
-            else if ('short'.equals(type))
+            else if ('short' == type)
             {
                 return ((val as Long).shortValue())
             }
-            else if ('bigdec'.equals(type))
+            else if ('bigdec' == type)
             {
                 return new BigDecimal(val as long)
             }
@@ -605,7 +593,7 @@ class CellInfo
             {
                 return val
             }
-            else if ('boolean'.equals(type))
+            else if ('boolean' == type)
             {
                 String bool = (String)val
                 if ('true'.equalsIgnoreCase(bool) || 'false'.equalsIgnoreCase(bool))
@@ -614,39 +602,39 @@ class CellInfo
                 }
                 throw new IllegalArgumentException("Boolean must be 'true' or 'false'.  Case does not matter.")
             }
-            else if ('byte'.equals(type))
+            else if ('byte' == type)
             {
                 return Converter.convert(val, byte.class)
             }
-            else if ('short'.equals(type))
+            else if ('short' == type)
             {
                 return Converter.convert(val, short.class)
             }
-            else if ('int'.equals(type))
+            else if ('int' == type)
             {
                 return Converter.convert(val, int.class)
             }
-            else if ('long'.equals(type))
+            else if ('long' == type)
             {
                 return Converter.convert(val, long.class)
             }
-            else if ('double'.equals(type))
+            else if ('double' == type)
             {
                 return Converter.convert(val, double.class)
             }
-            else if ('float'.equals(type))
+            else if ('float' == type)
             {
                 return Converter.convert(val, float.class)
             }
-            else if ('exp'.equals(type))
+            else if ('exp' == type)
             {
                 return new GroovyExpression((String)val, null, cache)
             }
-            else if ('method'.equals(type))
+            else if ('method' == type)
             {
                 return new GroovyMethod((String) val, null, cache)
             }
-            else if ('date'.equals(type) || "datetime".equals(type))
+            else if ('date' == type || 'datetime' == type)
             {
                 try
                 {
@@ -658,60 +646,60 @@ class CellInfo
                     throw new IllegalArgumentException("Could not parse '" + type + "': " + val)
                 }
             }
-            else if ('template'.equals(type))
+            else if ('template' == type)
             {
                 return new GroovyTemplate((String)val, null, cache)
             }
-            else if ('string'.equals(type))
+            else if ('string' == type)
             {
                 return val
             }
-            else if ('binary'.equals(type))
+            else if ('binary' == type)
             {   // convert hex string "10AF3F" as byte[]
                 String hex = (String)val
                 if (hex.length() % 2 != 0)
                 {
-                    throw new IllegalArgumentException("Binary (hex) values must have an even number of digits.")
+                    throw new IllegalArgumentException('Binary (hex) values must have an even number of digits.')
                 }
                 if (!HEX_DIGIT.matcher(hex).matches())
                 {
-                    throw new IllegalArgumentException("Binary (hex) values must contain only the numbers 0 thru 9 and letters A thru F.")
+                    throw new IllegalArgumentException('Binary (hex) values must contain only the numbers 0 thru 9 and letters A thru F.')
                 }
                 return StringUtilities.decode((String) val)
             }
-            else if ('bigint'.equals(type))
+            else if ('bigint' == type)
             {
                 return new BigInteger((String) val)
             }
-            else if ('bigdec'.equals(type))
+            else if ('bigdec' == type)
             {
                 return new BigDecimal((String)val)
             }
-            else if ('latlon'.equals(type))
+            else if ('latlon' == type)
             {
                 Matcher m = Regexes.valid2Doubles.matcher((String) val)
                 if (!m.matches())
                 {
-                    throw new IllegalArgumentException(String.format("Invalid Lat/Long value (%s)", val))
+                    throw new IllegalArgumentException(String.format('Invalid Lat/Long value (%s)', val))
                 }
 
                 return new LatLon((double)Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
             }
-            else if ('point2d'.equals(type))
+            else if ('point2d' == type)
             {
                 Matcher m = Regexes.valid2Doubles.matcher((String) val)
                 if (!m.matches())
                 {
-                    throw new IllegalArgumentException(String.format("Invalid Point2D value (%s)", val))
+                    throw new IllegalArgumentException(String.format('Invalid Point2D value (%s)', val))
                 }
                 return new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
             }
-            else if ('point3d'.equals(type))
+            else if ('point3d' == type)
             {
                 Matcher m = Regexes.valid3Doubles.matcher((String) val)
                 if (!m.matches())
                 {
-                    throw new IllegalArgumentException(String.format("Invalid Point3D value (%s)", val))
+                    throw new IllegalArgumentException(String.format('Invalid Point3D value (%s)', val))
                 }
                 return new Point3D((double) Converter.convert(m.group(1), double.class),
                         (double) Converter.convert(m.group(2), double.class),
@@ -725,7 +713,7 @@ class CellInfo
         else if (val.getClass().isArray())
         {   // Legacy support - remove once we drop support for array type (can be done using GroovyExpression).
             StringBuilder exp = new StringBuilder()
-            exp.append("[")
+            exp.append('[')
             Object[] values = val as Object[]
             int i=0
             for (Object value : values)
@@ -735,10 +723,10 @@ class CellInfo
                 exp.append(javaToGroovySource(o))
                 if (i < values.length)
                 {
-                    exp.append(",")
+                    exp.append(',')
                 }
             }
-            exp.append("] as Object[]")
+            exp.append('] as Object[]')
             return new GroovyExpression(exp.toString(), null, cache)
         }
         else
@@ -770,7 +758,7 @@ class CellInfo
         }
         else if (o instanceof Boolean)
         {
-            builder.append((o as Boolean) ? "true" : "false")
+            builder.append((o as Boolean) ? 'true' : 'false')
         }
         else if (o instanceof Double)
         {
@@ -800,7 +788,7 @@ class CellInfo
         else if (o instanceof Byte)
         {
             builder.append(o)
-            builder.append(" as Byte")
+            builder.append(' as Byte')
         }
         else if (o instanceof Float)
         {
@@ -810,19 +798,25 @@ class CellInfo
         else if (o instanceof Short)
         {
             builder.append(o)
-            builder.append(" as Short")
+            builder.append(' as Short')
         }
         else
         {
-            throw new IllegalArgumentException("Unknown Groovy Type : " + o.getClass())
+            throw new IllegalArgumentException('Unknown Groovy Type : ' + o.getClass().getName())
         }
         return builder.toString()
     }
 
+    /**
+     * Convert internal value to 'pretty' value for screen.  Doubles, BigDecimal, etc. become strings,
+     * Date converted to string, all else are .toString() on the underlying value.
+     * @param val Comparable to be shown to user
+     * @return String version of passed in value
+     */
     static String formatForDisplay(Comparable val)
     {
         if (val instanceof Double || val instanceof Float)
-        {
+        {   // Adds commas to make it easy to read
             return decimalFormat.get().format(val)
         }
         else if (val instanceof BigDecimal)
@@ -832,7 +826,7 @@ class CellInfo
             if (s.contains("."))
             {
                 String[] pieces = DECIMAL_REGEX.split(s)
-                return decimalIntFormat.get().format(new BigInteger(pieces[0])) + "." + pieces[1]
+                return decimalIntFormat.get().format(new BigInteger(pieces[0])) + '.' + pieces[1]
             }
             else
             {
@@ -849,7 +843,7 @@ class CellInfo
         }
         else if (val == null)
         {
-            return "Default"
+            return 'Default'
         }
         else
         {
@@ -857,6 +851,10 @@ class CellInfo
         }
     }
 
+    /**
+     * Get string value of passed in value in an editor-friendly string.
+     * For example, a double would be '1234.123' as opposed to '1,234.123' (no comma).
+     */
     static String formatForEditing(Object val)
     {
         if (val instanceof Date)
@@ -870,7 +868,7 @@ class CellInfo
         else if (val instanceof Range)
         {
             Range range = val as Range
-            return formatForEditing(range.low) + ", " + formatForEditing(range.high)
+            return formatForEditing(range.low) + ', ' + formatForEditing(range.high)
         }
         return val.toString()
     }
@@ -897,7 +895,7 @@ class CellInfo
         {
             String s = (String) o
 
-            if ("true".equalsIgnoreCase(s))
+            if ('true'.equalsIgnoreCase(s))
             {
                 return true
             }
@@ -927,11 +925,11 @@ class CellInfo
         {
             return false
         }
-        if (value != null ? !value.equals(cellInfo.value) : cellInfo.value != null)
+        if (value != null ? value != cellInfo.value : cellInfo.value != null)
         {
             return false
         }
-        return !(dataType != null ? !dataType.equals(cellInfo.dataType) : cellInfo.dataType != null)
+        return !(dataType != null ? dataType != cellInfo.dataType : cellInfo.dataType != null)
     }
 
     int hashCode()

@@ -29,6 +29,6 @@ class TestEnums
     @Test
     void testChangeType()
     {
-        assert ChangeType.values().length == 5
+        assert ChangeType.values().length == 6
     }
 }
