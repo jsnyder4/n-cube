@@ -76,6 +76,7 @@ class NCubeManager
     public static final String BRANCH_CONFLICTS = 'conflicts'
     public static final String BRANCH_FASTFORWARDS = 'fastforwards'
     public static final String BRANCH_REJECTS = 'rejects'
+    public static final String BRANCH_RESTORES = 'restores'
 
     public static final String SYS_BOOTSTRAP = 'sys.bootstrap'
     public static final String SYS_PROTOTYPE = 'sys.prototype'
@@ -851,48 +852,97 @@ class NCubeManager
         {
             head.branch = appId.branch  // using HEAD's DTO as return value, therefore setting the branch to the passed in AppId's branch
             NCubeInfoDto info = branchRecordMap[head.name]
+            long headRev = (long) Converter.convert(head.revision, long.class)
 
             if (info == null)
             {   // HEAD has cube that branch does not have
-                head.changeType = ChangeType.CREATED
+                head.changeType = headRev < 0 ? ChangeType.DELETED.code : ChangeType.CREATED.code
                 cubeDiffs.add(head)
                 continue
             }
 
             long infoRev = (long) Converter.convert(info.revision, long.class)
-            long headRev = (long) Converter.convert(head.revision, long.class)
             boolean activeStatusMatches = (infoRev < 0) == (headRev < 0)
+            boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1)
+            boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.sha1, head.sha1)
 
-            // Did branch change?
+            // TODO - this logic can be broken out into an ncube
+            // Did branch cube change?
             if (!info.isChanged())
             {   // No change on branch
-                if (!activeStatusMatches)
+                if (activeStatusMatches)
+                {
+                    if (!branchHeadSha1MatchesHeadSha1)
+                    {   // HEAD cube changed, branch cube did not
+                        head.changeType = ChangeType.UPDATED.code
+                        cubeDiffs.add(head)
+                    }
+                }
+                else
                 {   // 1. The active/deleted statuses don't match, or
                     // 2. HEAD has different SHA1 but branch cube did not change, safe to update branch (fast forward)
                     // In both cases, the cube was marked NOT changed in the branch, so safe to update.
-                    head.changeType = headRev < 0 ? ChangeType.DELETED : ChangeType.RESTORED
+                    head.changeType = headRev < 0 ? ChangeType.DELETED.code : ChangeType.RESTORED.code
                     cubeDiffs.add(head)
                 }
             }
-            else if (StringUtilities.equalsIgnoreCase(info.sha1, head.sha1))
-            {   // If branch is 'changed' but has same SHA-1 as head, then see if branch needs Fast-Forward
-                if (!StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
-                {   // Fast-Forward branch
-                    head.changeType = ChangeType.FASTFORWARD
+            else if (branchSha1MatchesHeadSha1)
+            {   // If branch is 'changed' but has same SHA-1 as head (same change in branch as HEAD)
+                if (branchHeadSha1MatchesHeadSha1)
+                {
+                    // no show
+                }
+                else
+                {
+                    if (activeStatusMatches)
+                    {
+                        head.changeType = ChangeType.FASTFORWARD.code
+                    }
+                    else
+                    {
+                        head.changeType = ChangeType.CONFLICT.code
+                    }
                     cubeDiffs.add(head)
                 }
             }
             else
             {
-                if (!StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
+                if (branchHeadSha1MatchesHeadSha1)
+                {
+                    if (!activeStatusMatches)
+                    {
+                        head.changeType = ChangeType.CONFLICT.code
+                        cubeDiffs.add(head)
+                    }
+                }
+                else
                 {   // Cube is different than HEAD, AND it is not based on same HEAD cube, but it could be merge-able.
                     String message = 'Cube was changed in both branch and HEAD'
                     NCube cube = mergeCubesIfPossible(conflicts, message, info, head, true)
-                    head.changeType = cube == null ? ChangeType.CONFLICT : ChangeType.UPDATED
+                    if (cube == null)
+                    {
+                        head.changeType = ChangeType.CONFLICT.code
+                    }
+                    else
+                    {
+                        if (activeStatusMatches)
+                        {
+                            if (StringUtilities.equalsIgnoreCase(cube.sha1(), info.sha1))
+                            {   // NOTE: could be different category
+                                head.changeType = ChangeType.FASTFORWARD.code
+                            }
+                            else
+                            {
+                                head.changeType = ChangeType.UPDATED.code
+                            }
+                        }
+                        else
+                        {
+                            head.changeType = ChangeType.CONFLICT.code
+                        }
+                    }
                     cubeDiffs.add(head)
                 }
-                // else not needed because it is the standard case where they have edited info cube and
-                // info cube still has info.headSha1 matching head.sha1
             }
         }
 
@@ -905,7 +955,7 @@ class NCubeManager
      * thrown indicating the cubes that are in conflict.
      * @param cubesToObject Object[] NCubeInfoDto to be updated or null to indicate update all.
      */
-    protected static Map<String, Object> updateBranchFromHead(ApplicationID appId, Object[] cubesToUpdate)
+    protected static Map<String, Object> updateBranchFromHead(ApplicationID appId, Object[] inputCubes)
     {
         validateAppId(appId)
         appId.validateBranchIsNotHead()
@@ -913,151 +963,117 @@ class NCubeManager
         assertNotLockBlocked(appId)
         assertPermissions(appId, null, ACTION.UPDATE)
 
-        Map<String, NCubeInfoDto> headRecordMap = new CaseInsensitiveMap<>()
-        List<NCubeInfoDto> headRecords = search(appId.asHead(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
-        for (NCubeInfoDto info : headRecords)
-        {
-            headRecordMap[info.name] = info
-        }
-
-        Map<String, NCubeInfoDto> refreshRecordMap = new CaseInsensitiveMap<>()
-        List<NCubeInfoDto> refreshRecords = search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
-        for (NCubeInfoDto info : refreshRecords)
-        {
-            refreshRecordMap[info.name] = info
-        }
-
         List<NCubeInfoDto> adds = []
         List<NCubeInfoDto> deletes = []
         List<NCubeInfoDto> updates = []
         List<NCubeInfoDto> merges = []
+        List<NCubeInfoDto> restores = []
         List<NCubeInfoDto> fastforwards = []
         List<NCubeInfoDto> rejects = []
-        List<NCubeInfoDto> finalAdds = []
-        List<NCubeInfoDto> finalDeletes = []
-        List<NCubeInfoDto> finalUpdates = []
+        List<NCubeInfoDto> finalUpdates
 
-        Map<String, Map> conflicts = new CaseInsensitiveMap<>()
         long txId = UniqueIdGenerator.getUniqueId()
-        Map<String, NCubeInfoDto> cubeRecordMap = new CaseInsensitiveMap<>()
+        Map<String, NCubeInfoDto> newDtos = new CaseInsensitiveMap<>()
+        List<NCubeInfoDto> newDtoList = getHeadChangesForBranch(appId)
+        List<NCubeInfoDto> cubesToUpdate = []
 
-        if (cubesToUpdate == null)
+        if (inputCubes == null)
         {
-            cubeRecordMap = refreshRecordMap
+            cubesToUpdate = newDtoList
         }
         else
         {
-            for (Object dto : cubesToUpdate)
-            {
-                NCubeInfoDto updateCube = (NCubeInfoDto) dto
-                cubeRecordMap[updateCube.name] = updateCube
-
-                // Determine rejects - cubes modified externally
-                NCubeInfoDto refreshCube = refreshRecordMap[updateCube.name]
-                if (refreshCube == null || refreshCube.sha1 != updateCube.sha1 || refreshCube.headSha1 != updateCube.headSha1 || refreshCube.revision != updateCube.revision || refreshCube.changed != updateCube.changed)
+            newDtoList.each { newDtos[it.name] = it }
+            (inputCubes.toList() as List<NCubeInfoDto>).each { NCubeInfoDto oldDto ->
+                // make reject list by comparing with refresh records
+                NCubeInfoDto newDto = newDtos[oldDto.name]
+                if (newDto == null || newDto.id != oldDto.id)
+                {   // if in oldDtos but no in newDtos OR if something happened while we were away
+                    rejects.add(oldDto)
+                }
+                else
                 {
-                    rejects.add(refreshCube)
-                    cubeRecordMap.remove(updateCube.name)
+                    cubesToUpdate.add(oldDto)
                 }
             }
         }
 
-        for (NCubeInfoDto headCube : headRecords)
+        for (NCubeInfoDto updateCube : cubesToUpdate)
         {
-            NCubeInfoDto updateCube = cubeRecordMap[headCube.name]
-
-            if (updateCube == null)
-            {   // HEAD has cube that branch does not have
-                adds.add(headCube)
-                continue
-            }
-
-            long cubeRev = (long) Converter.convert(updateCube.revision, long.class)
-            long headRev = (long) Converter.convert(headCube.revision, long.class)
-            boolean activeStatusMatches = (cubeRev < 0) == (headRev < 0)
-
-            // Did branch change?
-            if (!updateCube.isChanged())
-            {   // No change on branch
-                if (!activeStatusMatches)
-                {
-                    if (headRev < 0)
-                    {
-                        deletes.add(headCube)
+            switch(updateCube.changeType)
+            {
+                case ChangeType.CREATED.code:
+                    adds.add(updateCube)
+                    break
+                case ChangeType.RESTORED.code:
+                    restores.add(updateCube)
+                    break
+                case ChangeType.UPDATED.code:
+                    NCubeInfoDto branchCube = untrustedGetBranchCubeInfoDto(appId, updateCube)
+                    if (branchCube.isChanged())
+                    {   // Cube is different than HEAD, AND it is not based on same HEAD cube, but it could be merge-able.
+                        String message = 'Cube was changed in both branch and HEAD'
+                        NCube cube = mergeCubesIfPossible([:], message, branchCube, updateCube, true)
+                        if (cube != null)
+                        {
+                            NCubeInfoDto mergedDto = persister.commitMergedCubeToBranch(appId, cube, updateCube.sha1, getUserId(), txId)
+                            merges.add(mergedDto)
+                        }
                     }
                     else
                     {
-                        adds.add(headCube)
+                        updates.add(updateCube)
                     }
-                }
-                else if (!StringUtilities.equalsIgnoreCase(updateCube.headSha1, headCube.sha1))
-                {   // HEAD has different SHA1 but branch cube did not change, safe to update branch (regular update)
-                    updates.add(headCube)
-                }
-            }
-            else if (StringUtilities.equalsIgnoreCase(updateCube.sha1, headCube.sha1))
-            {   // If branch is 'changed' but has same SHA-1 as head, then see if branch needs Fast-Forward
-                if (!StringUtilities.equalsIgnoreCase(updateCube.headSha1, headCube.sha1))
-                {   // Fast-Forward branch
+                    break
+                case ChangeType.DELETED.code:
+                    deletes.add(updateCube)
+                    break
+                case ChangeType.FASTFORWARD.code:
+                    // Fast-Forward branch
                     // Update HEAD SHA-1 on branch directly (no need to insert)
-                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(updateCube.id, Long.class), headCube.sha1)
-                    fastforwards.add(headCube)
-                }
-            }
-            else
-            {
-                if (!StringUtilities.equalsIgnoreCase(updateCube.headSha1, headCube.sha1))
-                {   // Cube is different than HEAD, AND it is not based on same HEAD cube, but it could be merge-able.
-                    String message = 'Cube was changed in both branch and HEAD'
-                    NCube cube = mergeCubesIfPossible(conflicts, message, updateCube, headCube, true)
-
-                    if (cube != null)
-                    {
-                        NCubeInfoDto mergedDto = persister.commitMergedCubeToBranch(appId, cube, headCube.sha1, getUserId(), txId)
-                        merges.add(mergedDto)
-                    }
-                }
+                    NCubeInfoDto branchCube = untrustedGetBranchCubeInfoDto(appId, updateCube)
+                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(branchCube.id, Long.class), updateCube.sha1)
+                    fastforwards.add(updateCube)
+                    break
             }
         }
-
-        // Adds
-        Object[] ids = new Object[adds.size()]
-        int i=0
-        for (NCubeInfoDto dto : adds)
-        {
-            ids[i++] = dto.id
-        }
-        finalAdds.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
-
-        // Deletes
-        ids = new Object[deletes.size()]
-        i=0
-        for (NCubeInfoDto dto : deletes)
-        {
-            ids[i++] = dto.id
-        }
-        finalDeletes.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
-
-        // Updates
-        ids = new Object[updates.size()]
-        i=0
-        for (NCubeInfoDto dto : updates)
-        {
-            ids[i++] = dto.id
-        }
-        finalUpdates.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
 
         clearCache(appId)
-
+        finalUpdates = buildReturnList(appId, txId, updates)
+        finalUpdates.addAll(merges)
         Map<String, Object> ret = [:]
-        ret[BRANCH_ADDS] = finalAdds
-        ret[BRANCH_DELETES] = finalDeletes
+        ret[BRANCH_ADDS] = buildReturnList(appId, txId, adds)
+        ret[BRANCH_DELETES] = buildReturnList(appId, txId, deletes)
         ret[BRANCH_UPDATES] = finalUpdates
-        ret[BRANCH_MERGES] = merges
-        ret[BRANCH_CONFLICTS] = conflicts
+        ret[BRANCH_RESTORES] = buildReturnList(appId, txId, restores)
         ret[BRANCH_FASTFORWARDS] = fastforwards
         ret[BRANCH_REJECTS] = rejects
         return ret
+    }
+
+    private static List<NCubeInfoDto> buildReturnList(ApplicationID appId, long txId, List<NCubeInfoDto> dtos)
+    {
+        Object[] ids = new Object[dtos.size()]
+        int i=0
+        dtos.each { NCubeInfoDto dto ->
+            ids[i++] = dto.id
+        }
+        return persister.pullToBranch(appId, ids, getUserId(), txId)
+    }
+
+    private static NCubeInfoDto untrustedGetBranchCubeInfoDto(ApplicationID appId, NCubeInfoDto updateCube)
+    {
+        List<NCubeInfoDto> branchCubeDtos = search(appId, updateCube.name, null, [(SEARCH_EXACT_MATCH_NAME):true])
+        if (branchCubeDtos.isEmpty())
+        {
+            throw new IllegalStateException('Cube does not exist in branch.')
+        }
+        if (branchCubeDtos.size() > 1)
+        {
+            throw new IllegalStateException('Too many cubes')
+        }
+        NCubeInfoDto branchCube = branchCubeDtos.first()
+        branchCube
     }
 
     /**
@@ -1104,7 +1120,7 @@ class NCubeManager
             {   // we created this guy locally, but someone added this one to the head already
                 String message = 'Cube was changed in both branch and HEAD'
                 NCube cube = mergeCubesIfPossible(conflicts, message, updateCube, head, true)
-                updateCube.changeType = cube == null ? ChangeType.CONFLICT : ChangeType.UPDATED
+                updateCube.changeType = cube == null ? ChangeType.CONFLICT.code : ChangeType.UPDATED.code
                 list.add(updateCube)
             }
             else
@@ -1133,13 +1149,118 @@ class NCubeManager
                 {
                     String message = 'Cube was changed in both branch and HEAD'
                     NCube cube = mergeCubesIfPossible(conflicts, message, updateCube, head, true)
-                    updateCube.changeType = cube == null ? ChangeType.CONFLICT : ChangeType.UPDATED
+                    updateCube.changeType = cube == null ? ChangeType.CONFLICT.code : ChangeType.UPDATED.code
                     list.add(updateCube)
                 }
             }
         }
 
         return list
+    }
+
+    static NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
+    {
+        NCube ncube = getCube(appId, cubeName)
+        for (Delta delta : deltas)
+        {
+            switch (delta.location)
+            {
+                case Delta.Location.NCUBE:
+                    switch (delta.locId)
+                    {
+                        case 'DEFAULT_CELL':
+                            CellInfo cellInfo = delta.sourceVal as CellInfo
+                            Object cellValue = cellInfo.isUrl ?
+                                    CellInfo.parseJsonValue(null, cellInfo.value, cellInfo.dataType, cellInfo.isCached) :
+                                    CellInfo.parseJsonValue(cellInfo.value, null, cellInfo.dataType, cellInfo.isCached)
+                            ncube.setDefaultCellValue(cellValue)
+                            break
+                    }
+                    break
+                case Delta.Location.NCUBE_META:
+                    String key = delta.sourceVal as String
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        ncube.removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        ncube.setMetaProperty(key, delta.destVal)
+                    }
+                    break
+                case Delta.Location.AXIS:
+                    if (delta.destVal != null)
+                    {
+                        Axis axis = delta.destVal as Axis
+                        ncube.deleteAxis(axis.name)
+                    }
+                    if (delta.type != Delta.Type.ADD)
+                    {
+                        ncube.addAxis(delta.sourceVal as Axis)
+                    }
+                    break
+                case Delta.Location.AXIS_META:
+                    Axis axis = ncube.getAxis(delta.locId as String)
+                    String key = delta.sourceVal as String
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        axis.removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        axis.setMetaProperty(key, delta.destVal)
+                    }
+                    ncube.clearSha1()
+                    break
+                case Delta.Location.COLUMN:
+                    String axisName = delta.locId as String
+                    List<Column> columns = ncube.getAxis(axisName).getColumnsWithoutDefault()
+                    switch (delta.type)
+                    {
+                        case Delta.Type.ADD:
+                            columns.remove(delta.destVal as Column)
+                            break
+                        case Delta.Type.DELETE:
+                            columns.add(delta.sourceVal as Column)
+                            break
+                        case Delta.Type.UPDATE:
+                            int prevIdx = columns.indexOf(delta.destVal as Column)
+                            columns.remove(prevIdx)
+                            columns.add(prevIdx, delta.sourceVal as Column)
+                            break
+                    }
+                    ncube.updateColumns(axisName, columns, true)
+                    break
+                case Delta.Location.COLUMN_META:
+                    String key = delta.sourceVal as String
+                    Map<String, Object> helperId = delta.locId as Map<String, Object>
+                    Axis axis = ncube.getAxis(helperId.axis as String)
+                    Column column = axis.findColumn(helperId.column as Comparable)
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        column.removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        column.setMetaProperty(key, delta.destVal)
+                    }
+                    ncube.clearSha1()
+                    break
+                case Delta.Location.CELL:
+                    Set<Long> coords = delta.locId as Set<Long>
+                    ncube.removeCellById(coords)
+                    if (delta.type != Delta.Type.ADD)
+                    {
+                        ncube.setCellById(((CellInfo)delta.sourceVal).recreate(), coords)
+                    }
+                    break
+                case Delta.Location.CELL_META:
+                    // TODO - cell metaproperties not yet implemented
+                    break
+            }
+        }
+        updateCube(appId, ncube)
+        return ncube
     }
 
     /**
@@ -1265,56 +1386,69 @@ class NCubeManager
 
         try
         {
-            if (headInfo != null)
+            long branchCubeId = (long) Converter.convert(branchInfo.id, long.class)
+            long headCubeId = (long) Converter.convert(headInfo.id, long.class)
+            NCube branchCube = persister.loadCubeById(branchCubeId)
+            NCube headCube = persister.loadCubeById(headCubeId)
+            NCube baseCube, headBaseCube
+            Map branchDelta, headDelta
+
+            if (branchInfo.headSha1 != null)
             {
-                long branchCubeId = (long) Converter.convert(branchInfo.id, long.class)
-                long headCubeId = (long) Converter.convert(headInfo.id, long.class)
-                NCube branchCube = persister.loadCubeById(branchCubeId)
-                NCube headCube = persister.loadCubeById(headCubeId)
-
-                if (branchInfo.headSha1 != null)
-                {
-                    NCube baseCube = persister.loadCubeBySha1(branchInfo.getApplicationID(), branchInfo.name, branchInfo.headSha1)
-                    Map branchDelta = DeltaProcessor.getDelta(baseCube, branchCube)
-                    Map headDelta = DeltaProcessor.getDelta(baseCube, headCube)
-
-                    if (DeltaProcessor.areDeltaSetsCompatible(branchDelta, headDelta, headToBranch))
-                    {
-                        if (headToBranch)
-                        {
-                            DeltaProcessor.mergeDeltaSet(headCube, branchDelta)
-                            return headCube // merged n-cube (HEAD cube with branch changes in it)
-                        }
-                        else
-                        {
-                            DeltaProcessor.mergeDeltaSet(branchCube, headDelta)
-                            return branchCube   // merge n-cube (branch cube with HEAD changes in it)
-                        }
-                    }
-                }
-
-                List<Delta> diff = DeltaProcessor.getDeltaDescription(branchCube, headCube)
-                if (diff.size() > 0)
-                {
-                    map.diff = diff
-                }
-                else
-                {
-                    return branchCube
-                }
+                baseCube = persister.loadCubeBySha1(branchInfo.getApplicationID(), branchInfo.name, branchInfo.headSha1)
+                headDelta = DeltaProcessor.getDelta(baseCube, headCube)
             }
             else
             {
-                map.diff = null
+                baseCube = createStubCube(branchCube)
+                headBaseCube = createStubCube(headCube)
+                headDelta = DeltaProcessor.getDelta(headBaseCube, headCube)
+            }
+
+            branchDelta = DeltaProcessor.getDelta(baseCube, branchCube)
+
+            if (DeltaProcessor.areDeltaSetsCompatible(branchDelta, headDelta, headToBranch))
+            {
+                if (headToBranch)
+                {
+                    DeltaProcessor.mergeDeltaSet(headCube, branchDelta)
+                    return headCube // merged n-cube (HEAD cube with branch changes in it)
+                }
+                else
+                {
+                    DeltaProcessor.mergeDeltaSet(branchCube, headDelta)
+                    return branchCube   // merge n-cube (branch cube with HEAD changes in it)
+                }
+            }
+
+            List<Delta> diff = DeltaProcessor.getDeltaDescription(branchCube, headCube)
+            if (diff.size() > 0)
+            {
+                map.diff = diff
+            }
+            else
+            {
+                return branchCube
             }
         }
         catch (Exception e)
         {
-            Delta delta = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, e.message)
+            Delta delta = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, e.message, null, null, null, null, null)
             map.diff = [delta]
         }
         errors[branchInfo.name] = map
         return null
+    }
+
+    private static NCube createStubCube(NCube source)
+    {
+        NCube stub = source.duplicate(source.name)
+        stub.axes.each { Axis axis ->
+            axis.columns.each { Column column ->
+                stub.deleteColumn(axis.name, column.getValueThatMatches())
+            }
+        }
+        return stub
     }
 
     private static NCube attemptMerge(ApplicationID appId, Map<String, Map> errors, String message, NCubeInfoDto info, NCubeInfoDto other)
@@ -1508,155 +1642,7 @@ class NCubeManager
 
     private static Map<String, Object> updateBranchFromBranch(ApplicationID appId, Object[] cubeNames, String sourceBranch)
     {
-        if (ApplicationID.HEAD == sourceBranch)
-        {
-            throw new IllegalArgumentException('HEAD branch should never be the source branch. Update branch from branch, destination app: ' + appId)
-        }
-        // Step 1: Get all (or a subset) of the branch to be updated's, cubes.
-        List<NCubeInfoDto> records = []
-        Set<String> filter = null
-        Map options = [(SEARCH_EXACT_MATCH_NAME):true] as Map
-
-        if (ArrayUtilities.isEmpty(cubeNames))
-        {   // Update all
-            records = search(appId, null, null, null)
-            if (records.isEmpty())
-            {
-                throw new IllegalArgumentException(appId.app + ' ' + appId.version + '-' + appId.status + ' (' + appId.branch + ' branch) is empty and cannot be updated.  Create branch first.')
-            }
-        }
-        else
-        {   // Update selected
-            filter = new CaseInsensitiveSet<>()
-            for (String name : cubeNames)
-            {
-                filter.add(name)
-                records.addAll(persister.search(appId, name, null, options))
-            }
-        }
-
-        // Step 2: Make an addressable Map (branchRecordMap) of these cubes
-        ApplicationID headAppId = appId.asHead()
-        Map<String, NCubeInfoDto> branchRecordMap = new CaseInsensitiveMap<>()
-
-        for (NCubeInfoDto info : records)
-        {
-            branchRecordMap[info.name] = info
-        }
-
-        // Step 3: Fetch all source branch n-cubes, and then determine the adds, deletes, updates, merges, and conflicts.
-        List<NCubeInfoDto> adds = []
-        List<NCubeInfoDto> deletes = []
-        List<NCubeInfoDto> updates = []
-        List<NCubeInfoDto> dtosMerged = []
-        Map<String, Map> conflicts = new CaseInsensitiveMap<>()
-        List<NCubeInfoDto> headRecords = search(headAppId, null, null, null)
-        long txId = UniqueIdGenerator.getUniqueId()
-
-        for (NCubeInfoDto head : headRecords)
-        {
-            if (filter && !filter.contains(head.name))
-            {   // Only filter if there is a filter (not null) and it does not contain the cube name
-                continue
-            }
-
-            NCubeInfoDto info = branchRecordMap[head.name]
-
-            if (info == null)
-            {   // HEAD has cube that branch does not have
-                adds.add(head)
-                continue
-            }
-
-            long infoRev = (long) Converter.convert(info.revision, long.class)
-            long headRev = (long) Converter.convert(head.revision, long.class)
-            boolean activeStatusMatches = (infoRev < 0) == (headRev < 0)
-
-            // Did branch change?
-            if (!info.isChanged())
-            {   // No change on branch
-                if (activeStatusMatches)
-                {
-                    if (!StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
-                    {
-                        updates.add(head)
-                    }
-                }
-                else
-                {
-                    if (headRev >= 0)
-                    {
-                        adds.add(head)
-                    }
-                    else
-                    {
-                        deletes.add(head)
-                    }
-                }
-            }
-            else if (StringUtilities.equalsIgnoreCase(info.sha1, head.sha1))
-            {   // If branch is 'changed' but has same SHA-1 as head, then see if branch needs Fast-Forward
-                if (!StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
-                {   // Fast-Forward branch
-                    // Update HEAD SHA-1 on branch directly (no need to insert)
-                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(info.id, Long.class), head.sha1)
-                }
-            }
-            else
-            {
-                if (!StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1))
-                {   // Cube is different than HEAD, AND it is not based on same HEAD cube, but it could be merge-able.
-                    String message = 'Cube was changed in both branch and HEAD'
-                    NCube cube = mergeCubesIfPossible(conflicts, message, info, head, true)
-
-                    if (cube != null)
-                    {
-                        NCubeInfoDto mergedDto = persister.commitMergedCubeToBranch(appId, cube, head.sha1, getUserId(), txId)
-                        dtosMerged.add(mergedDto)
-                    }
-                }
-            }
-        }
-
-        // Adds
-        List<NCubeInfoDto> finalAdds = new ArrayList<>(adds.size())
-        Object[] ids = new Object[adds.size()]
-        int i=0
-        for (NCubeInfoDto dto : adds)
-        {
-            ids[i++] = dto.id
-        }
-        finalAdds.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
-
-        // Deletes
-        List<NCubeInfoDto> finalDeletes = new ArrayList<>(deletes.size())
-        ids = new Object[deletes.size()]
-        i=0
-        for (NCubeInfoDto dto : deletes)
-        {
-            ids[i++] = dto.id
-        }
-        finalDeletes.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
-
-        // Updates
-        List<NCubeInfoDto> finalUpdates = new ArrayList<>(updates.size())
-        ids = new Object[updates.size()]
-        i=0
-        for (NCubeInfoDto dto : updates)
-        {
-            ids[i++] = dto.id
-        }
-        finalUpdates.addAll(persister.pullToBranch(appId, ids, getUserId(), txId))
-
-        clearCache(appId)
-
-        Map<String, Object> ret = [:]
-        ret[BRANCH_ADDS] = finalAdds
-        ret[BRANCH_UPDATES] = finalUpdates
-        ret[BRANCH_DELETES] = finalDeletes
-        ret[BRANCH_MERGES] = dtosMerged
-        ret[BRANCH_CONFLICTS] = conflicts
-        return ret
+        throw new IllegalStateException('Not implemented.')
     }
 
     /**

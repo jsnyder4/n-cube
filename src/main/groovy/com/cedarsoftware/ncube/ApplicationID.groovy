@@ -142,12 +142,12 @@ class ApplicationID
 
     boolean isSnapshot()
     {
-        return ReleaseStatus.SNAPSHOT.name().equals(status)
+        return ReleaseStatus.SNAPSHOT.name() == status
     }
 
     boolean isRelease()
     {
-        return ReleaseStatus.RELEASE.name().equals(status)
+        return ReleaseStatus.RELEASE.name() == status
     }
 
     /**
@@ -173,7 +173,7 @@ class ApplicationID
         }
         else
         {
-            throw new IllegalArgumentException('Cannot convert ApplicationID to ' + clazz.getName())
+            throw new IllegalArgumentException('Cannot convert ApplicationID to ' + clazz.name)
         }
     }
 
@@ -185,7 +185,7 @@ class ApplicationID
      */
     ApplicationID asRelease()
     {
-        if (ReleaseStatus.RELEASE.name().equals(status) && HEAD.equals(branch))
+        if (ReleaseStatus.RELEASE.name() == status && HEAD == branch)
         {
             return this
         }
@@ -200,7 +200,7 @@ class ApplicationID
      */
     ApplicationID asSnapshot()
     {
-        if (ReleaseStatus.SNAPSHOT.name().equals(status))
+        if (ReleaseStatus.SNAPSHOT.name() == status)
         {
             return this
         }
@@ -215,7 +215,7 @@ class ApplicationID
      */
     ApplicationID asHead()
     {
-        if (HEAD.equals(branch))
+        if (HEAD == branch)
         {
             return this
         }
@@ -239,7 +239,7 @@ class ApplicationID
      */
     ApplicationID asVersion(String ver)
     {
-        if (version.equals(ver))
+        if (version == ver)
         {
             return this
         }
@@ -319,12 +319,12 @@ class ApplicationID
 
     boolean isHead()
     {
-        return HEAD.equals(branch)
+        return HEAD == branch
     }
 
     void validateBranchIsNotHead()
     {
-        if (isHead())
+        if (head)
         {
             throw new IllegalArgumentException("Branch cannot be 'HEAD'")
         }
@@ -332,7 +332,7 @@ class ApplicationID
 
     void validateStatusIsNotRelease()
     {
-        if (isRelease())
+        if (release)
         {
             throw new IllegalArgumentException("Status cannot be 'RELEASE'")
         }
@@ -340,7 +340,7 @@ class ApplicationID
 
     static ApplicationID getBootVersion(String tenant, String app)
     {
-        Map systemParams = NCubeManager.getSystemParams()
+        Map systemParams = NCubeManager.systemParams
         String branch = systemParams['branch']
         return new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), StringUtilities.isEmpty(branch) ? HEAD : branch)
     }

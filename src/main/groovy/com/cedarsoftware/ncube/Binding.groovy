@@ -95,40 +95,40 @@ class Binding
 
     String toHtml(boolean tagsOK)
     {
-        String spaces = padString("    ", getDepth())
+        String spaces = padString('    ', getDepth())
         StringBuilder s = new StringBuilder(spaces)
         s.append(cubeName)
         s.append(newLine)
         for (Map.Entry<String, Column> entry : coord.entrySet())
         {
-            Column column = entry.getValue()
+            Column column = entry.value
             s.append(spaces)
-            s.append("  ")
-            s.append(entry.getKey())
-            s.append(": ")
-            String name = (String) column.getMetaProperty("name")
+            s.append('  ')
+            s.append(entry.key)
+            s.append(': ')
+            String name = (String) column.getMetaProperty('name')
             if (StringUtilities.hasContent(name))
             {
                 s.append(name)
-                s.append(" / ")
+                s.append(' / ')
             }
-            s.append(column.getValue())
+            s.append(column.value)
             s.append(newLine)
         }
 
         s.append(spaces)
         if (tagsOK)
         {
-            s.append("  <b>value = ")
+            s.append('  <b>value = ')
         }
         else
         {
-            s.append("  value = ")
+            s.append('  value = ')
         }
-        s.append(value == null ? "null" : value.toString())
+        s.append(value == null ? 'null' : value.toString())
         if (tagsOK)
         {
-            s.append("</b>")
+            s.append('</b>')
         }
         return s.toString()
     }

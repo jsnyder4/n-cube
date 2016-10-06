@@ -45,7 +45,7 @@ class TestDelta
     @Test
     void testDeltaApis()
     {
-        Delta x = new Delta(Delta.Location.AXIS, Delta.Type.ADD, "foo")
+        Delta x = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'foo', null, null, null, null, null)
         assert x.location == Delta.Location.AXIS
         assert x.type == Delta.Type.ADD
         assert x.description == 'foo'
@@ -1053,9 +1053,12 @@ class TestDelta
 
         // Update branch 1.0.1 -> 1.0.2
         Map map = NCubeManager.updateBranch(appIdKpartlow)
-        assert (map.updates as List).isEmpty()
-        assert (map.conflicts as Map).isEmpty()
-        assert (map.merges as List).size() == 1
+        assert (map.adds as List).size() == 0
+        assert (map.deletes as List).size() == 0
+        assert (map.updates as List).size() == 1
+        assert (map.restores as List).size() == 0
+        assert (map.fastforwards as List).size() == 0
+        assert (map.rejects as List).size() == 0
 
         // TODO: Write many more reference axis tests
         // auto-merge reference axis (with diff transform)
@@ -1142,8 +1145,8 @@ class TestDelta
     @Test
     void testDeltaClass()
     {
-        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis')
-        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'delete axis')
+        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis', null, null, null, null, null)
+        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'delete axis', null, null, null, null, null)
         assert !delta1.equals(delta2)
 
         Map map = [:]
@@ -1159,14 +1162,14 @@ class TestDelta
     @Test
     void testDeltaLocationOrder()
     {
-        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'updated default')
-        Delta delta2 = new Delta(Delta.Location.NCUBE_META, Delta.Type.ADD, 'added meta-property')
-        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis')
-        Delta delta4 = new Delta(Delta.Location.AXIS_META, Delta.Type.UPDATE, 'updated axis meta-prop')
-        Delta delta5 = new Delta(Delta.Location.COLUMN, Delta.Type.UPDATE, 'updated column value')
-        Delta delta6 = new Delta(Delta.Location.COLUMN_META, Delta.Type.DELETE, 'deleted column meta-prop')
-        Delta delta7 = new Delta(Delta.Location.CELL, Delta.Type.ADD, 'added cell')
-        Delta delta8 = new Delta(Delta.Location.CELL_META, Delta.Type.DELETE, 'added cell meta-prop')
+        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'updated default', null, null, null, null, null)
+        Delta delta2 = new Delta(Delta.Location.NCUBE_META, Delta.Type.ADD, 'added meta-property', null, null, null, null, null)
+        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'add axis', null, null, null, null, null)
+        Delta delta4 = new Delta(Delta.Location.AXIS_META, Delta.Type.UPDATE, 'updated axis meta-prop', null, null, null, null, null)
+        Delta delta5 = new Delta(Delta.Location.COLUMN, Delta.Type.UPDATE, 'updated column value', null, null, null, null, null)
+        Delta delta6 = new Delta(Delta.Location.COLUMN_META, Delta.Type.DELETE, 'deleted column meta-prop', null, null, null, null, null)
+        Delta delta7 = new Delta(Delta.Location.CELL, Delta.Type.ADD, 'added cell', null, null, null, null, null)
+        Delta delta8 = new Delta(Delta.Location.CELL_META, Delta.Type.DELETE, 'added cell meta-prop', null, null, null, null, null)
 
         Set<Delta> set = [delta8, delta7, delta6, delta5, delta4, delta3, delta2, delta1] as TreeSet
         List<Delta> items = set.toList()
@@ -1183,9 +1186,9 @@ class TestDelta
     @Test
     void testDeltaMessageOrder()
     {
-        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'alpha')
-        Delta delta2 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'bravo')
-        Delta delta3 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'charlie')
+        Delta delta1 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'alpha', null, null, null, null, null)
+        Delta delta2 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'bravo', null, null, null, null, null)
+        Delta delta3 = new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, 'charlie', null, null, null, null, null)
         Set<Delta> set = [delta3, delta2, delta1] as TreeSet
         List<Delta> items = set.toList()
         assert items[0].description == 'alpha'
@@ -1196,9 +1199,9 @@ class TestDelta
     @Test
     void testDeltaTypeOrder()
     {
-        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'z')
-        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'm')
-        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.UPDATE, 'a')
+        Delta delta1 = new Delta(Delta.Location.AXIS, Delta.Type.ADD, 'z', null, null, null, null, null)
+        Delta delta2 = new Delta(Delta.Location.AXIS, Delta.Type.DELETE, 'm', null, null, null, null, null)
+        Delta delta3 = new Delta(Delta.Location.AXIS, Delta.Type.UPDATE, 'a', null, null, null, null, null)
         Set<Delta> set = [delta3, delta1, delta2] as TreeSet
         List<Delta> items = set.toList()
         assert items[0] == delta1
@@ -1209,18 +1212,18 @@ class TestDelta
     @Test
     void testEmptyDeltaHashCode()
     {
-        Delta empty = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, null)
+        Delta empty = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, null, null, null, null, null, null)
         assert empty.hashCode() == 0
         assert empty.compareTo(empty) == 0
 
-        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, "hey")
+        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, 'hey', null, null, null, null, null)
         assert empty.compareTo(delta) == -1
     }
 
     @Test
     void testDeltaEqualsNull()
     {
-        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, 'foo')
+        Delta delta = new Delta(Delta.Location.COLUMN, Delta.Type.ADD, 'foo', null, null, null, null, null)
         assert !delta.equals(null)
         assert delta.compareTo(null) != 0
     }

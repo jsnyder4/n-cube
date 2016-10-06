@@ -1508,13 +1508,16 @@ class TestNCubeManager
         List dtos2 = NCubeManager.getHeadChangesForBranch(johnAppId)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestCube'
-        assert dtos2[0].changeType == ChangeType.FASTFORWARD.name()
+        assert dtos2[0].changeType == ChangeType.FASTFORWARD.code
 
         // Update john branch (no changes are shown - it auto-merged)
         Map map = NCubeManager.updateBranch(johnAppId)
+        assert map.adds.size() == 0
+        assert map.deletes.size() == 0
         assert map.updates.size() == 0
-        assert map.merges.size() == 0
-        assert map.conflicts.size() == 0
+        assert map.restores.size() == 0
+        assert map.fastforwards.size() == 1
+        assert map.rejects.size() == 0
 
         cubes = NCubeManager.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 0    // No changes being returned

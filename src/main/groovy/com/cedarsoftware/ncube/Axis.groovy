@@ -83,7 +83,7 @@ class Axis
     private boolean isRef
 
     // Internal indexes
-    private final TLongObjectHashMap<Column> idToCol = new TLongObjectHashMap<>(16, 0.8f)   // Setting load factor to 0.8 because trove uses 0.5 (uses too much memory)
+    private final transient TLongObjectHashMap<Column> idToCol = new TLongObjectHashMap<>(16, 0.8f)   // Setting load factor to 0.8 because trove uses 0.5 (uses too much memory)
     private final transient Map<String, Column> colNameToCol = new CaseInsensitiveMap<>()
     private final transient SortedMap<Integer, Column> displayOrder = new TreeMap<>()
     private transient NavigableMap<Comparable, Column> valueToCol = new TreeMap<>()
@@ -147,6 +147,9 @@ class Axis
 
         verifyAxisType()
     }
+
+    // for construction during serialization
+    private Axis() {}
 
     /**
      * Use this constructor to create a 'reference' axis.  This allows a single MASTER DATA axis to be referenced
@@ -846,7 +849,7 @@ class Axis
      * NOTE: The columns field within the newCols axis are NOT in sorted order as they normally are
      * within the Axis class.  Instead, they are in display order (this order is typically set forth by a UI).
      */
-    Set<Long> updateColumns(Collection<Column> newCols)
+    Set<Long> updateColumns(Collection<Column> newCols, boolean allowPositiveColumnIds = false)
     {
         if (isRef)
         {
@@ -860,12 +863,7 @@ class Axis
         for (Column col : newCols)
         {
             Column newColumn = createColumnFromValue(col.value, col.id)
-            Map<String, Object> metaProperties = col.getMetaProperties()
-            for (Map.Entry<String, Object> entry : metaProperties.entrySet())
-            {
-                newColumn.setMetaProperty(entry.getKey(), entry.getValue())
-            }
-
+            newColumn.addMetaProperties(col.metaProperties)
             newColumnMap[col.id] = newColumn
         }
 
@@ -921,18 +919,29 @@ class Axis
                 continue
             }
             long existingId = col.id
-            if (col.id < 0)
-            {   // Add case - negative id, add new column to 'columns' List.
+            if (allowPositiveColumnIds && !existingColumns.containsKey(existingId))
+            {
                 Column newCol = addColumnInternal(newColumnMap[col.id])
+                newCol.displayOrder = col.displayOrder
                 existingId = newCol.id
                 existingColumns[existingId] = newCol
             }
-            Column realColumn = existingColumns[existingId]
-            if (realColumn == null)
+            else
             {
-                throw new IllegalArgumentException("Columns to be added should have negative ID values.")
+                if (col.id < 0)
+                {   // Add case - negative id, add new column to 'columns' List.
+                    Column newCol = addColumnInternal(newColumnMap[col.id])
+                    existingId = newCol.id
+                    existingColumns[existingId] = newCol
+                }
+
+                Column realColumn = existingColumns[existingId]
+                if (realColumn == null)
+                {
+                    throw new IllegalArgumentException("Columns to be added should have negative ID values.")
+                }
+                realColumn.setDisplayOrder(dispOrder++)
             }
-            realColumn.setDisplayOrder(dispOrder++)
         }
 
         clear()
