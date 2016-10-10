@@ -2248,6 +2248,17 @@ class NCube<T>
         return copy
     }
 
+    NCube createStubCube()
+    {
+        NCube stub = duplicate(name)
+        stub.axes.each { Axis axis ->
+            axis.columns.each { Column column ->
+                stub.deleteColumn(axis.name, column.valueThatMatches)
+            }
+        }
+        return stub
+    }
+
     boolean equals(Object other)
     {
         if (!(other instanceof NCube))

@@ -40,7 +40,7 @@ import static org.junit.Assert.fail
 class TestNCubeManager
 {
     public static final String APP_ID = 'ncube.test'
-    public static final String USER_ID = NCubeManager.getUserId()
+    public static final String USER_ID = NCubeManager.userId
     public static ApplicationID defaultSnapshotApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultReleaseApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.RELEASE.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultBootApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
@@ -1301,7 +1301,12 @@ class TestNCubeManager
         cube.addAxis(oddAxis)
 
         NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        NCubeManager.commitBranch(defaultSnapshotApp, his)
+        Map<String, Object> result = NCubeManager.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, cube.name, null, null))
+        assert result[NCubeManager.BRANCH_ADDS].size() == 1
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
         NCubeManager.releaseVersion(defaultSnapshotApp, '2.0.0')
         List<NCubeInfoDto> fullHistory = NCubeManager.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
         assert fullHistory.size() == 1
@@ -1486,7 +1491,12 @@ class TestNCubeManager
         NCubeManager.updateCube(kenAppId, cube, true)
         cubes = NCubeManager.getBranchChangesForHead(kenAppId)
         assert cubes.size() == 1
-        NCubeManager.commitBranch(kenAppId, cubes.toArray())
+        Map <String, Object> result = NCubeManager.commitBranch(kenAppId, cubes)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
         NCube cubeHead = NCubeManager.loadCube(kenAppId.asHead(), 'TestCube')
         assert cubeHead.sha1() == cube.sha1()
 
@@ -1503,7 +1513,7 @@ class TestNCubeManager
 
         // Verify that before the Update Branch, we show one (1) branch change
         cubes = NCubeManager.getBranchChangesForHead(johnAppId)
-        assert cubes.size() == 1
+        assert cubes.size() == 0
 
         List dtos2 = NCubeManager.getHeadChangesForBranch(johnAppId)
         assert dtos2.size() == 1
@@ -1849,14 +1859,14 @@ class TestNCubeManager
         List<Column> userColumns = sysUsergroupsCube.getAxis(NCubeManager.AXIS_USER).getColumns()
         assertEquals(2, sysUsergroupsCube.getAxes().size())
         assertEquals(2, userColumns.size())
-        assertEquals(NCubeManager.getUserId(), userColumns.get(0).value)
+        assertEquals(NCubeManager.userId, userColumns.get(0).value)
         assertEquals(3, sysUsergroupsCube.getAxis(NCubeManager.AXIS_ROLE).getColumns().size())
     }
 
     @Test
     void testSysLockSecurity()
     {
-        String userId = NCubeManager.getUserId()
+        String userId = NCubeManager.userId
         ApplicationID branchBootAppId = defaultBootApp.asBranch(userId)
         Map lockCoord = [(NCubeManager.AXIS_SYSTEM):null]
 
@@ -1870,8 +1880,8 @@ class TestNCubeManager
 
         // commit sys lock to head
         Object[] cubeInfos = NCubeManager.search(branchBootAppId, NCubeManager.SYS_LOCK, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
-        List<NCubeInfoDto> commitResult = NCubeManager.commitBranch(branchBootAppId, cubeInfos)
-        assertEquals(1, commitResult.size())
+        Map<String, Object> commitResult = NCubeManager.commitBranch(branchBootAppId, cubeInfos)
+        assertEquals(1, commitResult[NCubeManager.BRANCH_UPDATES].size())
 
         // make sure head took the lock
         sysLockCube = NCubeManager.loadCube(branchBootAppId, NCubeManager.SYS_LOCK)
@@ -1882,7 +1892,7 @@ class TestNCubeManager
         NCube testCube = new NCube('test')
         testCube.setApplicationID(branchBootAppId)
         NCubeManager.updateCube(branchBootAppId, testCube, true)  // works without error because current user has the lock
-        String currUser = NCubeManager.getUserId()
+        String currUser = NCubeManager.userId
         NCubeManager.setUserId('garpley')                   // change user
         try
         {
@@ -1908,8 +1918,8 @@ class TestNCubeManager
         assertFalse(branchPermCube.getDefaultCellValue())
         assertEquals(2, userAxis.getColumns().size())
         assertEquals(2, resourceAxis.getColumns().size())
-        assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.getUserId(), (NCubeManager.AXIS_RESOURCE):NCubeManager.SYS_BRANCH_PERMISSIONS]))
-        assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.getUserId(), (NCubeManager.AXIS_RESOURCE):null]))
+        assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.userId, (NCubeManager.AXIS_RESOURCE):NCubeManager.SYS_BRANCH_PERMISSIONS]))
+        assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.userId, (NCubeManager.AXIS_RESOURCE):null]))
         assertFalse(branchPermCube.getCell([(NCubeManager.AXIS_USER):null, (NCubeManager.AXIS_RESOURCE):NCubeManager.SYS_BRANCH_PERMISSIONS]))
         assertFalse(branchPermCube.getCell([(NCubeManager.AXIS_USER):null, (NCubeManager.AXIS_RESOURCE):null]))
     }
@@ -1918,7 +1928,7 @@ class TestNCubeManager
     void testBranchPermissionsFail()
     {
         String testAxisName = 'testAxis'
-        String origUser = NCubeManager.getUserId()
+        String origUser = NCubeManager.userId
         ApplicationID appId = defaultSnapshotApp.asBranch(origUser)
 
         //create new branch and make sure of permissions
@@ -1976,7 +1986,7 @@ class TestNCubeManager
     @Test
     void testAppPermissionsFail()
     {
-        String origUser = NCubeManager.getUserId()
+        String origUser = NCubeManager.userId
         String otherUser = 'otherUser'
         String testAxisName = 'testAxis'
         ApplicationID branchBootApp = defaultBootApp.asBranch(ApplicationID.TEST_BRANCH)
@@ -1996,7 +2006,7 @@ class TestNCubeManager
         NCube userCube = NCubeManager.loadCube(defaultBootApp, NCubeManager.SYS_USERGROUPS)
         userCube.getAxis(NCubeManager.AXIS_USER).addColumn(otherUser)
         userCube.setCell(true, [(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_READONLY])
-        NCubeManager.getPersister().updateCube(defaultBootApp, userCube, NCubeManager.getUserId())
+        NCubeManager.getPersister().updateCube(defaultBootApp, userCube, NCubeManager.userId)
         assertFalse(userCube.getCell([(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_USER]))
         assertTrue(userCube.getCell([(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_READONLY]))
 

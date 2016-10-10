@@ -157,6 +157,12 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 'copyBranch(' + srcAppId + '->' + targetAppId + ')')
     }
 
+    int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId)
+    {
+        return (int) jdbcOperation({ Connection c -> persister.copyBranchWithHistory(c, srcAppId, targetAppId) },
+                'copyBranchWithHistory(' + srcAppId + '->' + targetAppId + ')')
+    }
+
     boolean renameCube(ApplicationID appId, String oldName, String newName, String username)
     {
         return (boolean) jdbcOperation({ Connection c -> persister.renameCube(c, appId, oldName, newName, username) },

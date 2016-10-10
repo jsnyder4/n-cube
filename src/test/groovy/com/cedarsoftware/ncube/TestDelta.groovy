@@ -1020,8 +1020,8 @@ class TestDelta
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
         list = NCubeManager.getBranchChangesForHead(appIdjdereg)
-        list = NCubeManager.commitBranch(appIdjdereg, list as Object[])
-        NCubeInfoDto dto = list[0]
+        Map<String, Object> commits = NCubeManager.commitBranch(appIdjdereg, list as Object[])
+        NCubeInfoDto dto = (commits[NCubeManager.BRANCH_UPDATES] as List<NCubeInfoDto>).first()
         assert dto.notes.contains('merged')
 
         NCube referrer = NCubeManager.loadCube(appIdKpartlow.asHead(), 'States')
@@ -1038,18 +1038,16 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
-        List<NCubeInfoDto> list = NCubeManager.getBranchChangesForHead(appIdjdereg)
-        NCubeManager.commitBranch(appIdjdereg, list as Object[])
+        NCubeManager.commitBranch(appIdjdereg)
 
         // Commit a change in 'kpartlow' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.1
-        list = NCubeManager.getBranchChangesForHead(appIdKpartlow)
-        try
-        {   // Should fail because kpartlow branch is behind and needs to be updated (merged) first
-            NCubeManager.commitBranch(appIdKpartlow, list as Object[])
-            fail()
-        }
-        catch (BranchMergeException ignored)
-        { }
+        // Should fail because kpartlow branch is behind and needs to be updated (merged) first
+        Map<String, List> result = NCubeManager.commitBranch(appIdKpartlow) as Map
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
 
         // Update branch 1.0.1 -> 1.0.2
         Map map = NCubeManager.updateBranch(appIdKpartlow)
@@ -1077,21 +1075,18 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'kpartlow' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.1
-        List<NCubeInfoDto> list = NCubeManager.getBranchChangesForHead(appIdKpartlow)
-        NCubeManager.commitBranch(appIdKpartlow, list as Object[])
+        NCubeManager.commitBranch(appIdKpartlow)
 
         NCube statesJdereg = NCubeManager.loadCube(appIdjdereg, 'States')
         statesJdereg.breakAxisReference('state')
         NCubeManager.updateCube(appIdjdereg, statesJdereg, true)
 
-        list = NCubeManager.getBranchChangesForHead(appIdjdereg)
-        try
-        {
-            NCubeManager.commitBranch(appIdjdereg, list as Object[])
-            fail()
-        }
-        catch (BranchMergeException e)
-        { }
+        Map<String, List> result = NCubeManager.commitBranch(appIdjdereg) as Map
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
     }
 
     @Test
@@ -1103,21 +1098,18 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
-        List<NCubeInfoDto> list = NCubeManager.getBranchChangesForHead(appIdjdereg)
-        NCubeManager.commitBranch(appIdjdereg, list as Object[])
+        NCubeManager.commitBranch(appIdjdereg)
 
         NCube statesKpartlow = NCubeManager.loadCube(appIdKpartlow, 'States')
         statesKpartlow.breakAxisReference('state')
         NCubeManager.updateCube(appIdKpartlow, statesKpartlow, true)
 
-        list = NCubeManager.getBranchChangesForHead(appIdKpartlow)
-        try
-        {
-            NCubeManager.commitBranch(appIdKpartlow, list as Object[])
-            fail()
-        }
-        catch (BranchMergeException ignored)
-        { }
+        Map<String, List> result = NCubeManager.commitBranch(appIdKpartlow) as Map
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
     }
 
     @Test

@@ -141,7 +141,7 @@ class Axis
 
         if (hasDefault && type != AxisType.NEAREST)
         {
-            defaultCol = new Column(null, getDefaultColId())
+            defaultCol = new Column(null, defaultColId)
             indexColumn(defaultCol)
         }
 
@@ -170,7 +170,7 @@ class Axis
 
         if (hasDefault && type != AxisType.NEAREST)
         {
-            defaultCol = new Column(null, getDefaultColId())
+            defaultCol = new Column(null, defaultColId)
             indexColumn(defaultCol)
         }
 
@@ -243,7 +243,7 @@ class Axis
     {
         String status = (getMetaProperty(TRANSFORM_STATUS) as String) ?: ReleaseStatus.RELEASE
         String branch = (getMetaProperty(TRANSFORM_BRANCH) as String) ?: ApplicationID.HEAD
-        return isReferenceTransformed() ? new ApplicationID(getMetaProperty(REF_TENANT) as String,
+        return referenceTransformed ? new ApplicationID(getMetaProperty(REF_TENANT) as String,
                 getMetaProperty(TRANSFORM_APP) as String,
                 getMetaProperty(TRANSFORM_VERSION) as String,
                 status,
@@ -278,8 +278,8 @@ class Axis
                 StringUtilities.hasContent(getMetaProperty(TRANSFORM_VERSION) as String) &&
                 StringUtilities.hasContent(status) &&
                 StringUtilities.hasContent(branch) &&
-                StringUtilities.hasContent(getTransformCubeName()) &&
-                StringUtilities.hasContent(getTransformMethodName())
+                StringUtilities.hasContent(transformCubeName) &&
+                StringUtilities.hasContent(transformMethodName)
 
     }
 
@@ -435,7 +435,7 @@ class Axis
         idToCol.put(column.id, column)
 
         // 2: Index columns by name (if they have one) - held in CaseInsensitiveMap
-        String colName = column.getColumnName()
+        String colName = column.columnName
         if (StringUtilities.hasContent(colName))
         {
             colNameToCol[colName] = column
@@ -498,7 +498,7 @@ class Axis
 
     String toString()
     {
-        StringBuilder s = new StringBuilder(getAxisPropString())
+        StringBuilder s = new StringBuilder(axisPropString)
         if (!MapUtilities.isEmpty(metaProps))
         {
             s.append("\n")
@@ -600,12 +600,12 @@ class Axis
         if (suggestedId != null && suggestedId > 0)
         {
             long attemptId = (id * BASE_AXIS_ID) + (suggestedId % BASE_AXIS_ID)
-            long finalId = idToCol.containsKey(attemptId) ? getNextColId() : attemptId
+            long finalId = idToCol.containsKey(attemptId) ? nextColId : attemptId
             return new Column(v, finalId)
         }
         else
         {
-            return new Column(v, v == null ? getDefaultColId() : getNextColId())
+            return new Column(v, v == null ? defaultColId : nextColId)
         }
     }
 
@@ -708,7 +708,7 @@ class Axis
         final Column column = createColumnFromValue(value, suggestedId)
         if (StringUtilities.hasContent(colName))
         {
-            column.setColumnName(colName)
+            column.columnName = colName
         }
         addColumnInternal(column)
         return column
@@ -716,17 +716,17 @@ class Axis
 
     protected Column addColumnInternal(Column column)
     {
-        ensureUnique(column.getValue())
+        ensureUnique(column.value)
 
         if (column.value == null)
         {
-            column.setId(getDefaultColId())    // Safety check - should never happen
+            column.id = defaultColId    // Safety check - should never happen
             defaultCol = column
         }
 
         // New columns are always added at the end in terms of displayOrder.
         int order = displayOrder.isEmpty() ? 1 : displayOrder.lastKey() + 1
-        column.isDefault() ? column.setDisplayOrder(Integer.MAX_VALUE) : column.setDisplayOrder(order)
+        column.setDisplayOrder(column.default ? Integer.MAX_VALUE : order)
         indexColumn(column)
         return column
     }
@@ -763,7 +763,7 @@ class Axis
             return null
         }
 
-        if (col.isDefault())
+        if (col.default)
         {
             defaultCol = null
         }
@@ -777,7 +777,7 @@ class Axis
     {
         // Remove from col id to column map
         idToCol.remove(col.id)
-        colNameToCol.remove(col.getColumnName())
+        colNameToCol.remove(col.columnName)
         displayOrder.remove(col.displayOrder)
         if (col.value == null)
         {   // Default Column is not indexed by value/range (null), so we are done.
@@ -828,13 +828,13 @@ class Axis
         Column col = idToCol.get(colId)
         deleteColumnById(colId)
         Column newCol = createColumnFromValue(value, colId)     // re-use ID
-        ensureUnique(newCol.getValue())
-        newCol.setDisplayOrder(col.getDisplayOrder())           // re-use displayOrder
-        String colName = col.getColumnName()
+        ensureUnique(newCol.value)
+        newCol.displayOrder = col.displayOrder           // re-use displayOrder
+        String colName = col.columnName
 
         if (StringUtilities.hasContent(colName))
         {
-            newCol.setColumnName(col.getColumnName())           // re-use name
+            newCol.columnName = col.columnName           // re-use name
         }
 
         indexColumn(newCol)
@@ -869,7 +869,7 @@ class Axis
 
         // Step 2.  Build list of columns that no longer exist (add to deleted list)
         // AND update existing columns that match by ID columns from the passed in DTO.
-        List<Column> tempCol = getColumns()
+        List<Column> tempCol = columns
         Iterator<Column> i = tempCol.iterator()
 
         while (i.hasNext())
@@ -878,12 +878,12 @@ class Axis
             if (newColumnMap.containsKey(col.id))
             {   // Update case - matches existing column
                 Column newCol = newColumnMap[col.id]
-                col.setValue(newCol.getValue())
+                col.value = newCol.value
 
-                Map<String, Object> metaProperties = newCol.getMetaProperties()
+                Map<String, Object> metaProperties = newCol.metaProperties
                 for (Map.Entry<String, Object> entry : metaProperties.entrySet())
                 {
-                    col.setMetaProperty(entry.getKey(), entry.getValue())
+                    col.setMetaProperty(entry.key, entry.value)
                 }
             }
             else
@@ -903,8 +903,9 @@ class Axis
         for (Column column : tempCol)
         {
             existingColumns[column.id] = column
-            if (!column.isDefault()) {
-                ensureUnique(column.getValue())
+            if (!column.default)
+            {
+                ensureUnique(column.value)
                 indexColumn(column)
             }
         }
@@ -940,7 +941,7 @@ class Axis
                 {
                     throw new IllegalArgumentException("Columns to be added should have negative ID values.")
                 }
-                realColumn.setDisplayOrder(dispOrder++)
+                realColumn.displayOrder = dispOrder++
             }
         }
 
@@ -1141,7 +1142,7 @@ class Axis
         {
             if (!(value instanceof CommandCell))
             {
-                throw new IllegalArgumentException("Must only add CommandCell values to " + type + " axis '" + name + "' - attempted to add: " + value.getClass().getName())
+                throw new IllegalArgumentException("Must only add CommandCell values to " + type + " axis '" + name + "' - attempted to add: " + value.class.name)
             }
             return value
         }
@@ -1149,7 +1150,7 @@ class Axis
         {
             if (!(value instanceof Range))
             {
-                throw new IllegalArgumentException("Must only add Range values to " + type + " axis '" + name + "' - attempted to add: " + value.getClass().getName())
+                throw new IllegalArgumentException("Must only add Range values to " + type + " axis '" + name + "' - attempted to add: " + value.class.name)
             }
             return promoteRange(new Range(((Range)value).low, ((Range)value).high))
         }
@@ -1183,12 +1184,12 @@ class Axis
         else if (type == AxisType.NEAREST)
         {	// Standardizing a NEAREST axis entails ensuring conformity amongst values (must all be Point2D, LatLon, Date, Long, String, etc.)
             value = promoteValue(valueType, value)
-            if (!getColumnsWithoutDefault().isEmpty())
+            if (!columnsWithoutDefault.empty)
             {
                 Column col = (Column) idToCol.values().first()
-                if (value.getClass() != col.value.getClass())
+                if (value.class != col.value.class)
                 {
-                    throw new IllegalArgumentException("Value '" + value.getClass().getName() + "' cannot be added to axis '" + name + "' where the values are of type: " + col.getValue().getClass().getName())
+                    throw new IllegalArgumentException("Value '" + value.class.name + "' cannot be added to axis '" + name + "' where the values are of type: " + col.value.class.name)
                 }
             }
             return value	// First value added does not need to be checked
@@ -1209,7 +1210,7 @@ class Axis
     {
         final Comparable low = promoteValue(valueType, range.low)
         final Comparable high = promoteValue(valueType, range.high)
-        if (low.compareTo(high) > 0)
+        if (low > high)
         {
             range.low = high
             range.high = low
@@ -1326,7 +1327,7 @@ class Axis
     {
         if (StringUtilities.isEmpty(ruleName))
         {   // Since no rule name specified, all rule columns are returned to have their conditions evaluated.
-            return getColumns()
+            return columns
         }
 
         List<Column> cols = []
@@ -1335,7 +1336,7 @@ class Axis
         {   // A name was specified for a rule, but did not match any rule names and there is no default column.
             throw new CoordinateNotFoundException("Rule named '" + ruleName + "' matches no column names on the rule axis '" + name + "', and there is no default column.")
         }
-        else if (firstRule.isDefault())
+        else if (firstRule.default)
         {   // Matched no names, but there is a default column
             cols.add(defaultCol)
             return cols
@@ -1364,7 +1365,7 @@ class Axis
         {
             return StringUtilities.hasContent(column.columnName) ? column.columnName : column.id
         }
-        return column.getValueThatMatches()
+        return column.valueThatMatches
     }
 
     /**
@@ -1485,8 +1486,8 @@ class Axis
             Date low = entry1.key as Date
             Date high = entry2.key as Date
             Date value = promotedValue as Date
-            long delta1 = abs(value.getTime() - low.getTime())
-            long delta2 = abs(value.getTime() - high.getTime())
+            long delta1 = abs(value.time - low.time)
+            long delta2 = abs(value.time - high.time)
             if (delta1 <= delta2)
             {
                 return entry1.value
@@ -1498,9 +1499,9 @@ class Axis
             double min = Double.MAX_VALUE
             Column saveCol = null
 
-            for (Column column : getColumnsWithoutDefault())
+            for (Column column : columnsWithoutDefault)
             {
-                double d = Proximity.distance(promotedValue, column.getValue())
+                double d = Proximity.distance(promotedValue, column.value)
                 if (d < min)
                 {    // Record column that set's new minimum record
                     min = d
@@ -1575,7 +1576,7 @@ class Axis
     List<Column> getColumns()
     {
         // return 'view' of Columns that matches the desired order (sorted or display)
-        List<Column> cols = getColumnsWithoutDefault()
+        List<Column> cols = columnsWithoutDefault
         if (defaultCol != null)
         {   // Add in optional Default Column
             cols.add(defaultCol)
@@ -1641,11 +1642,11 @@ class Axis
         {
             return false
         }
-        if (defaultCol != null ? !defaultCol.equals(axis.defaultCol) : axis.defaultCol != null)
+        if (defaultCol != null ? defaultCol != axis.defaultCol : axis.defaultCol != null)
         {
             return false
         }
-        if (!name.equals(axis.name))
+        if (name != axis.name)
         {
             return false
         }
