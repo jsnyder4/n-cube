@@ -145,7 +145,7 @@ ORDER BY abs(revision_number) DESC""", 0, 1, { ResultSet row ->
 SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, cube_value_bin, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch
-ORDER BY version_no_cd DESC, revision_number DESC
+ORDER BY version_no_cd DESC, abs(revision_number) DESC
 """
         }
         else
@@ -821,14 +821,16 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
             String notes = 'rolled back, txId: [' + txId + ']'
 
             names.each { String cubeName ->
-                Long maxRev = getMaxRevision(c, appId, cubeName, 'rollbackCubes')
-                if (maxRev == null)
+                Long madMaxRev = getMaxRevision(c, appId, cubeName, 'rollbackCubes')
+                if (madMaxRev == null)
                 {
                     LOG.info('Attempt to rollback non-existing cube: ' + cubeName + ', app: ' + appId)
                 }
                 else
                 {
+                    long maxRev = madMaxRev
                     Long rollbackRev = findRollbackRevision(c, appId, cubeName)
+                    boolean rollbackStatusActive = getRollbackRevisionStatus(c, appId, cubeName)
                     boolean mustDelete = rollbackRev == null
                     map.cube = buildName(cubeName)
                     map.rev = mustDelete ? maxRev : rollbackRev
@@ -844,10 +846,9 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
                         byte[] testData = row.getBytes(TEST_DATA_BIN)
                         String sha1 = row.getString('sha1')
                         String headSha1 = row.getString('head_sha1')
-
-                        Long rev = Math.abs(maxRev as long) + 1L
-
+                        long nextRev = Math.abs(maxRev) + 1
                         long uniqueId = UniqueIdGenerator.uniqueId
+
                         ins.setLong(1, uniqueId)
                         ins.setString(2, appId.tenant)
                         ins.setString(3, appId.app)
@@ -855,7 +856,7 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
                         ins.setString(5, appId.status)
                         ins.setString(6, appId.branch)
                         ins.setString(7, cubeName)
-                        ins.setLong(8, mustDelete ? -rev : rev)
+                        ins.setLong(8, mustDelete || !rollbackStatusActive ? -nextRev : nextRev)
                         ins.setString(9, sha1)
                         ins.setString(10, headSha1)
                         Timestamp now = nowAsTimestamp()
@@ -886,6 +887,29 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
             ins?.close()
         }
         return count
+    }
+
+    private static boolean getRollbackRevisionStatus(Connection c, ApplicationID appId, String cubeName)
+    {
+        Sql sql = new Sql(c)
+        Map map = appId as Map
+        map.cube = buildName(cubeName)
+        map.tenant = padTenant(c, appId.tenant)
+        Long maxRev = null
+
+        sql.eachRow(map, """\
+/* rollbackCubes.findRollbackRevisionStatus */
+SELECT h.revision_number FROM
+(SELECT revision_number, head_sha1, create_dt FROM n_cube
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
+AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = head_sha1) b
+JOIN n_cube h ON h.sha1 = b.head_sha1
+WHERE h.app_cd = :app AND h.version_no_cd = :version AND h.status_cd = :status
+AND h.tenant_cd = :tenant AND h.branch_id = 'HEAD' AND h.create_dt < b.create_dt
+ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { ResultSet row ->
+            maxRev = row.getLong('revision_number')
+        });
+        return maxRev != null && maxRev >= 0
     }
 
     private static Long findRollbackRevision(Connection c, ApplicationID appId, String cubeName)

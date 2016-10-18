@@ -325,6 +325,45 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testRollbackBranchWithRestoredCube()
+    {
+        preloadCubes(branch1, "test.branch.1.json")
+        Object[] names = ['TestBranch'].toArray()
+        Map<String, Object> result = NCubeManager.commitBranch(branch1)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 1
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+
+        assertEquals(1, NCubeManager.search(head, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, NCubeManager.search(branch1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+
+        NCubeManager.deleteCubes(branch1, names)
+        assertNull(NCubeManager.getCube(branch1, 'TestBranch'))
+        result = NCubeManager.commitBranch(branch1)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 1
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+
+        NCubeManager.restoreCubes(branch1, names)
+        assertNotNull(NCubeManager.getCube(branch1, 'TestBranch'))
+
+        // undo restore
+        NCubeManager.rollbackCubes(branch1, names)
+        assertNull(NCubeManager.getCube(branch1, 'TestBranch'))
+
+        result = NCubeManager.commitBranch(branch1)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
     void testCommitBranchOnCreateThenDeleted() {
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
 
@@ -1901,8 +1940,8 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
 
-        assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
-        assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
+        assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
+        assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
         try
         {
@@ -2833,6 +2872,77 @@ class TestWithPreloadedDatabase
 
         dtos = NCubeManager.search(head, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(branchHeadSha1, dtos[0].sha1)
+    }
+
+    @Test
+    void testMergeDeltas()
+    {
+        preloadCubes(head, 'test.branch.1.json')
+        assertEquals(1, NCubeManager.copyBranch(head, branch1))
+
+        NCube headCube = NCubeManager.loadCube(head, 'TestBranch')
+        NCube cube = NCubeManager.loadCube(branch1, 'TestBranch')
+
+        // get original values from the cube
+        List<Column> columns = cube.getAxis('Code').columns
+        Object addedCell = cube.getCell([Code : 15])
+        Object deletedCell = cube.getCell([Code : -10])
+        Object defaultCellValue = cube.defaultCellValue
+        Map cubeMetaProps = cube.metaProperties
+        Map axisMetaProps = cube.getAxis('Code').metaProperties
+        Map colMetaProps = cube.getAxis('Code').getColumnById(1000000000003).metaProperties
+        Comparable colVal = cube.getAxis('Code').getColumnById(1000000000010).value
+
+        // make changes
+        cube.addColumn('Code', 20)
+        cube.deleteColumn('Code', -15)
+        cube.setCell('JKL', [Code : 15])
+        cube.removeCell([Code : -10])
+        cube.defaultCellValue = 'AAA'
+        cube.addMetaProperties([key : 'value'])
+        cube.getAxis('Code').addMetaProperties([key : 'value'])
+        cube.getAxis('Code').getColumnById(1000000000003).addMetaProperties([key : 'value'])
+        cube.getAxis('Code').getColumnById(1000000000010).value = 9
+
+        // save changes
+        NCubeManager.updateCube(branch1, cube)
+
+        // get our delta list, which should include all the changes we made
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
+        assertEquals(9, deltas.size())
+
+        // merge deltas, we should be back to our original cube
+        cube = NCubeManager.mergeDeltas(branch1, 'TestBranch', deltas)
+
+        // test our original values to make sure they are the same
+        assertEquals(columns.size(), cube.getAxis('Code').columns.size())
+        assertEquals(addedCell, cube.getCell([Code : 15]))
+        assertEquals(deletedCell, cube.getCell([Code : -10]))
+        assertEquals(defaultCellValue, cube.defaultCellValue)
+        assertEquals(cubeMetaProps.size(), cube.metaProperties.size())
+        assertEquals(axisMetaProps.size(), cube.getAxis('Code').metaProperties.size())
+        assertEquals(colMetaProps.size(), cube.getAxis('Code').getColumnById(1000000000003).metaProperties.size())
+        assertEquals(colVal, cube.getAxis('Code').getColumnById(1000000000010).value)
+
+        // test for add axis
+        cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false))
+        NCubeManager.updateCube(branch1, cube)
+        deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
+        assertEquals(1, deltas.size())
+        cube = NCubeManager.mergeDeltas(branch1, 'TestBranch', deltas)
+        assertNull(cube.getAxis('Axis'))
+
+        // test for delete axis
+        cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false))
+        NCubeManager.updateCube(branch1, cube)
+        NCubeManager.commitBranch(branch1)
+        headCube = NCubeManager.loadCube(head, 'TestBranch')
+        cube.deleteAxis('Axis')
+        NCubeManager.updateCube(branch1, cube)
+        deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
+        assertEquals(1, deltas.size())
+        cube = NCubeManager.mergeDeltas(branch1, 'TestBranch', deltas)
+        assertNotNull(cube.getAxis('Axis'))
     }
 
     @Test

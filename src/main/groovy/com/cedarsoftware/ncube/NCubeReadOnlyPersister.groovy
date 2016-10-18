@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
+import sun.security.provider.SHA
 
 /**
  * Class used to carry the NCube meta-information
@@ -25,22 +26,90 @@ import groovy.transform.CompileStatic
 @CompileStatic
 interface NCubeReadOnlyPersister
 {
-    // Load n-cube by ID (specific revision)
+    /**
+     * Load n-cube by ID (specific n-cube)
+     * @param id long id of n-cube to load
+     * @return NCube loaded from database
+     * @throws IllegalArgumentException if there is no n-cube with the given id.
+     */
     NCube loadCubeById(long id)
 
-    // Load n-cube by name (latest revision)
+    /**
+     * Load n-cube by name (latest revision)
+     * @param appId ApplicationID containing the n-cube
+     * @param name String name of the n-cube to load
+     */
     NCube loadCube(ApplicationID appId, String name)
 
-    // Load n-cube by SHA-1 (latest revision with that SHA-1)
+    /**
+     * Load n-cube by SHA-1 (latest revision with that SHA-1)
+     * @param appId ApplicationID containing the n-cube
+     * @param name String name of the n-cube to load
+     * @param sha1 String SHA-1 of the n-cube to load
+     */
     NCube loadCubeBySha1(ApplicationID appId, String name, String sha1)
 
+    /**
+     * Get all application names for the given tenant
+     * @param tenant String name of tenant
+     * @return List of all applications for the given tenant.  If none exist, an empty list
+     * is returned.
+     * @throws IllegalArgumentException if the tenant name is empty or null.
+     */
     List<String> getAppNames(String tenant)
+
+    /**
+     * Get all versions of an application (for a given tenant)
+     * @param tenant String tenant name
+     * @param app String application name
+     * @return Map with two (2) entries.  ['SNAPSHOT'] = List<String>, ['RELEASE'] = List<String>
+     *     The List is a list of String versions is in no specific order.
+     */
     Map<String, List<String>> getVersions(String tenant, String app)
 
+    /**
+     * Get the Revision History for a given cube (within the passed in ApplicationID).
+     * @param appId ApplicationID containing the n-cube
+     * @param cubeName String name of n-cube whose history will be returned
+     * @param ignoreVersion if true, then no filtering is done using the version and status field from the
+     * passed in ApplicationID, otherwise if false, then the version and status fields of the ApplicationID
+     * will be used to further refine the results.
+     * @return List of NCubeInfoDto's representing each n-cube record in the persisted storage.
+     * The ordering of the items in the list will have the highest revision number to lowest (in absolute value).
+     * The ordering of the versions is not specified.
+     */
     List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion)
+
+    /**
+     * Search the persisted storage for n-cube (NCubeInfoDto's) that match are within the passed in ApplicationID,
+     * and optionally match the supplied cube name pattern, and optionally further match (contain within) the
+     * searchValue, using the passed in options Map.
+     * @param appId ApplicationID containing the n-cube
+     * @param cubeNamePattern String name pattern to match ('*' matches any character, '?' matches a single character)
+     * and these can be used more than once.  null is allowed, which matches anything.  If a specific n-cube name is
+     * supplied and the caller's intention is match only one, make sure to passed in the SEARCH_EXACT_MATCH_NAME
+     * is set to true in the options Map.
+     * @param searchValue Optional String which will be 'contains' matched against the JSON format of the n-cube.  It
+     * may contain * and ? wildcard patterns.  This match is performed case-insensitively.
+     * @param options
+     * @return
+     */
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
 
+    /**
+     * Get the list of branches for the given ApplicationID
+     * @param appId ApplicationID containing the tenant, app, version, and status values.  The branch field of
+     * ApplicationID is ignored, and all branches are returned for the supplied tenant, app, version, and status.
+     * @return Set of String branch names
+     */
     Set<String> getBranches(ApplicationID appId)
 
+    /**
+     * Fetch the TEST data (in JSON format) for the named n-cube within the given ApplicationID.
+     * @param appId ApplicationID containing the n-cube
+     * @param cubeName String name of n-cube whose history will be returned
+     * @return String of JSON representing the tests for the given cube.
+     * @throws IllegalArgumentException if the passed in cubeName does not exist.
+     */
     String getTestData(ApplicationID appId, String cubeName)
 }

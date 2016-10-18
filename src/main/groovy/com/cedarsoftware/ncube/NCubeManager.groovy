@@ -877,18 +877,32 @@ class NCubeManager
                 {   // 1. The active/deleted statuses don't match, or
                     // 2. HEAD has different SHA1 but branch cube did not change, safe to update branch (fast forward)
                     // In both cases, the cube was marked NOT changed in the branch, so safe to update.
-                    head.changeType = headRev < 0 ? ChangeType.DELETED.code : ChangeType.RESTORED.code
+                    if (headRev < 0)
+                    {
+                        head.changeType = ChangeType.DELETED.code
+                    }
+                    else
+                    {
+                        head.changeType = ChangeType.RESTORED.code
+                    }
                     cubeDiffs.add(head)
                 }
             }
             else if (branchSha1MatchesHeadSha1)
             {   // If branch cube is 'changed' but has same SHA-1 as head cube (same change in branch as HEAD)
                 if (branchHeadSha1MatchesHeadSha1)
-                {   // no show
+                {   // no show - branch cube deleted or restored - will show on commit
                 }
                 else
                 {   // branch cube out of sync
-                    head.changeType = activeStatusMatches ? ChangeType.FASTFORWARD.code : ChangeType.CONFLICT.code
+                    if (activeStatusMatches)
+                    {
+                        head.changeType = ChangeType.FASTFORWARD.code
+                    }
+                    else
+                    {
+                        head.changeType = ChangeType.CONFLICT.code
+                    }
                     cubeDiffs.add(head)
                 }
             }
@@ -896,7 +910,10 @@ class NCubeManager
             {   // branch cube has content change
                 if (branchHeadSha1MatchesHeadSha1)
                 {   // head cube is still as it was when branch cube was created
-                    if (!activeStatusMatches)
+                    if (activeStatusMatches)
+                    {   // no show - in sync with head but branch cube has changed
+                    }
+                    else
                     {
                         head.changeType = ChangeType.CONFLICT.code
                         cubeDiffs.add(head)
@@ -1027,13 +1044,13 @@ class NCubeManager
         }
 
         clearCache(appId)
-        finalUpdates = pullToBranch(appId, txId, updates)
+        finalUpdates = persister.pullToBranch(appId, buildIdList(updates), getUserId(), txId)
         finalUpdates.addAll(merges)
         Map<String, Object> ret = [:]
-        ret[BRANCH_ADDS] = pullToBranch(appId, txId, adds)
-        ret[BRANCH_DELETES] = pullToBranch(appId, txId, deletes)
+        ret[BRANCH_ADDS] = persister.pullToBranch(appId, buildIdList(adds), getUserId(), txId)
+        ret[BRANCH_DELETES] = persister.pullToBranch(appId, buildIdList(deletes), getUserId(), txId)
         ret[BRANCH_UPDATES] = finalUpdates
-        ret[BRANCH_RESTORES] = pullToBranch(appId, txId, restores)
+        ret[BRANCH_RESTORES] = persister.pullToBranch(appId, buildIdList(restores), getUserId(), txId)
         ret[BRANCH_FASTFORWARDS] = fastforwards
         ret[BRANCH_REJECTS] = rejects
         return ret
@@ -1047,16 +1064,6 @@ class NCubeManager
             ids[i++] = dto.id
         }
         return ids
-    }
-
-    private static List<NCubeInfoDto> pullToBranch(ApplicationID appId, long txId, List<NCubeInfoDto> dtos)
-    {
-        return persister.pullToBranch(appId, buildIdList(dtos), getUserId(), txId)
-    }
-
-    private static List<NCubeInfoDto> commitCubes(ApplicationID appId, long txId, List<NCubeInfoDto> dtos)
-    {
-        return persister.commitCubes(appId, buildIdList(dtos), getUserId(), txId)
     }
 
     private static NCubeInfoDto getCubeInfo(ApplicationID appId, NCubeInfoDto dto)
@@ -1269,13 +1276,13 @@ class NCubeManager
         clearCache(appId)
         clearCache(appId.asHead())
 
-        finalUpdates = commitCubes(appId, txId, updates)
+        finalUpdates = persister.commitCubes(appId, buildIdList(updates), getUserId(), txId)
         finalUpdates.addAll(merges)
         Map<String, Object> ret = [:]
-        ret[BRANCH_ADDS] = commitCubes(appId, txId, adds)
-        ret[BRANCH_DELETES] = commitCubes(appId, txId, deletes)
+        ret[BRANCH_ADDS] = persister.commitCubes(appId, buildIdList(adds), getUserId(), txId)
+        ret[BRANCH_DELETES] = persister.commitCubes(appId, buildIdList(deletes), getUserId(), txId)
         ret[BRANCH_UPDATES] = finalUpdates
-        ret[BRANCH_RESTORES] = commitCubes(appId, txId, restores)
+        ret[BRANCH_RESTORES] = persister.commitCubes(appId, buildIdList(restores), getUserId(), txId)
         ret[BRANCH_REJECTS] = rejects
         return ret
     }
@@ -1327,6 +1334,100 @@ class NCubeManager
         {
             return branchCube
         }
+    }
+
+    /**
+     * Update a branch from the HEAD.  Changes from the HEAD are merged into the
+     * supplied branch.  If the merge cannot be done perfectly, an exception is
+     * thrown indicating the cubes that are in conflict.
+     */
+    static List<NCubeInfoDto> getBranchChangesForMyBranch(ApplicationID appId, String branch)
+    {
+        ApplicationID branchAppId = appId.asBranch(branch)
+        validateAppId(appId)
+        validateAppId(branchAppId)
+        appId.validateBranchIsNotHead()
+        appId.validateStatusIsNotRelease()
+        assertNotLockBlocked(appId)
+        assertPermissions(appId, null, ACTION.READ)
+        assertPermissions(branchAppId, null, ACTION.READ)
+
+        List<NCubeInfoDto> records = search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        if (records.empty)
+        {
+            return []
+        }
+        Map<String, NCubeInfoDto> branchRecordMap = new CaseInsensitiveMap<>()
+
+        for (NCubeInfoDto info : records)
+        {
+            branchRecordMap[info.name] = info
+        }
+
+        List<NCubeInfoDto> otherBranchRecords = search(branchAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> cubeDiffs = []
+
+        for (NCubeInfoDto otherBranchCube : otherBranchRecords)
+        {
+            otherBranchCube.branch = appId.branch  // using HEAD's DTO as return value, therefore setting the branch to the passed in AppId's branch
+            NCubeInfoDto info = branchRecordMap[otherBranchCube.name]
+            long otherBranchCubeRev = (long) Converter.convert(otherBranchCube.revision, long.class)
+
+            if (info == null)
+            {   // Other branch has cube that my branch does not have
+                if (otherBranchCubeRev >= 0)
+                {
+                    otherBranchCube.changeType = ChangeType.CREATED.code
+                    cubeDiffs.add(otherBranchCube)
+                }
+                else
+                {
+                    // Don't show a cube that is deleted in other's branch but I don't have.
+                }
+                continue
+            }
+
+            long infoRev = (long) Converter.convert(info.revision, long.class)
+            boolean activeStatusMatches = (infoRev < 0) == (otherBranchCubeRev < 0)
+            boolean myBranchSha1MatchesOtherBranchSha1 = StringUtilities.equalsIgnoreCase(info.sha1, otherBranchCube.sha1)
+
+            // No change on my branch cube
+            if (activeStatusMatches)
+            {
+                if (infoRev >= 0)
+                {
+                    if (!myBranchSha1MatchesOtherBranchSha1)
+                    {   // Cubes are different, test merge-ability
+                        otherBranchCube.changeType = ChangeType.UPDATED.code
+                        cubeDiffs.add(otherBranchCube)
+                    }
+                    else
+                    {
+                        // skip - the cubes are the same
+                    }
+                }
+                else
+                {
+                    // skip - you both have it deleted
+                }
+            }
+            else
+            {   // 1. The active/deleted statuses don't match, or
+                // 2. HEAD has different SHA1 but branch cube did not change, safe to update branch (fast forward)
+                // In both cases, the cube was marked NOT changed in the branch, so safe to update.
+                if (otherBranchCubeRev < 0)
+                {
+                    otherBranchCube.changeType = ChangeType.DELETED.code
+                }
+                else
+                {
+                    otherBranchCube.changeType = ChangeType.RESTORED.code
+                }
+                cubeDiffs.add(otherBranchCube)
+            }
+        }
+
+        return cubeDiffs
     }
 
     static NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
