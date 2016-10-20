@@ -2570,6 +2570,119 @@ class NCube<T>
     }
 
     /**
+     * Merge the passed in List of Delta's into this n-cube.
+     * @param deltas List of Delta instances.
+     */
+    void mergeDeltas(List<Delta> deltas)
+    {
+        for (Delta delta : deltas)
+        {
+            switch (delta.location)
+            {
+                case Delta.Location.NCUBE:
+                    switch (delta.locId)
+                    {
+                        case 'DEFAULT_CELL':
+                            CellInfo cellInfo = delta.sourceVal as CellInfo
+                            Object cellValue = cellInfo.isUrl ?
+                                    CellInfo.parseJsonValue(null, cellInfo.value, cellInfo.dataType, cellInfo.isCached) :
+                                    CellInfo.parseJsonValue(cellInfo.value, null, cellInfo.dataType, cellInfo.isCached)
+                            defaultCellValue = (T)cellValue
+                            break
+                    }
+                    break
+
+                case Delta.Location.NCUBE_META:
+                    String key = delta.sourceVal as String
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        setMetaProperty(key, delta.destVal)
+                    }
+                    break
+
+                case Delta.Location.AXIS:
+                    if (delta.destVal != null)
+                    {
+                        Axis axis = delta.destVal as Axis
+                        deleteAxis(axis.name)
+                    }
+                    if (delta.type != Delta.Type.ADD)
+                    {
+                        addAxis(delta.sourceVal as Axis)
+                    }
+                    break
+
+                case Delta.Location.AXIS_META:
+                    Axis axis = getAxis(delta.locId as String)
+                    String key = delta.sourceVal as String
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        axis.removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        axis.setMetaProperty(key, delta.destVal)
+                    }
+                    clearSha1()
+                    break
+
+                case Delta.Location.COLUMN:
+                    String axisName = delta.locId as String
+                    List<Column> columns = getAxis(axisName).columnsWithoutDefault
+                    switch (delta.type)
+                    {
+                        case Delta.Type.ADD:
+                            columns.remove(delta.destVal as Column)
+                            break
+                        case Delta.Type.DELETE:
+                            columns.add(delta.sourceVal as Column)
+                            break
+                        case Delta.Type.UPDATE:
+                            int prevIdx = columns.indexOf(delta.destVal as Column)
+                            columns.remove(prevIdx)
+                            columns.add(prevIdx, delta.sourceVal as Column)
+                            break
+                    }
+                    updateColumns(axisName, columns, true)
+                    break
+
+                case Delta.Location.COLUMN_META:
+                    String key = delta.sourceVal as String
+                    Map<String, Object> helperId = delta.locId as Map<String, Object>
+                    Axis axis = getAxis(helperId.axis as String)
+                    Column column = axis.findColumn(helperId.column as Comparable)
+                    if (delta.type == Delta.Type.ADD)
+                    {
+                        column.removeMetaProperty(key)
+                    }
+                    else
+                    {
+                        column.setMetaProperty(key, delta.destVal)
+                    }
+                    clearSha1()
+                    break
+
+                case Delta.Location.CELL:
+                    Set<Long> coords = delta.locId as Set<Long>
+                    removeCellById(coords)
+                    if (delta.type != Delta.Type.ADD)
+                    {
+                        setCellById((T)((CellInfo)delta.sourceVal).recreate(), coords)
+                    }
+                    break
+
+                case Delta.Location.CELL_META:
+                    // TODO - cell metaproperties not yet implemented
+                    break
+            }
+        }
+    }
+
+    /**
      * Fetch a 'display' coordinate from the passed in Set of IDs.  The returned coordinate
      * will have the String 'default column' for column ids that represent default columns.
      * If any of the columns have a name (like columns on a rule axis), the name will be

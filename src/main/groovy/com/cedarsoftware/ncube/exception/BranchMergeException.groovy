@@ -24,16 +24,16 @@ import groovy.transform.CompileStatic
 @CompileStatic
 public class BranchMergeException extends RuntimeException
 {
-    private final Map<String, Map> errors
+    private final Map<String, Object> errors
 
     // placeholder later for change log or something like that.
-    public BranchMergeException(String message, Map<String, Map> errors)
+    public BranchMergeException(String message, Map<String, Object> errors)
     {
         super(message)
         this.errors = errors
     }
 
-    public Map<String, Map> getErrors()
+    public Map<String, Object> getErrors()
     {
         return errors
     }

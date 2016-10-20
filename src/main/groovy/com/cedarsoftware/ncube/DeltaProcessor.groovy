@@ -578,8 +578,8 @@ class DeltaProcessor
         boolean axesChanged = false
         if (!a1.empty)
         {
-            String s = "Added axis: ${a1}"
             for (String axisName : a1) {
+                String s = "Added axis: ${axisName}"
                 changes.add(new Delta(Delta.Location.AXIS, Delta.Type.ADD, s, null, null, target.getAxis(axisName), oldAxes, newAxes))
             }
             axesChanged = true
@@ -589,8 +589,8 @@ class DeltaProcessor
         a2.removeAll(a1)
         if (!a2.empty)
         {
-            String s = "Removed axis: ${a2}"
             for (String axisName : a2) {
+                String s = "Removed axis: ${axisName}"
                 changes.add(new Delta(Delta.Location.AXIS, Delta.Type.DELETE, s, null, source.getAxis(axisName), null, oldAxes, newAxes))
             }
             axesChanged = true

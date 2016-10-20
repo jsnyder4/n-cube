@@ -1,4 +1,8 @@
 ### Revision History
+* 3.4.98
+ * Significant improvement to the version control APIs.  APIs exist for getting changes between a branch and HEAD, HEAD and branch, as well as branch to branch.
+ * Performance improvement: Permission checks are now performed more quickly (cached short-lived per user).
+ * 
 * 3.4.97
  * `CdnClassLoader` supports Grapes (dynamic class loader).  White-list of accepted domains must be specified (via `CdnClassLoader` constructor or environment variable `NCUBE_ACCEPTED_DOMAINS`).
  * When a cell is set to `null` (meaning it exists with 'key' for it, but the associated value is null), the JSON version of that looks like `{"type":"string", "value": null}` as opposed to an empty cell which is `{"type":null, "value":null}`

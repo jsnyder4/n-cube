@@ -456,14 +456,22 @@ class TestWithPreloadedDatabase
 
         Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
 
-        result = NCubeManager.updateBranch(branch1)
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
+
+        Map<String, Object> result = NCubeManager.updateBranch(branch1)
         assert result[NCubeManager.BRANCH_ADDS].size() == 0
         assert result[NCubeManager.BRANCH_DELETES].size() == 0
         assert result[NCubeManager.BRANCH_UPDATES].size() == 0
@@ -2323,12 +2331,19 @@ class TestWithPreloadedDatabase
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
     }
 
     @Test
@@ -2382,6 +2397,75 @@ class TestWithPreloadedDatabase
         assert dtos2.size() == 0    // Nothing for branch2 because cube matched HEAD already
     }
 
+    /***** tests for commit and update from our cube matrix *****/
+
+    @Test
+    void testCommitConsumerUpdateDeleteHeadUpdateMergable() {
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
+        NCubeManager.deleteBranch(branch1)
+
+        NCubeManager.copyBranch(head, branch1)
+        NCube cube1 = NCubeManager.loadCube(branch1, 'TestBranch')
+        cube1.setCell('AAA', [Code : 15])
+        NCubeManager.updateCube(branch1, cube1)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        NCubeManager.copyBranch(head, branch2)
+        NCube cube2 = NCubeManager.loadCube(branch2, 'TestBranch')
+        cube2.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, cube2)
+        NCubeManager.commitBranch(branch2)
+
+        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        assertEquals(1, dtos.size())
+
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateDeleteHeadUpdateMergable() {
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
+        NCubeManager.deleteBranch(branch1)
+
+        NCubeManager.copyBranch(head, branch1)
+        NCube cube1 = NCubeManager.loadCube(branch1, 'TestBranch')
+        cube1.setCell('AAA', [Code : 15])
+        NCubeManager.updateCube(branch1, cube1)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        NCubeManager.copyBranch(head, branch2)
+        NCube cube2 = NCubeManager.loadCube(branch2, 'TestBranch')
+        cube2.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, cube2)
+        NCubeManager.commitBranch(branch2)
+
+        List<NCubeInfoDto> dtos = NCubeManager.getHeadChangesForBranch(branch1)
+        assertEquals(1, dtos.size())
+
+        Map<String, Object> result = NCubeManager.updateBranch(branch1, dtos)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+    }
+
+    /***** End tests for commit and update from cube test matrix *****/
+
     @Test
     void testConflictOverwriteBranch() {
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
@@ -2414,12 +2498,19 @@ class TestWithPreloadedDatabase
         assert dtos2[0].changeType == ChangeType.CONFLICT.code
         assert dtos2[0].sha1 != cube.sha1()
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
 
         assertEquals(1, NCubeManager.mergeAcceptTheirs(branch1, ["TestBranch"].toArray(), [cube.sha1()].toArray()))
 
@@ -2473,12 +2564,19 @@ class TestWithPreloadedDatabase
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
 
         assertEquals(1, NCubeManager.mergeAcceptTheirs(branch1, ["TestBranch"] as Object[], cube.sha1()))
 
@@ -2540,14 +2638,20 @@ class TestWithPreloadedDatabase
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
 
-        cube = NCubeManager.getCube(branch1, "TestBranch")
         List<NCubeInfoDto> infos = NCubeManager.search(branch1, 'TestBranch', null, null)
         NCubeInfoDto infoDto = infos[0]
         assert infoDto.headSha1 == null
@@ -2609,12 +2713,19 @@ class TestWithPreloadedDatabase
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
 
         List<NCubeInfoDto> infos = NCubeManager.search(branch1, 'TestBranch', null, null)
         NCubeInfoDto infoDto = infos[0]
@@ -2744,12 +2855,20 @@ class TestWithPreloadedDatabase
         NCube cube2 = NCubeManager.getNCubeFromResource("merge3.json")
         cube2.name = 'merge2'
         NCubeManager.updateCube(branch2, cube2, true)
-        result = NCubeManager.commitBranch(branch2)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+
+        try
+        {
+            NCubeManager.commitBranch(branch2)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
     }
 
     @Test
@@ -2853,15 +2972,22 @@ class TestWithPreloadedDatabase
         assertEquals(1, dtos.size)
         String newSha1 = dtos[0].sha1;
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
 
-        NCubeInfoDto[] dto = (NCubeInfoDto[])NCubeManager.search(head, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
-        String sha1 = dto[0].sha1;
+        dtos = NCubeManager.search(head, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        String sha1 = dtos[0].sha1;
         assertNotEquals(sha1, newSha1)
 
         NCubeManager.mergeAcceptMine(branch1, "TestAge")
@@ -2877,7 +3003,9 @@ class TestWithPreloadedDatabase
     @Test
     void testMergeDeltas()
     {
-        preloadCubes(head, 'test.branch.1.json')
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.commitBranch(branch1)
+        NCubeManager.deleteBranch(branch1)
         assertEquals(1, NCubeManager.copyBranch(head, branch1))
 
         NCube headCube = NCubeManager.loadCube(head, 'TestBranch')
@@ -3095,12 +3223,19 @@ class TestWithPreloadedDatabase
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        try
+        {
+            NCubeManager.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
+            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
+            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+        }
     }
 
     @Test
@@ -3183,27 +3318,19 @@ class TestWithPreloadedDatabase
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
-        cube.removeCell([Code : -10])
-        assertEquals(2, cube.cellMap.size())
+        cube.setCell('AAA', [Code : 10])
+        assertEquals(3, cube.cellMap.size())
         NCubeManager.updateCube(branch1, cube, true)
 
         dtos = NCubeManager.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        try
-        {
-    NCubeManager.updateBranch(branch1)
-            // TODO: Need better assertion
-//            fail()
-        }
-        catch (BranchMergeException e)
-        {
-            assert e.message.toLowerCase().contains("conflict(s) updating branch")
-            assert e.errors.TestBranch.message.toLowerCase().contains('cube')
-            assert e.errors.TestBranch.message.toLowerCase().contains('changed in head')
-            assertEquals("5CA932980E050E97E09543F8B79BE08696E0A1A4", e.errors.TestBranch.sha1)
-            assertEquals("75EE6BA78989BD3563B9091FFF458E620FEAFDE8", e.errors.TestBranch.headSha1)
-        }
+        Map<String, Object> result = NCubeManager.updateBranch(branch1)
+        assert result[NCubeManager.BRANCH_ADDS].size() == 0
+        assert result[NCubeManager.BRANCH_DELETES].size() == 0
+        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
+        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
+        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
     }
 
     @Test
@@ -3800,7 +3927,7 @@ class TestWithPreloadedDatabase
     @Test
     void testGetReferenceAxes()
     {
-        NCube one = NCubeBuilder.getDiscrete1DAlt()
+        NCube one = NCubeBuilder.discrete1DAlt
         NCubeManager.updateCube(ApplicationID.testAppId, one, true)
         assert one.getAxis('state').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, one)
@@ -3827,10 +3954,10 @@ class TestWithPreloadedDatabase
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 2
+        assert reload.numCells == 2
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
-        assert reload.getAxis('stateSource').isReference()
+        assert reload.getAxis('stateSource').reference
         NCubeManager.updateCube(ApplicationID.testAppId, two, true)
 
         List<AxisRef> axisRefs = NCubeManager.getReferenceAxes(ApplicationID.testAppId)
@@ -3933,8 +4060,8 @@ class TestWithPreloadedDatabase
     @Test
     void testDynamicallyLoadedCode()
     {
-        System.getProperties().setProperty(CdnClassLoader.NCUBE_ACCEPTED_DOMAINS, 'org.apache.')
-        NCube ncube = NCubeBuilder.getDiscrete1DEmpty()
+        System.properties.setProperty(CdnClassLoader.NCUBE_ACCEPTED_DOMAINS, 'org.apache.')
+        NCube ncube = NCubeBuilder.discrete1DEmpty
         GroovyExpression exp = new GroovyExpression('''\
 import org.apache.commons.collections.primitives.*
 @Grab(group='commons-primitives', module='commons-primitives', version='1.0')
@@ -3948,7 +4075,7 @@ return ints''', null, false)
 
         def x = ncube.getCell([state: 'OH'])
 //        println x
-        assert 'org.apache.commons.collections.primitives.ArrayIntList' == x.getClass().getName()
+        assert 'org.apache.commons.collections.primitives.ArrayIntList' == x.class.name
     }
 
     /**

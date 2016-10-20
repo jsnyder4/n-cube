@@ -378,11 +378,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                            (METHOD_NAME) : 'restoreCubes'] as Map
             int count = 0
             long txId = UniqueIdGenerator.uniqueId
+            final String msg = 'restored, txId: [' + txId + ']'
+
             names.each { String cubeName ->
                 Long revision = null
                 runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
                     revision = row.getLong('revision_number')
-                    addBatchInsert(ins, row, appId, cubeName, Math.abs(revision as long) + 1, 'restored, txId: [' + txId + ']', username, ++count)
+                    addBatchInsert(ins, row, appId, cubeName, Math.abs(revision as long) + 1, msg, username, ++count)
                 })
 
                 if (revision == null)

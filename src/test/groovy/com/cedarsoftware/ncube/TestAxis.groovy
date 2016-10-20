@@ -3090,12 +3090,12 @@ class TestAxis
     {
         try
         {
-            axis.addColumn(range);
-            return true;
+            axis.addColumn(range)
+            return true
         }
         catch (AxisOverlapException e)
         {
-            return false;
+            return false
         }
     }
 }
