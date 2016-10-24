@@ -1917,7 +1917,7 @@ class NCube<T>
         String defType = jsonNCube.containsKey(DEFAULT_CELL_VALUE_TYPE) ? getString(jsonNCube, DEFAULT_CELL_VALUE_TYPE) : null
         String defUrl = jsonNCube.containsKey(DEFAULT_CELL_VALUE_URL) ? getString(jsonNCube, DEFAULT_CELL_VALUE_URL) : null
         boolean defCache = getBoolean(jsonNCube, DEFAULT_CELL_VALUE_CACHE)
-        ncube.defaultCellValue = CellInfo.parseJsonValue(jsonNCube[DEFAULT_CELL_VALUE], defUrl, defType, defCache)
+        ncube.setDefaultCellValue(CellInfo.parseJsonValue(jsonNCube[DEFAULT_CELL_VALUE], defUrl, defType, defCache))
 
         if (!jsonNCube.containsKey("axes"))
         {
@@ -2587,7 +2587,7 @@ class NCube<T>
                             Object cellValue = cellInfo.isUrl ?
                                     CellInfo.parseJsonValue(null, cellInfo.value, cellInfo.dataType, cellInfo.isCached) :
                                     CellInfo.parseJsonValue(cellInfo.value, null, cellInfo.dataType, cellInfo.isCached)
-                            defaultCellValue = (T)cellValue
+                            setDefaultCellValue((T)cellValue)
                             break
                     }
                     break

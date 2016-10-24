@@ -469,7 +469,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getBranchChangesForHead(defaultSnapshotApp.asHead())
+            VersionControl.getBranchChangesForHead(defaultSnapshotApp.asHead())
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
@@ -632,7 +632,7 @@ class TestNCubeManager
         Object[] cubeInfos = NCubeManager.search(defaultSnapshotApp, '*', null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertNotNull(cubeInfos)
         assertEquals(2, cubeInfos.length)
-        NCubeManager.commitBranch(defaultSnapshotApp, cubeInfos)
+        VersionControl.commitBranch(defaultSnapshotApp, cubeInfos)
 
         try
         {
@@ -1054,7 +1054,7 @@ class TestNCubeManager
         Object[] names = new Object[2]
         names[0] = "TestCube"
 
-        int x = NCubeManager.rollbackCubes(defaultSnapshotApp, names)
+        int x = VersionControl.rollbackCubes(defaultSnapshotApp, names)
         assert 0 == x
     }
 
@@ -1079,12 +1079,12 @@ class TestNCubeManager
         NCubeManager.updateCube(appId, cube4, true)
         String sha4 = cube4.sha1()
 
-        List<NCubeInfoDto> changes = NCubeManager.getBranchChangesForHead(appId)
+        List<NCubeInfoDto> changes = VersionControl.getBranchChangesForHead(appId)
         assert 4 == changes.size()
 
         Object[] cubes = [cube1.name, cube2.name, cube3.name, cube4.name].toArray()
-        assert 4 == NCubeManager.rollbackCubes(appId, cubes)
-        changes = NCubeManager.getBranchChangesForHead(appId)
+        assert 4 == VersionControl.rollbackCubes(appId, cubes)
+        changes = VersionControl.getBranchChangesForHead(appId)
         assert 0 == changes.size()  // Looks like we've got no cubes (4 deleted ones but 0 active)
 
         List<NCubeInfoDto> deleted = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_DELETED_RECORDS_ONLY): true])
@@ -1093,7 +1093,7 @@ class TestNCubeManager
         NCubeManager.restoreCubes(appId, cubes)
         assert 4 == NCubeManager.getCubeNames(appId).size()
 
-        changes = NCubeManager.getBranchChangesForHead(appId)
+        changes = VersionControl.getBranchChangesForHead(appId)
         assert 4 == changes.size()
 
         NCubeManager.loadCube(appId, cubes[0]).sha1() == sha1
@@ -1301,12 +1301,12 @@ class TestNCubeManager
         cube.addAxis(oddAxis)
 
         NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        Map<String, Object> result = NCubeManager.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, cube.name, null, null))
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, cube.name, null, null))
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
         NCubeManager.releaseVersion(defaultSnapshotApp, '2.0.0')
         List<NCubeInfoDto> fullHistory = NCubeManager.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
         assert fullHistory.size() == 1
@@ -1468,8 +1468,8 @@ class TestNCubeManager
         ApplicationID johnAppId = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'jdereg')
         NCube cube = NCubeManager.getNCubeFromResource(johnAppId, 'testCube6.json')
         NCubeManager.updateCube(johnAppId, cube, true)
-        List<NCubeInfoDto> cubes = NCubeManager.getBranchChangesForHead(johnAppId)
-        NCubeManager.commitBranch(johnAppId, cubes.toArray())
+        List<NCubeInfoDto> cubes = VersionControl.getBranchChangesForHead(johnAppId)
+        VersionControl.commitBranch(johnAppId, cubes.toArray())
         ApplicationID kenAppId  = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'ken')
         NCubeManager.copyBranch(kenAppId.asHead(), kenAppId)
 
@@ -1489,14 +1489,14 @@ class TestNCubeManager
         cube.setCell('foo', [gender:'male'])
         String kenSha1 = cube.sha1()
         NCubeManager.updateCube(kenAppId, cube, true)
-        cubes = NCubeManager.getBranchChangesForHead(kenAppId)
+        cubes = VersionControl.getBranchChangesForHead(kenAppId)
         assert cubes.size() == 1
-        Map <String, Object> result = NCubeManager.commitBranch(kenAppId, cubes)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map <String, Object> result = VersionControl.commitBranch(kenAppId, cubes)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
         NCube cubeHead = NCubeManager.loadCube(kenAppId.asHead(), 'TestCube')
         assert cubeHead.sha1() == cube.sha1()
 
@@ -1512,16 +1512,16 @@ class TestNCubeManager
         assert kenSha1 == johnCube.sha1()
 
         // Verify that before the Update Branch, we show one (1) branch change
-        cubes = NCubeManager.getBranchChangesForHead(johnAppId)
+        cubes = VersionControl.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 0
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(johnAppId)
+        List dtos2 = VersionControl.getHeadChangesForBranch(johnAppId)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestCube'
         assert dtos2[0].changeType == ChangeType.FASTFORWARD.code
 
         // Update john branch (no changes are shown - it auto-merged)
-        Map map = NCubeManager.updateBranch(johnAppId)
+        Map map = VersionControl.updateBranch(johnAppId)
         assert map.adds.size() == 0
         assert map.deletes.size() == 0
         assert map.updates.size() == 0
@@ -1529,7 +1529,7 @@ class TestNCubeManager
         assert map.fastforwards.size() == 1
         assert map.rejects.size() == 0
 
-        cubes = NCubeManager.getBranchChangesForHead(johnAppId)
+        cubes = VersionControl.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 0    // No changes being returned
 
         cubes = NCubeManager.search(johnAppId, null, null, null)
@@ -1566,7 +1566,7 @@ class TestNCubeManager
     @Test
     void testCopyBranchWhenReleaseVersionAlreadyExists()
     {
-        NCubeManager.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, null, null, null).toArray())
+        VersionControl.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, null, null, null).toArray())
         NCubeManager.releaseCubes(defaultSnapshotApp, '2.0.0')
         ApplicationID copyAppId = defaultSnapshotApp.asBranch('copy')
         try
@@ -1584,7 +1584,7 @@ class TestNCubeManager
         NCube cube = createCube()
         try
         {
-            NCubeManager.getPersister().loadCubeBySha1(cube.getApplicationID(), cube.name, "phonySha1")
+            NCubeManager.persister.loadCubeBySha1(cube.applicationID, cube.name, "phonySha1")
         }
         catch (IllegalArgumentException e)
         {
@@ -1597,7 +1597,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getPersister().updateBranchCubeHeadSha1(null, 'badSha1')
+            NCubeManager.persister.updateBranchCubeHeadSha1(null, 'badSha1')
         }
         catch (IllegalArgumentException e)
         {
@@ -1605,7 +1605,7 @@ class TestNCubeManager
         }
         try
         {
-            NCubeManager.getPersister().updateBranchCubeHeadSha1(75, '')
+            NCubeManager.persister.updateBranchCubeHeadSha1(75, '')
         }
         catch (IllegalArgumentException e)
         {
@@ -1614,7 +1614,7 @@ class TestNCubeManager
 
         try
         {
-            NCubeManager.getPersister().updateBranchCubeHeadSha1(75, 'phony')
+            NCubeManager.persister.updateBranchCubeHeadSha1(75, 'phony')
         }
         catch (IllegalArgumentException e)
         {
@@ -1846,21 +1846,21 @@ class TestNCubeManager
     void testSysPermissionsCreatedWithApp()
     {
         NCube sysPermCube = NCubeManager.loadCube(defaultBootApp, NCubeManager.SYS_PERMISSIONS)
-        assertEquals(3, sysPermCube.getAxes().size())
-        assertEquals(5, sysPermCube.getAxis(NCubeManager.AXIS_RESOURCE).getColumns().size())
-        assertEquals(3, sysPermCube.getAxis(NCubeManager.AXIS_ROLE).getColumns().size())
-        assertEquals(4, sysPermCube.getAxis(NCubeManager.AXIS_ACTION).getColumns().size())
+        assertEquals(3, sysPermCube.axes.size())
+        assertEquals(5, sysPermCube.getAxis(NCubeManager.AXIS_RESOURCE).columns.size())
+        assertEquals(3, sysPermCube.getAxis(NCubeManager.AXIS_ROLE).columns.size())
+        assertEquals(4, sysPermCube.getAxis(NCubeManager.AXIS_ACTION).columns.size())
     }
 
     @Test
     void testSysUsergroupsCreatedWithApp()
     {
         NCube sysUsergroupsCube = NCubeManager.loadCube(defaultBootApp, NCubeManager.SYS_USERGROUPS)
-        List<Column> userColumns = sysUsergroupsCube.getAxis(NCubeManager.AXIS_USER).getColumns()
-        assertEquals(2, sysUsergroupsCube.getAxes().size())
+        List<Column> userColumns = sysUsergroupsCube.getAxis(NCubeManager.AXIS_USER).columns
+        assertEquals(2, sysUsergroupsCube.axes.size())
         assertEquals(2, userColumns.size())
         assertEquals(NCubeManager.userId, userColumns.get(0).value)
-        assertEquals(3, sysUsergroupsCube.getAxis(NCubeManager.AXIS_ROLE).getColumns().size())
+        assertEquals(3, sysUsergroupsCube.getAxis(NCubeManager.AXIS_ROLE).columns.size())
     }
 
     @Test
@@ -1880,8 +1880,8 @@ class TestNCubeManager
 
         // commit sys lock to head
         Object[] cubeInfos = NCubeManager.search(branchBootAppId, NCubeManager.SYS_LOCK, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
-        Map<String, Object> commitResult = NCubeManager.commitBranch(branchBootAppId, cubeInfos)
-        assertEquals(1, commitResult[NCubeManager.BRANCH_UPDATES].size())
+        Map<String, Object> commitResult = VersionControl.commitBranch(branchBootAppId, cubeInfos)
+        assertEquals(1, commitResult[VersionControl.BRANCH_UPDATES].size())
 
         // make sure head took the lock
         sysLockCube = NCubeManager.loadCube(branchBootAppId, NCubeManager.SYS_LOCK)
@@ -1916,8 +1916,8 @@ class TestNCubeManager
         Axis resourceAxis = branchPermCube.getAxis(NCubeManager.AXIS_RESOURCE)
 
         assertFalse(branchPermCube.getDefaultCellValue())
-        assertEquals(2, userAxis.getColumns().size())
-        assertEquals(2, resourceAxis.getColumns().size())
+        assertEquals(2, userAxis.columns.size())
+        assertEquals(2, resourceAxis.columns.size())
         assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.userId, (NCubeManager.AXIS_RESOURCE):NCubeManager.SYS_BRANCH_PERMISSIONS]))
         assertTrue(branchPermCube.getCell([(NCubeManager.AXIS_USER):NCubeManager.userId, (NCubeManager.AXIS_RESOURCE):null]))
         assertFalse(branchPermCube.getCell([(NCubeManager.AXIS_USER):null, (NCubeManager.AXIS_RESOURCE):NCubeManager.SYS_BRANCH_PERMISSIONS]))
@@ -1958,7 +1958,7 @@ class TestNCubeManager
             fail()
         } catch (SecurityException e) {
             assertTrue(e.message.contains('not performed'))
-            assertTrue(e.message.contains(NCubeManager.ACTION.UPDATE.name()))
+            assertTrue(e.message.contains(Action.UPDATE.name()))
             assertTrue(e.message.contains(testCube.name))
         } finally {
             NCubeManager.setUserId(origUser)
@@ -2006,7 +2006,7 @@ class TestNCubeManager
         NCube userCube = NCubeManager.loadCube(defaultBootApp, NCubeManager.SYS_USERGROUPS)
         userCube.getAxis(NCubeManager.AXIS_USER).addColumn(otherUser)
         userCube.setCell(true, [(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_READONLY])
-        NCubeManager.getPersister().updateCube(defaultBootApp, userCube, NCubeManager.userId)
+        NCubeManager.persister.updateCube(defaultBootApp, userCube, NCubeManager.userId)
         assertFalse(userCube.getCell([(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_USER]))
         assertTrue(userCube.getCell([(NCubeManager.AXIS_USER):otherUser, (NCubeManager.AXIS_ROLE):NCubeManager.ROLE_READONLY]))
 
@@ -2026,7 +2026,7 @@ class TestNCubeManager
         catch (SecurityException e)
         {
             assertTrue(e.message.contains('not performed'))
-            assertTrue(e.message.contains(NCubeManager.ACTION.UPDATE.name()))
+            assertTrue(e.message.contains(Action.UPDATE.name()))
             assertTrue(e.message.contains(testCube.name))
         }
         finally

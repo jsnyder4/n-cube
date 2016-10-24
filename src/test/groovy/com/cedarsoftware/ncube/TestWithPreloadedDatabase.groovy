@@ -88,14 +88,16 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testToMakeSureOldStyleSysClasspathThrowsException() {
+    void testToMakeSureOldStyleSysClasspathThrowsException()
+	{
         preloadCubes(appId, "sys.classpath.old.style.json")
 
         // nothing in cache until we try and get the classloader or load a cube.
         assertEquals(0, NCubeManager.getCacheForApp(appId).size())
 
         //  url classloader has 1 item
-        try {
+        try
+		{
             Map input = [:]
             URLClassLoader loader = NCubeManager.getUrlClassLoader(appId, input)
         } catch (IllegalStateException e) {
@@ -106,7 +108,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testUrlClassLoader() {
+    void testUrlClassLoader()
+	{
         preloadCubes(appId, "sys.classpath.cp1.json")
 
         // nothing in cache until we try and get the classloader or load a cube.
@@ -185,23 +188,23 @@ class TestWithPreloadedDatabase
 
         NCubeManager.updateCube(branch1, cube, true)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assert dtos.size() == 1
 
         // verify no HEAD changes for branch
-        List<NCubeInfoDto> dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List<NCubeInfoDto> dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 0
         // end verify
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         // ensure that there are no more branch changes after create
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assert dtos.size() == 0
 
         ApplicationID headId = head
@@ -217,10 +220,10 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube1, true)
         NCubeManager.updateCube(branch2, cube2, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch2)
+        dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
     }
 
@@ -231,13 +234,13 @@ class TestWithPreloadedDatabase
 
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         assertTrue(NCubeManager.deleteBranch(branch1))
 
         // ensure that there are no more branch changes after delete
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
     }
 
@@ -247,19 +250,19 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         //  update didn't affect item added locally
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
     }
 
@@ -271,57 +274,57 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         Object[] names = [dtos[0].name]
-        NCubeManager.rollbackCubes(branch1, names)
+        VersionControl.rollbackCubes(branch1, names)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
     void testRollbackBranchWithDeletedCube()
     {
         preloadCubes(branch1, "test.branch.1.json")
-        Map<String, Object> result = NCubeManager.commitBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.search(head, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(1, NCubeManager.search(branch1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         Object[] names = [dtos.first().name]
         assertEquals(1, dtos.size())
 
-        List<NCubeInfoDto> dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List<NCubeInfoDto> dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 0
 
         // undo delete
-        NCubeManager.rollbackCubes(branch1, names)
+        VersionControl.rollbackCubes(branch1, names)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.size())
 
-        result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
@@ -329,56 +332,57 @@ class TestWithPreloadedDatabase
     {
         preloadCubes(branch1, "test.branch.1.json")
         Object[] names = ['TestBranch'].toArray()
-        Map<String, Object> result = NCubeManager.commitBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.search(head, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(1, NCubeManager.search(branch1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
         NCubeManager.deleteCubes(branch1, names)
         assertNull(NCubeManager.getCube(branch1, 'TestBranch'))
-        result = NCubeManager.commitBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         NCubeManager.restoreCubes(branch1, names)
         assertNotNull(NCubeManager.getCube(branch1, 'TestBranch'))
 
         // undo restore
-        NCubeManager.rollbackCubes(branch1, names)
+        VersionControl.rollbackCubes(branch1, names)
         assertNull(NCubeManager.getCube(branch1, 'TestBranch'))
 
-        result = NCubeManager.commitBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
-    void testCommitBranchOnCreateThenDeleted() {
+    void testCommitBranchOnCreateThenDeleted()
+	{
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
 
         NCubeManager.updateCube(branch1, cube, true)
         NCubeManager.deleteCubes(branch1, ['TestAge'].toArray())
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.size())
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         ApplicationID headId = head
         assertEquals(0, NCubeManager.search(headId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false]).size())
@@ -391,16 +395,16 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube, true)
         NCubeManager.deleteCubes(branch1, ['TestAge'],)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         ApplicationID headId = head
         assertEquals(0, NCubeManager.search(headId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false]).size())
@@ -410,74 +414,74 @@ class TestWithPreloadedDatabase
     void testUpdateBranchWhenSingleCubeWasDeletedinDifferentBranchAndNotChangedInOurBranch()
     {
         preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
+        VersionControl.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
 
         NCubeManager.copyBranch(head, branch2)
         NCubeManager.deleteCubes(branch2, ['TestBranch'])
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch2, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch2, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestBranch'
         assert Converter.convert(dtos2[0].revision, long.class) == -1
 
-        result = NCubeManager.updateBranch(branch1)
+        result = VersionControl.updateBranch(branch1)
 
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        List deletes = result[NCubeManager.BRANCH_DELETES]
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        List deletes = result[VersionControl.BRANCH_DELETES]
         assert deletes.size() == 1
         NCubeInfoDto dto = deletes[0]
         assert dto.name == 'TestBranch'
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
     void testUpdateBranchWhenCubeWasDeletedInDifferentBranchAndDeletedInOurBranch()
     {
         preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1, null)
+        VersionControl.commitBranch(branch1, null)
 
         NCubeManager.copyBranch(head, branch2)
         NCubeManager.deleteCubes(branch2, ['TestBranch'])
         NCubeManager.deleteCubes(branch1, ['TestBranch'])
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
@@ -554,15 +558,15 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(head, "TestAge"))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size())
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -615,23 +619,23 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
-        NCubeManager.commitBranch(branch1, dtos)
+        VersionControl.commitBranch(branch1, dtos)
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch2)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        List<NCubeInfoDto> adds = result[NCubeManager.BRANCH_ADDS]
+        Map<String, Object> result = VersionControl.updateBranch(branch2)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        List<NCubeInfoDto> adds = result[VersionControl.BRANCH_ADDS]
         assert adds[0].name == 'TestAge'
 
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        List<NCubeInfoDto> updates = result[NCubeManager.BRANCH_UPDATES]
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        List<NCubeInfoDto> updates = result[VersionControl.BRANCH_UPDATES]
         assert updates[0].name == 'TestBranch'
 
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -654,7 +658,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testCommitBranchOnUpdate() {
+    void testCommitBranchOnUpdate()
+	{
 
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
@@ -718,15 +723,15 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -769,7 +774,7 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
         NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2")
@@ -777,15 +782,15 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch2"))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
@@ -793,22 +798,23 @@ class TestWithPreloadedDatabase
         // No changes have happened yet, even though sha1 is incorrect,
         // we just copy the sha1 when we create the branch so the headsha1 won't
         // differ until we make a change.
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
-        result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
     }
 
     @Test
-    void testCommitBranchWithUpdateAndWrongRevisionNumber() {
+    void testCommitBranchWithUpdateAndWrongRevisionNumber()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -833,16 +839,16 @@ class TestWithPreloadedDatabase
         assertTrue(NCubeManager.updateCube(branch1, cube, true))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         ((NCubeInfoDto)dtos[0]).revision = Long.toString(100)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
 
@@ -916,19 +922,20 @@ class TestWithPreloadedDatabase
         assertEquals(5, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         dtos[0] = dtos[0].name
-        assertEquals(1, NCubeManager.rollbackCubes(branch1, dtos))
+        assertEquals(1, VersionControl.rollbackCubes(branch1, dtos))
 
         assertEquals(6, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
     }
 
     @Test
-    void testCommitBranchOnDelete() {
+    void testCommitBranchOnDelete()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -983,15 +990,15 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch though only TestBranch has changed.
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size())
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -1004,7 +1011,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testSearch() {
+    void testSearch()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json", "TestCubeLevelDefault.json", "basicJumpStart.json")
         testValuesOnBranch(head)
@@ -1014,25 +1022,25 @@ class TestWithPreloadedDatabase
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
         NCubeManager.deleteCubes(branch1, ['TestAge'].toArray())
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.size())
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 2
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 2
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch1, cube, true)
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size())
-        result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         // test with default options
         assertEquals(4, NCubeManager.search(head, null, null, null).size())
@@ -1089,7 +1097,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testSearchAdvanced() {
+    void testSearchAdvanced()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json", "basicJumpStart.json", "expressionAxis.json")
         testValuesOnBranch(head)
@@ -1198,7 +1207,7 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  loads in both TestAge and TestBranch though only TestBranch has changed.
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -1206,13 +1215,13 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -1224,19 +1233,21 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testCreateBranchThatAlreadyExists() {
+    void testCreateBranchThatAlreadyExists()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
         //1) should work
         NCubeManager.copyBranch(head, branch1)
 
-        try {
+        try
+		{
             //2) should already be created.
             NCubeManager.copyBranch(head, branch1)
             fail()
         } catch (IllegalStateException e) {
-            assertTrue(e.getMessage().contains("already exists"))
+            assertTrue(e.message.contains("already exists"))
         }
     }
 
@@ -1291,7 +1302,8 @@ class TestWithPreloadedDatabase
 
 
     @Test
-    void testDuplicateCubeChanges() {
+    void testDuplicateCubeChanges()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1317,7 +1329,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testDuplicateCubeGoingToDifferentApp() {
+    void testDuplicateCubeGoingToDifferentApp()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1344,7 +1357,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testDuplicateCubeOnDeletedCube() {
+    void testDuplicateCubeOnDeletedCube()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json")
 
@@ -1364,7 +1378,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testRenameCubeOnDeletedCube() {
+    void testRenameCubeOnDeletedCube()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json")
 
@@ -1384,7 +1399,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testDuplicateWhenCubeWithNameAlreadyExists() {
+    void testDuplicateWhenCubeWithNameAlreadyExists()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1427,7 +1443,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testRenameCubeWithHeadHavingCubeAAndCubeBDeleted() {
+    void testRenameCubeWithHeadHavingCubeAAndCubeBDeleted()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1449,15 +1466,15 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 2
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 2
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNull(NCubeManager.getCube(head, "TestBranch"))
         assertNull(NCubeManager.getCube(head, "TestAge"))
@@ -1476,16 +1493,16 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNotNull(NCubeManager.getCube(branch1, "TestAge"))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         assertEquals('TestAge', dtos[0].name)
 
-        result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNull(NCubeManager.getCube(head, "TestBranch"))
         assertNotNull(NCubeManager.getCube(head, "TestAge"))
@@ -1495,15 +1512,15 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestAge"))
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 1
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     @Test
@@ -1523,7 +1540,7 @@ class TestWithPreloadedDatabase
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
@@ -1533,15 +1550,15 @@ class TestWithPreloadedDatabase
         assertNotNull(NCubeManager.getCube(branch1, "TestAge"))
 
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 2
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 2
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNull(NCubeManager.getCube(head, "TestBranch"))
         assertNotNull(NCubeManager.getCube(head, "TestBranch2"))
@@ -1561,14 +1578,14 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
-        result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch2").size())
@@ -1577,7 +1594,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testRenameCubeWhenNewNameAlreadyExistsButIsInactive() {
+    void testRenameCubeWhenNewNameAlreadyExistsButIsInactive()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1605,7 +1623,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testDuplicateCubeWhenNewNameAlreadyExistsButIsInactive() {
+    void testDuplicateCubeWhenNewNameAlreadyExistsButIsInactive()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1650,16 +1669,16 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(2, VersionControl.getBranchChangesForHead(branch1).size())
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch2", "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
-        assertEquals(0, NCubeManager.rollbackCubes(branch1, dtos))
+        assertEquals(0, VersionControl.rollbackCubes(branch1, dtos))
 
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
@@ -1685,14 +1704,14 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(2, VersionControl.getBranchChangesForHead(branch1).size())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         dtos[0] = dtos[0].name
         dtos[1] = dtos[1].name
         assertEquals(2, dtos.length)
 
-        assertEquals(2, NCubeManager.rollbackCubes(branch1, dtos))
+        assertEquals(2, VersionControl.rollbackCubes(branch1, dtos))
 
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
@@ -1720,15 +1739,15 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNull(NCubeManager.getCube(head, "TestBranch"))
         assertNotNull(NCubeManager.getCube(head, "TestBranch2"))
@@ -1742,15 +1761,15 @@ class TestWithPreloadedDatabase
 
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
 
         assertEquals(2, dtos.length)
-        result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 1
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNull(NCubeManager.getCube(head, "TestBranch2"))
         assertNotNull(NCubeManager.getCube(head, "TestBranch"))
@@ -1782,7 +1801,7 @@ class TestWithPreloadedDatabase
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch, "*").size())
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch)
         assertEquals(2, dtos.length)
 
         assertTrue(NCubeManager.renameCube(branch, "TestBranch2", "TestBranch"))
@@ -1793,17 +1812,17 @@ class TestWithPreloadedDatabase
 
         assertEquals(2, NCubeManager.getRevisionHistory(branch, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesForHead(branch)
+        dtos = VersionControl.getBranchChangesForHead(branch)
         assertEquals(0, dtos.length)
 
         //  techniacally don't have to do this since there aren't any changes,
         //  but we should verify we work with 0 dtos passed in, too.  :)
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNotNull(NCubeManager.getCube(branch, "TestBranch"))
         assertNull(NCubeManager.getCube(branch, "TestBranch2"))
@@ -1822,18 +1841,18 @@ class TestWithPreloadedDatabase
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
         assertNull(NCubeManager.getCube(branch1, "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, "*").size())
-        assertEquals(2, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(2, VersionControl.getBranchChangesForHead(branch1).size())
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch2", "TestBranch"))
         assertEquals(2, NCubeManager.getRevisionHistory(branch1, "TestBranch2").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
         assertNotNull(NCubeManager.getCube(branch1, "TestBranch"))
@@ -1841,12 +1860,12 @@ class TestWithPreloadedDatabase
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
 
         assertNull(NCubeManager.getCube(branch1, "TestBranch2"))
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 2
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 2
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNotNull(NCubeManager.getCube(head, "TestBranch"))
         assertNotNull(NCubeManager.getCube(head, "TestBranch"))
@@ -1855,7 +1874,8 @@ class TestWithPreloadedDatabase
 
 
     @Test
-    void testRenameCubeBasicCase() {
+    void testRenameCubeBasicCase()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1873,15 +1893,15 @@ class TestWithPreloadedDatabase
 
         testValuesOnBranch(head)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertNotNull(NCubeManager.getCube(head, "TestBranch2"))
         assertNotNull(NCubeManager.getCube(head, "TestAge"))
@@ -1895,7 +1915,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testRenameCubeBasicCaseWithNoHead() {
+    void testRenameCubeBasicCaseWithNoHead()
+	{
         // load cube with same name, but different structure in TEST branch
         NCube cube1 = NCubeManager.getNCubeFromResource("test.branch.1.json")
         NCube cube2 = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
@@ -1904,20 +1925,20 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch1, cube2, true)
         testValuesOnBranch(branch1)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.size())
 
         assertTrue(NCubeManager.renameCube(branch1, "TestBranch", "TestBranch2"))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.size())
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 2
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 2
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         //  Test with new name.
         NCube cube = NCubeManager.getCube(branch1, "TestBranch2")
@@ -1934,7 +1955,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testRenameCubeFunctionality() {
+    void testRenameCubeFunctionality()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -1987,17 +2009,17 @@ class TestWithPreloadedDatabase
         } catch (IllegalArgumentException ignore) { }
 
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         dtos[0] = dtos[0].name
         dtos[1] = dtos[1].name
         assertEquals(2, dtos.length)
 
-        assertEquals(2, NCubeManager.rollbackCubes(branch1, dtos))
+        assertEquals(2, VersionControl.rollbackCubes(branch1, dtos))
 
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(1, getDeletedCubesFromDatabase(branch1, null).size())
 
-        assertEquals(0, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(0, VersionControl.getBranchChangesForHead(branch1).size())
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -2032,15 +2054,15 @@ class TestWithPreloadedDatabase
             fail()
         } catch (IllegalArgumentException ignore) { }
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(2, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 1
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -2073,13 +2095,15 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(head, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
         }
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(branch1, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
@@ -2105,29 +2129,31 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(branch1, "TestBranch").size())
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(head, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
         }
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(branch2, "TestBranch")
             fail()
         } catch (IllegalArgumentException ignore) {
         }
 
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         dtos[0] = dtos[0].name
         assertEquals(1, dtos.length)
 
-        assertEquals(1, NCubeManager.rollbackCubes(branch2, dtos))
+        assertEquals(1, VersionControl.rollbackCubes(branch2, dtos))
 
         assertEquals(0, getDeletedCubesFromDatabase(head, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(branch1, null).size())
 
-        assertEquals(0, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(0, VersionControl.getBranchChangesForHead(branch1).size())
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -2135,13 +2161,15 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(head, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
         }
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(branch1, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
@@ -2163,21 +2191,22 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getRevisionHistory(branch2, "TestAge").size())
         assertEquals(3, NCubeManager.getRevisionHistory(branch2, "TestBranch2").size())
 
-        try {
+        try
+		{
             NCubeManager.getRevisionHistory(head, "TestBranch2")
             fail()
         } catch (IllegalArgumentException ignore) {
         }
 
-        dtos = NCubeManager.getBranchChangesForHead(branch2)
+        dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch2, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch2, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestBranch").size())
@@ -2305,7 +2334,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testCommitBranchWithItemCreatedLocallyAndOnHead() {
+    void testCommitBranchWithItemCreatedLocallyAndOnHead()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json")
 
@@ -2316,38 +2346,39 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         // Commit to branch 2 causes 1 pending update for branch1
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestAge'
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
     }
 
     @Test
-    void testCommitWithCubeChangedButMatchesHead() {
+    void testCommitWithCubeChangedButMatchesHead()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json")
 
@@ -2375,105 +2406,2168 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch2)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch2)
         assert dtos2.size() == 0    // Nothing for branch2 because cube matched HEAD already
     }
 
     /***** tests for commit and update from our cube matrix *****/
 
     @Test
-    void testCommitConsumerUpdateDeleteHeadUpdateMergable() {
-        preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
-        NCubeManager.deleteBranch(branch1)
-
+    void testCommitConsumerNoCubeHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
         NCubeManager.copyBranch(head, branch1)
-        NCube cube1 = NCubeManager.loadCube(branch1, 'TestBranch')
-        cube1.setCell('AAA', [Code : 15])
-        NCubeManager.updateCube(branch1, cube1)
-        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
 
-        NCubeManager.copyBranch(head, branch2)
-        NCube cube2 = NCubeManager.loadCube(branch2, 'TestBranch')
-        cube2.setCell('AAA', [Code : -15])
-        NCubeManager.updateCube(branch2, cube2)
-        NCubeManager.commitBranch(branch2)
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch1)
-        assertEquals(1, dtos.size())
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoCubeHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerNoCubeHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoCubeHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerNoCubeHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoCubeHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadNoChange()
+	{
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadNoChange()
+	{
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
         }
     }
 
     @Test
-    void testUpdateConsumerUpdateDeleteHeadUpdateMergable() {
-        preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
-        NCubeManager.deleteBranch(branch1)
+    void testUpdateConsumerAddHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
 
+        preloadCubes(branch1, "test.branch.1.json")
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerAddHeadUpdateMergeable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadUpdateMergeable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerAddHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerAddHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerNoChangeHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
         NCubeManager.copyBranch(head, branch1)
-        NCube cube1 = NCubeManager.loadCube(branch1, 'TestBranch')
-        cube1.setCell('AAA', [Code : 15])
-        NCubeManager.updateCube(branch1, cube1)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoChangeHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerNoChangeHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoChangeHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 1
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerNoChangeHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoChangeHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerNoChangeHeadUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerNoChangeHeadUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadUpdateMergeable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadUpdateMergeable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
         NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
 
-        NCubeManager.copyBranch(head, branch2)
-        NCube cube2 = NCubeManager.loadCube(branch2, 'TestBranch')
-        cube2.setCell('AAA', [Code : -15])
-        NCubeManager.updateCube(branch2, cube2)
-        NCubeManager.commitBranch(branch2)
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
 
-        List<NCubeInfoDto> dtos = NCubeManager.getHeadChangesForBranch(branch1)
+    @Test
+    void testUpdateConsumerDeleteHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerDeleteHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerDeleteHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 1
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerDeleteHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerDeleteHeadUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerDeleteHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerDeleteHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerUpdateDeleteHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateDeleteHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateDeleteHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateDeleteHeadUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateDeleteHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateDeleteHeadUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerUpdateDeleteHeadUpdateMergable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerUpdateDeleteHeadUpdateMergable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadNoChange()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadAdd()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadRestore()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadRestoreUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadRestoreUpdate()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerRestoreHeadAddDelete()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerRestoreUpdateHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerRestoreUpdateHeadAddConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+        NCubeManager.deleteCubes(branch1, ['TestBranch'].toArray())
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerRestoreUpdateHeadRestoreUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreUpdateHeadRestoreUpdateSame()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 1
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitConsumerRestoreUpdateHeadRestoreUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testUpdateConsumerRestoreUpdateHeadRestoreUpdateConflict()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+    }
+
+    @Test
+    void testCommitConsumerRestoreUpdateHeadRestoreUpdateMergable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerRestoreUpdateHeadRestoreUpdateMergable()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        NCubeManager.restoreCubes(branch1, ['TestBranch'].toArray())
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testCommitWithReject()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size())
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        consumerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        try
+        {
+            VersionControl.commitBranch(branch1, dtos)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
+    @Test
+    void testMergeBetweenBranchesAddEmptyBranchCase()
+    {
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 1
+        NCubeInfoDto dto = dtos[0]
+        assert dto.name == 'TestAge'
+    }
+
+    @Test
+    void testMergeBetweenBranchesAddToEstablishedBranch()
+    {
+        preloadCubes(branch2, "test.branch.age.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1, true)
+        preloadCubes(branch2, "test.branch.2.json")
+
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 1
+        NCubeInfoDto dto = dtos[0]
+        assert dto.name == 'TestBranch'
+    }
+
+    @Test
+    void testMergeBetweenBranchesUpdate()
+    {
+        preloadCubes(branch2, "test.branch.1.json")
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        preloadCubes(branch1, "test.branch.1.json")
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 1
+        NCubeInfoDto dto = dtos[0]
+        assert dto.notes.contains('updated')
+    }
+
+    @Test
+    void testMergeBetweenBranchesDelete()
+    {
+        preloadCubes(branch2, "test.branch.1.json", 'test.branch.age.1.json')
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1, true)
+        NCubeManager.deleteCubes(branch2, ['TestBranch'])
+
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 1
+        NCubeInfoDto dto = dtos[0]
+        assert dto.name == 'TestBranch'
+        assert dto.notes.contains('deleted')
+    }
+
+    @Test
+    void testMergeBetweenBranchesRestore()
+    {
+        // Both branches have two n-cubes
+        preloadCubes(branch2, "test.branch.1.json", 'test.branch.age.1.json')
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1, true)
+
+        // 'TestBranch' deleted from both branches
+        NCubeManager.deleteCubes(branch2, ['TestBranch'].toArray())
+        VersionControl.commitBranch(branch2)
+        VersionControl.updateBranch(branch1)
+
+        // 'TestBranch' restored in branch2
+        NCubeManager.restoreCubes(branch2, ['TestBranch'].toArray())
+
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 1
+        NCubeInfoDto dto = dtos[0]
+        assert dto.name == 'TestBranch'
+        assert dto.notes.contains('restored')
+    }
+
+    @Test
+    void testMergeBetweenBranchesNoCubesInYoBranch()
+    {
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForMyBranch(branch1, 'BAR')
+        assert dtos.size() == 0
+    }
+
+    @Test
+    void testUpdateWithReject()
+	{
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        List<NCubeInfoDto> dtos = VersionControl.getHeadChangesForBranch(branch1)
+        assertEquals(1, dtos.size())
+
+        producerCube.setCell('BBB', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        Map<String, Object> result = VersionControl.updateBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
+
+        dtos = VersionControl.getHeadChangesForBranch(branch1)
+        assertEquals(1, dtos.size())
+
+        result = VersionControl.updateBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
     }
 
     /***** End tests for commit and update from cube test matrix *****/
 
     @Test
-    void testConflictOverwriteBranch() {
+    void testConflictOverwriteBranch()
+	{
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
-        NCubeManager.commitBranch(branch2, dtos)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
@@ -2490,29 +4584,29 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2[0].name == 'TestBranch'
         assert dtos2[0].changeType == ChangeType.CONFLICT.code
         assert dtos2[0].sha1 != cube.sha1()
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
-        assertEquals(1, NCubeManager.mergeAcceptTheirs(branch1, ["TestBranch"].toArray(), [cube.sha1()].toArray()))
+        assertEquals(1, VersionControl.mergeAcceptTheirs(branch1, ["TestBranch"].toArray(), [cube.sha1()].toArray()))
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -2535,10 +4629,10 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(branch2, cube, true)
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
-        NCubeManager.commitBranch(branch2, dtos)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
+        VersionControl.commitBranch(branch2, dtos)
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestBranch'
         assert dtos2[0].sha1 == dtos[0].sha1
@@ -2561,24 +4655,24 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
-        assertEquals(1, NCubeManager.mergeAcceptTheirs(branch1, ["TestBranch"] as Object[], cube.sha1()))
+        assertEquals(1, VersionControl.mergeAcceptTheirs(branch1, ["TestBranch"] as Object[], cube.sha1()))
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -2597,19 +4691,19 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch2)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(0, dtos.size())
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch2, dtos.toArray())
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch2, dtos.toArray())
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
-        List dtos2 = NCubeManager.getHeadChangesForBranch(branch1)
+        List dtos2 = VersionControl.getHeadChangesForBranch(branch1)
         assert dtos2.size() == 0
-        dtos2 = NCubeManager.getHeadChangesForBranch(branch2)
+        dtos2 = VersionControl.getHeadChangesForBranch(branch2)
         assert dtos2.size() == 1
         assert dtos2.first().changeType == ChangeType.FASTFORWARD.code
     }
@@ -2620,8 +4714,8 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
-        NCubeManager.commitBranch(branch2, dtos)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
         cube = NCubeManager.getCube(branch2, "TestBranch")
@@ -2635,21 +4729,21 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
         List<NCubeInfoDto> infos = NCubeManager.search(branch1, 'TestBranch', null, null)
@@ -2664,7 +4758,7 @@ class TestWithPreloadedDatabase
         String saveHeadSha1 = infoDto.sha1
         assert saveHeadSha1 != null
 
-        assertEquals(1, NCubeManager.mergeAcceptMine(branch1, "TestBranch"))
+        assertEquals(1, VersionControl.mergeAcceptMine(branch1, "TestBranch"))
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -2693,8 +4787,8 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
-        NCubeManager.commitBranch(branch2, dtos)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
 
@@ -2710,21 +4804,21 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
         List<NCubeInfoDto> infos = NCubeManager.search(branch1, 'TestBranch', null, null)
@@ -2738,7 +4832,7 @@ class TestWithPreloadedDatabase
         String saveHeadSha1 = infoDto.sha1
         assert saveHeadSha1 != null
 
-        assertEquals(1, NCubeManager.mergeAcceptMine(branch1, "TestBranch"))
+        assertEquals(1, VersionControl.mergeAcceptMine(branch1, "TestBranch"))
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -2762,7 +4856,7 @@ class TestWithPreloadedDatabase
     {
         try
         {
-    NCubeManager.mergeAcceptMine(appId, "TestBranch")
+            VersionControl.mergeAcceptMine(appId, "TestBranch")
             fail()
         }
         catch (IllegalStateException e)
@@ -2777,7 +4871,7 @@ class TestWithPreloadedDatabase
         try
         {
             preloadCubes(branch1, "test.branch.1.json")
-    NCubeManager.mergeAcceptMine(appId, "TestBranch")
+            VersionControl.mergeAcceptMine(appId, "TestBranch")
             fail()
         }
         catch (IllegalStateException e)
@@ -2789,8 +4883,9 @@ class TestWithPreloadedDatabase
     @Test
     void testOverwriteBranchCubeWhenBranchDoesNotExist()
     {
-        try {
-    NCubeManager.mergeAcceptTheirs(appId, ["TestBranch"] as Object[], "foo")
+        try
+		{
+            VersionControl.mergeAcceptTheirs(appId, ["TestBranch"] as Object[], "foo")
             fail()
         }
         catch (IllegalStateException e)
@@ -2803,9 +4898,10 @@ class TestWithPreloadedDatabase
     @Test
     void testOverwriteBranchCubeWhenHEADDoesNotExist()
     {
-        try {
+        try
+		{
             preloadCubes(branch1, "test.branch.1.json")
-    NCubeManager.mergeAcceptTheirs(appId, ["TestBranch"] as Object[], "foo")
+            VersionControl.mergeAcceptTheirs(appId, ["TestBranch"] as Object[], "foo")
             fail()
         }
         catch (IllegalStateException e)
@@ -2845,12 +4941,12 @@ class TestWithPreloadedDatabase
         NCube cube1 = NCubeManager.getNCubeFromResource("merge1.json")
         cube1.name = 'merge2'
         NCubeManager.updateCube(branch1, cube1, true)
-        Map<String, Object> result = NCubeManager.commitBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         NCube cube2 = NCubeManager.getNCubeFromResource("merge3.json")
         cube2.name = 'merge2'
@@ -2858,16 +4954,16 @@ class TestWithPreloadedDatabase
 
         try
         {
-            NCubeManager.commitBranch(branch2)
+            VersionControl.commitBranch(branch2)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
     }
 
@@ -2903,13 +4999,13 @@ class TestWithPreloadedDatabase
         cube1.setCell(3.14159, [row:3, column:'C'])
         NCubeManager.updateCube(branch1, cube1, true);
 
-        List<NCubeInfoDto> changes = NCubeManager.getBranchChangesForHead(branch1)
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, changes)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        List<NCubeInfoDto> changes = VersionControl.getBranchChangesForHead(branch1)
+        Map<String, Object> result = VersionControl.commitBranch(branch1, changes)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         headCube = NCubeManager.getCube(head, "merge1")
         coord = [row:3, column:'C']
@@ -2920,13 +5016,13 @@ class TestWithPreloadedDatabase
         cube2.removeCell([row:5, column:'E'])
         NCubeManager.updateCube(branch2, cube2, true)
 
-        changes = NCubeManager.getBranchChangesForHead(branch2)
-        result = NCubeManager.commitBranch(branch2, changes)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        changes = VersionControl.getBranchChangesForHead(branch2)
+        result = VersionControl.commitBranch(branch2, changes)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         headCube = NCubeManager.getCube(head, "merge1")
 
@@ -2961,38 +5057,38 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        List<NCubeInfoDto> dtos = NCubeManager.getBranchChangesForHead(branch2)
+        List<NCubeInfoDto> dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.size)
-        NCubeManager.commitBranch(branch2, dtos as Object[])
+        VersionControl.commitBranch(branch2, dtos as Object[])
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.size)
         String newSha1 = dtos[0].sha1;
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
 
         dtos = NCubeManager.search(head, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         String sha1 = dtos[0].sha1;
         assertNotEquals(sha1, newSha1)
 
-        NCubeManager.mergeAcceptMine(branch1, "TestAge")
+        VersionControl.mergeAcceptMine(branch1, "TestAge")
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         String branchHeadSha1 = dtos[0].headSha1
         assertEquals(1, dtos.size)
 
@@ -3004,7 +5100,7 @@ class TestWithPreloadedDatabase
     void testMergeDeltas()
     {
         preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1)
+        VersionControl.commitBranch(branch1)
         NCubeManager.deleteBranch(branch1)
         assertEquals(1, NCubeManager.copyBranch(head, branch1))
 
@@ -3063,7 +5159,7 @@ class TestWithPreloadedDatabase
         // test for delete axis
         cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false))
         NCubeManager.updateCube(branch1, cube)
-        NCubeManager.commitBranch(branch1)
+        VersionControl.commitBranch(branch1)
         headCube = NCubeManager.loadCube(head, 'TestBranch')
         cube.deleteAxis('Axis')
         NCubeManager.updateCube(branch1, cube)
@@ -3086,24 +5182,24 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         assertEquals(dtos[0].changeType, ChangeType.CONFLICT.code)
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
     }
 
     @Test
@@ -3111,7 +5207,7 @@ class TestWithPreloadedDatabase
     {
         // load cube with same name, but different structure in TEST branch
         preloadCubes(branch1, "test.branch.1.json")
-        NCubeManager.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
+        VersionControl.commitBranch(branch1, NCubeManager.search(branch1, null, null, null) as Object[])
         NCubeManager.deleteBranch(branch1)
 
         //  create the branch (TestAge, TestBranch)
@@ -3121,37 +5217,37 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.2.json")
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch2, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 1
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch2, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 1
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
         assertEquals(ChangeType.CONFLICT.code, dtos[0].changeType)
 
-        result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_FASTFORWARDS].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
 
         dtos = NCubeManager.search(branch1, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         String sha1 = dtos[0].sha1
 
-        NCubeManager.mergeAcceptTheirs(branch1, ["TestAge"] as Object[], sha1)
+        VersionControl.mergeAcceptTheirs(branch1, ["TestAge"] as Object[], sha1)
 
-        assertEquals(0, NCubeManager.getBranchChangesForHead(branch1).size())
+        assertEquals(0, VersionControl.getBranchChangesForHead(branch1).size())
 
     }
 
@@ -3171,10 +5267,10 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.cellMap.size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -3182,10 +5278,10 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.cellMap.size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch1, dtos)
+        VersionControl.commitBranch(branch1, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
         // cube has default of 'zzz' for non-existing cells
@@ -3209,10 +5305,10 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -3220,21 +5316,21 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         try
         {
-            NCubeManager.commitBranch(branch1, dtos)
+            VersionControl.commitBranch(branch1, dtos)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert e.errors[NCubeManager.BRANCH_ADDS].size() == 0
-            assert e.errors[NCubeManager.BRANCH_DELETES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_UPDATES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_RESTORES].size() == 0
-            assert e.errors[NCubeManager.BRANCH_REJECTS].size() == 1
+            assert e.errors[VersionControl.BRANCH_ADDS].size() == 0
+            assert e.errors[VersionControl.BRANCH_DELETES].size() == 0
+            assert e.errors[VersionControl.BRANCH_UPDATES].size() == 0
+            assert e.errors[VersionControl.BRANCH_RESTORES].size() == 0
+            assert e.errors[VersionControl.BRANCH_REJECTS].size() == 1
         }
     }
 
@@ -3242,7 +5338,7 @@ class TestWithPreloadedDatabase
     void testUpdateBranchWithItemThatWasChangedOnHeadAndInBranchWithNonConflictingChanges()
     {
         testUpdateBranchWithItemThatWasChanegdOnHeadAndInBranchWithNoConflicts({
-    NCubeManager.updateBranch(branch1)
+    VersionControl.updateBranch(branch1)
         })
     }
 
@@ -3261,10 +5357,10 @@ class TestWithPreloadedDatabase
         cube.setCell(18L, [Code: 15])
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(head, "TestBranch")
 
@@ -3283,7 +5379,7 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
         closure()
@@ -3311,10 +5407,10 @@ class TestWithPreloadedDatabase
         assertEquals(2, cube.cellMap.size())
         NCubeManager.updateCube(branch2, cube, true)
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch2)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch2)
         assertEquals(1, dtos.length)
 
-        NCubeManager.commitBranch(branch2, dtos)
+        VersionControl.commitBranch(branch2, dtos)
 
         cube = NCubeManager.getCube(branch1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -3322,19 +5418,20 @@ class TestWithPreloadedDatabase
         assertEquals(3, cube.cellMap.size())
         NCubeManager.updateCube(branch1, cube, true)
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.updateBranch(branch1)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 0
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 1
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 0
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 1
     }
 
     @Test
-    void testGetBranchChanges() {
+    void testGetBranchChanges()
+	{
         // load cube with same name, but different structure in TEST branch
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
 
@@ -3351,7 +5448,7 @@ class TestWithPreloadedDatabase
         //  create the branch (TestAge, TestBranch)
         assertEquals(2, NCubeManager.copyBranch(head, branch1))
 
-        Object[] dtos = NCubeManager.getBranchChangesForHead(branch1)
+        Object[] dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
 
         //  test values on branch
@@ -3380,7 +5477,7 @@ class TestWithPreloadedDatabase
         // update the new edited cube.
         assertTrue(NCubeManager.updateCube(branch1, cube, true))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
 
@@ -3401,15 +5498,15 @@ class TestWithPreloadedDatabase
         assertEquals("GHI", cube.getCell([Code : 10]))
 
         //  loads in both TestAge and TestBranch through only TestBranch has changed.
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(1, dtos.length)
 
-        Map<String, Object> result = NCubeManager.commitBranch(branch1, dtos)
-        assert result[NCubeManager.BRANCH_ADDS].size() == 0
-        assert result[NCubeManager.BRANCH_DELETES].size() == 0
-        assert result[NCubeManager.BRANCH_UPDATES].size() == 1
-        assert result[NCubeManager.BRANCH_RESTORES].size() == 0
-        assert result[NCubeManager.BRANCH_REJECTS].size() == 0
+        Map<String, Object> result = VersionControl.commitBranch(branch1, dtos)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
 
         assertEquals(2, NCubeManager.getRevisionHistory(head, "TestBranch").size())
         assertEquals(1, NCubeManager.getRevisionHistory(head, "TestAge").size())
@@ -3422,12 +5519,13 @@ class TestWithPreloadedDatabase
         cube = NCubeManager.getCube(head, "TestBranch")
         assertEquals("ZZZ", cube.getCell([Code : 10]))
 
-        dtos = NCubeManager.getBranchChangesForHead(branch1)
+        dtos = VersionControl.getBranchChangesForHead(branch1)
         assertEquals(0, dtos.length)
     }
 
     @Test
-    void testBootstrapWithOverrides() {
+    void testBootstrapWithOverrides()
+	{
         ApplicationID id = ApplicationID.getBootVersion('none', 'example')
         assertEquals(new ApplicationID('NONE', 'EXAMPLE', '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD), id)
 
@@ -3461,7 +5559,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testUserOverloadedClassPath() {
+    public void testUserOverloadedClassPath()
+	{
         preloadCubes(appId, "sys.classpath.user.overloaded.json", "sys.versions.json")
 
         // force reload of system params, you wouln't usually do this because it wouldn't be thread safe this way.
@@ -3487,6 +5586,7 @@ class TestWithPreloadedDatabase
         // Check with overload
         System.setProperty("NCUBE_PARAMS", '{"cpBase":"file://C:/Development/"}')
 
+        // This test does not actually use this file://C:/Dev... path.  I run these tests on my Mac all the time - JTD.
         // int loader is not marked as cached so we recreate this one each time.
         CdnClassLoader differentIntLoader = cube.getCell([env:"INT"])
         assertNotSame(intLoader, differentIntLoader)
@@ -3523,7 +5623,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testSystemParamsOverloads() {
+    public void testSystemParamsOverloads()
+	{
         preloadCubes(appId, "sys.classpath.system.params.user.overloaded.json", "sys.versions.2.json", "sys.resources.base.url.json")
 
         // force reload of system params, you wouln't usually do this because it wouldn't be thread safe this way.
@@ -3589,7 +5690,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testClearCacheWithClassLoaderLoadedByCubeRequest() {
+    public void testClearCacheWithClassLoaderLoadedByCubeRequest()
+	{
 
         preloadCubes(appId, "sys.classpath.cp1.json", "GroovyMethodClassPath1.json")
 
@@ -3658,7 +5760,8 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    void testMultiCubeClassPath() {
+    void testMultiCubeClassPath()
+	{
 
         preloadCubes(appId, "sys.classpath.base.json", "sys.classpath.json", "sys.status.json", "sys.versions.json", "sys.version.json", "GroovyMethodClassPath1.json")
 
@@ -3857,7 +5960,7 @@ class TestWithPreloadedDatabase
 
         // TODO: Write when merge between branches is supported.
 //        Map results = NCubeManager.updateBranchCube(branch1, cube.name, branch2.branch)
-//        assert results[NCubeManager.BRANCH_UPDATES].size() == 0
+//        assert results[VersionControl.BRANCH_UPDATES].size() == 0
 //        assert results[NCubeManager.BRANCH_MERGES].size() == 1
 //        assert results[NCubeManager.BRANCH_CONFLICTS].size() == 0
 //        NCube merged = NCubeManager.getCube(branch1, cube.name)
@@ -3876,7 +5979,7 @@ class TestWithPreloadedDatabase
 
         // TODO: Test needs to be written when merge between branches is supported.
 //        Map results = NCubeManager.updateBranchCube(branch1, cube.name, head.branch)
-//        assert results[NCubeManager.BRANCH_UPDATES].size() == 0
+//        assert results[VersionControl.BRANCH_UPDATES].size() == 0
 //        assert results[NCubeManager.BRANCH_MERGES].size() == 0
 //        assert results[NCubeManager.BRANCH_CONFLICTS].size() == 0
 //
@@ -3884,7 +5987,7 @@ class TestWithPreloadedDatabase
 //        NCubeManager.updateCube(branch2, cube, true)
 //
 //        results = NCubeManager.updateBranchCube(branch1, cube.name, branch2.branch)
-//        assert results[NCubeManager.BRANCH_UPDATES].size() == 0
+//        assert results[VersionControl.BRANCH_UPDATES].size() == 0
 //        assert results[NCubeManager.BRANCH_MERGES].size() == 1
 //        assert results[NCubeManager.BRANCH_CONFLICTS].size() == 0
 //        NCube merged = NCubeManager.getCube(branch1, cube.name)
@@ -3904,7 +6007,7 @@ class TestWithPreloadedDatabase
 
         // TODO: Write when merge between branches is supported
 //        Map results = NCubeManager.updateBranchCube(branch1, cube.name, branch2.branch)
-//        assert results[NCubeManager.BRANCH_UPDATES].size() == 0
+//        assert results[VersionControl.BRANCH_UPDATES].size() == 0
 //        assert results[NCubeManager.BRANCH_MERGES].size() == 0
 //        assert results[NCubeManager.BRANCH_CONFLICTS].size() == 1
     }
@@ -3919,7 +6022,7 @@ class TestWithPreloadedDatabase
 
         // TODO: Write when merge between branches is supported.
 //        Map results = NCubeManager.updateBranchCube(branch1, cube.name, branch2.branch)
-//        assert results[NCubeManager.BRANCH_UPDATES].size() == 0
+//        assert results[VersionControl.BRANCH_UPDATES].size() == 0
 //        assert results[NCubeManager.BRANCH_MERGES].size() == 0
 //        assert results[NCubeManager.BRANCH_CONFLICTS].size() == 0
     }

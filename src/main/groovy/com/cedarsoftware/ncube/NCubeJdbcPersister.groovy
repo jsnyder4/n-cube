@@ -952,7 +952,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
 
         Map map = [sha1:headSha1, id: cubeId]
         Sql sql = new Sql(c)
-        int count = sql.executeUpdate(map, '/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = 0 WHERE n_cube_id = :id')
+        int count = sql.executeUpdate(map, '/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1 WHERE n_cube_id = :id')
         if (count == 0)
         {
             throw new IllegalArgumentException("error updating branch cube: " + cubeId + ", to HEAD SHA-1: " + headSha1 + ", no record found.")
