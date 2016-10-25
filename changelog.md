@@ -1,4 +1,6 @@
 ### Revision History
+* 3.4.101
+ * Bug fix: when merging n-cubes, it was looking in the branch, not HEAD branch, for finding the base HEAD n-cube (computing the HEAD delta).
 * 3.4.100
  * Bug fix: Support for updating branch from a single HEAD cube.
 * 3.4.99

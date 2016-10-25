@@ -705,7 +705,7 @@ class VersionControl
 
         if (branchInfo.headSha1 != null)
         {   // Cube is based on a HEAD cube (not created new)
-            baseCube = persister.loadCubeBySha1(branchInfo.applicationID, branchInfo.name, branchInfo.headSha1)
+            baseCube = persister.loadCubeBySha1(branchInfo.applicationID.asHead(), branchInfo.name, branchInfo.headSha1)
             headDelta = DeltaProcessor.getDelta(baseCube, headCube)
         }
         else
