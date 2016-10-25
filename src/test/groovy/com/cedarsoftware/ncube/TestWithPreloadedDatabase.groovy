@@ -3316,6 +3316,84 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testCommitConsumerUpdateHeadUpdateTwice()
+    {
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        //consumer change
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        //producer change and commit
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        //consumer update
+        VersionControl.updateBranch(branch1)
+
+        //producer change and commit
+        producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('CCC', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        //consumer commit
+        Map<String, Object> result = VersionControl.commitBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
+    void testUpdateConsumerUpdateHeadUpdateTwice()
+    {
+        preloadCubes(branch2, "test.branch.1.json")
+        VersionControl.commitBranch(branch2)
+        NCubeManager.copyBranch(head, branch1)
+
+        //consumer change
+        NCube consumerCube = NCubeManager.loadCube(branch1, 'TestBranch')
+        consumerCube.setCell('BBB', [Code : 15])
+        NCubeManager.updateCube(branch1, consumerCube)
+
+        //producer change and commit
+        NCube producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        //consumer update
+        Map<String, Object> result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+
+        //producer change and commit
+        producerCube = NCubeManager.loadCube(branch2, 'TestBranch')
+        producerCube.setCell('CCC', [Code : -15])
+        NCubeManager.updateCube(branch2, producerCube)
+        VersionControl.commitBranch(branch2)
+
+        result = VersionControl.updateBranch(branch1)
+        assert result[VersionControl.BRANCH_ADDS].size() == 0
+        assert result[VersionControl.BRANCH_DELETES].size() == 0
+        assert result[VersionControl.BRANCH_UPDATES].size() == 1
+        assert result[VersionControl.BRANCH_RESTORES].size() == 0
+        assert result[VersionControl.BRANCH_FASTFORWARDS].size() == 0
+        assert result[VersionControl.BRANCH_REJECTS].size() == 0
+    }
+
+    @Test
     void testCommitConsumerUpdateHeadUpdateSame()
 	{
         preloadCubes(branch2, "test.branch.1.json")
