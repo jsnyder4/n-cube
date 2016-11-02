@@ -81,12 +81,12 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             options = [:]
         }
 
-        String name = ncube.getName()
+        String name = ncube.name
         try
         {
             startObject()
             writeObjectKeyValue("ncube", name, true)
-            Object defCellValue = ncube.getDefaultCellValue()
+            Object defCellValue = ncube.defaultCellValue
 
             if (defCellValue != null)
             {
@@ -99,17 +99,17 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
                 {
                     CommandCell cmd = (CommandCell) defCellValue
 
-                    if (cmd.isCacheable())
+                    if (cmd.cacheable)
                     {   // Only write 'cache' when the cache value is true.  Leave false be default.
                         writeObjectKeyValue(NCube.DEFAULT_CELL_VALUE_CACHE, true, true)
                     }
-                    if (cmd.getUrl() != null)
+                    if (cmd.url != null)
                     {
-                        writeObjectKeyValue(NCube.DEFAULT_CELL_VALUE_URL, cmd.getUrl(), true)
+                        writeObjectKeyValue(NCube.DEFAULT_CELL_VALUE_URL, cmd.url, true)
                     }
                     else
                     {
-                        writeObjectKeyValue(NCube.DEFAULT_CELL_VALUE, cmd.getCmd(), true)
+                        writeObjectKeyValue(NCube.DEFAULT_CELL_VALUE, cmd.cmd, true)
                     }
                 }
                 else
@@ -118,13 +118,13 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
                 }
             }
 
-            if (ncube.getMetaProperties().size() > 0)
+            if (ncube.metaProperties.size() > 0)
             {
-                writeMetaProperties(ncube.getMetaProperties())
+                writeMetaProperties(ncube.metaProperties)
                 comma()
             }
-            writeAxes(ncube.getAxes(), options)
-            writeCells(ncube.getCellMap() as Map, options)
+            writeAxes(ncube.axes, options)
+            writeCells(ncube.cellMap as Map, options)
             endObject()
             closeStream()
         }
@@ -181,7 +181,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 
     void writeAxes(List<Axis> axes, Map<String, Object> options) throws IOException
     {
-        if (axes.isEmpty())
+        if (axes.empty)
         {   // Make sure the formatter writes valid JSON
             options.indexFormat ? append('"axes":{},') : append('"axes":[],')
             return
@@ -233,16 +233,16 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
     void writeIndexAxis(Axis axis, Map<String, Object> options) throws IOException
     {
         // required inputs
-        writeObjectKey(axis.getName().toLowerCase())
+        writeObjectKey(axis.name.toLowerCase())
         startObject()
         writeAxisGuts(axis, options)
     }
 
     private void writeAxisGuts(Axis axis, Map<String, Object> options)
     {
-        writeObjectKeyValue("name", axis.getName(), true)
+        writeObjectKeyValue("name", axis.name, true)
         writeObjectKeyValue("hasDefault", axis.hasDefaultColumn(), true)
-        if (axis.isReference())
+        if (axis.reference)
         {
             writeReferenceAxisInfo(axis)
             if (options.indexFormat)
@@ -251,28 +251,28 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             }
         }
 
-        if (options.indexFormat || !axis.isReference())
+        if (options.indexFormat || !axis.reference)
         {
-            writeObjectKeyValue("type", axis.getType().name(), true)
-            writeObjectKeyValue("valueType", axis.getValueType().name(), true)
+            writeObjectKeyValue("type", axis.type.name(), true)
+            writeObjectKeyValue("valueType", axis.valueType.name(), true)
 
             //  optional inputs that can use defaults
-            writeObjectKeyValue("preferredOrder", axis.getColumnOrder(), true)
-            writeObjectKeyValue("fireAll", axis.isFireAll(), true)
-            if (axis.getMetaProperties().size() > 0)
+            writeObjectKeyValue("preferredOrder", axis.columnOrder, true)
+            writeObjectKeyValue("fireAll", axis.fireAll, true)
+            if (axis.metaProperties.size() > 0)
             {
-                writeMetaProperties(axis.getMetaProperties())
+                writeMetaProperties(axis.metaProperties)
                 comma()
             }
-            writeColumns(axis.getColumns(), options)
+            writeColumns(axis.columns, options)
         }
         endObject()
     }
 
     private void writeReferenceAxisInfo(Axis axis)
     {
-        Map meta = axis.getMetaProperties()
-        boolean hasTransformer = axis.isReferenceTransformed()
+        Map meta = axis.metaProperties
+        boolean hasTransformer = axis.referenceTransformed
 
         writeObjectKeyValue("isRef", true, true)
         writeObjectKeyValue(REF_TENANT, meta[REF_TENANT], true)
@@ -293,11 +293,11 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             writeObjectKeyValue(TRANSFORM_CUBE_NAME, meta[TRANSFORM_CUBE_NAME], true)
             writeObjectKeyValue(TRANSFORM_METHOD_NAME, meta[TRANSFORM_METHOD_NAME], false)
         }
-        if (axis.getMetaProperties().size() > 0)
+        if (axis.metaProperties.size() > 0)
         {
             comma()
         }
-        writeMetaProperties(axis.getMetaProperties())
+        writeMetaProperties(axis.metaProperties)
     }
 
     void writeColumns(List<Column> columns, Map<String, Object> options) throws IOException
@@ -309,7 +309,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 
         for (Column column : columns)
         {
-            if (!column.isDefault())
+            if (!column.default)
             {
                 if (!firstPass)
                 {
@@ -325,7 +325,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 
     void writeColumn(Column column, Map<String, Object> options) throws IOException
     {
-        String columnType = getColumnType(column.getValue())
+        String columnType = getColumnType(column.value)
         if (options.indexFormat)
         {
             writeObjectKey(String.valueOf(column.id))
@@ -336,38 +336,38 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             startObject()
 
             //  Check to see if id exists anywhere. then optimize
-            writeId(column.getId(), true)
+            writeId(column.id, true)
         }
         writeType(columnType)
-        if (column.getMetaProperties().size() > 0)
+        if (column.metaProperties.size() > 0)
         {
-            writeMetaProperties(column.getMetaProperties())
+            writeMetaProperties(column.metaProperties)
             comma()
         }
-        if (column.getValue() instanceof CommandCell)
+        if (column.value instanceof CommandCell)
         {
-            writeCommandCell((CommandCell) column.getValue())
+            writeCommandCell((CommandCell) column.value)
         }
         else
         {
-            writeObjectKeyValue("value", column.getValue(), false)
+            writeObjectKeyValue("value", column.value, false)
         }
         endObject()
     }
 
     void writeCommandCell(CommandCell cmd) throws IOException
     {
-        if (cmd.isCacheable())
+        if (cmd.cacheable)
         {
-            writeObjectKeyValue("cache", cmd.isCacheable(), true)
+            writeObjectKeyValue("cache", cmd.cacheable, true)
         }
-        if (cmd.getUrl() != null)
+        if (cmd.url != null)
         {
-            writeObjectKeyValue("url", cmd.getUrl(), false)
+            writeObjectKeyValue("url", cmd.url, false)
         }
         else
         {
-            writeObjectKeyValue("value", cmd.getCmd(), false)
+            writeObjectKeyValue("value", cmd.cmd, false)
         }
     }
 
@@ -445,12 +445,12 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         }
     }
 
-    private void writeCell(Map.Entry<Set<Long>, Object> cell) throws IOException
+    private void writeCell(Map.Entry<Set<Long>, Object> cellEntry) throws IOException
     {
         startObject()
-        writeIds(cell.getKey())
-        writeType(CellInfo.getType(cell.getValue(), "cell"))
-        writeCellValue(cell.value)
+        writeIds(cellEntry.key)
+        writeType(CellInfo.getType(cellEntry.value, "cell"))
+        writeCellValue(cellEntry.value)
         endObject()
     }
 
@@ -573,9 +573,9 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         {
             Range r = o as Range
             startArray()
-            writeObjectValue(r.getLow())
+            writeObjectValue(r.low)
             comma()
-            writeObjectValue(r.getHigh())
+            writeObjectValue(r.high)
             endArray()
         }
         else if (o instanceof RangeSet)
@@ -601,7 +601,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             builder.append(StringUtilities.encode(o as byte[]))
             builder.append('"')
         }
-        else if (o.getClass().isArray())
+        else if (o.class.array)
         {
             throw new IllegalArgumentException("Cell cannot be an array (except byte[]). Use Groovy Expression to make cell an array, a List, or a Map, etc.")
         }

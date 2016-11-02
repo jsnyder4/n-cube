@@ -421,7 +421,7 @@ class NCube<T>
         LongHashSet ids = ensureFullCoordinate(coordinate)
         if (ids == null)
         {
-            throw new CoordinateNotFoundException("Unable to setCellById() into n-cube: " + name + " using coordinate: " + coordinate)
+            throw new CoordinateNotFoundException("Unable to setCellById() into n-cube: ${name} using coordinate: ${coordinate}")
         }
         return cells[ids] = value
     }
@@ -720,7 +720,7 @@ class NCube<T>
                 Integer count = conditionsFiredCountPerAxis[axis.name]
                 if (count == null || count < 1)
                 {
-                    throw new CoordinateNotFoundException("No conditions on the rule axis: " + axis.name + " fired, and there is no default column on this axis, cube: " + name + ", input: " + coordinate)
+                    throw new CoordinateNotFoundException("No conditions on the rule axis: ${axis.name} fired, and there is no default column on this axis, cube: ${name}, input: ${coordinate}")
                 }
             }
         }
@@ -1017,7 +1017,7 @@ class NCube<T>
                 final Column column = axis.findColumn(value)
                 if (column == null)
                 {
-                    throw new CoordinateNotFoundException("Value '" + value + "' not found on axis: " + axis.name + ", cube: " + name)
+                    throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axis.name}, cube: ${name}")
                 }
                 bindings[axisName] = [column]    // Binding is a List of one column on non-rule axis
             }
@@ -1194,12 +1194,12 @@ class NCube<T>
 
         if (count == 0)
         {
-            throw new IllegalArgumentException("No 'Set' value found within input coordinate, cube: " + name)
+            throw new IllegalArgumentException("No 'Set' value found within input coordinate, cube: ${name}")
         }
 
         if (count > 1)
         {
-            throw new IllegalArgumentException("More than one 'Set' found as value within input coordinate, cube: " + name)
+            throw new IllegalArgumentException("More than one 'Set' found as value within input coordinate, cube: ${name}")
         }
 
         return wildcardAxis
@@ -1253,7 +1253,7 @@ class NCube<T>
             final Column column = (Column) axis.findColumn(value)
             if (column == null)
             {
-                throw new CoordinateNotFoundException("Value '" + coordinate + "' not found on axis: " + axis.name + ", cube: " + name)
+                throw new CoordinateNotFoundException("Value '${coordinate}' not found on axis: ${axis.name}, cube: ${name}")
             }
             ids.add(column.id)
         }
@@ -1270,7 +1270,7 @@ class NCube<T>
     {
         if (coordinate == null)
         {
-            throw new IllegalArgumentException("'null' passed in for coordinate Map, n-cube: " + name)
+            throw new IllegalArgumentException("'null' passed in for coordinate Map, n-cube: ${name}")
         }
 
         // Duplicate input coordinate
@@ -1284,9 +1284,7 @@ class NCube<T>
         {
             if (!copy.containsKey(scopeKey))
             {
-                throw new IllegalArgumentException("Input coordinate with keys: " + coordinate.keySet() +
-                        ", does not contain all of the required scope keys: " + requiredScope +
-                        ", required for cube: " + name)
+                throw new IllegalArgumentException("Input coordinate: ${coordinate.keySet()}, does not contain all of the required scope keys: ${requiredScope}, cube: ${name}")
             }
         }
 
@@ -1322,7 +1320,7 @@ class NCube<T>
                 final Column column = wildcardAxis.findColumn(value)
                 if (column == null)
                 {
-                    throw new CoordinateNotFoundException("Value '" + value + "' not found using Set on axis: " + wildcardAxis.name + ", cube: " + name)
+                    throw new CoordinateNotFoundException("Value '${value}' not found using Set on axis: ${wildcardAxis.name}, cube: ${name}")
                 }
 
                 columns.add(column)
@@ -1379,7 +1377,7 @@ class NCube<T>
         final Axis axis = getAxis(axisName)
         if (axis == null)
         {
-            throw new IllegalArgumentException("Could not add column. Axis name '" + axisName + "' was not found on cube: " + name)
+            throw new IllegalArgumentException("Could not add column. Axis name '${axisName}' was not found on cube: ${name}")
         }
         Column newCol = axis.addColumn(value, colName, suggestedId)
         clearSha1()
@@ -1398,7 +1396,7 @@ class NCube<T>
         final Axis axis = getAxis(axisName)
         if (axis == null)
         {
-            throw new IllegalArgumentException("Could not delete column. Axis name '" + axisName + "' was not found on cube: " + name)
+            throw new IllegalArgumentException("Could not delete column. Axis name '${axisName}' was not found on cube: ${name}")
         }
 
         Column column
@@ -1462,7 +1460,7 @@ class NCube<T>
         Axis axis = getAxisFromColumnId(id)
         if (axis == null)
         {
-            throw new IllegalArgumentException("No column exists with the id " + id + " within cube: " + name)
+            throw new IllegalArgumentException("No column exists with the id ${id} within cube: ${name}")
         }
         clearSha1()
         axis.updateColumn(id, value)
@@ -1480,11 +1478,11 @@ class NCube<T>
     {
         if (newCols == null)
         {
-            throw new IllegalArgumentException("Cannot pass in null for list of columns when updating columns, cube: " + name)
+            throw new IllegalArgumentException("Cannot pass in null for list of columns when updating columns, cube: ${name}")
         }
         if (!axisList.containsKey(axisName))
         {
-            throw new IllegalArgumentException("No axis exists with the name: " + axisName + ", cube: " + name)
+            throw new IllegalArgumentException("No axis exists with the name: ${axisName}, cube: ${name}")
         }
 
         final Axis axisToUpdate = axisList[axisName]
@@ -1593,14 +1591,14 @@ class NCube<T>
         String axisName = axis.name
         if (axisList.containsKey(axisName))
         {
-            throw new IllegalArgumentException("An axis with the name '" + axisName + "' already exists on cube: " + name)
+            throw new IllegalArgumentException("An axis with the name '${axisName}' already exists on cube: ${name}")
         }
 
         for (axe in axisList.values())
         {
             if (axe.id == axis.id)
             {
-                throw new IllegalArgumentException("An axis with the id '" + axe.id + "' already exists on cube: " + name)
+                throw new IllegalArgumentException("An axis with the id '${axe.id}' already exists on cube: ${name}")
             }
         }
 
@@ -1623,12 +1621,12 @@ class NCube<T>
         }
         if (getAxis(newName) != null)
         {
-            throw new IllegalArgumentException("There is already an axis named '" + oldName + "' on cube: " + name)
+            throw new IllegalArgumentException("There is already an axis named '${oldName}' on cube: ${name}")
         }
         final Axis axis = getAxis(oldName)
         if (axis == null)
         {
-            throw new IllegalArgumentException("Axis '" + oldName + "' not on cube: " + name)
+            throw new IllegalArgumentException("Axis '${oldName}' not on cube: ${name}")
         }
         axisList.remove(oldName)
         axis.name = newName
@@ -1921,14 +1919,14 @@ class NCube<T>
 
         if (!jsonNCube.containsKey("axes"))
         {
-            throw new IllegalArgumentException("Must specify a list of axes for the ncube, under the key 'axes' as [{axis 1}, {axis 2}, ... {axis n}], cube: " + cubeName)
+            throw new IllegalArgumentException("Must specify a list of axes for the ncube, under the key 'axes' as [{axis 1}, {axis 2}, ... {axis n}], cube: ${cubeName}")
         }
 
         Object[] axes = (Object[]) jsonNCube["axes"]
 
         if (ArrayUtilities.isEmpty(axes))
         {
-            throw new IllegalArgumentException("Must be at least one axis defined in the JSON format, cube: " + cubeName)
+            throw new IllegalArgumentException("Must be at least one axis defined in the JSON format, cube: ${cubeName}")
         }
 
         Map<Object, Long> userIdToUniqueId = new CaseInsensitiveMap<>()
@@ -1987,7 +1985,7 @@ class NCube<T>
 
                 if (!jsonAxis.containsKey('columns'))
                 {
-                    throw new IllegalArgumentException("'columns' must be specified, axis: " + axisName + ", cube: " + cubeName)
+                    throw new IllegalArgumentException("'columns' must be specified, axis: ${axisName}, cube: ${cubeName}")
                 }
 
                 // Read columns
@@ -2005,7 +2003,7 @@ class NCube<T>
                     {
                         if (id == null)
                         {
-                            throw new IllegalArgumentException("Missing 'value' field on column or it is null, axis: " + axisName + ", cube: " + cubeName)
+                            throw new IllegalArgumentException("Missing 'value' field on column or it is null, axis: ${axisName}, cube: ${cubeName}")
                         }
                         else
                         {   // Allows you to skip setting both id and value to the same value.
@@ -2031,7 +2029,7 @@ class NCube<T>
                         Object[] rangeItems = (Object[])value
                         if (rangeItems.length != 2)
                         {
-                            throw new IllegalArgumentException("Range must have exactly two items, axis: " + axisName +", cube: " + cubeName)
+                            throw new IllegalArgumentException("Range must have exactly two items, axis: ${axisName}, cube: ${cubeName}")
                         }
                         Comparable low = (Comparable) CellInfo.parseJsonValue(rangeItems[0], null, colType, false)
                         Comparable high = (Comparable) CellInfo.parseJsonValue(rangeItems[1], null, colType, false)
@@ -2048,7 +2046,7 @@ class NCube<T>
                                 Object[] rangeValues = (Object[]) pt
                                 if (rangeValues.length != 2)
                                 {
-                                    throw new IllegalArgumentException("Set Ranges must have two values only, range length: " + rangeValues.length + ", axis: " + axisName + ", cube: " + cubeName)
+                                    throw new IllegalArgumentException("Set Ranges must have two values only, range length: ${rangeValues.length}, axis: ${axisName}, cube: ${cubeName}")
                                 }
                                 Comparable low = (Comparable) CellInfo.parseJsonValue(rangeValues[0], null, colType, false)
                                 Comparable high = (Comparable) CellInfo.parseJsonValue(rangeValues[1], null, colType, false)
@@ -2073,7 +2071,7 @@ class NCube<T>
                     }
                     else
                     {
-                        throw new IllegalArgumentException("Unsupported Axis Type '" + type + "' for simple JSON input, axis: " + axisName + ", cube: " + cubeName)
+                        throw new IllegalArgumentException("Unsupported Axis Type '${type}' for simple JSON input, axis: ${axisName}, cube: ${cubeName}")
                     }
 
                     if (id != null)
@@ -2138,14 +2136,14 @@ class NCube<T>
                     }
                     catch (CoordinateNotFoundException ignore)
                     {
-                        LOG.debug("Orphaned cell on n-cube: " + cubeName + ", ids: " + colIds)
+                        LOG.debug("Orphaned cell on n-cube: ${cubeName}, ids: ${colIds}")
                     }
                 }
                 else
                 {
                     if (!(cMap['key'] instanceof JsonObject))
                     {
-                        throw new IllegalArgumentException("'key' must be a JSON object {}, cube: " + cubeName)
+                        throw new IllegalArgumentException("'key' must be a JSON object {}, cube: ${cubeName}")
                     }
 
                     JsonObject<String, Object> keys = (JsonObject<String, Object>) cMap['key']
@@ -2159,7 +2157,7 @@ class NCube<T>
                     }
                     catch (CoordinateNotFoundException ignore)
                     {
-                        LOG.debug("Orphaned cell on n-cube: " + cubeName + ", coord: " + keys)
+                        LOG.debug("Orphaned cell on n-cube: ${cubeName}, coord: ${keys}")
                     }
                 }
             }
@@ -2196,7 +2194,7 @@ class NCube<T>
             return (String) val
         }
         String clazz = val == null ? "null" : val.class.name
-        throw new IllegalArgumentException("Expected 'String' for key '" + key + "' but instead found: " + clazz)
+        throw new IllegalArgumentException("Expected 'String' for key '${key}' but instead found: ${clazz}")
     }
 
     protected static Long getLong(Map obj, String key)
@@ -2216,7 +2214,7 @@ class NCube<T>
             { }
         }
         String clazz = val == null ? "null" : val.class.name
-        throw new IllegalArgumentException("Expected 'Long' for key '" + key + "' but instead found: " + clazz)
+        throw new IllegalArgumentException("Expected 'Long' for key '${key}' but instead found: ${clazz}")
     }
 
     protected static Boolean getBoolean(Map obj, String key)
@@ -2235,7 +2233,7 @@ class NCube<T>
             return false
         }
         String clazz = val.class.name
-        throw new IllegalArgumentException("Expected 'Boolean' for key '" + key + "' but instead found: " + clazz)
+        throw new IllegalArgumentException("Expected 'Boolean' for key '${key}' but instead found: ${clazz}")
     }
 
     /**
@@ -2800,7 +2798,7 @@ class NCube<T>
         }
         catch (Exception ignore)
         {
-            throw new IllegalStateException("Unable to convert value to JSON: " + o.toString())
+            throw new IllegalStateException("Unable to convert value to JSON: ${o.toString()}")
         }
     }
 
@@ -2821,7 +2819,7 @@ class NCube<T>
         {
             return
         }
-        throw new IllegalArgumentException("Invalid n-cube name: '" + cubeName + "'. Name can only contain a-z, A-Z, 0-9, '.', '_', '-'")
+        throw new IllegalArgumentException("Invalid n-cube name: '${cubeName}'. Name can only contain a-z, A-Z, 0-9, '.', '_', '-'")
     }
 
     /**

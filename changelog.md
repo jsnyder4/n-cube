@@ -1,4 +1,17 @@
 ### Revision History
+* 3.4.106
+ * Bug fix: Code that locates 'rollback' revision now locates across versions / releases.  
+ * Enhancement: Date comparison used in locating 'rollback' revision needed to be 'less than or equal' not 'equal' because the test cases could run so fast that a millisecond time change did not occur causing a false failure.
+* 3.4.105
+ * Enhancement: Newly added columns added to the same axis (in the n-cube-editor) will have unique ids.  This improves n-cube merging.
+ * Bug fix: displayOrder was not being set correctly on newly added columns.
+* 3.4.104
+ * Enhancement: `NCubeJdbcPersister.mergeAcceptTheirs()` now handles both HEAD and non-HEAD branches.
+ * Bug fix: `VersionControl.mergeCubesIfPossible()` now correctly looks up HEAD cube SHA-1, as opposed to incorrectly looking in the branch.
+* 3.4.103
+ * Performance improvement: Further improve performance of permissions checks.
+* 3.4.102
+ * Performance improvement: Sped up performance of NCubeManager.getCube() (because it can be called so frequently.)
 * 3.4.101
  * Bug fix: when merging n-cubes, it was looking in the branch, not HEAD branch, for finding the base HEAD n-cube (computing the HEAD delta).
 * 3.4.100

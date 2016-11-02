@@ -45,6 +45,12 @@ def at(Map coord, String cubeName = ncube.name, def defaultValue = null)
     return getCube(cubeName).getCell(input, output, defaultValue)
 }
 
+def at(Map coord, NCube cube, def defaultValue = null)
+{
+    input.putAll(coord)
+    return cube.getCell(input, output, defaultValue)
+}
+
 def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = NCubeManager.getCube(appId, cubeName)
@@ -55,6 +61,11 @@ def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 def go(Map coord, String cubeName = ncube.name, def defaultValue = null)
 {
     return getCube(cubeName).getCell(coord, output, defaultValue)
+}
+
+def go(Map coord, NCube cube, def defaultValue = null)
+{
+    return cube.getCell(coord, output, defaultValue)
 }
 
 def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
@@ -92,12 +103,12 @@ def jump(Map coord)
     throw new RuleJump(input)
 }
 
-long now()
+static long now()
 {
     return System.nanoTime()
 }
 
-double elapsedMillis(long begin, long end)
+static double elapsedMillis(long begin, long end)
 {
     return (double) (end - begin) / 1000000.0d
 }

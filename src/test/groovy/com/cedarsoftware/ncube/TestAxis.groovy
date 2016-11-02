@@ -250,7 +250,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new Range(0L, 18L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(65L, 80L)
@@ -265,7 +265,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new Range(65L, 80L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(0L, 18L)
@@ -280,7 +280,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new Range(0L, 18L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(65L, 80L)
@@ -296,7 +296,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new Range(65L, 80L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(0L, 18L)
@@ -312,7 +312,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == new Range(0L, 18L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(65L, 80L)
@@ -327,7 +327,7 @@ class TestAxis
         axis.addColumn(new Range(18, 30))
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == new Range(65L, 80L)
         assert cols[1].value == new Range(18L, 30L)
         assert cols[2].value == new Range(0L, 18L)
@@ -342,7 +342,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new RangeSet(new Range(0L, 18L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(65L, 80L))
@@ -357,7 +357,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new RangeSet(new Range(65L, 80L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(0L, 18L))
@@ -372,7 +372,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new RangeSet(new Range(0L, 18L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(65L, 80L))
@@ -388,7 +388,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == new RangeSet(new Range(65L, 80L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(0L, 18L))
@@ -404,7 +404,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == new RangeSet(new Range(0L, 18L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(65L, 80L))
@@ -419,7 +419,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(new Range(0, 18))
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == new RangeSet(new Range(65L, 80L))
         assert cols[1].value == new RangeSet(18L)
         assert cols[2].value == new RangeSet(new Range(0L, 18L))
@@ -434,7 +434,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == 0L
         assert cols[1].value == 18L
         assert cols[2].value == 65L
@@ -449,7 +449,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == 65L
         assert cols[1].value == 18L
         assert cols[2].value == 0L
@@ -464,7 +464,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == 0L
         assert cols[1].value == 18L
         assert cols[2].value == 65L
@@ -480,7 +480,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumns()
+        List<Column> cols = axis.columns
         assert cols[0].value == 65L
         assert cols[1].value == 18L
         assert cols[2].value == 0L
@@ -496,7 +496,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == 0L
         assert cols[1].value == 18L
         assert cols[2].value == 65L
@@ -511,7 +511,7 @@ class TestAxis
         axis.addColumn(18)
         axis.addColumn(0)
 
-        List<Column> cols = axis.getColumnsWithoutDefault()
+        List<Column> cols = axis.columnsWithoutDefault
         assert cols[0].value == 65L
         assert cols[1].value == 18L
         assert cols[2].value == 0L
@@ -726,7 +726,7 @@ class TestAxis
             assert expected.message.contains('already')
         }
         axis.deleteColumn null
-        assert axis.getDefaultColumn() == null
+        assert axis.defaultColumn == null
     }
 
     @Test
@@ -1191,7 +1191,7 @@ class TestAxis
         Axis axis2 = new Axis('loc', AxisType.SET, AxisValueType.LONG, false)
         Column colAdded = axis2.addColumn('[1, 2]')
         colAdded.id = -1
-        axis.updateColumns(axis2.getColumns())
+        axis.updateColumns(axis2.columns)
 
         assert 2 == axis.columns.size()
         Column col = axis.columnsWithoutDefault.get(0)
@@ -1210,7 +1210,7 @@ class TestAxis
         cols.get(0).id = axis1.columnsWithoutDefault.get(0).id
         cols.get(0).setMetaProperty('name', 'cheese')
         cols.get(0).setMetaProperty('foo', 'bar')
-        axis1.updateColumns(axis2.getColumns())
+        axis1.updateColumns(axis2.columns)
 
         assert 2 == axis1.columns.size()
         Column col = axis1.columnsWithoutDefault.get(0)
@@ -1260,7 +1260,7 @@ class TestAxis
         axis2.addColumn '[1, 2]'
         try
         {
-            axis.updateColumns(axis2.getColumns())
+            axis.updateColumns(axis2.columns)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -1805,34 +1805,34 @@ class TestAxis
     void testUpdateColumnsFrontMiddleBack()
     {
         Axis axis = new Axis('Age', AxisType.RANGE, AxisValueType.LONG, false, Axis.SORTED, 1)
-        axis.addColumn(new Range(5, 10))
-        axis.addColumn(new Range(20, 30))
-        axis.addColumn(new Range(30, 40))
+        Column col1 = axis.addColumn(new Range(5, 10))
+        Column col2 = axis.addColumn(new Range(20, 30))
+        Column col3 = axis.addColumn(new Range(30, 40))
 
         Axis axis2 = new Axis('Age', AxisType.RANGE, AxisValueType.LONG, false, Axis.SORTED, 1)
-        axis2.addColumn(new Range(5, 10))
-        axis2.addColumn(new Range(20, 30))
-        axis2.addColumn(new Range(30, 40))
+        axis2.addColumn(new Range(5, 10), '', col1.id)
+        axis2.addColumn(new Range(20, 30), '', col2.id)
+        axis2.addColumn(new Range(30, 40), '', col3.id)
 
         Column newCol = axis.createColumnFromValue(new Range(10, 20), null)
         newCol = axis.addColumnInternal(newCol)
         newCol.id = -newCol.id
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 4 == axis2.columns.size()
 
         newCol = axis.createColumnFromValue(new Range(0, 5), null)
         newCol = axis.addColumnInternal(newCol)
         newCol.id = -newCol.id
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 5 == axis2.columns.size()
 
         newCol = axis.createColumnFromValue(new Range(40, 50), null)
         axis.addColumnInternal(newCol)
         newCol.id = -newCol.id
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 6 == axis2.columns.size()
 
         for (Column column : axis2.columns)
@@ -1842,11 +1842,11 @@ class TestAxis
 
         // Test remove via updateColumns()
         axis = new Axis('Age', AxisType.RANGE, AxisValueType.LONG, false, Axis.SORTED, 1)
-        axis.addColumn(new Range(5, 10))
-        axis.addColumn(new Range(20, 30))
-        axis.addColumn(new Range(30, 40))
+        axis.addColumn(new Range(5, 10), '', col1.id)
+        axis.addColumn(new Range(20, 30), '', col2.id)
+        axis.addColumn(new Range(30, 40), '', col3.id)
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 3 == axis2.size()
     }
 
@@ -1854,57 +1854,58 @@ class TestAxis
     void testUpdateColumnsOverlapCheck()
     {
         Axis axis = new Axis('Age', AxisType.RANGE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis.addColumn new Range('2', '4')
-        axis.addColumn new Range('4', '6')
-        axis.addColumn new Range('6', '8')
-        axis.addColumn new Range('0', '2')
+        Column col1 = axis.addColumn new Range('2', '4')
+        Column col2 = axis.addColumn new Range('4', '6')
+        Column col3 = axis.addColumn new Range('6', '8')
+        Column col4 = axis.addColumn new Range('0', '2')
 
         Axis axis2 = new Axis('Age', AxisType.RANGE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis2.addColumn new Range('2', '4')
-        axis2.addColumn new Range('4', '6')
-        axis2.addColumn new Range('6', '8')
-        axis2.addColumn new Range('0', '2')
+        axis2.addColumn(new Range('2', '4'), '', col1.id)
+        axis2.addColumn(new Range('4', '6'), '', col2.id)
+        axis2.addColumn(new Range('6', '8'), '', col3.id)
+        axis2.addColumn(new Range('0', '2'), '', col4.id)
 
         Column newCol = axis.createColumnFromValue(new Range('8', '10'), null) // String axis
 
         try
         {
             axis.addColumnInternal(newCol)
+            fail()
         }
-        catch (AxisOverlapException e)
+        catch (AxisOverlapException ignore)
         { }
 
         newCol = axis.createColumnFromValue(new Range('8', '9'), null)      // String axis
         newCol.id = -newCol.id
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
     }
 
     @Test
     void testUpdateColumnsOverlapFail()
     {
         Axis axis = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis.addColumn('Mon')
-        axis.addColumn('Tue')
-        axis.addColumn('Wed')
-        axis.addColumn('Thu')
-        axis.addColumn('Fri')
-        axis.addColumn('Sat')
-        axis.addColumn('Sun')
+        Column mon = axis.addColumn('Mon')
+        Column tue = axis.addColumn('Tue')
+        Column wed = axis.addColumn('Wed')
+        Column thu = axis.addColumn('Thu')
+        Column fri = axis.addColumn('Fri')
+        Column sat = axis.addColumn('Sat')
+        Column sun = axis.addColumn('Sun')
 
-        List<Column> columnList = axis.getColumns()
+        List<Column> columnList = axis.columns
         axis.deleteColumn('Wed')
         Column repeatedColumn = axis.addColumn('Wed')
         repeatedColumn.id = -repeatedColumn.id
         columnList << repeatedColumn
 
         Axis axis2 = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis2.addColumn('Mon')
-        axis2.addColumn('Tue')
-        axis2.addColumn('Wed')
-        axis2.addColumn('Thu')
-        axis2.addColumn('Fri')
-        axis2.addColumn('Sat')
-        axis2.addColumn('Sun')
+        axis2.addColumn('Mon', '', mon.id)
+        axis2.addColumn('Tue', '', tue.id)
+        axis2.addColumn('Wed', '', wed.id)
+        axis2.addColumn('Thu', '', thu.id)
+        axis2.addColumn('Fri', '', fri.id)
+        axis2.addColumn('Sat', '', sat.id)
+        axis2.addColumn('Sun', '', sun.id)
 
         try
         {
@@ -1913,10 +1914,10 @@ class TestAxis
         }
         catch (AxisOverlapException e)
         {
-            String msg = e.message.toLowerCase()
+            String msg = e.message
             assert msg.contains('matches a value already on axis')
             assert msg.contains('days')
-            assert msg.contains('wed')
+            assert msg.contains('Wed')
         }
     }
 
@@ -1924,27 +1925,27 @@ class TestAxis
     void testUpdateColumnsUpdatedValueFail()
     {
         Axis axis = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis.addColumn('Mon')
-        axis.addColumn('Tue')
-        axis.addColumn('Wed')
-        axis.getColumnById(1000000000001).setValue('Wed')
+        Column mon = axis.addColumn('Mon')
+        Column tue = axis.addColumn('Tue')
+        Column wed = axis.addColumn('Wed')
+        axis.findColumn('Mon').value = 'Wed'
 
         Axis axis2 = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis2.addColumn('Mon')
-        axis2.addColumn('Tue')
-        axis2.addColumn('Wed')
+        axis2.addColumn('Mon', '', mon.id)
+        axis2.addColumn('Tue', '', tue.id)
+        axis2.addColumn('Wed', '', wed.id)
 
         try
         {
-            axis2.updateColumns(axis.getColumns())
+            axis2.updateColumns(axis.columns)
             fail()
         }
         catch (AxisOverlapException e)
         {
-            String msg = e.message.toLowerCase()
+            String msg = e.message
             assert msg.contains('matches a value already on axis')
             assert msg.contains('days')
-            assert msg.contains('wed')
+            assert msg.contains('Wed')
         }
     }
 
@@ -1952,31 +1953,31 @@ class TestAxis
     void testUpColumnsMaintainsOrder()
     {
         Axis axis = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis.addColumn 'Mon'
-        axis.addColumn 'Tue'
+        Column mon = axis.addColumn 'Mon'
+        Column tue = axis.addColumn 'Tue'
         Column wed = axis.addColumn 'Wed'
         wed.id = -wed.id
-        axis.addColumn 'Thu'
-        axis.addColumn 'Fri'
-        axis.addColumn 'Sat'
-        axis.addColumn 'Sun'
+        Column thu = axis.addColumn 'Thu'
+        Column fri = axis.addColumn 'Fri'
+        Column sat = axis.addColumn 'Sat'
+        Column sun = axis.addColumn 'Sun'
 
         // Mon/Sat backwards
         // Wed missing
         // Bogus column added (named 'Whoops')
         // Fix these problems with updateColumns (simulate user moving columns in NCE)
         Axis axis2 = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis2.addColumn 'Sat'
-        axis2.addColumn 'Tue'
-        axis2.addColumn 'Wed'
-        axis2.addColumn 'Thu'
-        axis2.addColumn 'Fri'
-        axis2.addColumn 'Mon'
-        axis2.addColumn 'Sun'
-        axis2.addColumn 'Whoops'
-        axis2.deleteColumn 'Wed'
+        axis2.addColumn('Sat', '', sat.id)
+        axis2.addColumn('Tue', '', tue.id)
+        axis2.addColumn('Wed', '', wed.id)
+        axis2.addColumn('Thu', '', thu.id)
+        axis2.addColumn('Fri', '', fri.id)
+        axis2.addColumn('Mon', '', mon.id)
+        axis2.addColumn('Sun', '', sun.id)
+        axis2.addColumn('Whoops')
+        axis2.deleteColumn('Wed')
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 7 == axis2.size()
         assert 'Mon' == axis2.columns[0].value
         assert 'Tue' == axis2.columns[1].value
@@ -1991,31 +1992,31 @@ class TestAxis
     void testUpColumnsMaintainsOrderWithDefault()
     {
         Axis axis = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY, 1)
-        axis.addColumn 'Mon'
-        axis.addColumn 'Tue'
+        Column mon = axis.addColumn 'Mon'
+        Column tue = axis.addColumn 'Tue'
         Column wed = axis.addColumn 'Wed'
         wed.id = -wed.id
-        axis.addColumn 'Thu'
-        axis.addColumn 'Fri'
-        axis.addColumn 'Sat'
-        axis.addColumn 'Sun'
+        Column thu = axis.addColumn 'Thu'
+        Column fri = axis.addColumn 'Fri'
+        Column sat = axis.addColumn 'Sat'
+        Column sun = axis.addColumn 'Sun'
 
         // Mon/Sat backwards
         // Wed missing
         // Bogus column added (named 'Whoops')
         // Fix these problems with updateColumns (simulate user moving columns in NCE)
         Axis axis2 = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY, 1)
-        axis2.addColumn 'Sat'
-        axis2.addColumn 'Tue'
-        axis2.addColumn 'Wed'
-        axis2.addColumn 'Thu'
-        axis2.addColumn 'Fri'
-        axis2.addColumn 'Mon'
-        axis2.addColumn 'Sun'
-        axis2.addColumn 'Whoops'
-        axis2.deleteColumn 'Wed'
+        axis2.addColumn('Sat', '', sat.id)
+        axis2.addColumn('Tue', '', tue.id)
+        axis2.addColumn('Wed', '', wed.id)
+        axis2.addColumn('Thu', '', thu.id)
+        axis2.addColumn('Fri', '', fri.id)
+        axis2.addColumn('Mon', '', mon.id)
+        axis2.addColumn('Sun', '', sun.id)
+        axis2.addColumn('Whoops')
+        axis2.deleteColumn('Wed')
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 8 == axis2.size()
         assert 'Mon' == axis2.columns[0].value
         assert 'Tue' == axis2.columns[1].value
@@ -2032,31 +2033,31 @@ class TestAxis
     void testUpColumnsMaintainsIgnoresDefault()
     {
         Axis axis = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY, 1)
-        axis.addColumn 'Mon'
-        axis.addColumn 'Tue'
+        Column mon = axis.addColumn 'Mon'
+        Column tue = axis.addColumn 'Tue'
         Column wed = axis.addColumn 'Wed'
         wed.id = -wed.id
-        axis.addColumn 'Thu'
-        axis.addColumn 'Fri'
-        axis.addColumn 'Sat'
-        axis.addColumn 'Sun'
+        Column thu = axis.addColumn 'Thu'
+        Column fri = axis.addColumn 'Fri'
+        Column sat = axis.addColumn 'Sat'
+        Column sun = axis.addColumn 'Sun'
 
         // Mon/Sat backwards
         // Wed missing
         // Bogus column added (named 'Whoops')
         // Fix these problems with updateColumns (simulate user moving columns in NCE)
         Axis axis2 = new Axis('days', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1)
-        axis2.addColumn 'Sat'
-        axis2.addColumn 'Tue'
-        axis2.addColumn 'Wed'
-        axis2.addColumn 'Thu'
-        axis2.addColumn 'Fri'
-        axis2.addColumn 'Mon'
-        axis2.addColumn 'Sun'
-        axis2.addColumn 'Whoops'
-        axis2.deleteColumn 'Wed'
+        axis2.addColumn('Sat', '', sat.id)
+        axis2.addColumn('Tue', '', tue.id)
+        axis2.addColumn('Wed', '', wed.id)
+        axis2.addColumn('Thu', '', thu.id)
+        axis2.addColumn('Fri', '', fri.id)
+        axis2.addColumn('Mon', '', mon.id)
+        axis2.addColumn('Sun', '', sun.id)
+        axis2.addColumn('Whoops')
+        axis2.deleteColumn('Wed')
 
-        axis2.updateColumns(axis.getColumns())
+        axis2.updateColumns(axis.columns)
         assert 7 == axis2.size()
         assert 'Mon' == axis2.columns[0].value
         assert 'Tue' == axis2.columns[1].value
@@ -2114,7 +2115,7 @@ class TestAxis
     @Test
     void testUpdateColumnsNotLosingCellsInDefaultColumn()
     {
-        NCube ncube = NCubeBuilder.getDiscrete1DEmptyWithDefault()
+        NCube ncube = NCubeBuilder.discrete1DEmptyWithDefault
         ncube.setCell('Ohio', [state:'OH'] as Map)
         ncube.setCell('Texas', [state:'TX'] as Map)
         ncube.setCell('Alabama', [state:'AL'] as Map)
@@ -2582,28 +2583,28 @@ class TestAxis
     {
         Axis axis = new Axis('rule', AxisType.RULE, AxisValueType.EXPRESSION, true)
         GroovyExpression exp = (GroovyExpression) axis.convertStringToColumnValue("true")
-        assert "true".equals(exp.getCmd())
-        assert exp.getUrl() == null
+        assert "true".equals(exp.cmd)
+        assert exp.url == null
 
         exp = (GroovyExpression) axis.convertStringToColumnValue("cache|true")
-        assert 'true'.equals(exp.getCmd())
-        assert  null == exp.getUrl()
-        assert exp.isCacheable()
+        assert 'true'.equals(exp.cmd)
+        assert  null == exp.url
+        assert exp.cacheable
 
         // These values allow a single-line edit widget to feed a GroovyExpression with all capabilities.
         exp = (GroovyExpression) axis.convertStringToColumnValue("url|http://www.foxnews.com")
-        assert "http://www.foxnews.com".equals(exp.getUrl())
-        assert !exp.isCacheable()
+        assert "http://www.foxnews.com".equals(exp.url)
+        assert !exp.cacheable
 
         exp = (GroovyExpression) axis.convertStringToColumnValue("url|cache|http://www.foxnews.com")
-        assert "http://www.foxnews.com".equals(exp.getUrl())
-        assert exp.getCmd() == null
-        assert exp.isCacheable()
+        assert "http://www.foxnews.com".equals(exp.url)
+        assert exp.cmd == null
+        assert exp.cacheable
 
         exp = (GroovyExpression) axis.convertStringToColumnValue("cache|url|http://www.foxnews.com")
-        assert "http://www.foxnews.com".equals(exp.getUrl())
-        assert exp.getCmd() == null
-        assert exp.isCacheable()
+        assert "http://www.foxnews.com".equals(exp.url)
+        assert exp.cmd == null
+        assert exp.cacheable
     }
 
     @Test
@@ -2624,7 +2625,7 @@ class TestAxis
     @Test
     void testReferenceAxisNoDefaultAndBreakReference()
     {
-        NCube one = NCubeBuilder.getDiscrete1DAlt()
+        NCube one = NCubeBuilder.discrete1DAlt
         assert one.getAxis('state').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
@@ -2642,8 +2643,8 @@ class TestAxis
         // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
         Axis axis = new Axis('stateSource', 1, false, refAxisLoader)
-        assert axis.getReferenceCubeName() == 'SimpleDiscrete'
-        assert axis.getReferenceAxisName() == 'state'
+        assert axis.referenceCubeName == 'SimpleDiscrete'
+        assert axis.referenceAxisName == 'state'
         NCube two = new NCube('Mongo')
         two.addAxis(axis)
 
@@ -2652,23 +2653,23 @@ class TestAxis
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 2
+        assert reload.numCells == 2
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
-        assert reload.getAxis('stateSource').isReference()
+        assert reload.getAxis('stateSource').reference
 
         // Break reference and verify broken
         reload.breakAxisReference('stateSource')
-        assert reload.getNumCells() == 2
+        assert reload.numCells == 2
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
-        assert !reload.getAxis('stateSource').isReference()
+        assert !reload.getAxis('stateSource').reference
     }
 
     @Test
     void testReferenceAxisToReferenceAxis()
     {
-        NCube one = NCubeBuilder.getDiscrete1DAlt()
+        NCube one = NCubeBuilder.discrete1DAlt
         assert one.getAxis('state').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
@@ -2695,10 +2696,10 @@ class TestAxis
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 2
+        assert reload.numCells == 2
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
-        assert reload.getAxis('stateSource').isReference()
+        assert reload.getAxis('stateSource').reference
 
         args[REF_TENANT] = appId.tenant
         args[REF_APP] = appId.app
@@ -2718,16 +2719,16 @@ class TestAxis
 
         json = three.toFormattedJson()
         reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 2
+        assert reload.numCells == 2
         assert 'a' == reload.getCell([stateClone:'OH'] as Map)
         assert 'b' == reload.getCell([stateClone:'TX'] as Map)
-        assert reload.getAxis('stateClone').isReference()
+        assert reload.getAxis('stateClone').reference
     }
 
     @Test
     void testReferenceAxisAddedDefault()
     {
-        NCube one = NCubeBuilder.getDiscrete1DAlt()
+        NCube one = NCubeBuilder.discrete1DAlt
         assert one.getAxis('state').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
@@ -2754,7 +2755,7 @@ class TestAxis
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 3
+        assert reload.numCells == 3
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
         assert 'c' == reload.getCell([stateSource:'AZ'] as Map)
@@ -2764,7 +2765,7 @@ class TestAxis
     @Test
     void testReferenceAxisWithDefault()
     {
-        NCube one = NCubeBuilder.getDiscrete1DEmptyWithDefault()
+        NCube one = NCubeBuilder.discrete1DEmptyWithDefault
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
         Map<String, Object> args = [:]
@@ -2790,7 +2791,7 @@ class TestAxis
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 3
+        assert reload.numCells == 3
         assert 'a' == reload.getCell([stateSource:'OH'] as Map)
         assert 'b' == reload.getCell([stateSource:'TX'] as Map)
         assert 'c' == reload.getCell([stateSource:'AZ'] as Map)
@@ -2800,11 +2801,11 @@ class TestAxis
     @Test
     void testReferenceAxisWithTransform()
     {
-        NCube one = NCubeBuilder.getDiscrete1DLong()
+        NCube one = NCubeBuilder.discrete1DLong
         assert one.getAxis('code').size() == 3
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
-        NCube transform = NCubeBuilder.getTransformMultiply()
+        NCube transform = NCubeBuilder.transformMultiply
         assert transform.getAxis('method').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, transform)
 
@@ -2841,7 +2842,7 @@ class TestAxis
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 3
+        assert reload.numCells == 3
 
         // 1, 2, 3 was transformed to 2, 4, 6
         assert 'a' == reload.getCell([age:2] as Map)
@@ -2857,7 +2858,7 @@ class TestAxis
     @Test
     void testReferenceAxisCubeNotExists()
     {
-        NCube one = NCubeBuilder.getDiscrete1DAlt()
+        NCube one = NCubeBuilder.discrete1DAlt
         assert one.getAxis('state').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
@@ -2876,14 +2877,15 @@ class TestAxis
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
         try
         {
-            new Axis('stateSource', 1, false, refAxisLoader)
+            Axis ignore = new Axis('stateSource', 1, false, refAxisLoader)
             fail()
         }
         catch (IllegalStateException e)
         {
-            assert e.message.toLowerCase().contains('unable to load')
-            assert e.message.toLowerCase().contains('reference axis')
-            assert e.message.contains('impleDiscreteNotExisting')
+            String message = e.message
+            assert message.contains('Unable to load')
+            assert message.contains('reference axis')
+            assert message.contains('impleDiscreteNotExisting')
         }
 
         args[REF_CUBE_NAME] = 'SimpleDiscrete'
@@ -2891,26 +2893,27 @@ class TestAxis
         refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
         try
         {
-            new Axis('stateSource', 1, false, refAxisLoader)
+            Axis ignore = new Axis('stateSource', 1, false, refAxisLoader)
             fail()
         }
         catch (IllegalStateException e)
         {
-            assert e.message.toLowerCase().contains('unable to load')
-            assert e.message.toLowerCase().contains('reference axis')
-            assert e.message.contains('stateNotThere')
-            assert e.message.toLowerCase().contains('not found')
+            String message = e.message
+            assert message.contains('Unable to load')
+            assert message.contains('reference axis')
+            assert message.contains('stateNotThere')
+            assert message.contains('not found')
         }
     }
 
     @Test
     void testNonExistingTransformCube()
     {
-        NCube one = NCubeBuilder.getDiscrete1DLong()
+        NCube one = NCubeBuilder.discrete1DLong
         assert one.getAxis('code').size() == 3
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
-        NCube transform = NCubeBuilder.getTransformMultiply()
+        NCube transform = NCubeBuilder.transformMultiply
         assert transform.getAxis('method').size() == 2
         NCubeManager.addCube(ApplicationID.testAppId, transform)
 
@@ -2935,7 +2938,7 @@ class TestAxis
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
         try
         {
-            new Axis('age', 1, false, refAxisLoader)
+            Axis ignore = new Axis('age', 1, false, refAxisLoader)
             fail()
         }
         catch (IllegalStateException e)
@@ -2951,7 +2954,7 @@ class TestAxis
         refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
         try
         {
-            new Axis('age', 1, false, refAxisLoader)
+            Axis ignore = new Axis('age', 1, false, refAxisLoader)
             fail()
         }
         catch (IllegalStateException e)
@@ -2967,7 +2970,7 @@ class TestAxis
         refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
         try
         {
-            new Axis('age', 1, false, refAxisLoader)
+            Axis ignore = new Axis('age', 1, false, refAxisLoader)
             fail()
         }
         catch (IllegalStateException e)
@@ -2982,7 +2985,7 @@ class TestAxis
     @Test
     void testReferenceIntoHigherDimensionCube()
     {
-        NCube one = NCubeBuilder.getDiscrete1DLong()
+        NCube one = NCubeBuilder.discrete1DLong
         NCubeManager.addCube(ApplicationID.testAppId, one)
         NCube two = NCubeBuilder.get5DTestCube()
         NCubeManager.addCube(ApplicationID.testAppId, two)
@@ -3025,7 +3028,7 @@ class TestAxis
 
         String json = one.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
-        assert reload.getNumCells() == 6
+        assert reload.numCells == 6
 
         coord.code ='1'
         coord.stateRef = 'OH'
@@ -3051,7 +3054,7 @@ class TestAxis
     @Test
     void testRefAxisWithMetaProps()
     {
-        NCube one = NCubeBuilder.getDiscrete1DLong()
+        NCube one = NCubeBuilder.discrete1DLong
         Axis code = one.getAxis('code')
         code.setMetaProperty('a', 'alpha')
         code.setMetaProperty('b', 'ball')
@@ -3079,7 +3082,7 @@ class TestAxis
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
 
-        Map meta = reload.getAxis('code').getMetaProperties()
+        Map meta = reload.getAxis('code').metaProperties
         assert 'alpha' == meta.get('a')
         assert 'bravo' == meta.get('b')
         assert 'charlie' == meta.get('c')
@@ -3093,7 +3096,7 @@ class TestAxis
             axis.addColumn(range)
             return true
         }
-        catch (AxisOverlapException e)
+        catch (AxisOverlapException ignore)
         {
             return false
         }

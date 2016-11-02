@@ -671,7 +671,7 @@ class VersionControl
      * @param Object[] of String SHA-1's for each of the cube names in the branch.
      * @return int the number of n-cubes merged.
      */
-    static int mergeAcceptTheirs(ApplicationID appId, Object[] cubeNames, Object[] branchSha1)
+    static int mergeAcceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
     {
         NCubeManager.validateAppId(appId)
         appId.validateBranchIsNotHead()
@@ -682,9 +682,9 @@ class VersionControl
         for (int i = 0; i < cubeNames.length; i++)
         {
             String cubeNameStr = cubeNames[i] as String
-            String sha1 = branchSha1[i] as String
             NCubeManager.assertPermissions(appId, cubeNameStr, Action.UPDATE)
-            persister.mergeAcceptTheirs(appId, cubeNameStr, sha1, userId)
+            NCubeManager.assertPermissions(appId.asBranch(sourceBranch), cubeNameStr, Action.READ)
+            persister.mergeAcceptTheirs(appId, cubeNameStr, sourceBranch, userId)
             NCubeManager.removeCachedCube(appId, cubeNameStr)
             count++
         }

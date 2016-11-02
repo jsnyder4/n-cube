@@ -906,8 +906,7 @@ SELECT h.revision_number FROM
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
 AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = head_sha1) b
 JOIN n_cube h ON h.sha1 = b.head_sha1
-WHERE h.app_cd = :app AND h.version_no_cd = :version AND h.status_cd = :status
-AND h.tenant_cd = :tenant AND h.branch_id = 'HEAD' AND h.create_dt < b.create_dt
+WHERE h.app_cd = :app AND h.branch_id = 'HEAD' AND h.tenant_cd = :tenant AND h.create_dt <= b.create_dt
 ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { ResultSet row ->
             maxRev = row.getLong('revision_number')
         });
@@ -1011,13 +1010,13 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         return true
     }
 
-    static boolean mergeAcceptTheirs(Connection c, ApplicationID appId, String cubeName, String branchSha1, String username)
+    static boolean mergeAcceptTheirs(Connection c, ApplicationID appId, String cubeName, String sourceBranch, String username)
     {
-        ApplicationID headId = appId.asHead()
-        byte[] headBytes = null
-        Long headRevision = null
-        byte[] headTestData = null
-        String headSha1 = null
+        ApplicationID sourceId = appId.asBranch(sourceBranch)
+        byte[] sourceBytes = null
+        Long sourceRevision = null
+        byte[] sourceTestData = null
+        String sourceSha1 = null
 
         Map<String, Object> options = [
                 (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
@@ -1025,42 +1024,34 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
                 (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
                 (METHOD_NAME) : 'mergeAcceptTheirs'] as Map
 
-        runSelectCubesStatement(c, headId, cubeName, options, 1, { ResultSet row ->
-            headBytes = row.getBytes(CUBE_VALUE_BIN)
-            headTestData = row.getBytes(TEST_DATA_BIN)
-            headRevision = row.getLong('revision_number')
-            headSha1 = row.getString('sha1')
+        runSelectCubesStatement(c, sourceId, cubeName, options, 1, { ResultSet row ->
+            sourceBytes = row.getBytes(CUBE_VALUE_BIN)
+            sourceTestData = row.getBytes(TEST_DATA_BIN)
+            sourceRevision = row.getLong('revision_number')
+            sourceSha1 = row.getString('sha1')
         })
 
-        if (headRevision == null)
+        if (sourceRevision == null)
         {
-            throw new IllegalStateException("Failed to overwrite cube in your branch, because 'their' cube does not exist: " + cubeName + ", app: " + appId)
+            throw new IllegalStateException("Failed to overwrite cube in your branch, because ${cubeName} does not exist in ${sourceId}")
         }
 
         Long newRevision = null
-        String oldBranchSha1 = null
+        String targetHeadSha1 = null
 
         // Do not use cube_value_bin, test data, or notes to speed up search
         Map<String, Object> options1 = [(NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
                                         (METHOD_NAME) : 'mergeAcceptTheirs'] as Map
         runSelectCubesStatement(c, appId, cubeName, options1, 1, { ResultSet row ->
             newRevision = row.getLong('revision_number')
-            oldBranchSha1 = row.getString('sha1')
+            targetHeadSha1 = row.getString('head_sha1')
         })
 
-        if (newRevision == null)
-        {
-            throw new IllegalStateException("failed to overwrite cube in your branch, because branch cube does not exist: " + cubeName + ", app: " + appId)
-        }
-
-        if (!StringUtilities.equalsIgnoreCase(branchSha1, oldBranchSha1))
-        {
-            throw new IllegalStateException("failed to overwrite cube in your branch, because branch cube has changed: " + cubeName + ", app: " + appId)
-        }
-
-        String notes = 'merge: head accepted over branch'
-        Long rev = Math.abs(newRevision as long) + 1L
-        insertCube(c, appId, cubeName, headRevision < 0 ? -rev : rev, headBytes, headTestData, notes, false, headSha1, headSha1, username, 'mergeAcceptTheirs')
+        String notes = "merge: ${sourceBranch} accepted over branch"
+        long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
+        rev = sourceRevision < 0 ? -rev : rev
+        String headSha1 = sourceBranch == ApplicationID.HEAD ? sourceSha1 : targetHeadSha1
+        insertCube(c, appId, cubeName, rev, sourceBytes, sourceTestData, notes, false, sourceSha1, headSha1, username, 'mergeAcceptTheirs')
         return true
     }
 
@@ -1351,7 +1342,7 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         map.tenant = padTenant(c, appId.tenant)
         map.create_dt = nowAsTimestamp()
         map.tenant = padTenant(c, appId.tenant)
-        return sql.executeUpdate(map, "/* releaseCubes */ UPDATE n_cube SET create_dt = :create_dt, status_cd = 'RELEASE' WHERE app_cd = :app AND version_no_cd = :version AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = 'HEAD'")
+        return sql.executeUpdate(map, "/* releaseCubes */ UPDATE n_cube SET status_cd = 'RELEASE' WHERE app_cd = :app AND version_no_cd = :version AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = 'HEAD'")
     }
 
     static int changeVersionValue(Connection c, ApplicationID appId, String newVersion)

@@ -9,6 +9,7 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -4864,6 +4865,23 @@ class TestNCube
         ncube.setCell('null', input)
         assert ncube.numCells == 2
         assert ncube.toHtml() != null
+    }
+
+    // For testing getCube speed()
+    @Ignore
+    void testGetCubeSpeed()
+    {
+        NCube ncube = NCubeBuilder.getDiscrete1D()
+        NCubeManager.addCube(ApplicationID.testAppId, ncube)
+
+        long start = System.nanoTime()
+        for (int i=0; i < 1000000; i++)
+        {
+            NCubeManager.getCube(ApplicationID.testAppId, ncube.name)
+        }
+        long end = System.nanoTime()
+
+        println ((end - start) / 1000000.0d)
     }
 
     // ---------------------------------------------------------------------------------

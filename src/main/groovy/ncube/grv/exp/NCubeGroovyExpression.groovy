@@ -9,7 +9,6 @@ import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
@@ -145,6 +144,19 @@ class NCubeGroovyExpression
     /**
      * Using the input Map passed in, fetch the coordinate at that location.
      * @param coord Map containing precise coordinate to use.
+     * @param cube NCube the n-cube to fetch the result from - passed in to save processing time.
+     * @param defaultValue Object to return when no cell exists at the target coordinate
+     * and the cube does not have a cube-level default.  This argument is optional.
+     * @return executed cell contents at the given coordinate.
+     */
+    def go(Map coord, NCube cube, def defaultValue = null)
+    {
+        return cube.getCell(coord, output, defaultValue)
+    }
+
+    /**
+     * Using the input Map passed in, fetch the coordinate at that location.
+     * @param coord Map containing precise coordinate to use.
      * @param cubeName String n-cube name.  This argument is optional and defaults
      * to the same cube as the cell currently executing.
      * @param defaultValue Object to return when no cell exists at the target coordinate
@@ -178,6 +190,23 @@ class NCubeGroovyExpression
     {
         input.putAll(coord)
         return getCube(cubeName).getCell(input, output, defaultValue)
+    }
+
+    /**
+     * Fetch the cell contents using the current input coordinate and specified n-cube,
+     * but first apply any updates from the passed in coordinate.
+     * @param coord Map containing 'updates' to the current input coordinate.
+     * @param cubeName String n-cube name.  This argument is optional and defaults
+     * to the same cube as the cell currently executing.
+     * @param defaultValue Object to return when no cell exists at the target coordinate
+     * and the cube does not have a cube-level default.  This argument is optional.
+     * @return executed cell contents at the current input location and specified n-cube,
+     * but first apply updates to the current input coordinate from the passed in coord.
+     */
+    def at(Map coord, NCube cube, def defaultValue = null)
+    {
+        input.putAll(coord)
+        return cube.getCell(input, output, defaultValue)
     }
 
     /**
@@ -262,7 +291,7 @@ class NCubeGroovyExpression
         Axis axis = (Axis) ncube[axisName]
         if (axis == null)
         {
-            throw new IllegalArgumentException("Axis '" + axisName + "' does not exist on n-cube: " + ncube.getName())
+            throw new IllegalArgumentException("Axis '" + axisName + "' does not exist on n-cube: " + ncube.name)
         }
 
         return axis
@@ -312,14 +341,14 @@ class NCubeGroovyExpression
      */
     byte[] urlToBytes(String url)
     {
-        URL actualUrl = NCubeManager.getActualUrl(getApplicationID(), url, input)
+        URL actualUrl = NCubeManager.getActualUrl(applicationID, url, input)
         return UrlUtilities.getContentFromUrl(actualUrl, true)
     }
 
     /**
      * @return long Current time in nano seconds (used to compute how long something takes to execute)
      */
-    long now()
+    static long now()
     {
         return System.nanoTime()
     }
@@ -330,13 +359,13 @@ class NCubeGroovyExpression
      * @param end long value from call to now()
      * @return double elapsed time in milliseconds.
      */
-    double elapsedMillis(long begin, long end)
+    static double elapsedMillis(long begin, long end)
     {
         return (double) (end - begin) / 1000000.0d
     }
 
     def run()
     {
-        throw new IllegalStateException('run() should never be called on ' + getClass().getName() + '. This can occur for a cell marked GroovyExpression which should be set to GroovyMethod.')
+        throw new IllegalStateException('run() should never be called on ' + getClass().name + '. This can occur for a cell marked GroovyExpression which should be set to GroovyMethod.')
     }
 }

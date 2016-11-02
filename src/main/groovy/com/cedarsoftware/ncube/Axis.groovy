@@ -70,6 +70,7 @@ class Axis
     public static final int DISPLAY = 1
     private static final AtomicLong baseAxisIdForTesting = new AtomicLong(1)
     protected static final long BASE_AXIS_ID = 1000000000000L
+    protected static final long MAX_COLUMN_ID = 2000000000L
 
     private String name
     private AxisType type
@@ -77,7 +78,6 @@ class Axis
     protected Map<String, Object> metaProps = null
     private Column defaultCol
     protected final long id
-    private long colIdBase = 0
     private int preferredOrder = SORTED
     protected boolean fireAll = true
     private boolean isRef
@@ -88,6 +88,13 @@ class Axis
     private final transient SortedMap<Integer, Column> displayOrder = new TreeMap<>()
     private transient NavigableMap<Comparable, Column> valueToCol = new TreeMap<>()
     protected transient RangeMap<Comparable, Column> rangeToCol = TreeRangeMap.create()
+
+    private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
+        public Random initialValue()
+        {
+            return new Random()
+        }
+    }
 
     /**
      * Implement to provide data for this Axis
@@ -314,11 +321,22 @@ class Axis
         removeMetaProperty(TRANSFORM_METHOD_NAME)
     }
 
+    /**
+     * @return long next id for use on a new Column.
+     */
     protected long getNextColId()
     {
         long baseAxisId = id * BASE_AXIS_ID
-        while (idToCol.containsKey(++colIdBase + baseAxisId));
-        return baseAxisId + colIdBase
+        Random random = localRandom.get()
+        long uniqueId = random.nextLong()
+        long total = uniqueId % MAX_COLUMN_ID
+
+        while (uniqueId <= 0L || idToCol.containsKey(baseAxisId + total))
+        {
+            uniqueId = random.nextLong()
+            total = uniqueId % MAX_COLUMN_ID
+        }
+        return baseAxisId + total
     }
 
     protected long getDefaultColId()
@@ -555,7 +573,6 @@ class Axis
         displayOrder.clear()
         valueToCol?.clear()
         rangeToCol?.clear()
-        colIdBase = 0
     }
 
     /**
@@ -923,7 +940,7 @@ class Axis
             if (allowPositiveColumnIds && !existingColumns.containsKey(existingId))
             {
                 Column newCol = addColumnInternal(newColumnMap[col.id])
-                newCol.displayOrder = col.displayOrder
+                newCol.displayOrder = dispOrder++
                 existingId = newCol.id
                 existingColumns[existingId] = newCol
             }

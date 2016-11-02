@@ -1461,8 +1461,8 @@ class TestNCubeManager
     void testFastForward()
     {
         // Test the case where two users make the exact same change.  In this case, we can fast-forward the
-        // head sha1 in the branch (re-base it) because the cube in the branch is the same as the cube in head,
-        // even though the cube in the branch has an out-of-date HEAD SHA-1 (the head changed since the
+        // HEAD sha1 in the branch (re-base it) because the cube in the branch is the same as the cube in HEAD,
+        // even though the cube in the branch has an out-of-date HEAD SHA-1 (the HEAD changed since the
         // branch was changed).  But, because the branch owner made the same change as someone else, when they
         // go to update, it is recognized, and then their branch cube just has it's HEAD SHA1 updated.
         ApplicationID johnAppId = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'jdereg')
@@ -1878,12 +1878,12 @@ class TestNCubeManager
         sysLockCube.setCell(userId, lockCoord)
         NCubeManager.updateCube(branchBootAppId, sysLockCube, true)
 
-        // commit sys lock to head
+        // commit sys lock to HEAD
         Object[] cubeInfos = NCubeManager.search(branchBootAppId, NCubeManager.SYS_LOCK, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
         Map<String, Object> commitResult = VersionControl.commitBranch(branchBootAppId, cubeInfos)
         assertEquals(1, commitResult[VersionControl.BRANCH_UPDATES].size())
 
-        // make sure head took the lock
+        // make sure HEAD took the lock
         sysLockCube = NCubeManager.loadCube(branchBootAppId, NCubeManager.SYS_LOCK)
         NCube headSysLockCube = NCubeManager.loadCube(defaultBootApp, NCubeManager.SYS_LOCK)
         assertEquals(sysLockCube.getCell(lockCoord), headSysLockCube.getCell(lockCoord))
