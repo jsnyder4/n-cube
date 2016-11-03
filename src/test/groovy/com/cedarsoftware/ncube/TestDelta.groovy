@@ -932,7 +932,7 @@ class TestDelta
         assert '3' == getCellIgnoreRule(cube1, [:])
 
         Axis rule = (Axis) cube1['rule']
-        Column process = rule.findColumn(null)
+        Column process = rule.findColumn('process')
         cube1.updateColumn(process.id, '1 < 2')
 
         rule = (Axis) cube2['rule']
@@ -941,7 +941,12 @@ class TestDelta
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
         boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
-        assert !compatibleChange
+        assert compatibleChange
+        DeltaProcessor.mergeDeltaSet(cube2, delta1)
+        DeltaProcessor.mergeDeltaSet(cube1, delta2)
+
+        assert cube2.getAxis('rule').findColumn('process').value == new GroovyExpression('1 < 2', null, false)
+        assert !cube1.getAxis('rule').hasDefaultColumn()
     }
 
     @Test

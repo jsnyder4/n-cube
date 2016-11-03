@@ -155,7 +155,14 @@ class DeltaProcessor
                         Comparable value = axis.getValueToLocateColumn(column)
                         Column findCol = axis.findColumn(value)
 
-                        if (findCol == null)
+                        /**
+                         * findCol == null
+                         *    1. you have a value not on the axis and there is no default
+                         * findCol.default && value != null
+                         *    1. default column is being added - skip because default already exists
+                         *    2. value not found but landing on default
+                         */
+                        if (findCol == null || (findCol.default && value != null))
                         {
                             mergeTarget.addColumn(axisName, column.value, column.columnName, column.id)
                         }
@@ -464,18 +471,19 @@ class DeltaProcessor
         Map<Comparable, ColumnDelta> deltaColumns = new CaseInsensitiveMap<>()
         Map<Comparable, Column> copyColumns = [:]
 
-        for (Column baseColumn : baseAxis.columns)
+        for (Column baseColumn : baseAxis.columnsWithoutDefault)
         {
             Comparable locatorKey = baseAxis.getValueToLocateColumn(baseColumn)
             copyColumns[locatorKey] = baseColumn
         }
 
-        for (Column changeColumn : changeAxis.columns)
+        for (Column changeColumn : changeAxis.columnsWithoutDefault)
         {
             Comparable locatorKey = changeAxis.getValueToLocateColumn(changeColumn)
             Column foundCol = baseAxis.findColumn(locatorKey)
 
-            if (foundCol == null)
+            //add because you didn't find the column or you landed on the default
+            if (foundCol == null || foundCol.default)
             {
                 deltaColumns[locatorKey] = new ColumnDelta(baseAxis.type, changeColumn, locatorKey, DELTA_COLUMN_ADD)
             }
@@ -495,6 +503,16 @@ class DeltaProcessor
         {   // If 'this' axis has columns 'other' axis does not, then mark these to be removed (like we do with cells).
             Comparable locatorKey = changeAxis.getValueToLocateColumn(column)
             deltaColumns[locatorKey] = new ColumnDelta(baseAxis.type, column, locatorKey, DELTA_COLUMN_REMOVE)
+        }
+
+        //handle add or remove default column
+        if (baseAxis.hasDefaultColumn() && !changeAxis.hasDefaultColumn())
+        {
+            deltaColumns[null] = new ColumnDelta(baseAxis.type, baseAxis.defaultColumn, null, DELTA_COLUMN_REMOVE)
+        }
+        else if (!baseAxis.hasDefaultColumn() && changeAxis.hasDefaultColumn())
+        {
+            deltaColumns[null] = new ColumnDelta(changeAxis.type, changeAxis.defaultColumn, null, DELTA_COLUMN_ADD)
         }
 
         return deltaColumns
