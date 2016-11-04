@@ -1339,7 +1339,6 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         Sql sql = new Sql(c)
         Map map = appId as Map
         map.newVer = newSnapVer
-        map.tenant = padTenant(c, appId.tenant)
         map.create_dt = nowAsTimestamp()
         map.tenant = padTenant(c, appId.tenant)
         return sql.executeUpdate(map, "/* releaseCubes */ UPDATE n_cube SET status_cd = 'RELEASE' WHERE app_cd = :app AND version_no_cd = :version AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = 'HEAD'")
