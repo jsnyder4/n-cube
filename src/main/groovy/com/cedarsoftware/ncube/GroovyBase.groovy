@@ -43,7 +43,7 @@ import java.util.regex.Pattern
 abstract class GroovyBase extends UrlCommandCell
 {
     static final String NCUBE_TARGET_JVM_VERSION = 'NCUBE_TARGET_JVM_VERSION'
-    static final String NCUBE_CODEGEN_DEBUG = 'NCUBE_TARGET_JVM_VERSION'
+    static final String NCUBE_CODEGEN_DEBUG = 'NCUBE_CODEGEN_DEBUG'
     protected transient String L2CacheKey  // in-memory cache of (SHA-1(source) || SHA-1(URL + classpath.urls)) to compiled class
     private volatile transient Class runnableCode = null
     /**
@@ -219,7 +219,8 @@ abstract class GroovyBase extends UrlCommandCell
         compilerConfiguration.targetBytecode = targetByteCodeVersion
         compilerConfiguration.debug = NCubeCodeGenDebug
         compilerConfiguration.defaultScriptExtension = '.groovy'
-        compilerConfiguration.optimizationOptions = [(CompilerConfiguration.INVOKEDYNAMIC): Boolean.TRUE]
+        // TODO: Research when this can be safely turned on vs having to be turned off
+//        compilerConfiguration.optimizationOptions = [(CompilerConfiguration.INVOKEDYNAMIC): Boolean.TRUE]
 
         SourceUnit sourceUnit = new SourceUnit("ncube.grv.exp.N_${L2CacheKey}", groovySource, compilerConfiguration, gcLoader, null)
 

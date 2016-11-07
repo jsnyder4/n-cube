@@ -1,4 +1,6 @@
 ### Revision History
+* 3.4.109
+ * Bug fix: when merging from another user's branch and 'accepting their changes' over yours, the 'changed' flag in your branch was not being set to their changed flag value.  This issue manifests as that file not showing up in your commit box when committed to HEAD.
 * 3.4.108
  * Enhancement: All dynamically compiled classes (GroovyExpression cells) are now cached in the temp folder under /target/SHA-1.class. The SHA-1 value is derived from the groovy source code, plus the JVM target version, plus a true/false indicating if the code was compiled in debug (true) or not (false).
  * Use the `NCUBE_TARGET_JVM_VERSION` environment variable to set the JVM version (e.g., "1.8" or "1.7").  Default is 1.8
