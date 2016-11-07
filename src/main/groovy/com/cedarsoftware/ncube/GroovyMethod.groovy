@@ -71,6 +71,6 @@ class GroovyMethod extends GroovyBase
     protected Object invokeRunMethod(NCubeGroovyExpression instance, Map<String, Object> ctx) throws Exception
     {
         NCubeGroovyController controller = (NCubeGroovyController) instance
-        return controller.run(cmdHash)
+        return controller.run(L2CacheKey)
     }
 }

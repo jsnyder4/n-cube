@@ -53,12 +53,12 @@ abstract class ContentCmdCell extends UrlCommandCell
     //  constructor only for serialization.
     ContentCmdCell() {}
 
-    public ContentCmdCell(String cmd, String url, boolean cacheContent)
+    ContentCmdCell(String cmd, String url, boolean cacheContent)
     {
         super(cmd, url, cacheContent)
     }
 
-    protected Object fetchResult(Map<String, Object> ctx)
+    protected def fetchResult(Map<String, Object> ctx)
     {
         Object data;
 
@@ -74,12 +74,12 @@ abstract class ContentCmdCell extends UrlCommandCell
         return executeInternal(data, ctx)
     }
 
-    protected Object executeInternal(Object data, Map<String, Object> ctx)
+    protected def executeInternal(Object data, Map<String, Object> ctx)
     {
         return data
     }
 
-    protected Object fetchContentFromUrl(Map ctx)
+    protected def fetchContentFromUrl(Map ctx)
     {
         Map input = getInput(ctx)
         if (input.containsKey(CdnRouter.HTTP_REQUEST) && input.containsKey(CdnRouter.HTTP_RESPONSE))
@@ -92,7 +92,7 @@ abstract class ContentCmdCell extends UrlCommandCell
         }
     }
 
-    protected Object simpleFetch(Map ctx)
+    protected def simpleFetch(Map ctx)
     {
         NCube cube = getNCube(ctx)
         URL u = getActualUrl(ctx)
@@ -106,8 +106,8 @@ abstract class ContentCmdCell extends UrlCommandCell
             }
             catch (Exception e)
             {
-                final String className = getClass().getSimpleName()
-                String errorMsg = 'url: ' + getUrl() + ', n-cube: ' + cube.name + ', app: ' + cube.applicationID
+                final String className = getClass().simpleName
+                String errorMsg = 'url: ' + url + ', n-cube: ' + cube.name + ', app: ' + cube.applicationID
                 if (i == 1)
                 {   // Note: Error is not marked - it will be retried in the future
                     String msg = 'Unable to load content from ' + errorMsg
@@ -121,6 +121,8 @@ abstract class ContentCmdCell extends UrlCommandCell
                 }
             }
         }
+        // Will never happen - loop will throw exception if 2nd attempt fails
+        return null
     }
 
     protected Object grab(URL u)
@@ -139,7 +141,7 @@ abstract class ContentCmdCell extends UrlCommandCell
         try
         {
             actualUrl = getActualUrl(ctx)
-            HttpURLConnection.setFollowRedirects(true)
+            HttpURLConnection.followRedirects = true
             URLConnection connection = actualUrl.openConnection()
             if (!(connection instanceof HttpURLConnection))
             {   // Handle a "file://" URL
@@ -210,7 +212,7 @@ abstract class ContentCmdCell extends UrlCommandCell
             out = response.outputStream
             IOUtilities.transfer(input, out)
 
-            return cacheable ? ((CachingInputStream) input).getStreamCache() : null     // must call .getStreamCache() with CompileStatic
+            return cacheable ? ((CachingInputStream) input).streamCache : null     // must call .getStreamCache() with CompileStatic
         }
         finally
         {
@@ -252,7 +254,7 @@ abstract class ContentCmdCell extends UrlCommandCell
 
     private static String getExtension(String urlPath)
     {
-        int index = urlPath == null ? -1 : urlPath.lastIndexOf(UrlCommandCell.EXTENSION_SEPARATOR as int)   // Must fully qualify with @CompileStatic
+        int index = urlPath == null ? -1 : urlPath.lastIndexOf(EXTENSION_SEPARATOR as int)
         return index == -1 ? null : urlPath.substring(index).intern()
     }
 

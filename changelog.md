@@ -1,4 +1,8 @@
 ### Revision History
+* 3.4.108
+ * Enhancement: All dynamically compiled classes (GroovyExpression cells) are now cached in the temp folder under /target/SHA-1.class. The SHA-1 value is derived from the groovy source code, plus the JVM target version, plus a true/false indicating if the code was compiled in debug (true) or not (false).
+ * Use the `NCUBE_TARGET_JVM_VERSION` environment variable to set the JVM version (e.g., "1.8" or "1.7").  Default is 1.8
+ * Use the `NCUBE_CODEGEN_DEBUG` environment variable to instruct compilation in debug or non-debug mode. Use "true" for debug, "false" for non-debug.  Default is false. 
 * 3.4.107
  * Bug fix: Merging axis columns when there was a Default Column, failed.
 * 3.4.106

@@ -50,7 +50,7 @@ class TestWithPreloadedDatabase
     private static final ApplicationID BRANCH3 = new ApplicationID('NONE', "test", "1.29.0", "SNAPSHOT", "FOO")
     private static final ApplicationID BOOT = new ApplicationID('NONE', "test", "0.0.0", "SNAPSHOT", ApplicationID.HEAD)
 
-    ApplicationID[] branches = [HEAD, BRANCH1, BRANCH2, BRANCH3, appId, BOOT] as ApplicationID[];
+    ApplicationID[] branches = [HEAD, BRANCH1, BRANCH2, BRANCH3, appId, BOOT] as ApplicationID[]
 
     private TestingDatabaseManager manager;
 

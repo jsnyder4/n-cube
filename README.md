@@ -4,13 +4,13 @@ n-cube
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.cedarsoftware/n-cube/badge.svg)](http://www.javadoc.io/doc/com.cedarsoftware/n-cube)
 
-n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and Enterprise Spreadsheet, built as a hyper-space.  The Domain Specific Language (**DSL**) for rules is [**Groovy**](http://www.groovy-lang.org/). To include in your project :
+n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and Enterprise Spreadsheet, built as a hyper-space.  The Domain Specific Language (**DSL**) for rules is [**Groovy**](http://www.groovy-lang.org/). To include in your project:
 
 ```
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.107</version>
+  <version>3.4.108</version>
 </dependency>
 ```
 

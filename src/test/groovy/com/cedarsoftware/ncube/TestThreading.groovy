@@ -55,21 +55,20 @@ public class TestThreading
         data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
         data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
 
-//        load = 50; threads = 5; count = 5
-//        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-//        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-//        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        load = 50; threads = 5; count = 5
+        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
+        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
+        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
 
 //        load = 25; threads = 5; count = 15
 //        data << [ ['load':load,'threads':threads,'count':count*10,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
 //        data << [ ['load':load,'threads':threads,'count':count*10,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
 //        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
-
+//
 //        load = 25; threads = 15; count = 15
 //        data << [ ['load':load,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
 //        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
 //        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
-
 
         return data as Object [][]
     }
@@ -175,16 +174,27 @@ public class TestThreading
             if (clearCache) {
                 LOG.debug '==>clear cache'
                 NCubeManager.clearCache()
-                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(cp.toFormattedJson().getBytes())))
-                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(supportingCube.toFormattedJson().getBytes())))
-                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().getBytes())))
+                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(cp.toFormattedJson().bytes)))
+                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(supportingCube.toFormattedJson().bytes)))
+                NCubeManager.addCube(ApplicationID.testAppId,NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().bytes)))
             }
 
             if (preCache) {
                 LOG.debug '==>pre-cache'
                 maxThreads.times { tid ->
                     count.times { cnt ->
-                        cube.getCell(['tid':tid,'cnt':cnt,'sleep':0L,'interface':ifc])
+                        try
+                        {
+                            cube.getCell(['tid':tid,'cnt':cnt,'sleep':0L,'interface':ifc])
+                        }
+                        catch (Exception e)
+                        {
+                            Throwable rootCause = StackTraceUtils.extractRootCause(e)
+                            if (!rootCause.message.toLowerCase().contains('code cleared while'))
+                            {
+                                failures.add(rootCause)
+                            }
+                        }
                     }
                 }
             }
@@ -201,16 +211,16 @@ public class TestThreading
                                 def output = [:]
                                 try {
                                     def val = cube.getCell(['tid': tid, 'cnt': cnt, 'sleep':sleepTime, 'sync':sync, 'remove':remove, 'interface':ifc], output)
-                                    if (!nm.equals(val)) {
+                                    if (nm != val) {
                                         throw new RuntimeException("Cell value=" + val + " does not match expected")
                                     }
                                 }
                                 catch (Exception e)
                                 {
                                     Throwable rootCause = StackTraceUtils.extractRootCause(e)
-                                    if (!rootCause.message.toLowerCase().contains('code cleared while getCell'))
+                                    if (!rootCause.message.toLowerCase().contains('code cleared while'))
                                     {
-                                        failures.add(StackTraceUtils.extractRootCause(e))
+                                        failures.add(rootCause)
                                     }
                                 }
                             }
@@ -244,12 +254,13 @@ public class TestThreading
         LOG.info "total time of " + totalDuration + "ms and average of " + (totalDuration/loopTest) + "ms with failure rate of " + allFailures.size() + "/" + (loopTest*(maxThreads*count*loopCount*load))
         dumpFailures(allFailures)
         assertEquals(0,allFailures.size())
+        return allFailures as List
     }
 
     private static void dumpFailures(ConcurrentLinkedQueue<Exception> failures) {
         def uniqueFailures = [:]
         failures.each { f ->
-            def msg = f.getMessage()
+            def msg = f.message
             if (StringUtilities.hasContent(msg))
             {
                 if (msg.contains('@'))
@@ -273,9 +284,9 @@ public class TestThreading
 
     private NCube buildAccessCube(def maxThreads, def maxCount, def warm) {
         LOG.info '==>Creating cube...'
-        NCube threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadDef.getBytes()))
+        NCube threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadDef.bytes))
         assertNotNull(threadCube)
-        NCube cube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCountDef.getBytes()))
+        NCube cube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCountDef.bytes))
         Axis axisTid = cube.getAxis("tid");
         Axis axisCnt = cube.getAxis("cnt");
         assertNotNull(cube)
@@ -283,9 +294,9 @@ public class TestThreading
         assertNotNull(axisCnt)
 
         LOG.debug 'columns...'
-        maxThreads.times { tid -> threadCube.getAxis('tid').addColumn(tid)}
-        maxThreads.times { tid -> axisTid.addColumn(tid) }
-        maxCount.times { cnt -> axisCnt.addColumn(cnt) }
+        maxThreads.times { int tid -> threadCube.getAxis('tid').addColumn(tid)}
+        maxThreads.times { int tid -> axisTid.addColumn(tid) }
+        maxCount.times { int cnt -> axisCnt.addColumn(cnt) }
 
         LOG.debug 'cells...'
         maxThreads.times { tid ->
@@ -310,17 +321,28 @@ public class TestThreading
         }
 
         LOG.debug 'recreating...'
-        cube = NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().getBytes()));
-        threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCube.toFormattedJson().getBytes()))
+        cube = NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().bytes));
+        threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCube.toFormattedJson().bytes))
         NCubeManager.addCube(ApplicationID.testAppId,threadCube)
         NCubeManager.addCube(ApplicationID.testAppId,cube)
 
         if (warm) {
             LOG.info 'warming...'
-            maxThreads.times { tid ->
-                maxCount.times { cnt ->
-                    def nm='test-'+tid+'-'+cnt
-                    assertEquals(nm,threadCube.getCell(['tid':tid,'cnt':cnt,'sleep':0L]))
+            maxThreads.times { int tid ->
+                maxCount.times { int cnt ->
+                    def nm = "test-${tid}-${cnt}"
+                    try
+                    {
+                        assertEquals(nm,threadCube.getCell(['tid':tid,'cnt':cnt,'sleep':0L]))
+                    }
+                    catch (Exception e)
+                    {
+                        Throwable rootCause = StackTraceUtils.extractRootCause(e)
+                        if (!rootCause.message.toLowerCase().contains('code cleared while'))
+                        {
+                            failures.add(rootCause)
+                        }
+                    }
                 }
             }
         }

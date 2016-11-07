@@ -3449,26 +3449,32 @@ class TestNCube
         NCube ncube = NCubeManager.getNCubeFromResource("urlWithNcubeRefs.json")
 
         def coord = [:]
-        coord.put("env_level", "local")
-        coord.put("protocol", "http")
-        coord.put("content", "hello")
+        coord["env_level"] = "local"
+        coord["protocol"] = "http"
+        coord["content"] = "hello"
         String html = (String) ncube.getCell(coord)
         assertNotNull(html)
         assertEquals("Hello, world.", html)
 
-        coord.put("protocol", "https")
-        coord.put("content", "hello")
+        coord["protocol"] = "https"
+        coord["content"] = "hello"
         String html1 = (String) ncube.getCell(coord)
         assertEquals(html, html1)
 
-        coord.put("protocol", "http")
-        coord.put("content", "hello2")
-        html = (String) ncube.getCell(coord)
-        assertNotNull(html)
-        assertEquals("Hello, world 2.", html)
+        coord["protocol"] = "http"
+        coord["content"] = "hello2"
+        try
+        {
+            ncube.getCell(coord)
+            fail()
+        }
+        catch (Exception e)
+        {
+            assert e.cause instanceof LinkageError
+        }
 
-        coord.put("protocol", "http")
-        coord.put("content", "95")
+        coord["protocol"] = "http"
+        coord["content"] = "95"
         Integer num = (Integer) ncube.getCell(coord)
         assertEquals(95, num.intValue())
     }
@@ -3722,6 +3728,7 @@ class TestNCube
 //        ApplicationID appId2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, "1.0.0", ReleaseStatus.SNAPSHOT.name())
 //        NCubeManager.addBaseResourceUrls(appId2, urls)
 
+        // LEFT OF HERE - This test fails
         NCube ncube = NCubeManager.getNCubeFromResource("debugExp.json")
         Map coord = [:] as Map
         int age = 9

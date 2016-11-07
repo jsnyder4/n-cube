@@ -10,7 +10,7 @@ class UrlToExpressionDebugTest extends NCubeGroovyExpression
         {
             return -1
         }
-        LibCode libCode = new LibCode();
-        libCode.pow(input.age, 2);
+        LibCode libCode = new LibCode()
+        libCode.pow(input.age as double, 2d)
     }
 }

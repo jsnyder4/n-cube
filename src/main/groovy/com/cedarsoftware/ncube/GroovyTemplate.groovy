@@ -46,7 +46,6 @@ class GroovyTemplate extends ContentCmdCell
 
     void getCubeNamesFromCommandText(final Set<String> cubeNames)
     {
-        String cmd = getCmd()
         if (cmd == null)
         {
             return
@@ -75,7 +74,7 @@ class GroovyTemplate extends ContentCmdCell
      */
     void getScopeKeys(Set<String> scopeKeys)
     {
-        Matcher m = Regexes.scripletPattern.matcher(getCmd())  // <%  %>
+        Matcher m = Regexes.scripletPattern.matcher(cmd)  // <%  %>
 
         while (m.find())
         {
@@ -86,7 +85,7 @@ class GroovyTemplate extends ContentCmdCell
             }
         }
 
-        m = Regexes.velocityPattern.matcher(getCmd())          // ${   }
+        m = Regexes.velocityPattern.matcher(cmd)          // ${   }
 
         while (m.find())
         {
@@ -98,7 +97,7 @@ class GroovyTemplate extends ContentCmdCell
         }
     }
 
-    protected Object executeInternal(final Object data, final Map ctx)
+    protected def executeInternal(final Object data, final Map ctx)
     {
         // ctx.input, ctx.output, ctx.ncube
         // are ALWAYS set by NCube before the execution gets here.
@@ -128,7 +127,7 @@ class GroovyTemplate extends ContentCmdCell
 
         // Do normal Groovy substitutions.
         String result = resolvedTemplate.make(ctx).toString()
-        if (isCacheable())
+        if (cacheable)
         {   // No need to hold onto the template since cache:true on the cell, meaning that the substitution
             // is only being done once.
             resolvedTemplate = null

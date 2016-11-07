@@ -61,7 +61,7 @@ class GroovyExpression extends GroovyBase
     {
         Matcher m = Regexes.hasClassDefPattern.matcher(theirGroovy)
         if (m.find())
-        {   // If they include a class ... { in their source, then we do not add the 'apartment' around the content.
+        {   // If they include a class ... { in their source, then we do not add the 'buns' around the content.
             return theirGroovy
         }
 
@@ -70,8 +70,13 @@ class GroovyExpression extends GroovyBase
 
         // NOTE: CdnClassLoader needs to exclude the imports listed below with '*' (it will 'bike-lock' search these for
         // all unexpected tokens in the source being compiled.
+        NCube ncube = getNCube(ctx)
         StringBuilder groovy = new StringBuilder("""\
 package ncube.grv.exp
+/**
+ * n-cube: ${ncube.name}
+ * axes:   ${ncube.axisNames}
+ */
 import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.exception.*
 import com.cedarsoftware.ncube.formatters.*
@@ -84,7 +89,6 @@ import com.cedarsoftware.util.io.*
         // Attempt to load sys.prototype cube
         // If loaded, add the import statement list from this cube to the list of imports for generated cells
         String expClassName = null
-        NCube ncube = getNCube(ctx)
 
         if (!NCubeManager.SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
         {
@@ -111,14 +115,14 @@ import com.cedarsoftware.util.io.*
             expClassName = "ncube.grv.exp.NCubeGroovyExpression"
         }
 
-        String className = "N_" + cmdHash
-        groovy.append("class ")
-        groovy.append(className)
-        groovy.append(" extends ")
-        groovy.append(expClassName)
-        groovy.append("\n{\n\tdef run()\n\t{\n\t")
-        groovy.append(groovyCodeWithoutImportsAndAnnotations.toString())
-        groovy.append("\n\t}\n}")
+        groovy.append("""\
+class N_${L2CacheKey} extends ${expClassName}
+{
+    def run()
+    {
+    ${groovyCodeWithoutImportsAndAnnotations}
+    }
+}""")
         return groovy.toString()
     }
 
@@ -130,20 +134,20 @@ import com.cedarsoftware.util.io.*
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching " + NCubeManager.SYS_PROTOTYPE)
+            handleException(e, "Exception occurred fetching ${NCubeManager.SYS_PROTOTYPE}")
             return null
         }
     }
 
     protected static void handleException(Exception e, String msg)
     {
-        if (LOG.isDebugEnabled())
+        if (LOG.debugEnabled)
         {
             LOG.debug(msg, e)
         }
         else
         {
-            LOG.info(msg + ", " + e.getMessage())
+            LOG.info("${msg}, ${e.message}")
         }
     }
 
@@ -167,7 +171,7 @@ import com.cedarsoftware.util.io.*
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching imports from " + NCubeManager.SYS_PROTOTYPE)
+            handleException(e, "Exception occurred fetching imports from ${NCubeManager.SYS_PROTOTYPE}")
         }
     }
 
@@ -185,7 +189,7 @@ import com.cedarsoftware.util.io.*
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching base class for Groovy Expression cells from " + NCubeManager.SYS_PROTOTYPE)
+            handleException(e, "Exception occurred fetching base class for Groovy Expression cells from ${NCubeManager.SYS_PROTOTYPE}")
         }
         return null
     }
@@ -223,7 +227,7 @@ import com.cedarsoftware.util.io.*
 
         // If 'around' Advice has been added to n-cube, invoke it after calling Groovy expression's run() method
         final int len = advices.size()
-        for (int i = len - 1; i >= 0; i--)
+        for (int i = len - 1i; i >= 0i; i--)
         {
             Advice advice = advices.get(i)
             try
@@ -236,7 +240,7 @@ import com.cedarsoftware.util.io.*
             }
             catch (Throwable e)
             {
-                LOG.error("An exception occurred calling 'after' advice: " + advice.getName(), e)
+                LOG.error("An exception occurred calling 'after' advice: ${advice.name}", e)
             }
         }
         if (t == null)
