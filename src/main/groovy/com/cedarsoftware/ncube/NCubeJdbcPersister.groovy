@@ -50,6 +50,7 @@ class NCubeJdbcPersister
     static final String TEST_DATA_BIN = 'test_data_bin'
     static final String NOTES_BIN = 'notes_bin'
     static final String HEAD_SHA_1 = 'head_sha1'
+    static final String CHANGED = 'changed'
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
@@ -996,7 +997,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             myTestData = row.getBytes(TEST_DATA_BIN)
             newRevision = row.getLong('revision_number')
             tipBranchSha1 = row.getString('sha1')
-            changed = row.getBoolean('changed')
+            changed = row.getBoolean(CHANGED)
         })
 
         if (newRevision == null)
@@ -1017,6 +1018,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         Long sourceRevision = null
         byte[] sourceTestData = null
         String sourceSha1 = null
+        boolean sourceChanged = false
 
         Map<String, Object> options = [
                 (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
@@ -1029,6 +1031,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             sourceTestData = row.getBytes(TEST_DATA_BIN)
             sourceRevision = row.getLong('revision_number')
             sourceSha1 = row.getString('sha1')
+            sourceChanged = (boolean)row.getBoolean(CHANGED)
         })
 
         if (sourceRevision == null)
@@ -1051,7 +1054,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
         rev = sourceRevision < 0 ? -rev : rev
         String headSha1 = sourceBranch == ApplicationID.HEAD ? sourceSha1 : targetHeadSha1
-        insertCube(c, appId, cubeName, rev, sourceBytes, sourceTestData, notes, false, sourceSha1, headSha1, username, 'mergeAcceptTheirs')
+        insertCube(c, appId, cubeName, rev, sourceBytes, sourceTestData, notes, sourceChanged, sourceSha1, headSha1, username, 'mergeAcceptTheirs')
         return true
     }
 
@@ -1190,7 +1193,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
-                insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean('changed'))
+                insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean(CHANGED))
                 insert.setString(15, sha1)
 
                 String headSha1 = null
@@ -1252,7 +1255,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))
-                insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean('changed'))
+                insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean(CHANGED))
                 insert.setString(15, sha1)
 
                 String headSha1 = null
@@ -1590,7 +1593,7 @@ ORDER BY abs(revision_number) DESC"""
             dto.createDate = new Date(row.getTimestamp('create_dt').time)
             dto.createHid = row.getString('create_hid')
             dto.revision = row.getString('revision_number')
-            dto.changed = row.getBoolean('changed')
+            dto.changed = row.getBoolean(CHANGED)
             dto.sha1 = row.getString('sha1')
             dto.headSha1 = row.getString('head_sha1')
             list.add(dto)

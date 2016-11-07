@@ -4628,6 +4628,31 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testRestoreFromChangedCubeInOtherBranch()
+    {
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        //producer change cube
+        NCube producerCube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        producerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(BRANCH2, producerCube)
+
+        //consumer delete cube
+        NCubeManager.deleteCubes(BRANCH1, 'TestBranch')
+
+        //consumer update from producer
+        VersionControl.mergeAcceptTheirs(BRANCH1, ['TestBranch'] as Object[], BRANCH2.branch)
+
+        //consumer open commit modal
+        Object[] dtos = VersionControl.getBranchChangesForHead(BRANCH1)
+        assert dtos.length == 1
+        NCubeInfoDto dto = dtos[0] as NCubeInfoDto
+        assert dto.changed
+    }
+
+    @Test
     void testConflictOverwriteBranch()
 	{
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
