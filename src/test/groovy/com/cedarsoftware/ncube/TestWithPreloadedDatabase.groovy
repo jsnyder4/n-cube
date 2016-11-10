@@ -2280,6 +2280,52 @@ class TestWithPreloadedDatabase
         assert dtos2.size() == 0    // Nothing for BRANCH2 because cube matched HEAD already
     }
 
+    @Test
+    void testCommitFailsWithoutPermissions()
+    {
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        // cube is updated by someone with access
+        String cubeName = 'TestBranch'
+        NCube testBranchCube = NCubeManager.getCube(BRANCH1, cubeName)
+        testBranchCube.setCell('AAA', [Code: 15])
+        NCubeManager.updateCube(BRANCH1, testBranchCube, true)
+
+        // set permission on cube to deny commit for normal user
+        ApplicationID branchBoot = BRANCH1.asVersion('0.0.0')
+        NCube sysPermissions = NCubeManager.getCube(branchBoot, NCubeManager.SYS_PERMISSIONS)
+        sysPermissions.addColumn(NCubeManager.AXIS_RESOURCE, cubeName)
+        sysPermissions.setCell(true, [(NCubeManager.AXIS_RESOURCE): cubeName, (NCubeManager.AXIS_ROLE): NCubeManager.ROLE_USER, (NCubeManager.AXIS_ACTION): Action.READ.lower()])
+        NCubeManager.updateCube(branchBoot, sysPermissions)
+        VersionControl.commitBranch(branchBoot)
+
+        // set testUser to have user role on branch
+        NCube sysBranchPermissions = NCubeManager.getCube(branchBoot, NCubeManager.SYS_BRANCH_PERMISSIONS)
+        String testUser = 'testUser'
+        sysBranchPermissions.addColumn(NCubeManager.AXIS_USER, testUser)
+        sysBranchPermissions.setCell(true, [(NCubeManager.AXIS_USER): testUser])
+        NCubeManager.updateCube(branchBoot, sysBranchPermissions)
+
+        // impersonate testUser, who shouldn't be able to commit the changed cube
+        NCubeManager.userId = testUser
+
+        try
+        {
+            VersionControl.commitBranch(BRANCH1)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+        }
+    }
+
     /***** tests for commit and update from our cube matrix *****/
 
     @Test

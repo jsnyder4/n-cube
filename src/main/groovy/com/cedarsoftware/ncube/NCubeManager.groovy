@@ -1214,6 +1214,7 @@ class NCubeManager
         {
             ApplicationID srcApp = axisRef.srcAppId
             validateAppId(srcApp)
+            srcApp.validateBranchIsNotHead()
             assertPermissions(srcApp, axisRef.srcCubeName, Action.UPDATE)
             uniqueAppIds.add(srcApp)
             ApplicationID destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)

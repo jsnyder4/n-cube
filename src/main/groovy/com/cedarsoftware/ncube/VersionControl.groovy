@@ -548,6 +548,12 @@ class VersionControl
 
         for (NCubeInfoDto updateCube : cubesToUpdate)
         {
+            if (!NCubeManager.checkPermissions(appId, updateCube.name, Action.COMMIT))
+            {
+                rejects.add(updateCube)
+                continue
+            }
+
             switch(updateCube.changeType)
             {
                 case ChangeType.CREATED.code:
