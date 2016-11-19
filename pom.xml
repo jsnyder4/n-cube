@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>3.4.109</version>
+	<version>3.4.112-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -87,8 +87,6 @@
         <version.plugin.assembly>2.6</version.plugin.assembly>
         <version.plugin.compiler>3.5.1</version.plugin.compiler>
         <version.plugin.gmavenplus>1.5</version.plugin.gmavenplus>
-        <version.plugin.groovy.eclipse.compiler>2.9.2-01</version.plugin.groovy.eclipse.compiler>
-        <version.plugin.groovy.eclipse.batch>2.4.3-01</version.plugin.groovy.eclipse.batch>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.nexus>1.6.7</version.plugin.nexus>
         <version.plugin.source>3.0.1</version.plugin.source>

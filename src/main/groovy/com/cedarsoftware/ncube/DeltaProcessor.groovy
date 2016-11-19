@@ -637,8 +637,8 @@ class DeltaProcessor
             newAxis.columns.each { Column newCol ->
                 newColNames.add(newCol.toString())
             }
-            Object[] oldCols = oldColNames.toArray()
-            Object[] newCols = newColNames.toArray()
+            Object[] oldCols = oldColNames as Object[]
+            Object[] newCols = newColNames as Object[]
 
             for (Column newCol : newAxis.columns)
             {
@@ -736,8 +736,8 @@ class DeltaProcessor
      */
     protected static List<Delta> compareMetaProperties(Map<String, Object> oldMeta, Map<String, Object> newMeta, Delta.Location location, String locName, Object helperId)
     {
-        Object[] oldMetaList = oldMeta.keySet().toArray()
-        Object[] newMetaList = newMeta.keySet().toArray()
+        Object[] oldMetaList = oldMeta.keySet() as Object[]
+        Object[] newMetaList = newMeta.keySet() as Object[]
         List<Delta> changes = []
         Set<String> oldKeys = new CaseInsensitiveSet<>(oldMeta.keySet())
         Set<String> sameKeys = new CaseInsensitiveSet<>(newMeta.keySet())

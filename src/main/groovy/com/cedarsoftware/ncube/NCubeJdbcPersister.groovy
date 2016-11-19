@@ -2,11 +2,13 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.util.ArrayUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
+import com.cedarsoftware.util.io.JsonReader
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
@@ -61,13 +63,27 @@ class NCubeJdbcPersister
         List<NCubeInfoDto> list = []
         Pattern searchPattern = null
 
-        if (StringUtilities.hasContent(searchContent))
+        Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
+        boolean hasSearchContent = StringUtilities.hasContent(searchContent)
+        copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent
+        if (hasSearchContent)
         {
-            options[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = true
             searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
         }
-        options[METHOD_NAME] = 'search'
-        runSelectCubesStatement(c, appId, cubeNamePattern, options, { ResultSet row -> getCubeInfoRecords(appId, searchPattern, list, row) })
+
+        // Convert INCLUDE or EXCLUDE filter query from String, Set, or Map to Set.
+        copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE] = getFilter(copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE])
+        copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE] = getFilter(copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE])
+        Set includeTags = copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE] as Set
+        Set excludeTags = copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE] as Set
+
+        // If filtering by tags, we need to include CUBE DATA, so add that flag to the search
+        boolean includeCubeData = copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA]
+        includeCubeData |= includeTags || excludeTags  // Set to true if either inclusion or exclusion filter has content, or if it was already set to true.
+
+        copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = includeCubeData
+        copyOptions[METHOD_NAME] = 'search'
+        runSelectCubesStatement(c, appId, cubeNamePattern, copyOptions, { ResultSet row -> getCubeInfoRecords(appId, searchPattern, list, copyOptions, row) })
         return list
     }
 
@@ -90,7 +106,7 @@ class NCubeJdbcPersister
         NCube cube = null
         sql.eachRow(map, """\
 /* loadCubeById */
-SELECT tenant_cd, app_cd, version_no_cd, status_cd, branch_id, cube_value_bin, sha1
+SELECT tenant_cd, app_cd, version_no_cd, status_cd, branch_id, ${CUBE_VALUE_BIN}, sha1
 FROM n_cube
 WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
             String tenant = row.getString('tenant_cd')
@@ -118,10 +134,10 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
 
         new Sql(c).eachRow(map, """\
 /* loadCubeBySha1 */
-SELECT cube_value_bin, sha1
+SELECT ${CUBE_VALUE_BIN}, sha1
 FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1
-ORDER BY abs(revision_number) DESC""", 0, 1, { ResultSet row ->
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1""",
+                0, 1, { ResultSet row ->
             cube = buildCube(appId, row)
         })
         if (cube)
@@ -143,7 +159,7 @@ ORDER BY abs(revision_number) DESC""", 0, 1, { ResultSet row ->
         {
             sqlStatement = """\
 /* getRevisions */
-SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, cube_value_bin, sha1, head_sha1, changed
+SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, ${CUBE_VALUE_BIN}, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch
 ORDER BY version_no_cd DESC, abs(revision_number) DESC
@@ -153,7 +169,7 @@ ORDER BY version_no_cd DESC, abs(revision_number) DESC
         {
             sqlStatement = """\
 /* getRevisions */
-SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, cube_value_bin, sha1, head_sha1, changed
+SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, ${CUBE_VALUE_BIN}, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND status_cd = :status AND branch_id = :branch
 ORDER BY abs(revision_number) DESC
@@ -161,7 +177,7 @@ ORDER BY abs(revision_number) DESC
         }
 
         List<NCubeInfoDto> records = []
-        sql.eachRow(map, sqlStatement, { ResultSet row -> getCubeInfoRecords(appId, null, records, row) })
+        sql.eachRow(map, sqlStatement, { ResultSet row -> getCubeInfoRecords(appId, null, records, [:], row) })
 
         if (records.isEmpty())
         {
@@ -180,7 +196,7 @@ ORDER BY abs(revision_number) DESC
             s = c.prepareStatement("""\
 /* ${methodName}.insertCubeBytes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
-sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
+sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """)
             long uniqueId = UniqueIdGenerator.uniqueId
@@ -248,7 +264,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             s = c.prepareStatement("""\
 /* ${methodName}.insertCube */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
-sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
+sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """)
             s.setLong(1, uniqueId)
@@ -266,7 +282,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             s.setBlob(13, blob)
             s.setBytes(14, testData)
             String note = createNote(username, now, notes)
-            s.setBytes(15, StringUtilities.getBytes(note, "UTF-8"))
+            s.setBytes(15, StringUtilities.getUTF8Bytes(note))
             s.setBoolean(16, changed)
 
             NCubeInfoDto dto = new NCubeInfoDto()
@@ -326,7 +342,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             stmt = c.prepareStatement("""\
 /* deleteCubes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
-sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
+sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             long txId = UniqueIdGenerator.uniqueId
@@ -369,7 +385,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             ins = c.prepareStatement("""\
 /* restoreCubes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
-sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
+sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             Map<String, Object> options = [(NCubeManager.SEARCH_DELETED_RECORDS_ONLY): true,
@@ -429,7 +445,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         stmt.setString(12, username)
         stmt.setBytes(13, jsonBytes)
         stmt.setBytes(14, testData)
-        stmt.setBytes(15, StringUtilities.getBytes(createNote(username, now, action), "UTF-8"))
+        stmt.setBytes(15, StringUtilities.getUTF8Bytes(createNote(username, now, action)))
         stmt.setInt(16, 1)
         stmt.addBatch()
         if (count % EXECUTE_BATCH_CONSTANT == 0)
@@ -446,7 +462,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             return infoRecs
         }
 
-        String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = ?"
+        String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, ${CUBE_VALUE_BIN}, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = ?"
         PreparedStatement stmt = null
         try
         {
@@ -610,12 +626,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
                 (METHOD_NAME) : 'renameCube'] as Map
 
+        NCube ncube = null
         runSelectCubesStatement(c, appId, oldName, options, 1, { ResultSet row ->
-            oldBytes = row.getBytes(CUBE_VALUE_BIN)
             oldRevision = row.getLong('revision_number')
             testData = row.getBytes(TEST_DATA_BIN)
             oldSha1 = row.getString('sha1')
             oldHeadSha1 = row.getString('head_sha1')
+            ncube = buildCube(appId, row)
         })
 
         if (oldRevision == null)
@@ -639,7 +656,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             newHeadSha1 = row.getString(HEAD_SHA_1)
         })
 
-        NCube ncube = NCube.createCubeFromBytes(oldBytes)
         ncube.name = newName
         String notes = "renamed: " + oldName + " -> " + newName
 
@@ -731,7 +747,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         for (int i = 0; i < cubeIds.length; i++)
         {
             map.id = Converter.convert(cubeIds[i], Long.class)
-            sql.eachRow("/* commitCubes */ SELECT n_cube_nm, revision_number, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id",
+            sql.eachRow("/* commitCubes */ SELECT n_cube_nm, revision_number, ${CUBE_VALUE_BIN}, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id",
                     map, 0, 1, { ResultSet row ->
                 byte[] jsonBytes = row.getBytes(CUBE_VALUE_BIN)
                 String sha1 = row.getString('sha1')
@@ -815,7 +831,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             ins = c.prepareStatement("""\
 /* rollbackCubes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
- sha1, head_sha1, create_dt, create_hid, cube_value_bin, test_data_bin, notes_bin, changed)
+ sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             Map map = appId as Map
@@ -841,7 +857,7 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
 
                     sql.eachRow(map, """\
 /* rollbackCubes */
-SELECT cube_value_bin, test_data_bin, changed, sha1, head_sha1
+SELECT ${CUBE_VALUE_BIN}, test_data_bin, changed, sha1, head_sha1
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
 AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0, 1, { ResultSet row ->
@@ -1176,7 +1192,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         {
             c.autoCommit = false
             insert = c.prepareStatement(
-                    "/* copyBranch */ INSERT INTO n_cube (n_cube_id, n_cube_nm, cube_value_bin, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
+                    "/* copyBranch */ INSERT INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectCubesStatement(c, srcAppId, null, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')
@@ -1238,7 +1254,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         {
             c.autoCommit = false
             insert = c.prepareStatement(
-                    "/* copyBranchWithHistory */ INSERT INTO n_cube (n_cube_id, n_cube_nm, cube_value_bin, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
+                    "/* copyBranchWithHistory */ INSERT INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectAllCubesInBranch(c, srcAppId, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')
@@ -1299,7 +1315,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         Sql sql = new Sql(c)
         String select = """\
 /* ${methodName}.runSelectAllCubesInBranch */
-SELECT n_cube_nm, notes_bin, create_dt, create_hid, revision_number, changed, sha1, head_sha1, test_data_bin, cube_value_bin, notes_bin
+SELECT n_cube_nm, notes_bin, create_dt, create_hid, revision_number, changed, sha1, head_sha1, test_data_bin, ${CUBE_VALUE_BIN}, notes_bin
 FROM n_cube
 WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch
 """
@@ -1377,7 +1393,7 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
             throw new IllegalArgumentException("Cannot update test data, cube: " + cubeName + " does not exist in app: " + appId)
         }
 
-        Map map = [testData: testData?.getBytes("UTF-8"), tenant: padTenant(c, appId.tenant),
+        Map map = [testData: StringUtilities.getUTF8Bytes(testData), tenant: padTenant(c, appId.tenant),
                    app     : appId.app, ver: appId.version, status: ReleaseStatus.SNAPSHOT.name(),
                    branch  : appId.branch, rev: maxRev, cube: buildName(cubeName)]
         Sql sql = new Sql(c)
@@ -1428,7 +1444,7 @@ ORDER BY abs(revision_number) DESC"""
         }
 
         Map map = appId as Map
-        map.notes = notes?.getBytes("UTF-8")
+        map.notes = StringUtilities.getUTF8Bytes(notes)
         map.status = ReleaseStatus.SNAPSHOT.name()
         map.rev = maxRev
         map.cube = buildName(cubeName)
@@ -1557,47 +1573,79 @@ ORDER BY abs(revision_number) DESC"""
         return rev
     }
 
-    protected static void getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, ResultSet row)
+    protected static void getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
     {
         if (row.fetchSize < FETCH_SIZE)
         {
             row.fetchSize = FETCH_SIZE
         }
-        boolean contentMatched = false
+        boolean hasSearchPattern = searchPattern != null
+        Set<String> includeFilter = options[NCubeManager.SEARCH_FILTER_INCLUDE] as Set
+        Set<String> excludeFilter = options[NCubeManager.SEARCH_FILTER_EXCLUDE] as Set
 
-        if (searchPattern != null)
-        {
+        if (hasSearchPattern || includeFilter || excludeFilter)
+        {   // Only read CUBE_VALUE_BIN if needed (searching content or filtering by cube_tags)
             byte[] bytes = IOUtilities.uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
             String cubeData = StringUtilities.createUtf8String(bytes)
-            Matcher matcher = searchPattern.matcher(cubeData)
-            contentMatched = matcher.find()
+
+            if (hasSearchPattern)
+            {
+                Matcher matcher = searchPattern.matcher(cubeData)
+                if (!matcher.find())
+                {   // Did not contains-match content pattern
+                    return
+                }
+            }
+
+            if (includeFilter || excludeFilter)
+            {
+                Map jsonNCube = (Map) JsonReader.jsonToJava(StringUtilities.createUtf8String(bytes), [(JsonReader.USE_MAPS):true] as Map)
+                Collection<String> tags = getFilter(jsonNCube[NCubeManager.CUBE_TAGS])
+                Collection<String> cubeTags = new HashSet(tags)
+
+                if (includeFilter)
+                {   // User is filtering by one or more tokens
+                    cubeTags.retainAll(includeFilter)
+                    if (cubeTags.empty)
+                    {   // Skip this n-cube : the user passed in TAGs to match, and none did.
+                        return
+                    }
+                }
+
+                cubeTags = new HashSet(tags)
+                if (excludeFilter)
+                {   // User is excluding by one or more tokens
+                    cubeTags.retainAll(excludeFilter)
+                    if (cubeTags.size() > 0)
+                    {   // cube had 1 or more cube_tags that matched a tag in the exclusion list.
+                        return
+                    }
+                }
+            }
         }
 
-        if (searchPattern == null || contentMatched)
+        NCubeInfoDto dto = new NCubeInfoDto()
+        dto.id = row.getString('n_cube_id')
+        dto.name = row.getString('n_cube_nm')
+        dto.branch = appId.branch
+        dto.tenant = appId.tenant
+        byte[] notes = null
+        try
         {
-            NCubeInfoDto dto = new NCubeInfoDto()
-            dto.id = row.getString('n_cube_id')
-            dto.name = row.getString('n_cube_nm')
-            dto.branch = appId.branch
-            dto.tenant = appId.tenant
-            byte[] notes = null
-            try
-            {
-                notes = row.getBytes(NOTES_BIN)
-            }
-            catch (Exception ignored) { }
-            dto.notes = new String(notes == null ? "".bytes : notes, 'UTF-8')
-            dto.version = row.getString('version_no_cd')
-            dto.status = row.getString('status_cd')
-            dto.app = appId.app
-            dto.createDate = new Date(row.getTimestamp('create_dt').time)
-            dto.createHid = row.getString('create_hid')
-            dto.revision = row.getString('revision_number')
-            dto.changed = row.getBoolean(CHANGED)
-            dto.sha1 = row.getString('sha1')
-            dto.headSha1 = row.getString('head_sha1')
-            list.add(dto)
+            notes = row.getBytes(NOTES_BIN)
         }
+        catch (Exception ignored) { }
+        dto.notes = new String(notes == null ? "".bytes : notes, 'UTF-8')
+        dto.version = row.getString('version_no_cd')
+        dto.status = row.getString('status_cd')
+        dto.app = appId.app
+        dto.createDate = new Date(row.getTimestamp('create_dt').time)
+        dto.createHid = row.getString('create_hid')
+        dto.revision = row.getString('revision_number')
+        dto.changed = row.getBoolean(CHANGED)
+        dto.sha1 = row.getString('sha1')
+        dto.headSha1 = row.getString('head_sha1')
+        list.add(dto)
     }
 
     protected static NCube buildCube(ApplicationID appId, ResultSet row)
@@ -1671,5 +1719,32 @@ ORDER BY abs(revision_number) DESC"""
             LOG.info('Oracle JDBC driver: ' + isOracle.get())
         }
         return isOracle.get()
+    }
+
+    /**
+     * Given the unknown way of specifying tags, create a Collection of tags from the input.  This API
+     * handles String (Command and space delimited), a Collection or Strings, or a Map of Strings in
+     * which case the keySet of the map is used.
+     * @param filter
+     * @return Collection<String>
+     */
+    private static Collection<String> getFilter(def filter)
+    {
+        if (filter instanceof String)
+        {
+            return filter.tokenize(', ')
+        }
+        else if (filter instanceof Collection)
+        {
+            return (Collection) filter
+        }
+        else if (filter instanceof Map)
+        {
+            return filter.keySet()
+        }
+        else
+        {
+            return new HashSet()
+        }
     }
 }

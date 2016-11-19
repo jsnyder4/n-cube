@@ -1,0 +1,9 @@
+package com.acme.util
+
+class Dumbo
+{
+    def multiplyBy10(def x)
+    {
+        return 10 * x
+    }
+}

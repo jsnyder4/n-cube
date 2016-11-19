@@ -52,7 +52,7 @@ class TestThreadedClearCache
         NCubeManager.clearCache()
     }
 
-    @Ignore
+    @Test
     void testCubesWithThreadedClearCacheWithAppId()
     {
         NCube[] ncubes = TestingDatabaseHelper.getCubesFromDisk("sys.classpath.2per.app.json", "math.controller.json")
@@ -101,7 +101,11 @@ class TestThreadedClearCache
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace()
+                    Throwable t = getDeepestException(e)
+                    if (!(t.message?.contains('cleared while cell was executing') || t instanceof LinkageError))
+                    {
+                        throw e
+                    }
                 }
             }
         }
@@ -117,7 +121,11 @@ class TestThreadedClearCache
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace()
+                    Throwable t = getDeepestException(e)
+                    if (!(t.message?.contains('cleared while cell was executing') || t instanceof LinkageError))
+                    {
+                        throw e
+                    }
                 }
             }
         }

@@ -135,6 +135,11 @@ abstract class UrlCommandCell implements CommandCell
             return cmd == that.cmd
         }
 
+        if (cacheable != that.cacheable)
+        {
+            return false
+        }
+
         return url == that.getUrl()
     }
 

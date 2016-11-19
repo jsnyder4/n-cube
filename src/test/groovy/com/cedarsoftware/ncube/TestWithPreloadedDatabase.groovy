@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
@@ -52,7 +53,7 @@ class TestWithPreloadedDatabase
 
     ApplicationID[] branches = [HEAD, BRANCH1, BRANCH2, BRANCH3, appId, BOOT] as ApplicationID[]
 
-    private TestingDatabaseManager manager;
+    private TestingDatabaseManager manager
 
     @Before
     public void setup()
@@ -68,17 +69,17 @@ class TestWithPreloadedDatabase
     {
         manager.removeBranches(branches)
         manager.tearDown()
-        manager = null;
+        manager = null
 
         NCubeManager.clearCache()
     }
 
-    static TestingDatabaseManager getTestingDatabaseManager()
+    TestingDatabaseManager getTestingDatabaseManager()
     {
         return TestingDatabaseHelper.testingDatabaseManager
     }
 
-    static NCubePersister getNCubePersister()
+    NCubePersister getNCubePersister()
     {
         return TestingDatabaseHelper.persister
     }
@@ -5086,7 +5087,7 @@ class TestWithPreloadedDatabase
 
         NCube cube1 = NCubeManager.getCube(BRANCH1, "merge1")
         cube1.setCell(3.14159, [row:3, column:'C'])
-        NCubeManager.updateCube(BRANCH1, cube1, true);
+        NCubeManager.updateCube(BRANCH1, cube1, true)
 
         Map<String, Object> result = VersionControl.commitBranch(BRANCH1)
         assert (result[VersionControl.BRANCH_ADDS] as Map).size() == 0
@@ -5153,7 +5154,7 @@ class TestWithPreloadedDatabase
 
         dtos = VersionControl.getBranchChangesForHead(BRANCH1)
         assertEquals(1, dtos.size())
-        String newSha1 = dtos[0].sha1;
+        String newSha1 = dtos[0].sha1
 
         try
         {
@@ -5170,7 +5171,7 @@ class TestWithPreloadedDatabase
         }
 
         dtos = NCubeManager.search(HEAD, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
-        String sha1 = dtos[0].sha1;
+        String sha1 = dtos[0].sha1
         assertNotEquals(sha1, newSha1)
 
         VersionControl.mergeAcceptMine(BRANCH1, "TestAge")
@@ -5788,7 +5789,7 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.getCacheForApp(appId).size())
 
         def input = [:]
-        input.env = "DEV";
+        input.env = "DEV"
         input.put("method", "foo")
         Object x = cube.getCell(input)
         assertEquals("foo", x)
@@ -5809,7 +5810,7 @@ class TestWithPreloadedDatabase
         // Had to reget cube so I had a new classpath
         cube = NCubeManager.getCube(appId, "GroovyMethodClassPath1")
 
-        input.env = 'UAT';
+        input.env = 'UAT'
         input.put("method", "foo")
         x = cube.getCell(input)
 
@@ -5928,8 +5929,8 @@ class TestWithPreloadedDatabase
     {
         preloadCubes(appId, "sys.bootstrap.multi.api.json", "sys.bootstrap.version.json")
 
-        def input = [:];
-        input.env = "SAND";
+        def input = [:]
+        input.env = "SAND"
 
         NCube cube = NCubeManager.getCube(appId, 'sys.bootstrap')
         Map<String, ApplicationID> map = cube.getCell(input) as Map
@@ -6007,7 +6008,7 @@ class TestWithPreloadedDatabase
         try
         {
             NCubeManager.updateReferenceAxes([axisRef] as List) // Update
-            fail();
+            fail()
         }
         catch (IllegalArgumentException e)
         {
@@ -6036,6 +6037,50 @@ return ints''', null, false)
         def x = ncube.getCell([state: 'OH'])
 //        println x
         assert 'org.apache.commons.collections.primitives.ArrayIntList' == x.class.name
+    }
+
+    @Test
+    void testSearchIncludeFilter()
+    {
+        preloadCubes(appId, "testCube1.json", "testCube3.json", "test.branch.1.json", "delta.json", "deltaRule.json", "basicJump.json", "basicJumpStart.json")
+
+        // Mark TestCube as red
+        NCube testCube = NCubeManager.getCube(appId, 'TestCube')
+        testCube.setMetaProperty("cube_tags", "red")
+        NCubeManager.updateCube(appId, testCube)
+
+        // Mark TestBranch as red & white
+        NCube testBranch = NCubeManager.getCube(appId, 'TestBranch')
+        testBranch.setMetaProperty("cube_tags", "red, white")
+        NCubeManager.updateCube(appId, testBranch)
+
+        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_INCLUDE):['red', 'white']])
+        assert list.size() == 2
+        assert 'TestCube' == list[0].name || 'TestBranch' == list[0].name
+        assert 'TestCube' == list[1].name || 'TestBranch' == list[1].name
+
+        list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_INCLUDE):['red', 'white'], (NCubeManager.SEARCH_FILTER_EXCLUDE):['white', 'blue']])
+        assert list.size() == 1
+        assert 'TestCube' == list[0].name
+    }
+
+    @Test
+    void testSearchExcludeFilter()
+    {
+        preloadCubes(appId, "testCube1.json", "testCube3.json", "test.branch.1.json", "delta.json", "deltaRule.json", "basicJump.json", "basicJumpStart.json")
+
+        // Mark TestCube as red
+        NCube testCube = NCubeManager.getCube(appId, 'TestCube')
+        testCube.setMetaProperty("cube_tags", "red")
+        NCubeManager.updateCube(appId, testCube)
+
+        // Mark TestBranch as red & white
+        NCube testBranch = NCubeManager.getCube(appId, 'TestBranch')
+        testBranch.setMetaProperty("cube_tags", "red, white")
+        NCubeManager.updateCube(appId, testBranch)
+
+        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_EXCLUDE):['red', 'white']])
+        assert list.size() == 5
     }
 
     /**

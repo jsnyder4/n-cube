@@ -3470,7 +3470,7 @@ class TestNCube
         }
         catch (Exception e)
         {
-            assert e.cause instanceof LinkageError
+            assert e.cause instanceof IllegalStateException
         }
 
         coord["protocol"] = "http"
@@ -3714,21 +3714,12 @@ class TestNCube
     @Test
     void testDebugExpression()
     {
-//        List urls = new ArrayList()
-//        URL url = NCubeManager.class.getResource("/")
-//        urls.add(url.toString())
-//        urls.add("http://files.cedarsoftware.com")
+//        List urls = []
+//        urls.add("./com/acme/util/")
+//
+//        NCube sysClasspath = NCubeManager.getNCubeFromResource("sys.classpath.local.resources.json")
+//        NCubeManager.addCube(ApplicationID.testAppId, sysClasspath)
 
-//        NCube classpathCube = NCubeManager.getNCubeFromResource("sys.classpath.testing")
-//        NCubeManager.addCube(new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name()), cube)
-//        NCubeManager.addCube(new ApplicationID(ApplicationID.DEFAULT_TENANT, "ncube.test", "1.0.0", ReleaseStatus.SNAPSHOT.name()), cube)
-
-//        ApplicationID appId1 = new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name())
-//        NCubeManager.addBaseResourceUrls(appId1, urls)
-//        ApplicationID appId2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, "1.0.0", ReleaseStatus.SNAPSHOT.name())
-//        NCubeManager.addBaseResourceUrls(appId2, urls)
-
-        // LEFT OF HERE - This test fails
         NCube ncube = NCubeManager.getNCubeFromResource("debugExp.json")
         Map coord = [:] as Map
         int age = 9

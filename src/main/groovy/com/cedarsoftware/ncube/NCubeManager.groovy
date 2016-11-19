@@ -67,6 +67,8 @@ class NCubeManager
     public static final String SEARCH_ACTIVE_RECORDS_ONLY = 'activeRecordsOnly'
     public static final String SEARCH_CHANGED_RECORDS_ONLY = 'changedRecordsOnly'
     public static final String SEARCH_EXACT_MATCH_NAME = 'exactMatchName'
+    public static final String SEARCH_FILTER_INCLUDE = 'includeTags'
+    public static final String SEARCH_FILTER_EXCLUDE = 'excludeTags'
 
     public static final String SYS_BOOTSTRAP = 'sys.bootstrap'
     public static final String SYS_PROTOTYPE = 'sys.prototype'
@@ -88,7 +90,7 @@ class NCubeManager
 
     public static final String PROPERTY_CACHE = 'cache'
 
-    public static final int PERMISSION_CACHE_THRESHOLD = 1000 * 60 * 30 // half-hour
+    public static final String CUBE_TAGS = 'cube_tags'
 
     // Maintain cache of 'wildcard' patterns to Compiled Pattern instance
     private static final ConcurrentMap<String, Pattern> wildcards = new ConcurrentHashMap<>()

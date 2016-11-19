@@ -70,7 +70,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     CdnClassLoader(List<String> urlList, List<String> acceptedDomains = null)
     {
-        this(CdnClassLoader.class.getClassLoader(), true, true, acceptedDomains)
+        this(CdnClassLoader.class.classLoader, true, true, acceptedDomains)
         addURLs(urlList)
     }
 
