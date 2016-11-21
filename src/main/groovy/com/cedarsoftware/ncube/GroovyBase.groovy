@@ -2,12 +2,13 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.SystemUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.Phases
@@ -43,6 +44,7 @@ import java.util.regex.Pattern
 @CompileStatic
 abstract class GroovyBase extends UrlCommandCell
 {
+    private static final Logger LOG = LogManager.getLogger(GroovyBase.class)
     static final String NCUBE_TARGET_JVM_VERSION = 'NCUBE_TARGET_JVM_VERSION'
     static final String NCUBE_CODEGEN_DEBUG = 'NCUBE_CODEGEN_DEBUG'
     protected transient String L2CacheKey  // in-memory cache of (SHA-1(source) || SHA-1(URL + classpath.urls)) to compiled class
@@ -187,7 +189,7 @@ abstract class GroovyBase extends UrlCommandCell
                 {   // Another thread defined and persisted the class while this thread was blocked...
                     return
                 }
-                Class root = gcLoader.defineClass(null, rootClassBytes)
+                Class root = defineClass(gcLoader, rootClassBytes)
                 defineInnerClassesFromL3(~/^${L3CacheKey}.+\.class$/, gcLoader)
                 setRunnableCode(root)
                 L2Cache[L2CacheKey] = root
@@ -201,7 +203,7 @@ abstract class GroovyBase extends UrlCommandCell
         {
             // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
-            Thread.currentThread().contextClassLoader = gcLoader
+            Thread.currentThread().contextClassLoader = getClass().getClassLoader()
             compile(gcLoader, groovySource, L3CacheKey, ctx)
         }
         finally
@@ -279,16 +281,13 @@ abstract class GroovyBase extends UrlCommandCell
                 }
             }
 
-            if (root != null)
-            {
-                setRunnableCode(root)
-                L2Cache[L2CacheKey] = root
-            }
-            return L2Cache[L2CacheKey]
+            setRunnableCode(root)
+            L2Cache[L2CacheKey] = root
+            return root
         }
     }
 
-    private Class defineClass(GroovyClassLoader loader, byte[] byteCode)
+    private static Class defineClass(GroovyClassLoader loader, byte[] byteCode)
     {
         // Add compiled class to classLoader
         try
@@ -300,10 +299,64 @@ abstract class GroovyBase extends UrlCommandCell
         {
             throw t
         }
+        catch (ClassCircularityError e)
+        {
+            e.printStackTrace()
+        }
+        catch (LinkageError ignored)
+        {
+            Class clazz = Class.forName(getClassName(byteCode), false, loader)
+            return clazz
+        }
         catch (Throwable t)
         {
+            if (byteCode != null)
+            {
+                LOG.warn("Unable to defineClass: ${getClassName(byteCode)}", t)
+            }
+            else
+            {
+                LOG.warn("Unable to defineClass, null byte code", t)
+            }
             return null
         }
+    }
+
+    public static String getClassName(byte[] byteCode) throws Exception
+    {
+        InputStream is = new ByteArrayInputStream(byteCode)
+        DataInputStream dis = new DataInputStream(is)
+        dis.readLong() // skip header and class version
+        int cpcnt = (dis.readShort() & 0xffff) - 1
+        int[] classes = new int[cpcnt]
+        String[] strings = new String[cpcnt]
+        for (int i=0; i < cpcnt; i++)
+        {
+            int t = dis.read()
+            if (t == 7)
+            {
+                classes[i] = dis.readShort() & 0xffff
+            }
+            else if (t == 1)
+            {
+                strings[i] = dis.readUTF()
+            }
+            else if (t == 5 || t == 6)
+            {
+                dis.readLong()
+                i++;
+            }
+            else if (t == 8)
+            {
+                dis.readShort()
+            }
+            else
+            {
+                dis.readInt()
+            }
+        }
+        dis.readShort() // skip access flags
+        return strings[classes[(dis.readShort() & 0xffff) - 1] - 1].replace('/', '.')
     }
 
     protected Map getClassLoaderAndSource(Map<String, Object> ctx)
@@ -430,7 +483,7 @@ abstract class GroovyBase extends UrlCommandCell
     private static void defineInnerClassesFromL3(Pattern pattern, GroovyClassLoader gcLoader)
     {
         new File("${TEMP_DIR}/target/classes/").eachFileMatch(pattern) { File file ->
-            gcLoader.defineClass(null, file.bytes)
+            defineClass(gcLoader, file.bytes)
         }
     }
 

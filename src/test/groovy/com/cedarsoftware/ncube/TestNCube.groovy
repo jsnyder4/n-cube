@@ -3531,15 +3531,8 @@ class TestNCube
 
         coord["protocol"] = "http"
         coord["content"] = "hello2"
-        try
-        {
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (Exception e)
-        {
-            assert e.cause instanceof IllegalStateException
-        }
+        def x = ncube.getCell(coord)
+        assert x == "Hello, world."  // Not 2, because the same class name was used for same classpath.
 
         coord["protocol"] = "http"
         coord["content"] = "95"
