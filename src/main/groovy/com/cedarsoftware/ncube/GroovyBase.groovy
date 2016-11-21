@@ -88,12 +88,6 @@ abstract class GroovyBase extends UrlCommandCell
     {
         prepare(cmd ?: url, ctx)
         Object result = executeInternal(ctx)
-        if (cacheable)
-        {   // Remove the compiled class from the cell's cache.
-            // This is because the cell is marked as cacheable meaning the result of the
-            // execution is cached, so there is no need to hold a reference to the compiled class.
-            setRunnableCode(null)
-        }
         return result
     }
 
