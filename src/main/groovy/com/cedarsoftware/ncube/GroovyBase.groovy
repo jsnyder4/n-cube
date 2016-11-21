@@ -207,7 +207,7 @@ abstract class GroovyBase extends UrlCommandCell
         {
             // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
-            Thread.currentThread().contextClassLoader = null
+            Thread.currentThread().contextClassLoader = gcLoader
             compile(gcLoader, groovySource, L3CacheKey, ctx)
         }
         finally
@@ -270,6 +270,7 @@ abstract class GroovyBase extends UrlCommandCell
                     continue
                 }
 
+                // TODO: Write the main class out LAST (important when cache is shared amongst clustered servers)
                 // Persist class bytes
                 if (className == urlClassName || (isRoot && root == null && NCubeGroovyExpression.isAssignableFrom(clazz)))
                 {
