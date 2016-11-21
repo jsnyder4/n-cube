@@ -265,8 +265,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 /* ${methodName}.insertCube */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
 sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-""")
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             s.setLong(1, uniqueId)
             s.setString(2, appId.tenant)
             s.setString(3, appId.app)
@@ -1192,7 +1191,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         {
             c.autoCommit = false
             insert = c.prepareStatement(
-                    "/* copyBranch */ INSERT INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
+                    "/* copyBranch */ INSERT /*+append*/ INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectCubesStatement(c, srcAppId, null, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')
@@ -1254,7 +1253,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
         {
             c.autoCommit = false
             insert = c.prepareStatement(
-                    "/* copyBranchWithHistory */ INSERT INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
+                    "/* copyBranchWithHistory */ INSERT /*+append*/ INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectAllCubesInBranch(c, srcAppId, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')

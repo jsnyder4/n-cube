@@ -1,5 +1,8 @@
 package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.BranchMergeException
+import com.cedarsoftware.ncube.exception.CommandCellException
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.junit.After
@@ -149,11 +152,75 @@ class TestWithPreloadedDatabase
         try
         {
             cube.getCell([:])
-            fail()
+            fail("should throw an exception")
+        }
+        catch (CoordinateNotFoundException e)
+        {
+            assertTrue(e.message.contains("fail\nerror occurred in cube: test.coordinate.not.found.exception\n-> cell:test.coordinate.not.found.exception:[]"))
+            assertNull(e.cubeName)
+            assertNull(e.coordinate)
+            assertNull(e.axisName)
+            assertNull(e.value)
         }
         catch (Exception e)
         {
-            assertTrue(e.message.contains("fail"))
+            fail("should throw CoordinateNotFoundException")
+        }
+    }
+
+    @Test
+    void testCoordinateNotFoundExceptionThrownWithAdditionalInfo()
+    {
+        preloadCubes(appId, "test.coordinate.not.found.exception.additional.info.json")
+
+        NCube cube = NCubeManager.getCube(appId, "test.coordinate.not.found.exception.additional.info")
+
+        try
+        {
+            cube.getCell([:])
+            fail("should throw an exception")
+        }
+        catch (CoordinateNotFoundException e)
+        {
+            assertTrue(e.message.contains("fail with additional info"))
+            assertEquals(cube.name, e.cubeName)
+            assertEquals([condition:'true'], e.coordinate)
+            assertEquals("condition", e.axisName)
+            assertEquals("value", e.value)
+
+        }
+        catch (Exception e)
+        {
+            fail("should throw CoordinateNotFoundException")
+        }
+    }
+
+    @Test
+    void testInvalidCoordinateExceptionThrown()
+    {
+        preloadCubes(appId, "test.invalid.coordinate.exception.json")
+
+        NCube cube = NCubeManager.getCube(appId, "test.invalid.coordinate.exception")
+
+        try
+        {
+            cube.getCell([:])
+            fail()
+        }
+        catch (CommandCellException e)
+        {
+            assertTrue(e.message.contains("Error occurred in cube"))
+            assertTrue((e.cause instanceof InvalidCoordinateException))
+            assertTrue((e.cause instanceof IllegalArgumentException))
+            InvalidCoordinateException invalidException = e.cause as InvalidCoordinateException
+            assertTrue(invalidException.message.contains("fail with additional info"))
+            assertEquals(cube.name, invalidException.cubeName)
+            assertEquals(['coord1','coord2'] as  Set,invalidException.coordinateKeys)
+            assertEquals(['req1','req2'] as Set, invalidException.requiredKeys)
+       }
+        catch (Exception e)
+        {
+            fail("should throw InvalidCoordinateException")
         }
     }
 

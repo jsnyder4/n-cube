@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.SystemUtilities
 import com.cedarsoftware.util.UrlUtilities
@@ -204,9 +205,9 @@ abstract class GroovyBase extends UrlCommandCell
         ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
         try
         {
-            // Internally, Groovy sometimes uses the Thread.currentThread9).contextClassLoader, which is not the
+            // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
-            Thread.currentThread().contextClassLoader = gcLoader
+            Thread.currentThread().contextClassLoader = null
             compile(gcLoader, groovySource, L3CacheKey, ctx)
         }
         finally
@@ -238,8 +239,6 @@ abstract class GroovyBase extends UrlCommandCell
 
     protected Class defineClasses(Map<String, Class> L2Cache, List classes, GroovyClassLoader gcLoader, String L3CacheKey, String groovySource)
     {
-        Class root = null
-
         synchronized(L3CacheKey)
         {
             Class clazz = L2Cache[L2CacheKey]
@@ -255,6 +254,7 @@ abstract class GroovyBase extends UrlCommandCell
                 urlClassName = urlClassName.replace('/', '.')
             }
             int numClasses = classes.size()
+            Class root = null
 
             for (int i = 0; i < numClasses; i++)
             {
@@ -264,22 +264,14 @@ abstract class GroovyBase extends UrlCommandCell
                 boolean isRoot = dollarPos == -1
 
                 // Add compiled class to classLoader
-                try
-                {
-                    clazz = gcLoader.defineClass(null, gclass.bytes)
-                }
-                catch (ThreadDeath t)
-                {
-                    throw t
-                }
-                catch (Throwable t)
-                {
-//                    t.printStackTrace()
+                clazz = defineClass(gcLoader, gclass.bytes)
+                if (clazz == null)
+                {   // error defining class - may have already been defined thru another route
                     continue
                 }
 
                 // Persist class bytes
-                if (className == urlClassName || (isRoot && url == null && root == null && NCubeGroovyExpression.isAssignableFrom(clazz)))
+                if (className == urlClassName || (isRoot && root == null && NCubeGroovyExpression.isAssignableFrom(clazz)))
                 {
                     // cache (L3) main class file
                     cacheClassInL3("${L3CacheKey}.class", gclass.bytes)
@@ -287,11 +279,8 @@ abstract class GroovyBase extends UrlCommandCell
                     cacheSourceInL3("${L3CacheKey}.groovy", groovySource)
                 }
                 else
-                {   // cache (L3) inner class
-                    if (dollarPos != -1)
-                    {
-                        cacheClassInL3("${L3CacheKey}${className.substring(dollarPos)}.class", gclass.bytes)
-                    }
+                {   // cache (L3) inner class or other referenced classes
+                    cacheClassInL3("${L3CacheKey}-${i}.class", gclass.bytes)
                 }
             }
 
@@ -304,6 +293,23 @@ abstract class GroovyBase extends UrlCommandCell
         }
     }
 
+    private Class defineClass(GroovyClassLoader loader, byte[] byteCode)
+    {
+        // Add compiled class to classLoader
+        try
+        {
+            Class clazz = loader.defineClass(null, byteCode)
+            return clazz
+        }
+        catch (ThreadDeath t)
+        {
+            throw t
+        }
+        catch (Throwable t)
+        {
+            return null
+        }
+    }
 
     protected Map getClassLoaderAndSource(Map<String, Object> ctx)
     {

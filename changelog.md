@@ -1,5 +1,7 @@
 ### Revision History
 * 3.4.112
+ * Enhancement: InvalidateCoordinateException added (it is a subclass of IllegalArgumentException and is thrown when a coordinate does not have all of the required axes).  The exception contains fields to indicate which ncube and what is missing.
+ * Dynamically loaded classes are compiled and cached.  More work to come - specify location of cache. 
  * `NCubeManager.search()` now allows the returned `NCubeInfoDto` list to be filtered by a set of tags.  `NCubes` that specify the meta-property `cube_tags`, which is a comma and/or space separated list of tags, will be matched against a list of tags passed in the `search()` options. The `NCubeManager.search()` option `NCubeManager.SEARCH_FILTER_INCLUDE` key is mapped to a comma and/or space separated list of tags.  NCubes that have these tags will be returned.  If no tags are specified for the include option, then all NCubes are included (other filtering will still be applied). Also, `NCubeManager.SEARCH_FILTER_EXCLUDE` can be set as well. Any `NCubes` that have a tag that is on this list, will not be returned.  The exclude filter will override the include filter. In addition to using a space or comma separated list to specify tags, tags can also be specified a `Collection` of `Strings`.
  
     ```groovy 

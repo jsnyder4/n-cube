@@ -358,6 +358,10 @@ class TestNCubeManager
         catch (CoordinateNotFoundException e)
         {
             assertTrue(e.message.contains("not found"))
+            assertEquals("bb", e.cubeName)
+            assertEquals("KY", e.coordinate.state)
+            assertEquals("state", e.axisName)
+            assertEquals("KY", e.value)
         }
     }
 

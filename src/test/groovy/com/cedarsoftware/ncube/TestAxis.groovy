@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.ncube.util.LongHashSet
@@ -910,8 +911,9 @@ class TestAxis
         assertNull c.metaProperties.get('foo')
         c.setMetaProperty 'foo', 'bar'
 
-        assert 'Axis: foo [DISCRETE, STRING, default-column, sorted]\n' +
-                '  metaProps: [foo:bar]' == c.toString()
+        String x = c.toString().toLowerCase()
+        assert x.contains('discrete, string, default-column, sorted')
+        assert x.contains('[foo:bar]')
     }
 
     @Test
@@ -1323,10 +1325,11 @@ class TestAxis
         }
         catch (CoordinateNotFoundException e)
         {
-            assert e.message.contains('rule')
-            assert e.message.toLowerCase().contains('matches no column')
-            assert e.message.contains('foo')
-            assert e.message.contains('no default')
+            assert "Rule named 'foo' matches no column names on the rule axis 'foo', and there is no default column." == e.message
+            assert !e.cubeName
+            assert !e.coordinate
+            assert 'foo' == e.axisName
+            assert 'foo' == e.value
         }
     }
 
@@ -1442,6 +1445,10 @@ class TestAxis
             assertTrue(e.message.contains("not"))
             assertTrue(e.message.contains("found"))
             assertTrue(e.message.contains("axis"))
+            assertEquals(ncube.name, e.cubeName)
+            assertEquals(coord, e.coordinate)
+            assertEquals("Gender", e.axisName)
+            assertEquals("Jones", e.value)
         }
 
         // 'null' value to find on String axis:
@@ -1455,6 +1462,10 @@ class TestAxis
         {
             assert e.message.toLowerCase().contains('null')
             assert e.message.toLowerCase().contains('not found on axis')
+            assert ncube.name == e.cubeName
+            assert coord == e.coordinate
+            assert "Gender" == e.axisName
+            assert !e.value
         }
 
         // Illegal value to find on String axis:
@@ -1468,6 +1479,10 @@ class TestAxis
         {
             assert e.message.toLowerCase().contains('value')
             assert e.message.toLowerCase().contains('not found on axis')
+            assert ncube.name == e.cubeName
+            assert coord == e.coordinate
+            assert "Gender" == e.axisName
+            assert 8 == e.value
         }
 
         // 'null' for coordinate
@@ -1489,9 +1504,12 @@ class TestAxis
             ncube.getCell(coord)
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             assert e.message.toLowerCase().contains('required scope')
+            assert ncube.name == e.cubeName
+            assert !e.coordinateKeys
+            assert e.requiredKeys.contains('Gender')
         }
 
         // coordinate / table dimension mismatch
@@ -1502,9 +1520,12 @@ class TestAxis
             ncube.getCell(coord)
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             assert e.message.toLowerCase().contains('required scope')
+            assert ncube.name == e.cubeName
+            assert e.coordinateKeys.contains('State')
+            assert e.requiredKeys.contains('Gender')
         }
     }
 
@@ -1536,6 +1557,10 @@ class TestAxis
             assertTrue(e.message.contains("not"))
             assertTrue(e.message.contains("found"))
             assertTrue(e.message.contains("axis"))
+            assertEquals(ncube.name, e.cubeName)
+            assertEquals(coord, e.coordinate)
+            assertEquals("BU", e.axisName)
+            assertEquals("bogus", e.value)
         }
     }
 

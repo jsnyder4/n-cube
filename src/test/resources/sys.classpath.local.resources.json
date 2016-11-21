@@ -15,7 +15,7 @@
             "id": [],
             "type": "exp",
             "cache" : true,
-            "value": "println 'file://' + TestNCube.class.getResource('/').getPath(); new CdnClassLoader(['file://' + TestNCube.class.getResource('/').getPath()])"
+            "value": "new CdnClassLoader(['file://' + TestNCube.class.getResource('/').getPath()])"
         }
     ]
 }

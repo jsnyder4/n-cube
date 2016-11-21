@@ -156,7 +156,7 @@ class Axis
     }
 
     // for construction during serialization
-    private Axis() {}
+    private Axis() { id=0 }
 
     /**
      * Use this constructor to create a 'reference' axis.  This allows a single MASTER DATA axis to be referenced
@@ -186,12 +186,12 @@ class Axis
 
         if (!AxisValueType.values().contains(valueType))
         {
-            throw new IllegalStateException('AxisValueType not set, axis: ' + name)
+            throw new IllegalStateException("AxisValueType not set, axis: ${name}")
         }
 
         if (preferredOrder != DISPLAY && preferredOrder != SORTED)
         {
-            throw new IllegalStateException('preferred order not set, axis: ' + name)
+            throw new IllegalStateException("preferred order not set, axis: ${name}")
         }
     }
 
@@ -207,7 +207,7 @@ class Axis
         }
         else
         {
-            throw new IllegalArgumentException('Unknown axis type: ' + type + " set")
+            throw new IllegalArgumentException("Unknown axis type: ${type}")
         }
     }
 
@@ -520,7 +520,7 @@ class Axis
         if (!MapUtilities.isEmpty(metaProps))
         {
             s.append("\n")
-            s.append("  metaProps: " + metaProps)
+            s.append("  metaProps: ${metaProps}")
         }
 
         return s.toString()
@@ -635,11 +635,11 @@ class Axis
         {  // Attempting to add Default column to axis
             if (hasDefaultColumn())
             {
-                throw new IllegalArgumentException("Cannot add default column to axis '" + name + "' because it already has a default column.")
+                throw new IllegalArgumentException("Cannot add default column to axis '${name}' because it already has a default column.")
             }
             if (type == AxisType.NEAREST)
             {
-                throw new IllegalArgumentException("Cannot add default column to NEAREST axis '" + name + "' as it would never be chosen.")
+                throw new IllegalArgumentException("Cannot add default column to NEAREST axis '${name}' as it would never be chosen.")
             }
         }
         else
@@ -648,7 +648,7 @@ class Axis
             {
                 if (valueToCol.containsKey(value))
                 {
-                    throw new AxisOverlapException("Passed in value '" + value + "' matches a value already on axis '" + name + "'")
+                    throw new AxisOverlapException("Passed in value '${value}' matches a value already on axis '${name}'")
                 }
             }
             else if (type == AxisType.RANGE)
@@ -656,7 +656,7 @@ class Axis
                 Range range = (Range)value
                 if (doesOverlap(range))
                 {
-                    throw new AxisOverlapException("Passed in Range overlaps existing Range on axis: " + name + ", value: " + value)
+                    throw new AxisOverlapException("Passed in Range overlaps existing Range on axis: ${name}, value: ${value}")
                 }
             }
             else if (type == AxisType.SET)
@@ -664,14 +664,14 @@ class Axis
                 RangeSet set = (RangeSet)value
                 if (doesOverlap(set))
                 {
-                    throw new AxisOverlapException("Passed in RangeSet overlaps existing RangeSet on axis: " + name + ", value: " + value)
+                    throw new AxisOverlapException("Passed in RangeSet overlaps existing RangeSet on axis: ${name}, value: ${value}")
                 }
             }
             else if (type == AxisType.RULE)
             {
                 if (!(value instanceof CommandCell))
                 {
-                    throw new IllegalArgumentException("Columns for RULE axis must be a CommandCell, axis: " + name + ", value: " + value)
+                    throw new IllegalArgumentException("Columns for RULE axis must be a CommandCell, axis: ${name}, value: ${value}")
                 }
             }
             else
@@ -705,7 +705,7 @@ class Axis
     {
         if (isRef)
         {
-            throw new IllegalStateException('You cannot add columns to a reference Axis, axis: ' + name)
+            throw new IllegalStateException("You cannot add columns to a reference Axis, axis: ${name}")
         }
         return addColumn(value, colName, null)
     }
@@ -771,7 +771,7 @@ class Axis
     {
         if (isRef)
         {
-            throw new IllegalStateException('You cannot delete columns from a reference Axis, axis: ' + name)
+            throw new IllegalStateException("You cannot delete columns from a reference Axis, axis: ${name}")
         }
 
         Column col = idToCol.get(colId)
@@ -822,7 +822,7 @@ class Axis
         }
         else
         {
-            throw new IllegalStateException("Unsupported axis type (" + type + ") for axis '" + name + "', trying to remove column from internal index")
+            throw new IllegalStateException("Unsupported axis type (${type}) for axis '${name}', trying to remove column from internal index")
         }
     }
 
@@ -839,7 +839,7 @@ class Axis
     {
         if (isRef)
         {
-            throw new IllegalStateException('You cannot update columns on a reference Axis, axis: ' + name)
+            throw new IllegalStateException("You cannot update columns on a reference Axis, axis: ${name}")
         }
 
         Column col = idToCol.get(colId)
@@ -870,7 +870,7 @@ class Axis
     {
         if (isRef)
         {
-            throw new IllegalStateException('You cannot update columns on a reference Axis, axis: ' + name)
+            throw new IllegalStateException("You cannot update columns on a reference Axis, axis: ${name}")
         }
 
         LongHashSet colsToDelete = new LongHashSet()
@@ -976,7 +976,7 @@ class Axis
     {
         if (StringUtilities.isEmpty(value))
         {
-            throw new IllegalArgumentException("Column value cannot be empty, axis: " + name)
+            throw new IllegalArgumentException("Column value cannot be empty, axis: ${name}")
         }
         value = value.trim()
 
@@ -1021,7 +1021,7 @@ class Axis
                     {
                         return standardizeColumnValue(set)
                     }
-                    throw new IllegalArgumentException("Value: " + value + " cannot be parsed as a Set. Must have at least one element within the set, axis: " + name)
+                    throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set. Must have at least one element within the set, axis: ${name}")
                 }
                 catch (IllegalArgumentException e)
                 {
@@ -1029,14 +1029,14 @@ class Axis
                 }
                 catch (Exception e)
                 {
-                    throw new IllegalArgumentException("Value: " + value + " cannot be parsed as a Set.  Use v1, v2, [low, high], v3, ... , axis: " + name, e)
+                    throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set.  Use v1, v2, [low, high], v3, ... , axis: ${name}", e)
                 }
 
             case AxisType.RULE:
                 return createExpressionFromValue(value)
 
             default:
-                throw new IllegalStateException("Unsupported axis type (" + type + ") for axis '" + name + "', trying to parse value: " + value)
+                throw new IllegalStateException("Unsupported axis type (${type}) for axis '${name}', trying to parse value: ${value}")
         }
     }
 
@@ -1093,7 +1093,7 @@ class Axis
         }
         else
         {
-            throw new IllegalArgumentException("Value (" + value + ") cannot be parsed as a Range.  Use [value1, value2], axis: " + name)
+            throw new IllegalArgumentException("Value (${value}) cannot be parsed as a Range.  Use [value1, value2], axis: ${name}")
         }
     }
 
@@ -1159,7 +1159,7 @@ class Axis
         {
             if (!(value instanceof CommandCell))
             {
-                throw new IllegalArgumentException("Must only add CommandCell values to " + type + " axis '" + name + "' - attempted to add: " + value.class.name)
+                throw new IllegalArgumentException("Must only add CommandCell values to ${type} axis '${name}' - attempted to add: ${value.class.name}")
             }
             return value
         }
@@ -1167,7 +1167,7 @@ class Axis
         {
             if (!(value instanceof Range))
             {
-                throw new IllegalArgumentException("Must only add Range values to " + type + " axis '" + name + "' - attempted to add: " + value.class.name)
+                throw new IllegalArgumentException("Must only add Range values to ${type} axis '${name}' - attempted to add: ${value.class.name}")
             }
             return promoteRange(new Range(((Range)value).low, ((Range)value).high))
         }
@@ -1206,14 +1206,14 @@ class Axis
                 Column col = (Column) idToCol.values().first()
                 if (value.class != col.value.class)
                 {
-                    throw new IllegalArgumentException("Value '" + value.class.name + "' cannot be added to axis '" + name + "' where the values are of type: " + col.value.class.name)
+                    throw new IllegalArgumentException("Value '${value.class.name}' cannot be added to axis '${name}' where the values are of type: ${col.value.class.name}")
                 }
             }
             return value	// First value added does not need to be checked
         }
         else
         {
-            throw new IllegalArgumentException("New AxisType added '" + type + "' but code support for it is not there.")
+            throw new IllegalArgumentException("New AxisType added '${type}' but code support for it is not there.")
         }
     }
 
@@ -1304,7 +1304,7 @@ class Axis
             }
             return value
         }
-        throw new IllegalArgumentException("AxisValueType '" + srcValueType + "' added but no code to support it.")
+        throw new IllegalArgumentException("AxisValueType '${srcValueType}' added but no code to support it.")
     }
 
     /**
@@ -1351,7 +1351,7 @@ class Axis
         Column firstRule = findColumn(ruleName)
         if (firstRule == null)
         {   // A name was specified for a rule, but did not match any rule names and there is no default column.
-            throw new CoordinateNotFoundException("Rule named '" + ruleName + "' matches no column names on the rule axis '" + name + "', and there is no default column.")
+            throw new CoordinateNotFoundException("Rule named '${ruleName}' matches no column names on the rule axis '${name}', and there is no default column.", null, null, name, ruleName)
         }
         else if (firstRule.default)
         {   // Matched no names, but there is a default column
@@ -1414,7 +1414,7 @@ class Axis
         {
             if (promotedValue instanceof Long)
             {
-                return idToCol.get(promotedValue)
+                return idToCol.get(promotedValue as Long)
             }
             else if (promotedValue instanceof String)
             {
@@ -1423,7 +1423,7 @@ class Axis
             }
             else
             {
-                throw new IllegalArgumentException("A column on a rule axis can only be located by the 'name' attribute (String) or ID (long), axis: " + name + ", value: " + promotedValue)
+                throw new IllegalArgumentException("A column on a rule axis can only be located by the 'name' attribute (String) or ID (long), axis: ${name}, value: ${promotedValue}")
             }
         }
         else if (type == AxisType.NEAREST)
@@ -1432,7 +1432,7 @@ class Axis
         }
         else
         {
-            throw new IllegalArgumentException("Axis type '" + type + "' added but no code supporting it.")
+            throw new IllegalArgumentException("Axis type '${type}' added but no code supporting it.")
         }
     }
 
@@ -1634,7 +1634,7 @@ class Axis
         }
         else
         {
-            throw new IllegalStateException("AxisValueType '" + type + "' added but no code to support it.")
+            throw new IllegalStateException("AxisValueType '${type}' added but no code to support it.")
         }
     }
 

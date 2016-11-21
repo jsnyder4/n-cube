@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
@@ -290,7 +291,12 @@ class TestDelta
             fail()
         }
         catch (CoordinateNotFoundException e)
-        { }
+        {
+            assert !e.cubeName
+            assert !e.coordinate
+            assert "rule" == e.axisName
+            assert "jones" == e.value
+        }
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 49
         assert 'alpha' == getCellIgnoreRule(cube2, coord)
@@ -807,9 +813,12 @@ class TestDelta
             cube1.getCell([:])
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             e.getMessage().contains('required scope')
+            assert cube1.name == e.cubeName
+            assert !e.coordinateKeys
+            assert e.requiredKeys.contains('state')
         }
         assert cube1.numCells == 2
 
@@ -826,9 +835,12 @@ class TestDelta
             cube2.getCell([:])
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             e.getMessage().contains('required scope')
+            assert cube2.name == e.cubeName
+            assert !e.coordinateKeys
+            assert e.requiredKeys.contains('state')
         }
         assert cube2.numCells == 2
     }

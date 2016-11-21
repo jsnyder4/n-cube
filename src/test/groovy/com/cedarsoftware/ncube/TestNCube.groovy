@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
@@ -41,7 +42,7 @@ import static org.junit.Assert.fail
 @CompileStatic
 class TestNCube
 {
-    private static final boolean _debug = false;
+    private static final boolean _debug = false
 
     @Before
     public void setUp()
@@ -644,6 +645,14 @@ class TestNCube
             cube.getCell(coord)
             fail()
         }
+        catch (CoordinateNotFoundException e)
+        {
+            assert e.message.contains("not found on axis")
+            assert cube.name == e.cubeName
+            assert coord == e.coordinate
+            assert axis == e.axisName
+            assert -20 == e.value
+        }
         catch (Exception e)
         {
             // varies
@@ -660,6 +669,10 @@ class TestNCube
         {
             assert e.message.toLowerCase().contains('null')
             assert e.message.toLowerCase().contains('not found on axis')
+            assert cube.name == e.cubeName
+            assert coord == e.coordinate
+            assert axis == e.axisName
+            assert !e.value
         }
 
         // Illegal value to find on String axis:
@@ -860,14 +873,22 @@ class TestNCube
         try
         {
             ncube.setCell(9.9, coord)
-            fail()
+            fail("should throw an exception")
         }
-        catch (Exception e)
+        catch (CoordinateNotFoundException e)
         {
             assertTrue(e.message.contains("not"))
             assertTrue(e.message.contains("found"))
             assertTrue(e.message.contains("axis"))
             assertTrue(e.message.contains("Gender"))
+            assertEquals(ncube.name, e.cubeName)
+            assertEquals(coord, e.coordinate)
+            assertEquals("Gender", e.axisName)
+            assertEquals("Fmale", e.value)
+        }
+        catch (Exception e)
+        {
+            fail("should throw CoordinateNotFoundException")
         }
     }
 
@@ -897,6 +918,10 @@ class TestNCube
         catch (CoordinateNotFoundException e)
         {
             assertTrue(e.message.contains("not found"))
+            assertEquals(ncube.name, e.cubeName)
+            assertEquals(coord, e.coordinate)
+            assertEquals("Gender", e.axisName)
+            assertNull(e.value)
         }
 
         // Map with not enough dimensions
@@ -945,9 +970,12 @@ class TestNCube
             ncube.getCell(coord)        // (Object) cast makes it one argument
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             assertTrue(e.message.contains("required scope"))
+            assert ncube.name == e.cubeName
+            assert coord.keySet() == e.coordinateKeys
+            assert ['Trailers', 'Vehicles', 'BU'] as Set == e.requiredKeys
         }
 
         try
@@ -962,6 +990,11 @@ class TestNCube
         {
             assertTrue(e.message.contains("null"))
             assertTrue(e.message.contains("not found on axis"))
+            assertEquals(ncube.name, e.cubeName)
+            assertEquals(coord, e.coordinate)
+            assertEquals("Trailers", e.axisName)
+            assertNull(e.value)
+
         }
     }
 
@@ -1078,7 +1111,7 @@ class TestNCube
         coord.put("States", "IN")
         int numCells = ncube.numCells
         assertTrue(ncube.deleteColumn("States", "IN"))
-        assertTrue(numCells == ncube.numCells + 1)
+        assertTrue(numCells == ncube.numCells + 1i)
 
         assertTrue(ncube.getCell(coord) == 9999L)
         coord.put("States", "OH")
@@ -1854,9 +1887,12 @@ class TestNCube
             ncube.getMap(coord)
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             assertTrue(e.message.contains("required scope"))
+            assert ncube.name == e.cubeName
+            assert coord.keySet() == e.coordinateKeys
+            assert ['Days'] as Set == e.requiredKeys
         }
 
         try
@@ -2098,7 +2134,7 @@ class TestNCube
         }
         catch (RuntimeException e)
         {
-            assert e.message.toLowerCase().contains('error occurred')
+            assert e.message.toLowerCase().contains("error occurred in cube: continents\n-> cell:continents:[continent:north america,country:usa,state:oh")
         }
     }
 
@@ -2291,6 +2327,21 @@ class TestNCube
         slice = ncube.getMap(coord)
         assertTrue(slice.size() == 2)
 
+        coord.put("businessDivisionCode", ['BOGUS'] as Set)
+        try
+        {
+            ncube.getMap(coord)
+            fail("should not make it here")
+        }
+        catch (CoordinateNotFoundException e)
+        {
+            assert e.message.toLowerCase().contains('not found using set on axis')
+            assert ncube.name == e.cubeName
+            assert coord == e.coordinate
+            assert "businessDivisionCode" == e.axisName
+            assert "BOGUS" == e.value
+        }
+
         coord.put("businessDivisionCode", null)
         try
         {
@@ -2300,6 +2351,20 @@ class TestNCube
         catch (IllegalArgumentException e)
         {
             assert e.message.toLowerCase().contains("no 'set' value found")
+        }
+
+        coord.clear()
+        try
+        {
+            ncube.getMap(coord)
+            fail("should not make it here")
+        }
+        catch (InvalidCoordinateException e)
+        {
+            assert e.message.toLowerCase().contains('does not contain all of the required scope keys')
+            assert ncube.name == e.cubeName
+            assert coord.keySet() == e.coordinateKeys
+            assert ["attribute", "businessDivisionCode"] as Set == e.requiredKeys
         }
     }
 
@@ -2975,9 +3040,12 @@ class TestNCube
             ncube.getCell(coord)
             fail("Should not make it here")
         }
-        catch (IllegalArgumentException e)
+        catch (InvalidCoordinateException e)
         {
             assert e.message.toLowerCase().contains('required scope')
+            assert ncube.name == e.cubeName
+            assert coord.keySet() == e.coordinateKeys
+            assert ['Code'] as Set == e.requiredKeys
         }
         coord.clear()
         coord.put("codE", "ints")
@@ -3294,7 +3362,7 @@ class TestNCube
     void testUpdateColumns()
     {
         NCube<String> ncube = NCubeManager.getNCubeFromResource("updateColumns.json")
-        assertEquals(30, ncube.getCellMap().size())
+        assertEquals(30, ncube.cellMap.size())
 
         // Delete 1st, middle, and last column
         Map<Object, Long> valueToId = new HashMap<>()
@@ -3313,8 +3381,8 @@ class TestNCube
             column.id = id
         }
         // 1,3,5 deleted
-        ncube.updateColumns(axisDto.getName(), axisDto.getColumns())
-        assertEquals(15, ncube.getCellMap().size())
+        ncube.updateColumns(axisDto.name, axisDto.columns)
+        assertEquals(15, ncube.cellMap.size())
 
         // Delete 1st, middle, last on state axis
         code = ncube.getAxis("state")
@@ -3332,11 +3400,11 @@ class TestNCube
             column.id = id
         }
 
-        ncube.updateColumns(axisDto.getName(), axisDto.getColumns())
-        assertEquals(6, ncube.getCellMap().size())
+        ncube.updateColumns(axisDto.name, axisDto.columns)
+        assertEquals(6, ncube.cellMap.size())
 
         ncube.deleteColumn("code", null)
-        assertEquals(4, ncube.getCellMap().size())
+        assertEquals(4, ncube.cellMap.size())
 
         try
         {
@@ -3351,7 +3419,7 @@ class TestNCube
         try
         {
             Axis fake = new Axis("fake", AxisType.DISCRETE, AxisValueType.DOUBLE, false)
-            ncube.updateColumns(fake.getName(), fake.getColumns())
+            ncube.updateColumns(fake.name, fake.columns)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -3571,6 +3639,10 @@ class TestNCube
         catch (CoordinateNotFoundException e)
         {
             assert e.message.toLowerCase().contains('not found on axis')
+            assert ncube.name == e.cubeName
+            assert coord == e.coordinate
+            assert "Gender" == e.axisName
+            assert "GI Joe" == e.value
         }
 
         ncube.defaultCellValue = null
@@ -3714,11 +3786,8 @@ class TestNCube
     @Test
     void testDebugExpression()
     {
-//        List urls = []
-//        urls.add("./com/acme/util/")
-//
-//        NCube sysClasspath = NCubeManager.getNCubeFromResource("sys.classpath.local.resources.json")
-//        NCubeManager.addCube(ApplicationID.testAppId, sysClasspath)
+        NCube sysClasspath = NCubeManager.getNCubeFromResource("sys.classpath.local.resources.json")
+        NCubeManager.addCube(ApplicationID.testAppId, sysClasspath)
 
         NCube ncube = NCubeManager.getNCubeFromResource("debugExp.json")
         Map coord = [:] as Map
@@ -4799,8 +4868,13 @@ class TestNCube
             ncube.setCellById(1.0, null)
             fail()
         }
-        catch (CoordinateNotFoundException ignored)
-        { }
+        catch (InvalidCoordinateException e)
+        {
+            assertTrue(e.message.contains("Unable to setCellById"))
+            assertEquals(ncube.name, e.cubeName)
+            assertNull(e.coordinateKeys)
+            assertNull(e.requiredKeys)
+        }
     }
 
     @Test

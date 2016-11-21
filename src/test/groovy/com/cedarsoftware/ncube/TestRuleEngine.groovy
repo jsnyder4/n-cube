@@ -56,10 +56,27 @@ class TestRuleEngine
         Axis state = ncube.getAxis 'state'
         assert state.columns[0].id != 10
 
+        Map input = [vehiclePrice:5000.0, driveAge:22, gender:'male', vehicleCylinders:8, state:'TX']
         Map output = [:]
-        Object out = ncube.getCell([vehiclePrice:5000.0, driveAge:22, gender:'male', vehicleCylinders:8, state:'TX'], output)
+        Object out = ncube.getCell(input, output)
         assert out == 10
         assert output.premium == 119.0
+
+        try
+        {
+            input.state = "BOGUS"
+            ncube.getCell(input, output)
+            fail("should not make it here")
+        }
+        catch (CoordinateNotFoundException e)
+        {
+            assert e.message.toLowerCase().contains('not found on axis')
+            assert ncube.name == e.cubeName
+            assert input == e.coordinate
+            assert 'state' == e.axisName
+            assert 'BOGUS' == e.value
+        }
+
     }
 
     // This test also tests ID-based ncube's specified in simple JSON format
@@ -312,7 +329,7 @@ class TestRuleEngine
         }
         catch (CoordinateNotFoundException e)
         {
-            ruleAxisDidNotBind(e)
+            ruleAxisDidNotBind(e, ncube.name, coord)
         }
         assert 1 == output.size()
         RuleInfo ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
@@ -326,12 +343,16 @@ class TestRuleEngine
         assert 2L == ruleInfo.getNumberOfRulesExecuted()
     }
 
-    private static void ruleAxisDidNotBind(CoordinateNotFoundException e)
+    private static void ruleAxisDidNotBind(CoordinateNotFoundException e, String cubeName, Map coordinate)
     {
         assert e.message.toLowerCase().contains("no condition")
         assert e.message.toLowerCase().contains("fired")
         assert e.message.toLowerCase().contains("no default")
         assert e.message.toLowerCase().contains("rule axis")
+        assert cubeName == e.cubeName
+        assert coordinate == e.coordinate
+        assert e.axisName
+        assert e.value == null
     }
 
     @Test
@@ -348,7 +369,7 @@ class TestRuleEngine
         }
         catch (CoordinateNotFoundException e)
         {
-            ruleAxisDidNotBind(e)
+            ruleAxisDidNotBind(e, ncube.name, coord)
         }
 
         coord.condition = 'Female'
@@ -360,7 +381,7 @@ class TestRuleEngine
         }
         catch (CoordinateNotFoundException e)
         {
-            ruleAxisDidNotBind(e)
+            ruleAxisDidNotBind(e, ncube.name, coord)
         }
         coord.gender = 'Female'
         assert 'bar' == ncube.getCell(coord)
@@ -769,7 +790,7 @@ class TestRuleEngine
         }
         catch (CoordinateNotFoundException e)
         {
-            ruleAxisDidNotBind(e)
+            ruleAxisDidNotBind(e, ncube.name, input)
         }
 
         input = [state:'TX', rule:'OhioRule']
@@ -787,7 +808,7 @@ class TestRuleEngine
         }
         catch (CoordinateNotFoundException e)
         {
-            ruleAxisDidNotBind(e)
+            ruleAxisDidNotBind(e, ncube.name, input)
         }
 
         input = [state:'OH', rule:'MatchesNoRuleName']
