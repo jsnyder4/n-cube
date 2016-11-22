@@ -198,17 +198,17 @@ abstract class GroovyBase extends UrlCommandCell
         }
 
         // Newly encountered source - compile the source and store it in L1, L2, and L3 caches
-        ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
+//        ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
         try
         {
             // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
-            Thread.currentThread().contextClassLoader = getClass().getClassLoader()
+//            Thread.currentThread().contextClassLoader = gcLoader
             compile(gcLoader, groovySource, L3CacheKey, ctx)
         }
         finally
         {
-            Thread.currentThread().contextClassLoader = originalClassLoader
+//            Thread.currentThread().contextClassLoader = originalClassLoader
         }
     }
 

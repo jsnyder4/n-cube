@@ -53,6 +53,7 @@ class NCubeJdbcPersister
     static final String NOTES_BIN = 'notes_bin'
     static final String HEAD_SHA_1 = 'head_sha1'
     static final String CHANGED = 'changed'
+    static final String VALUE = 'value'
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
@@ -1739,7 +1740,19 @@ ORDER BY abs(revision_number) DESC"""
         }
         else if (filter instanceof Map)
         {
-            return filter.keySet()
+            Object value = filter[VALUE]
+            if (value instanceof CellInfo)
+            {
+                CellInfo cellInfo = (CellInfo) value
+                value = cellInfo.value
+            }
+            return value.toString().tokenize(', ')
+        }
+        else if (filter instanceof Object[])
+        {
+            Set<String> tags = new HashSet<String>()
+            filter.each { Object tag -> tags.add(tag as String) }
+            return tags
         }
         else
         {
