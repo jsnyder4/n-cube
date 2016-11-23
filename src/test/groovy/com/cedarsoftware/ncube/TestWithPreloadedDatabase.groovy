@@ -6118,7 +6118,7 @@ return ints''', null, false)
 
         // Mark TestBranch as red & white
         NCube testBranch = NCubeManager.getCube(appId, 'TestBranch')
-        testBranch.addMetaProperties([(NCubeManager.CUBE_TAGS): new CellInfo('string', 'red,white', false, false)] as Map)
+        testBranch.addMetaProperties([(NCubeManager.CUBE_TAGS): new CellInfo('string', 'rEd , whiTe', false, false)] as Map)
         NCubeManager.updateCube(appId, testBranch)
 
         List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_INCLUDE):['red', 'white']])
@@ -6143,7 +6143,7 @@ return ints''', null, false)
 
         // Mark TestBranch as red & white
         NCube testBranch = NCubeManager.getCube(appId, 'TestBranch')
-        testBranch.setMetaProperty("cube_tags", "red, white")
+        testBranch.setMetaProperty("cube_tags", "red , WHIte")
         NCubeManager.updateCube(appId, testBranch)
 
         List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_EXCLUDE):['red', 'white']])

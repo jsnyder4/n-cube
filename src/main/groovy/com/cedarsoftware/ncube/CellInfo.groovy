@@ -8,9 +8,9 @@ import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
 import java.text.DecimalFormat
-import java.text.MessageFormat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * Get information about a cell (makes it a uniform query-able object).  Optional method
  * exists to collapse types for UI.<br><br>
@@ -120,10 +120,10 @@ class CellInfo
         else if (cell instanceof GroovyExpression)
         {
             GroovyExpression exp = cell as GroovyExpression
-            isUrl = StringUtilities.hasContent(exp.getUrl())
-            value = isUrl ? exp.getUrl() : exp.getCmd()
+            isUrl = StringUtilities.hasContent(exp.url)
+            value = isUrl ? exp.url : exp.cmd
             dataType = 'exp'
-            isCached = exp.isCacheable()
+            isCached = exp.cacheable
         }
         else if (cell instanceof Byte)
         {
@@ -188,34 +188,34 @@ class CellInfo
         else if (cell instanceof GroovyMethod)
         {
             GroovyMethod method = cell as GroovyMethod
-            isUrl = StringUtilities.hasContent(method.getUrl())
-            value = isUrl ? method.getUrl() : method.getCmd()
+            isUrl = StringUtilities.hasContent(method.url)
+            value = isUrl ? method.url : method.cmd
             dataType = 'method'
-            isCached = method.isCacheable()
+            isCached = method.cacheable
         }
         else if (cell instanceof StringUrlCmd)
         {
             StringUrlCmd strCmd = cell as StringUrlCmd
-            value = strCmd.getUrl()
+            value = strCmd.url
             dataType = 'string'
             isUrl = true
-            isCached = strCmd.isCacheable()
+            isCached = strCmd.cacheable
         }
         else if (cell instanceof BinaryUrlCmd)
         {
             BinaryUrlCmd binCmd = cell as BinaryUrlCmd
-            value = binCmd.getUrl()
+            value = binCmd.url
             dataType = 'binary'
             isUrl = true
-            isCached = binCmd.isCacheable()
+            isCached = binCmd.cacheable
         }
         else if (cell instanceof GroovyTemplate)
         {
             GroovyTemplate templateCmd = cell as GroovyTemplate
-            isUrl = StringUtilities.hasContent(templateCmd.getUrl())
-            value = isUrl ? templateCmd.getUrl() : templateCmd.getCmd()
+            isUrl = StringUtilities.hasContent(templateCmd.url)
+            value = isUrl ? templateCmd.url : templateCmd.cmd
             dataType = 'template'
-            isCached = templateCmd.isCacheable()
+            isCached = templateCmd.cacheable
         }
         else if (cell instanceof Range)
         {
@@ -284,7 +284,7 @@ class CellInfo
         }
         else
         {
-            throw new IllegalArgumentException('Unknown cell value type, value: ' + cell.toString() + ', class: ' + cell.getClass().getName())
+            throw new IllegalArgumentException("Unknown cell value type, value: ${cell.toString()}, class: ${cell.class.name}")
         }
     }
 
@@ -303,7 +303,7 @@ class CellInfo
         String type = getType(cell)
         if (UNSUPPORTED_TYPE == type)
         {
-            throw new IllegalArgumentException(MessageFormat.format('Unsupported type {0} found in {1}', cell.getClass().getName(), section))
+            throw new IllegalArgumentException("Unsupported type ${cell.class.name} found in ${section}")
         }
         return type
     }
@@ -341,7 +341,7 @@ class CellInfo
         }
         else
         {
-            throw new IllegalArgumentException('Unknown type to convert CellInfo to: ' + c.getName())
+            throw new IllegalArgumentException("Unknown type to convert CellInfo to: ${c.name}")
         }
     }
 
@@ -396,7 +396,7 @@ class CellInfo
             return 'binary'
         }
 
-        if (cell instanceof GroovyExpression || cell instanceof Collection || cell.getClass().isArray()) {
+        if (cell instanceof GroovyExpression || cell instanceof Collection || cell.class.array) {
             return 'exp'
         }
 
@@ -707,10 +707,10 @@ class CellInfo
             }
             else
             {
-                throw new IllegalArgumentException("Unknown value (" + type + ") for 'type' field")
+                throw new IllegalArgumentException("Unknown value: ${type} for 'type' field")
             }
         }
-        else if (val.getClass().isArray())
+        else if (val.class.array)
         {   // Legacy support - remove once we drop support for array type (can be done using GroovyExpression).
             StringBuilder exp = new StringBuilder()
             exp.append('[')
@@ -731,7 +731,7 @@ class CellInfo
         }
         else
         {
-            throw new IllegalArgumentException("Error reading value of type '" + val.getClass().getName() + "' - Simple JSON format for NCube only supports Long, Double, String, String Date, Boolean, or null")
+            throw new IllegalArgumentException("Error reading value of type '${val.class.name}' - Simple JSON format for NCube only supports Long, Double, String, String Date, Boolean, or null")
         }
     }
 
@@ -753,7 +753,7 @@ class CellInfo
         else if (o instanceof GroovyExpression)
         {
             builder.append("'")
-            builder.append(((GroovyExpression) o).getCmd())
+            builder.append(((GroovyExpression) o).cmd)
             builder.append("'")
         }
         else if (o instanceof Boolean)
@@ -802,7 +802,7 @@ class CellInfo
         }
         else
         {
-            throw new IllegalArgumentException('Unknown Groovy Type : ' + o.getClass().getName())
+            throw new IllegalArgumentException("Unknown Groovy Type : ${o.class.name}")
         }
         return builder.toString()
     }
@@ -875,9 +875,9 @@ class CellInfo
 
     private static String getDateAsString(Date date)
     {
-        Calendar cal = Calendar.getInstance()
+        Calendar cal = Calendar.instance
         cal.clear()
-        cal.setTime(date)
+        cal.time = date
         if (cal.get(Calendar.HOUR) == 0 && cal.get(Calendar.MINUTE) == 0 && cal.get(Calendar.SECOND) == 0)
         {
             return dateFormat.format(date)

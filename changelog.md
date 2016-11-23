@@ -1,4 +1,8 @@
 ### Revision History
+* 3.4.114
+ * tag matching more robust for Strings and other data types
+* 3.4.113
+ * tag processing to support CellInfo 
 * 3.4.112
  * Enhancement: InvalidateCoordinateException added (it is a subclass of IllegalArgumentException and is thrown when a coordinate does not have all of the required axes).  The exception contains fields to indicate which ncube and what is missing.
  * Dynamically loaded classes are compiled and cached.  More work to come - specify location of cache. 
