@@ -174,9 +174,24 @@ abstract class GroovyBase extends UrlCommandCell
             return
         }
 
-        // check L3 cache
         GroovyClassLoader gcLoader = ret.loader as GroovyClassLoader
         String groovySource = ret.source as String
+
+//        // TODO: Remove the code below once L3 cache is completed
+//        synchronized (GroovyBase.class)
+//        {
+//            if (L2Cache.containsKey(L2CacheKey))
+//            {   // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
+//                setRunnableCode(L2Cache[L2CacheKey])
+//                return
+//            }
+//
+//            Class clazz = gcLoader.parseClass(groovySource, 'N_' + L2CacheKey + '.groovy')
+//            setRunnableCode(clazz)
+//            L2Cache[L2CacheKey] = clazz
+//        }
+
+        // check L3 cache
         String L3CacheKey = sourceAndFlagsToSha1(groovySource).intern()
         byte[] rootClassBytes = getRootClassFromL3("${L3CacheKey}.class")
 
@@ -198,17 +213,17 @@ abstract class GroovyBase extends UrlCommandCell
         }
 
         // Newly encountered source - compile the source and store it in L1, L2, and L3 caches
-//        ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
+        ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
         try
         {
             // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
-//            Thread.currentThread().contextClassLoader = gcLoader
+            Thread.currentThread().contextClassLoader = gcLoader
             compile(gcLoader, groovySource, L3CacheKey, ctx)
         }
         finally
         {
-//            Thread.currentThread().contextClassLoader = originalClassLoader
+            Thread.currentThread().contextClassLoader = originalClassLoader
         }
     }
 
@@ -240,6 +255,7 @@ abstract class GroovyBase extends UrlCommandCell
             Class clazz = L2Cache[L2CacheKey]
             if (clazz != null)
             {   // Another thread defined and persisted the class while this thread was blocked...
+                setRunnableCode(clazz)
                 return clazz
             }
 
@@ -302,6 +318,7 @@ abstract class GroovyBase extends UrlCommandCell
         catch (ClassCircularityError e)
         {
             e.printStackTrace()
+            return null
         }
         catch (LinkageError ignored)
         {

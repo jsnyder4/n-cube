@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>3.4.114</version>
+	<version>3.4.117-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -66,7 +66,7 @@
     </developers>
 
     <properties>
-        <version.json-io>4.9.0</version.json-io>
+        <version.json-io>4.9.1</version.json-io>
         <version.java-util>1.25.0</version.java-util>
         <version.log4j>2.5</version.log4j>
         <version.junit>4.12</version.junit>

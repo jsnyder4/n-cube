@@ -15,6 +15,7 @@ import groovy.transform.CompileStatic
  *         Copyright (c) Cedar Software LLC
  *         <br/><br/>
  *         Licensed under the Apache License, Version 2.0 (the "License")
+ *         Licensed under the Apache License, Version 2.0 (the "License")
  *         you may not use this file except in compliance with the License.
  *         You may obtain a copy of the License at
  *         <br/><br/>
@@ -83,11 +84,11 @@ class DeltaProcessor
         // these over.
 
         // Build axis differences
-        Map<String, Map<String, Object>> axisDeltaMap = [:] as CaseInsensitiveMap
+        Map<String, Map<String, Object>> axisDeltaMap = new CaseInsensitiveMap<>()
         delta[DELTA_AXES] = axisDeltaMap
 
         // Build column differences per axis
-        Map<String, Map<Comparable, ColumnDelta>> colDeltaMap = [:] as CaseInsensitiveMap
+        Map<String, Map<Comparable, ColumnDelta>> colDeltaMap = new CaseInsensitiveMap<>()
         delta[DELTA_AXES_COLUMNS] = colDeltaMap
 
         for (Axis baseAxis : baseCube.axes)
@@ -113,13 +114,8 @@ class DeltaProcessor
     static <T> void mergeDeltaSet(NCube<T> mergeTarget, Map<String, Object> deltaSet)
     {
         // Step 1: Merge axis-level changes
-        boolean wasReferenceAxisUpdated = false
-
         Map<String, Map<String, Object>> axisDeltas = deltaSet[DELTA_AXES] as Map
-        axisDeltas.each { k, v ->
-            String axisName = k
-            Map<String, Object> axisChanges = v
-
+        axisDeltas.each { String axisName, Map<String, Object> axisChanges ->
             if (axisChanges.size() > 0)
             {   // There exist changes on the Axis itself, not including possible column changes (sorted, reference, etc)
                 Axis axis = mergeTarget.getAxis(axisName)
@@ -127,29 +123,18 @@ class DeltaProcessor
                 {
                     axis.columnOrder = axisChanges[DELTA_AXIS_SORT_CHANGED] as int
                 }
-
-                Map<String, Object> ref = axisChanges[DELTA_AXIS_REF_CHANGE] as Map
-                if (ref.size() > 1)
-                {   // Merge the reference changes to target cube's axis.  > 1 indicates a reference, the number of
-                    // fields to specify the reference is much more than 1.
-                    wasReferenceAxisUpdated = true
-                }
             }
         }
 
         // Step 2: Merge column-level changes
-        if (!wasReferenceAxisUpdated)
-        {
-            Map<String, Map<Long, ColumnDelta>> deltaMap = deltaSet[DELTA_AXES_COLUMNS] as Map
-            deltaMap.each { k, v ->
-                String axisName = k
-                Map<Long, ColumnDelta> colChanges = v
-
+        Map<String, Map<Long, ColumnDelta>> deltaMap = deltaSet[DELTA_AXES_COLUMNS] as Map
+        deltaMap.each { String axisName, Map<Long, ColumnDelta> colChanges ->
+            Axis axis = mergeTarget.getAxis(axisName)
+            if (!axis.reference)
+            {
                 for (ColumnDelta colDelta : colChanges.values())
                 {
                     Column column = colDelta.column
-                    Axis axis = mergeTarget.getAxis(axisName)
-
                     if (DELTA_COLUMN_ADD == colDelta.changeType)
                     {
                         Comparable value = axis.getValueToLocateColumn(column)
@@ -215,18 +200,18 @@ class DeltaProcessor
      * The 'headDelta' is the delta-between another person's branch and HEAD when merging between branches.
      * @param branchDelta Map of cell coordinates to values generated from comparing two cubes (A -> B)
      * @param headDelta Map of cell coordinates to values generated from comparing two cubes (A -> C)
-     * @param reverse = true (HEAD -> branch), false = (branch -> HEAD)
+     * @param direction = true (HEAD -> branch), false = (branch -> HEAD)
      * @return boolean true if the two cell change-sets are compatible, false otherwise.
      */
-    static boolean areDeltaSetsCompatible(Map<String, Object> branchDelta, Map<String, Object> headDelta, boolean reverse)
+    static boolean areDeltaSetsCompatible(Map<String, Object> branchDelta, Map<String, Object> headDelta, boolean direction)
     {
         if (branchDelta == null || headDelta == null)
         {
             return false
         }
 
-        return areAxisDifferencesOK(branchDelta, headDelta, reverse) &&
-                areAxisColumnDifferencesOK(branchDelta, headDelta) &&
+        return areAxisDifferencesOK(branchDelta, headDelta, direction) &&
+                areColumnDifferencesOK(branchDelta, headDelta) &&
                 areCellDifferencesOK(branchDelta, headDelta)
     }
 
@@ -310,7 +295,7 @@ class DeltaProcessor
      * Verify that axis-Column changes are OK.
      * @return true if the axis column changes between the two change sets are non-conflicting, false otherwise.
      */
-    private static boolean areAxisColumnDifferencesOK(Map<String, Object> branchDelta, Map<String, Object> headDelta)
+    private static boolean areColumnDifferencesOK(Map<String, Object> branchDelta, Map<String, Object> headDelta)
     {
         Map<String, Map<Comparable, ColumnDelta>> deltaMap1 = branchDelta[DELTA_AXES_COLUMNS] as Map
         Map<String, Map<Comparable, ColumnDelta>> deltaMap2 = headDelta[DELTA_AXES_COLUMNS] as Map
@@ -410,31 +395,34 @@ class DeltaProcessor
 
         if (changeAxis.reference && baseAxis.reference)
         {   // Record desired change reference axis info
-            ref.ref_tenant = changeApp.tenant
-            ref.ref_app = changeApp.app
-            ref.ref_version = changeApp.version
-            ref.ref_status = changeApp.status
-            ref.ref_branch = changeApp.branch
-            ref.ref_cube = changeAxis.referenceCubeName
-            ref.ref_axis = changeAxis.referenceAxisName
+            if (!areReferenceAxesEqual(baseAxis, changeAxis))
+            {
+                ref.ref_tenant = changeApp.tenant
+                ref.ref_app = changeApp.app
+                ref.ref_version = changeApp.version
+                ref.ref_status = changeApp.status
+                ref.ref_branch = changeApp.branch
+                ref.ref_cube = changeAxis.referenceCubeName
+                ref.ref_axis = changeAxis.referenceAxisName
 
-            if (changeAxis.referenceTransformed)
-            {
-                ref.tx_app = changeTxApp.app
-                ref.tx_version = changeTxApp.version
-                ref.tx_status = changeTxApp.status
-                ref.tx_branch = changeTxApp.branch
-                ref.tx_cube = changeAxis.transformCubeName
-                ref.tx_method = changeAxis.transformMethodName
-            }
-            else
-            {
-                ref.tx_app = null
-                ref.tx_version = null
-                ref.tx_status = null
-                ref.tx_branch = null
-                ref.tx_cube = null
-                ref.tx_method = null
+                if (changeAxis.referenceTransformed)
+                {
+                    ref.tx_app = changeTxApp.app
+                    ref.tx_version = changeTxApp.version
+                    ref.tx_status = changeTxApp.status
+                    ref.tx_branch = changeTxApp.branch
+                    ref.tx_cube = changeAxis.transformCubeName
+                    ref.tx_method = changeAxis.transformMethodName
+                }
+                else
+                {
+                    ref.tx_app = null
+                    ref.tx_version = null
+                    ref.tx_status = null
+                    ref.tx_branch = null
+                    ref.tx_cube = null
+                    ref.tx_method = null
+                }
             }
         }
         else if (changeAxis.reference != baseAxis.reference)
@@ -445,8 +433,18 @@ class DeltaProcessor
         return axisDeltas
     }
 
+    private static boolean areReferenceAxesEqual(Axis baseAxis, Axis changeAxis)
+    {
+        return baseAxis.referencedApp == changeAxis.referencedApp &&
+            baseAxis.referenceCubeName == changeAxis.referenceCubeName &&
+            baseAxis.referenceAxisName == changeAxis.referenceAxisName &&
+            baseAxis.transformApp == changeAxis.transformApp &&
+            baseAxis.transformCubeName == changeAxis.transformCubeName &&
+            baseAxis.transformMethodName == changeAxis.transformMethodName
+    }
+
     /**
-     * Ensure that the two passed in Maps hav the same number of axes, and that the names are the same,
+     * Ensure that the two passed in Maps have the same number of axes, and that the names are the same,
      * case-insensitive.
      * @return true if the key sets are compatible, false otherwise.
      */
@@ -460,7 +458,7 @@ class DeltaProcessor
         Set<String> a1 = new CaseInsensitiveSet<>(axisNames1)
         Set<String> a2 = new CaseInsensitiveSet<>(axisNames2)
         a1.removeAll(a2)
-        return a1.isEmpty()
+        return a1.empty
     }
 
     /**
@@ -482,7 +480,7 @@ class DeltaProcessor
             Comparable locatorKey = changeAxis.getValueToLocateColumn(changeColumn)
             Column foundCol = baseAxis.findColumn(locatorKey)
 
-            //add because you didn't find the column or you landed on the default
+            // add because you didn't find the column or you landed on the default
             if (foundCol == null || foundCol.default)
             {
                 deltaColumns[locatorKey] = new ColumnDelta(baseAxis.type, changeColumn, locatorKey, DELTA_COLUMN_ADD)
@@ -505,7 +503,7 @@ class DeltaProcessor
             deltaColumns[locatorKey] = new ColumnDelta(baseAxis.type, column, locatorKey, DELTA_COLUMN_REMOVE)
         }
 
-        //handle add or remove default column
+        // handle add or remove default column
         if (baseAxis.hasDefaultColumn() && !changeAxis.hasDefaultColumn())
         {
             deltaColumns[null] = new ColumnDelta(baseAxis.type, baseAxis.defaultColumn, null, DELTA_COLUMN_REMOVE)
@@ -528,14 +526,14 @@ class DeltaProcessor
         Map<Map<String, Object>, T> delta = new HashMap<>()
         Set<Map<String, Object>> copyCells = new HashSet<>()
 
-        thisCube.cellMap.each { key, value ->
-            copyCells.add(thisCube.getCoordinateFromIds(key))
+        thisCube.cellMap.each { LongHashSet colIds, T value ->
+            copyCells.add(thisCube.getCoordinateFromIds(colIds))
         }
 
         // At this point, the cubes have the same number of axes and same axis types.
         // Now, compute cell deltas.
-        other.cellMap.each { key, value ->
-            Map<String, Object> deltaCoord = other.getCoordinateFromIds(key)
+        other.cellMap.each { LongHashSet colIds, T value ->
+            Map<String, Object> deltaCoord = other.getCoordinateFromIds(colIds)
             LongHashSet idKey = deltaCoordToSetOfLong(other, deltaCoord)
             if (idKey != null)
             {   // Was able to bind deltaCoord between cubes
@@ -584,7 +582,7 @@ class DeltaProcessor
             changes.add(new Delta(Delta.Location.NCUBE, Delta.Type.UPDATE, s, 'DEFAULT_CELL', new CellInfo(source.defaultCellValue), new CellInfo(target.defaultCellValue), null, null))
         }
 
-        List<Delta> metaChanges = compareMetaProperties(source.metaProperties, target.metaProperties, Delta.Location.NCUBE_META, "n-cube '" + target.name + "'", null)
+        List<Delta> metaChanges = compareMetaProperties(source.metaProperties, target.metaProperties, Delta.Location.NCUBE_META, "n-cube '${target.name}'", null)
         changes.addAll(metaChanges)
         Object[] oldAxes = source.axisNames
         Object[] newAxes = target.axisNames
@@ -595,7 +593,8 @@ class DeltaProcessor
         boolean axesChanged = false
         if (!a1.empty)
         {
-            for (String axisName : a1) {
+            for (String axisName : a1)
+            {
                 String s = "Added axis: ${axisName}"
                 changes.add(new Delta(Delta.Location.AXIS, Delta.Type.ADD, s, null, null, target.getAxis(axisName), oldAxes, newAxes))
             }
@@ -606,7 +605,8 @@ class DeltaProcessor
         a2.removeAll(a1)
         if (!a2.empty)
         {
-            for (String axisName : a2) {
+            for (String axisName : a2)
+            {
                 String s = "Removed axis: ${axisName}"
                 changes.add(new Delta(Delta.Location.AXIS, Delta.Type.DELETE, s, null, source.getAxis(axisName), null, oldAxes, newAxes))
             }
@@ -626,7 +626,7 @@ class DeltaProcessor
                 changes.add(new Delta(Delta.Location.AXIS, Delta.Type.UPDATE, s, null, oldAxis, newAxis, oldAxes, newAxes))
             }
 
-            metaChanges = compareMetaProperties(oldAxis.metaProperties, newAxis.metaProperties, Delta.Location.AXIS_META, "axis: " + newAxis.name, newAxis.name)
+            metaChanges = compareMetaProperties(oldAxis.metaProperties, newAxis.metaProperties, Delta.Location.AXIS_META, "axis: ${newAxis.name}", newAxis.name)
             changes.addAll(metaChanges)
 
             Set<String> oldColNames = new CaseInsensitiveSet<>()
@@ -650,7 +650,7 @@ class DeltaProcessor
                 }
                 else
                 {   // Check Column meta properties
-                    metaChanges = compareMetaProperties(oldCol.metaProperties, newCol.metaProperties, Delta.Location.COLUMN_META, "column '" + newCol.value + "'", [axis:newAxis.name, column:newCol.value])
+                    metaChanges = compareMetaProperties(oldCol.metaProperties, newCol.metaProperties, Delta.Location.COLUMN_META, "column '${newCol.value}'", [axis:newAxis.name, column:newCol.value])
                     changes.addAll(metaChanges)
 
                     if (!DeepEquals.deepEquals(oldCol.value, newCol.value))
@@ -679,35 +679,32 @@ class DeltaProcessor
             return changes
         }
 
-        target.cellMap.each { key, value ->
-            LongHashSet newCellKey = key as LongHashSet
-            Object newCellValue = value
-
-            if (source.cellMap.containsKey(newCellKey))
+        Map<LongHashSet, Object> cellMap = target.cellMap
+        cellMap.each { LongHashSet colIds, value ->
+            if (source.cellMap.containsKey(colIds))
             {
-                Object oldCellValue = source.cellMap[newCellKey]
-                if (!DeepEquals.deepEquals(newCellValue, oldCellValue))
+                Object oldCellValue = source.cellMap[colIds]
+                if (!DeepEquals.deepEquals(value, oldCellValue))
                 {
-                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(newCellKey)
-                    String s = "Cell changed at location: ${properCoord}, from: ${oldCellValue}, to: ${newCellValue}"
-                    changes.add(new Delta(Delta.Location.CELL, Delta.Type.UPDATE, s, newCellKey, new CellInfo(source.getCellByIdNoExecute(newCellKey)), new CellInfo(target.getCellByIdNoExecute(newCellKey)), null, null))
+                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(colIds)
+                    String s = "Cell changed at location: ${properCoord}, from: ${oldCellValue}, to: ${value}"
+                    changes.add(new Delta(Delta.Location.CELL, Delta.Type.UPDATE, s, colIds, new CellInfo(source.getCellByIdNoExecute(colIds)), new CellInfo(target.getCellByIdNoExecute(colIds)), null, null))
                 }
             }
             else
             {
-                Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(newCellKey)
-                String s = "Cell added at location: ${properCoord}, value: ${newCellValue}"
-                changes.add(new Delta(Delta.Location.CELL, Delta.Type.ADD, s, newCellKey, null, new CellInfo(target.getCellByIdNoExecute(newCellKey)), null, null))
+                Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(colIds)
+                String s = "Cell added at location: ${properCoord}, value: ${value}"
+                changes.add(new Delta(Delta.Location.CELL, Delta.Type.ADD, s, colIds, null, new CellInfo(target.getCellByIdNoExecute(colIds)), null, null))
             }
         }
 
-        source.cellMap.each { key, value ->
-            LongHashSet oldCellKey = key as LongHashSet
-
-            if (!target.cellMap.containsKey(oldCellKey))
+        Map<LongHashSet, Object> srcCellMap = source.cellMap
+        srcCellMap.each { LongHashSet colIds, value ->
+            if (!target.cellMap.containsKey(colIds))
             {
                 boolean allColsStillExist = true
-                for (Long colId : oldCellKey)
+                for (Long colId : colIds)
                 {
                     Axis axis = target.getAxisFromColumnId(colId)
                     if (axis == null)
@@ -721,9 +718,9 @@ class DeltaProcessor
                 // dropped column would report a ton of removed cells.
                 if (allColsStillExist)
                 {
-                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(oldCellKey)
+                    Map<String, Object> properCoord = target.getDisplayCoordinateFromIds(colIds)
                     String s = "Cell removed at location: ${properCoord}, value: ${value}"
-                    changes.add(new Delta(Delta.Location.CELL, Delta.Type.DELETE, s, oldCellKey, new CellInfo(source.getCellByIdNoExecute(oldCellKey)), null, null, null))
+                    changes.add(new Delta(Delta.Location.CELL, Delta.Type.DELETE, s, colIds, new CellInfo(source.getCellByIdNoExecute(colIds)), null, null, null))
                 }
             }
         }

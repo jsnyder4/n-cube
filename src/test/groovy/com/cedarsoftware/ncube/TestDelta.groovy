@@ -8,6 +8,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
+import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXIS_REF_CHANGE
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
 import static org.junit.Assert.fail
@@ -1148,6 +1150,46 @@ class TestDelta
             assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
             assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
         }
+    }
+
+    @Test
+    void testMergeReferenceAxisNoChange()
+    {
+        setupLibrary()
+        setupLibraryReference()
+        ApplicationID branch1 = setupBranch('branch1', '1.0.1')
+        ApplicationID branch2 = setupBranch('branch2', '1.0.1')
+        NCube branch1Cube = NCubeManager.getCube(branch1, 'States')
+        NCube branch2Cube = NCubeManager.getCube(branch2, 'States')
+        Map deltas = DeltaProcessor.getDelta(branch1Cube, branch2Cube)
+        Map stateRefAxisDeltas = deltas[DELTA_AXES]['State'][DELTA_AXIS_REF_CHANGE] as Map
+        assert stateRefAxisDeltas.size() == 0
+    }
+
+    @Test
+    void testDeleteColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
+    {
+        setupLibrary()
+        NCube base = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        NCube change = base.duplicate('george')
+        change.deleteColumn('Column', 'C')
+        base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
+        Map deltas = DeltaProcessor.getDelta(base, change)
+        DeltaProcessor.mergeDeltaSet(base, deltas)
+        assert base.getAxis('Column').findColumn('C') == null
+    }
+
+    @Test
+    void testAddColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
+    {
+        setupLibrary()
+        NCube base = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        NCube change = base.duplicate('george')
+        change.addColumn('Column', 'D')
+        base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
+        Map deltas = DeltaProcessor.getDelta(base, change)
+        DeltaProcessor.mergeDeltaSet(base, deltas)
+        assert base.getAxis('Column').findColumn('D') != null
     }
 
     @Test

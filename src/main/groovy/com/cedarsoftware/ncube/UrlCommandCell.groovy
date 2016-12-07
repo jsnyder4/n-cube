@@ -78,6 +78,30 @@ abstract class UrlCommandCell implements CommandCell
         cache = null
     }
 
+    // When no L3, use this
+//    void clearClassLoaderCache()
+//    {
+//        if (cache == null)
+//        {
+//            return
+//        }
+//
+//        synchronized (GroovyBase.class)
+//        {
+//            if (cache == null)
+//            {
+//                return
+//            }
+//
+//            // classpath case, lets clear all classes before setting to null.
+//            if (cache instanceof GroovyClassLoader)
+//            {
+//                ((GroovyClassLoader)cache).clearCache()
+//            }
+//            cache = null
+//        }
+//    }
+
     protected URL getActualUrl(Map<String, Object> ctx)
     {
         for (int i=0; i < 2; i++)

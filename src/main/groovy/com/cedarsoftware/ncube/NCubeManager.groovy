@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
+import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.IOUtilities
@@ -303,17 +304,20 @@ class NCubeManager
             return getLocalClassloader(appId)
         }
 
+        // duplicate input coordinate - no need to validate, that will be done inside cpCube.getCell() later.
+        Map copy = new HashMap(input)
+
         final String envLevel = SystemUtilities.getExternalVariable('ENV_LEVEL')
-        if (StringUtilities.hasContent(envLevel) && !doesMapContainKey(input, 'env'))
+        if (StringUtilities.hasContent(envLevel) && !doesMapContainKey(copy, 'env'))
         {   // Add in the 'ENV_LEVEL" environment variable when looking up sys.* cubes,
             // if there was not already an entry for it.
-            input.env = envLevel
+            copy.env = envLevel
         }
-        if (!doesMapContainKey(input, 'username'))
-        {   // same as ENV_LEVEL, add it in if not already there.
-            input.username = System.getProperty('user.name')
+        if (!doesMapContainKey(copy, 'username'))
+        {   // same as ENV_LEVEL, add if not already there.
+            copy.username = System.getProperty('user.name')
         }
-        Object urlCpLoader = cpCube.getCell(input)
+        Object urlCpLoader = cpCube.getCell(copy)
 
         if (urlCpLoader instanceof URLClassLoader)
         {
@@ -670,6 +674,19 @@ class NCubeManager
         ApplicationID.validateTenant(tenant)
         ApplicationID.validateApp(app)
         return persister.getVersions(tenant, app)
+    }
+
+    /**
+     * Get the lastest version for the given tenant, app, and SNAPSHOT or RELEASE.
+     * @return String version number in the form "major.minor.patch" where each of the
+     * values (major, minor, patch) is numeric.
+     */
+    static String getLatestVersion(String tenant, String app, String releaseStatus)
+    {
+        Map<String, List<String>> versionsMap = getVersions(tenant, app)
+        Set<String> versions = new TreeSet<>(new VersionComparator())
+        versions.addAll(versionsMap[releaseStatus])
+        return versions.first() as String
     }
 
     /**
@@ -1095,7 +1112,8 @@ class NCubeManager
             throw new IllegalStateException("Missing ${SYS_BOOTSTRAP} cube in the 0.0.0 version for the app: ${app}")
         }
 
-        ApplicationID bootAppId = (ApplicationID) bootCube.getCell(coord)
+        Map copy = new HashMap(coord)
+        ApplicationID bootAppId = (ApplicationID) bootCube.getCell(copy, [:])
         String version = bootAppId.version
         String status = bootAppId.status
         String branch = bootAppId.branch

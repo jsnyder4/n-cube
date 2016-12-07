@@ -811,7 +811,7 @@ class NCube<T>
             if (cellValue instanceof CommandCell)
             {
                 Map ctx = prepareExecutionContext(coordinate, output)
-                return (T) executeExpression(ctx, cellValue)
+                return (T) executeExpression(ctx, cellValue as CommandCell)
             }
             else
             {
@@ -1870,7 +1870,7 @@ class NCube<T>
         }
         catch (Throwable e)
         {
-            throw new IllegalArgumentException("Error reading cube from passed in JSON", e)
+            throw new IllegalStateException("Error reading cube from passed in JSON", e)
         }
     }
 
@@ -1897,7 +1897,7 @@ class NCube<T>
         }
         catch (Throwable e)
         {
-            throw new IllegalArgumentException("Error reading cube from passed in JSON", e)
+            throw new IllegalStateException("Error reading cube from passed in JSON", e)
         }
     }
 

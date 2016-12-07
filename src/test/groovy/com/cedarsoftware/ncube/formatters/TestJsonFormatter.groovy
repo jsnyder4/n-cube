@@ -263,6 +263,7 @@ class TestJsonFormatter
                             name.endsWith('badJsonNoNcubeRoot.json') ||
                             name.endsWith('idBasedCubeError2.json') ||
                             name.endsWith('error.json') ||
+                            name.endsWith('2D1Ref.json') ||
                             name.endsWith('arrays.json') ||  /** won't have equivalency **/
                             name.endsWith('testCubeList.json'))   /** list of cubes **/
         }

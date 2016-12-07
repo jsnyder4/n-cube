@@ -156,8 +156,9 @@ class N_${L2CacheKey} extends ${expClassName}
         try
         {
             Map<String, Object> input = getInput(ctx)
-            input.put(SYS_PROPERTY, EXP_IMPORTS)
-            Object importList = prototype.getCell(input)
+            Map<String, Object> copy = new HashMap<>(input)
+            copy.put(SYS_PROPERTY, EXP_IMPORTS)
+            Object importList = prototype.getCell(copy)
             if (importList instanceof Collection)
             {
                 Collection<String> impList = (Collection) importList
@@ -179,7 +180,7 @@ class N_${L2CacheKey} extends ${expClassName}
     {
         try
         {
-            Map input = getInput(ctx)
+            Map input = new HashMap(getInput(ctx))
             input[SYS_PROPERTY] = EXP_CLASS
             Object className = prototype.getCell(input)
             if (className instanceof String && StringUtilities.hasContent((String)className))

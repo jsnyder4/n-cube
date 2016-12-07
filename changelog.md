@@ -1,4 +1,10 @@
 ### Revision History
+* 3.4.116
+ * Remove L3 cache (turn it off until it is completed)
+ * Inside `NCubeManger.getUrlClassLoader()`, duplicate the input coordinate before calling `.getCell()` on the `sys.classpath.cube`. Also, pass a dummy output Map.  This way, `userId` and `env_level` do not end up on utilized scope.
+* 3.4.115
+ * Bug fix: DeltaProcessor was not merging columns of other axes, when there was a reference axis.
+ * Bug fix: DeltaProcessor was incorrectly reporting a difference when there was a reference axis present with no changes.
 * 3.4.114
  * tag matching more robust for Strings and other data types
 * 3.4.113

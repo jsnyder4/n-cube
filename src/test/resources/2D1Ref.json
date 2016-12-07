@@ -1,0 +1,49 @@
+{
+  "ncube": "harry",
+  "axes": [
+    {
+      "name": "Column",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1001781718663,
+          "type": "string",
+          "value": "A"
+        },
+        {
+          "id": 1000831496690,
+          "type": "string",
+          "value": "B"
+        },
+        {
+          "id": 1000688357197,
+          "type": "string",
+          "value": "C"
+        }
+      ]
+    },
+    {
+      "name": "state",
+      "hasDefault": false,
+      "isRef": true,
+      "referenceTenant": "NONE",
+      "referenceApp": "DEFAULT_APP",
+      "referenceVersion": "1.0.0",
+      "referenceStatus": "RELEASE",
+      "referenceBranch": "HEAD",
+      "referenceCubeName": "SimpleDiscrete",
+      "referenceAxisName": "state",
+      "transformApp": null,
+      "transformVersion": null,
+      "transformStatus": null,
+      "transformBranch": null,
+      "transformCubeName": null,
+      "transformMethodName": null
+    }
+  ],
+  "cells": []
+}
