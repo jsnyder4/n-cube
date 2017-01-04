@@ -54,7 +54,7 @@ class LongHashSet implements Set<Long>
 
     boolean contains(Object item)
     {
-        if (isEmpty())
+        if (empty)
         {
             return false
         }
@@ -75,7 +75,7 @@ class LongHashSet implements Set<Long>
         Iterator it = new Iterator() {
             private int currentIndex = 0
 
-            public boolean hasNext()
+            boolean hasNext()
             {
                 if (elems == null)
                 {
@@ -84,12 +84,12 @@ class LongHashSet implements Set<Long>
                 return currentIndex < elems.length
             }
 
-            public Long next()
+            Long next()
             {
                 return elems[currentIndex++]
             }
 
-            public void remove()
+            void remove()
             {
                 throw new UnsupportedOperationException()
             }
@@ -99,7 +99,7 @@ class LongHashSet implements Set<Long>
 
     Object[] toArray()
     {
-        if (isEmpty())
+        if (empty)
         {
             return [] as Object[]
         }
@@ -134,7 +134,7 @@ class LongHashSet implements Set<Long>
 
     boolean remove(Object o)
     {
-        if (isEmpty())
+        if (empty)
         {
             return false
         }
@@ -233,7 +233,7 @@ class LongHashSet implements Set<Long>
             return false
         }
 
-        if (isEmpty())
+        if (empty)
         {
             return true
         }

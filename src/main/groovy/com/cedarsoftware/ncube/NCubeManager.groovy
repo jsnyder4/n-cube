@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.ArrayUtilities
-import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.StringUtilities
@@ -59,7 +58,6 @@ class NCubeManager
     public static final String ERROR_CANNOT_MOVE_TO_000 = 'Version 0.0.0 is for system configuration and branch cannot be moved to it.'
     public static final String ERROR_CANNOT_RELEASE_000 = 'Version 0.0.0 is for system configuration and cannot be released.'
     public static final String ERROR_CANNOT_RELEASE_TO_000 = 'Version 0.0.0 is for system configuration and cannot be created from the release process.'
-    public static final String ERROR_NOT_ADMIN = 'Operation not performed. You do not have admin permissions for '
 
     public static final String SEARCH_INCLUDE_CUBE_DATA = 'includeCubeData'
     public static final String SEARCH_INCLUDE_TEST_DATA = 'includeTestData'
@@ -98,7 +96,11 @@ class NCubeManager
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Object>> ncubeCache = new ConcurrentHashMap<>()
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Advice>> advices = new ConcurrentHashMap<>()
     private static final ConcurrentMap<ApplicationID, GroovyClassLoader> localClassLoaders = new ConcurrentHashMap<>()
-    static final String NCUBE_PARAMS = 'NCUBE_PARAMS'
+    public static final String NCUBE_PARAMS = 'NCUBE_PARAMS'
+    public static final String NCUBE_PARAMS_BYTE_CODE_DEBUG = 'byteCodeDebug'
+    public static final String NCUBE_PARAMS_BYTE_CODE_VERSION = 'byteCodeVersion'
+    public static final String NCUBE_ACCEPTED_DOMAINS = 'acceptedDomains'
+    public static final String NCUBE_PARAMS_BRANCH = 'branch'
     private static NCubePersister nCubePersister
     private static final Logger LOG = LogManager.getLogger(NCubeManager.class)
 
@@ -106,7 +108,7 @@ class NCubeManager
     protected static volatile ConcurrentMap<String, Object> systemParams = null
 
     private static final ThreadLocal<String> userId = new ThreadLocal<String>() {
-        public String initialValue()
+        String initialValue()
         {
             Map params = systemParams
             String userId = params.user instanceof String ? params.user : System.getProperty('user.name')
@@ -173,40 +175,6 @@ class NCubeManager
     protected static void clearSysParams()
     {
         systemParams = null;
-    }
-
-    /**
-     * Fetch all the n-cube names for the given ApplicationID.  This API
-     * will load all cube records for the ApplicationID (NCubeInfoDtos),
-     * and then get the names from them.
-     *
-     * @return Set < String >  n-cube names.  If an empty Set is returned,
-     * then there are no persisted n-cubes for the passed in ApplicationID.
-     */
-    @Deprecated
-    protected static Set<String> getCubeNames(ApplicationID appId)
-    {
-        List<NCubeInfoDto> cubeInfos = search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true])
-        Set<String> names = new TreeSet<>()
-
-        for (NCubeInfoDto info : cubeInfos)
-        {   // Permission check happened in search()
-            names.add(info.name)
-        }
-
-        if (names.isEmpty())
-        {   // Support tests that load cubes from JSON files...
-            // can only be in there as ncubes, not ncubeDtoInfo
-            for (Object value : getCacheForApp(appId).values())
-            {
-                if (value instanceof NCube)
-                {
-                    NCube cube = (NCube) value
-                    names.add(cube.name)
-                }
-            }
-        }
-        return new CaseInsensitiveSet<>(names)
     }
 
     /**
@@ -426,6 +394,21 @@ class NCubeManager
             permCache.invalidateAll()
 
             Map<String, Object> appCache = getCacheForApp(appId)
+            for (Object cube : appCache.values())
+            {
+                if (cube instanceof NCube)
+                {
+                    NCube ncube = cube as NCube
+                    for (Object value : ncube.cellMap.values())
+                    {
+                        if (value instanceof UrlCommandCell)
+                        {
+                            UrlCommandCell cell = value as UrlCommandCell
+                            cell.clearClassLoaderCache()
+                        }
+                    }
+                }
+            }
             clearGroovyClassLoaderCache(appCache)
 
             appCache.clear()
@@ -587,16 +570,18 @@ class NCubeManager
         {
             throw new IllegalArgumentException("Could not get referenced cube names, n-cube: ${name} does not exist in app: ${appId}")
         }
-        Set<String> subCubeList = ncube.referencedCubeNames
+
+        Map<Map, Set<String>> subCubeRefs = ncube.referencedCubeNames
 
         // TODO: Use explicit stack, NOT recursion
 
-        for (String cubeName : subCubeList)
-        {
-            if (!refs.contains(cubeName))
-            {
-                refs.add(cubeName)
-                getReferencedCubeNames(appId, cubeName, refs)
+        subCubeRefs.values().each { Set<String> cubeNames ->
+            cubeNames.each { String cubeName ->
+                if (!refs.contains(cubeName))
+                {
+                    refs.add(cubeName)
+                    getReferencedCubeNames(appId, cubeName, refs)
+                }
             }
         }
     }

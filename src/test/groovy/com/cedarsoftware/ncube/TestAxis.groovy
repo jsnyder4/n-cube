@@ -55,13 +55,13 @@ import static org.junit.Assert.fail
 class TestAxis
 {
     @Before
-    public void setUp()
+    void setUp()
     {
         TestingDatabaseHelper.setupDatabase()
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         TestingDatabaseHelper.tearDownDatabase()
     }
@@ -2874,7 +2874,7 @@ class TestAxis
         assert 'b' == reload.getCell([age:4] as Map)
         assert 'c' == reload.getCell([age:6] as Map)
 
-        json = reload
+        json = reload.toString()
         assert !json.contains('"columns":{')
         json = reload.toFormattedJson([indexFormat:true] as Map)
         assert json.contains('"columns":{')
@@ -2986,7 +2986,7 @@ class TestAxis
         {
             assert e.message.toLowerCase().contains('unable to load')
             assert e.message.contains('TestTransform')
-            assert e.message.toLowerCase().contains('reference axis (age)')
+            assert e.message.toLowerCase().contains('reference axis: age')
             assert e.message.toLowerCase().contains("no 'method' axis")
         }
 
@@ -3002,8 +3002,8 @@ class TestAxis
         {
             assert e.message.toLowerCase().contains('unable to load')
             assert e.message.contains('TestTransform')
-            assert e.message.toLowerCase().contains('reference axis (age)')
-            assert e.message.contains("(doubleNotThere) does not exist")
+            assert e.message.toLowerCase().contains('reference axis: age')
+            assert e.message.contains("doubleNotThere does not exist")
         }
     }
 

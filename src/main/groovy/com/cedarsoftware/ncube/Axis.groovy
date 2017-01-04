@@ -90,7 +90,7 @@ class Axis
     protected transient RangeMap<Comparable, Column> rangeToCol = TreeRangeMap.create()
 
     private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
-        public Random initialValue()
+        Random initialValue()
         {
             return new Random()
         }
@@ -99,7 +99,7 @@ class Axis
     /**
      * Implement to provide data for this Axis
      */
-    public static interface AxisRefProvider
+    static interface AxisRefProvider
     {
         void load(Axis axis)
     }

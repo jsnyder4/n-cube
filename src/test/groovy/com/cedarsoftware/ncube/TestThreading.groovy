@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -33,16 +34,15 @@ import static org.junit.Assert.assertNotNull
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-public class TestThreading
+class TestThreading
 {
     private Map testArgs
     private NCube cp
 
     private static final Logger LOG = LogManager.getLogger(GroovyExpression.class)
 
-
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
+    static Collection<Object[]> data() {
         def data = []
 
         int sleep = 0L
@@ -56,9 +56,9 @@ public class TestThreading
         data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
 
         load = 50; threads = 5; count = 5
-        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
+        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
+        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
 
 //        load = 25; threads = 5; count = 15
 //        data << [ ['load':load,'threads':threads,'count':count*10,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
@@ -73,17 +73,18 @@ public class TestThreading
         return data as Object [][]
     }
 
-    public TestThreading(Map args) {
+    TestThreading(Map args)
+    {
         testArgs = args
     }
 
     @Test
-    public void test() {
+    void test() {
         runTest testArgs
     }
 
     @Before
-    public void setUp()
+    void setUp()
     {
         TestingDatabaseHelper.setupDatabase()
         NCubeManager.getNCubeFromResource('sys.classpath.threading.json')
@@ -93,7 +94,7 @@ public class TestThreading
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         TestingDatabaseHelper.tearDownDatabase()
     }
@@ -226,6 +227,7 @@ public class TestThreading
                             }
                         }
                     } as Runnable)
+                    t.daemon = true
                     threads << t
                 }
             }
@@ -282,13 +284,13 @@ public class TestThreading
         }
     }
 
-    private NCube buildAccessCube(def maxThreads, def maxCount, def warm) {
+    private NCube buildAccessCube(int maxThreads, int maxCount, boolean warm) {
         LOG.info '==>Creating cube...'
         NCube threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadDef.bytes))
         assertNotNull(threadCube)
         NCube cube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCountDef.bytes))
-        Axis axisTid = cube.getAxis("tid");
-        Axis axisCnt = cube.getAxis("cnt");
+        Axis axisTid = cube.getAxis("tid")
+        Axis axisCnt = cube.getAxis("cnt")
         assertNotNull(cube)
         assertNotNull(axisTid)
         assertNotNull(axisCnt)
@@ -321,7 +323,7 @@ public class TestThreading
         }
 
         LOG.debug 'recreating...'
-        cube = NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().bytes));
+        cube = NCube.createCubeFromStream(new ByteArrayInputStream(cube.toFormattedJson().bytes))
         threadCube = NCube.createCubeFromStream(new ByteArrayInputStream(threadCube.toFormattedJson().bytes))
         NCubeManager.addCube(ApplicationID.testAppId,threadCube)
         NCubeManager.addCube(ApplicationID.testAppId,cube)

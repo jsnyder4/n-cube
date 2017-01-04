@@ -10,7 +10,7 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.4.116</version>
+  <version>3.5.1</version>
 </dependency>
 ```
 
@@ -86,7 +86,7 @@ Used in this fashion, HTTP requests target a CDN n-cube, the n-cube may have axe
 
 The next cube maps the logical name to the desired actual name.  In the example above, the HTML ncube has the logical HTML file names on one axis, and the cells have URLs to the real content.  This indirection allows the content to be moved without the page having to be changed.  Furthermore, if the page (or style sheet or Javascript code) returned needed to be different because of the user-agent device, the date, etc, then the routing cube can have an axis for each of these additional decision criteria.
 
-HTTP Request ===> dyn/html/account ===> tomcat ===> UrlRewrite.xml ===> CdnRouter ===> content-n-cubes ===> physical file.  The content-n-cubes have the logical file names on the content.name axis, and the associated cell has the physical name.  If it is not found, the default cell will add the appropriate extension to the file type, and then make an attempt at fetching the content.  This way, these mime-type routing cubes only require entries on their axis when the logical to phsyical file name mapping is non-standard (changing based on device type, date, business unit, etc.)
+HTTP Request ===> dyn/html/account ===> tomcat ===> UrlRewrite.xml ===> CdnRouter ===> content-n-cubes ===> physical file.  The content-n-cubes have the logical file names on the content.name axis, and the associated cell has the physical name.  If it is not found, the default cell will add the appropriate extension to the file type, and then make an attempt at fetching the content. This way, these mime-type routing cubes only require entries on their axis when the logical to phsyical file name mapping is non-standard (changing based on device type, date, business unit, etc.)
 
 ### Creating n-cubes
 Use either the Simple JSON format to create n-cubes, or the nCubeEditor to editing the pages.  At the moment, there is no cloud-based editor for n-cube, so you need to set up the nCubeEditor as a web-app within a Java container like tomcat or jetty.  See the sample .json files in the test / resources directories for examples.

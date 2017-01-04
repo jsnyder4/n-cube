@@ -4874,10 +4874,131 @@ class TestNCube
     void testGetReferencedCubeNamesOnRuleCubeWithDefault()
     {
         NCube ncube = NCubeBuilder.getRuleWithOutboundRefs()
-        Set<String> refs = ncube.getReferencedCubeNames()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
         assert refs.size() == 2
-        assert refs.contains('test.available')
-        assert refs.contains('test.price')
+
+        Map coord = [rule: "${'(availability): @test.available[:]'}"] as CaseInsensitiveMap
+        assert ['test.available'] as Set == refs[coord]
+
+        coord = [:] as CaseInsensitiveMap
+        assert ['test.price'] as Set == refs[coord]
+    }
+
+    @Test
+    void testGetReferencedCubeNamesOnCubeWithMultipleRefCubesPerCoord()
+    {
+        NCube ncube = NCubeBuilder.getCubeWithMultipleRefCubesPerCoord()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 2
+
+        Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
+        assert ['CubeA', 'CubeB'] as Set == refs[coord]
+
+        coord = [Axis1: 'Axis1Col2', Axis2: 'Axis2Col2'] as CaseInsensitiveMap
+        assert ['CubeA', 'CubeB', 'CubeC'] as Set == refs[coord]
+    }
+
+    @Test
+    void testGetReferencedCubeNamesOnCubeWithColumnDefault()
+    {
+        NCube ncube = NCubeBuilder.getCubeWithColumnDefault()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 2
+
+        Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
+        assert ['CubeA'] as Set == refs[coord]
+
+        coord = [Axis1: 'Axis1Col2'] as CaseInsensitiveMap
+        assert ['Axis1Col2Default'] as Set == refs[coord]
+      }
+
+    @Test
+    void testGetReferencedCubeNamesOnCubeWithCubeDefault()
+    {
+        NCube ncube = NCubeBuilder.getCubeWithCubeDefault()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 2
+
+        Map coord = [Axis1: 'Axis1Col2', Axis2: 'Axis2Col2'] as CaseInsensitiveMap
+        assert ['CubeB'] as Set == refs[coord]
+
+        coord = [:] as CaseInsensitiveMap
+        assert ['CubeA'] as Set == refs[coord]
+    }
+
+    @Test
+    void testGetReferencedCubeNamesOnCubeWithDefaultColumns()
+    {
+        NCube ncube = NCubeBuilder.getCubeWithDefaultColumns()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 4
+
+        Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
+        assert ['CubeA'] as Set == refs[coord]
+
+        coord = [Axis1: 'default column', Axis2: 'Axis2Col2'] as CaseInsensitiveMap
+        assert ['CubeB'] as Set == refs[coord]
+
+        coord = [Axis1: 'Axis1Col2', Axis2: 'default column'] as CaseInsensitiveMap
+        assert ['CubeC'] as Set == refs[coord]
+
+        coord = [Axis1: 'default column', Axis2: 'default column'] as CaseInsensitiveMap
+        assert ['CubeD'] as Set == refs[coord]
+    }
+
+    @Test
+    void testGetReferencedCubeNamesOnCubeWithAllDefaults()
+    {
+        NCube ncube = NCubeBuilder.getCubeWithAllDefaults()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 7
+
+        Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
+        assert ['CubeA'] as Set == refs[coord]
+
+        coord = [Axis1: 'default column', Axis2: 'Axis2Col2'] as CaseInsensitiveMap
+        assert ['CubeB'] as Set == refs[coord]
+
+        coord = [Axis1: 'Axis1Col2', Axis2: 'default column'] as CaseInsensitiveMap
+        assert ['CubeC'] as Set == refs[coord]
+
+        coord = [Axis1: 'default column', Axis2: 'default column'] as CaseInsensitiveMap
+        assert ['CubeD'] as Set == refs[coord]
+
+        coord = [Axis1: 'Axis1Col3'] as CaseInsensitiveMap
+        assert ['Axis1Col3Default'] as Set == refs[coord]
+
+        coord = [Axis2: 'Axis2Col3'] as CaseInsensitiveMap
+        assert ['Axis2Col3Default'] as Set == refs[coord]
+
+        coord = [:] as CaseInsensitiveMap
+        assert ['CubeLevelDefault'] as Set == refs[coord]
+    }
+
+    @Test
+    void testGetReferencedCubeNamesOnRuleCubeWithAllDefaults()
+    {
+        NCube ncube = NCubeBuilder.getRuleCubeWithAllDefaults()
+        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        assert refs.size() == 6
+
+        Map coord = [Axis2: 'Axis2Col1', RuleAxis1: "${'(Condition1): @Condition1[:]'}"] as CaseInsensitiveMap
+        assert ['CubeB'] as Set == refs[coord]
+
+        coord = [Axis2: 'Axis2Col2',  RuleAxis1: "${'(Condition2): true'}"] as CaseInsensitiveMap
+        assert ['CubeC'] as Set == refs[coord]
+
+        coord = [Axis2: 'Axis2Col2'] as CaseInsensitiveMap
+        assert ['Axis2Col2Default'] as Set == refs[coord]
+
+        coord = [RuleAxis1: "${'(Condition1): @Condition1[:]'}"] as CaseInsensitiveMap
+        assert ['Condition1'] as Set == refs[coord]
+
+        coord = [RuleAxis1: "${'(Condition3): true'}"] as CaseInsensitiveMap
+        assert ['Condition3ColumnDefault'] as Set == refs[coord]
+
+        coord = [:] as CaseInsensitiveMap
+        assert ['CubeLevelDefault'] as Set == refs[coord]
     }
 
     @Test

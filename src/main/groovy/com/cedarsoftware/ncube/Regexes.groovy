@@ -60,7 +60,6 @@ interface Regexes
     Pattern groovyRelRefCellPattern =  ~/([^a-zA-Z0-9_$]|^)@\s*[(]($bracketMatch|$varMatch)[)]/
     Pattern groovyRelRefCellPatternA = ~/([^a-zA-Z0-9_$]|^)@\s*($bracketMatch)/
     Pattern groovyExplicitCubeRefPattern = ~/([^a-zA-Z0-9_$"']|^)getCube\s*[(]\s*['"]([$validNameChars]+)['"]\s*[)]/
-    Pattern groovyExplicitRunRulePattern = ~/([^a-zA-Z0-9_$]|^)runRuleCube\s*[(]\s*['"]([$validNameChars]+)['"].*?[)]/
     Pattern groovyExplicitJumpPattern = ~/([^a-zA-Z0-9_$]|^)jump\s*[(]\s*['"]([$validNameChars]+)['"].*?[)]/
     Pattern groovyExplicitAtPattern = ~/([^a-zA-Z0-9_$'"]|^)at\s*[(][^,]+?,\s*['"]([$validNameChars]+)['"].*?[)]/
     Pattern groovyExplicitGoPattern = ~/([^a-zA-Z0-9_$'"]|^)go\s*[(][^,]+?,\s*['"]([$validNameChars]+)['"].*?[)]/

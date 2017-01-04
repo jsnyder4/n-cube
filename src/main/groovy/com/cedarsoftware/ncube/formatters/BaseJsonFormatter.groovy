@@ -70,14 +70,14 @@ public class BaseJsonFormatter
         append(Long.toString(id))
     }
 
-    void append(String id)
+    void append(String str)
     {
-        builder.write(id, 0, id.length())
+        builder.write(str, 0, str.length())
     }
 
     protected void writeObjectKey(String key)
     {
-        append('"' + key + '":')
+        append(""""${key}":""")
     }
 
     protected void writeObjectKeyValue(String key, Object value, boolean includeComma) throws IOException
@@ -96,9 +96,12 @@ public class BaseJsonFormatter
         {
             StringWriter w = new StringWriter()
             JsonWriter.writeJsonUtf8String((String) value, w)
-            value = w.toString()
+            append(w.toString())
         }
-        append(value == null ? "null" : value.toString())
+        else
+        {
+            append(value == null ? "null" : value.toString())
+        }
     }
 
     protected void closeStream() throws IOException

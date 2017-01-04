@@ -73,12 +73,12 @@
         {
             "id": ["runRuleRef1"],
             "type": "exp",
-            "value": "def coord = [:]; runRuleCube('Sig', coord); dorunRuleCube('HiPoint', coord)"
+            "value": "def coord = [:]; at(coord, 'Sig'); dorunRuleCube('HiPoint', coord)"
         },
         {
             "id": ["runRuleRef2"],
             "type": "exp",
-            "value": "def coord = [:]; runRuleCube ( 'Colt' , coord); dorunRuleCube ( 'HiPoint' , coord)"
+            "value": "def coord = [:]; at(coord, 'Colt'); dorunRuleCube ( 'HiPoint' , coord)"
         },
         {
             "id": ["absRef1"],

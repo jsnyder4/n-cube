@@ -25,7 +25,6 @@ n-cube 'ToDo' list
  * Run all tests
 
 ### n-cube editor (NCE)
-* create visualization of n-cube in NCE
 * Run all tests
 
 

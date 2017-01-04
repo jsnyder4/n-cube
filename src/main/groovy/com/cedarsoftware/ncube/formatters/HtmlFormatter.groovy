@@ -40,11 +40,11 @@ import static java.lang.Math.abs
  *         limitations under the License.
  */
 @CompileStatic
-public class HtmlFormatter implements NCubeFormatter
+class HtmlFormatter implements NCubeFormatter
 {
     String[] _headers
 
-    public HtmlFormatter(String... headers)
+    HtmlFormatter(String... headers)
     {
         _headers = headers
     }
@@ -75,7 +75,7 @@ public class HtmlFormatter implements NCubeFormatter
         // Hypercubes look best when the smaller axes are on the inside, and the larger axes are on the outside.
         List<Axis> axes = new ArrayList<>(ncube.axes)
         Collections.sort(axes, new Comparator<Axis>() {
-            public int compare(Axis a1, Axis a2)
+            int compare(Axis a1, Axis a2)
             {
                 a2.size() - a1.size()
             }
@@ -118,7 +118,7 @@ public class HtmlFormatter implements NCubeFormatter
             axes.add(0, top)
         }
         long width = axes[0].size()
-        long height = 1;
+        long height = 1
         final int len = axes.size()
 
         for (int i = 1; i < len; i++)
@@ -135,7 +135,7 @@ public class HtmlFormatter implements NCubeFormatter
      *
      * @return String containing an HTML view of this NCube.
      */
-    public String format(NCube ncube)
+    String format(NCube ncube)
     {
         if (ncube.axes.size() < 1)
         {
@@ -145,8 +145,8 @@ public class HtmlFormatter implements NCubeFormatter
         final StringBuilder s = new StringBuilder()
         final Object[] displayValues = getDisplayValues(ncube)
         final List<Axis> axes = (List<Axis>) displayValues[0]
-        final long height = (Long) displayValues[1]
-        final long width = (Long) displayValues[2]
+        final long height = displayValues[1] as long
+        final long width = displayValues[2] as long
 
         s.append(getHtmlPreamble())
 
@@ -157,55 +157,45 @@ public class HtmlFormatter implements NCubeFormatter
 
         if (axes.size() == 1)
         {   // Ensure that one dimension is vertically down the page
-            s.append(' <th data-id="a').append(topAxis.id).append('" class="th-ncube ncube-head">')
-            s.append('  <div class="btn-group axis-menu" data-id="').append(topAxisName).append('">\n')
-            s.append('   <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">')
-            s.append('    <span>').append(topAxisName).append('</span><span class="caret"></span>')
-            s.append('   </button></th>\n')
-            s.append('  </div>\n')
-            s.append(' <th class="th-ncube ncube-dead">')
-            s.append(ncube.name)
-            s.append('</th>\n')
-            s.append('</tr>\n')
+            s.append("""\
+ <th data-id="a${topAxis.id}" class="th-ncube ncube-head">
+  <div class="btn-group axis-menu" data-id="${topAxisName}">
+   <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">
+    <span>${topAxisName}</span><span class="caret"></span>
+   </button></th>
+  </div>
+ <th class="th-ncube ncube-dead">${ncube.name}</th>
+</tr>""")
 
             for (int i = 0; i < width; i++)
             {
-                s.append("<tr>\n")
+                s.append('<tr>\n')
                 Column column = topColumns[i]
-                String colId = String.valueOf(column.id)
-                s.append(' <th data-id="').append(colId)
-                s.append('" data-axis="').append(topAxisName).append('" class="th-ncube ')
-                s.append(getColumnCssClass(column))
-                s.append('">')
+                s.append(""" <th data-id="${column.id}" data-axis="${topAxisName}" class="th-ncube ${getColumnCssClass(column)}">""")
                 buildColumnGuts(s, column)
                 s.append('</th>\n')
-                Set<Long> colIds = new LinkedHashSet<>()
-                colIds.add(column.id)
-                buildCell(ncube, s, colIds, i % 2 == 0)
+                buildCell(ncube, s, [column.id] as Set, i % 2i == 0)
                 s.append('</tr>\n')
             }
         }
         else
         {   // 2D+ shows as one column on the X axis and all other dimensions on the Y axis.
-            int deadCols = axes.size() - 1
+            int deadCols = axes.size() - 1i
             if (deadCols > 0)
             {
-                s.append(' <th class="th-ncube ncube-dead" colspan="').append(deadCols).append("\">")
-                s.append(ncube.name)
-                s.append('</th>\n')
+                s.append(""" <th class="th-ncube ncube-dead" colspan="${deadCols}">${ncube.name}</th>""")
             }
-            s.append(' <th data-id="a').append(topAxis.id).append('" class="th-ncube ncube-head" colspan="')
-            s.append(topAxis.size())
-            s.append('">')
-            s.append('  <div class="btn-group axis-menu" data-id="').append(topAxisName).append('">\n')
-            s.append('  <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">')
-            s.append('   <span>').append(topAxisName).append('</span><span class="caret"></span>')
-            s.append('  </button>\n')
-            s.append('   </div>\n')
-            s.append(' </th>\n</tr>\n')
-
-            // Second row (special case)
-            s.append('<tr>\n')
+            s.append("""\
+  <th data-id="a${topAxis.id}" class="th-ncube ncube-head" colspan="${topAxis.size()}">
+   <div class="btn-group axis-menu" data-id="${topAxisName}">
+    <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">
+     <span>${topAxisName}</span><span class="caret"></span>
+    </button>
+   </div>
+  </th>
+ </tr>
+ <tr>  
+""")
             Map<String, Long> rowspanCounter = [:]
             Map<String, Long> rowspan = [:]
             Map<String, Long> columnCounter = [:]
@@ -217,13 +207,15 @@ public class HtmlFormatter implements NCubeFormatter
             {
                 final Axis axis = axes[i]
                 final String axisName = axis.name
-                s.append(' <th data-id="a').append(axis.id).append('" class="th-ncube ncube-head">\n')
-                s.append('  <div class="btn-group axis-menu" data-id="').append(axisName).append('">\n')
-                s.append('   <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">')
-                s.append('    <span>').append(axisName).append('</span><span class="caret"></span>')
-                s.append('   </button>\n')
-                s.append('   </div>\n')
-                s.append(' </th>\n')
+                s.append("""\
+ <th data-id="a${axis.id}" class="th-ncube ncube-head">
+  <div class="btn-group axis-menu" data-id="${axisName}">
+   <button type="button" class="btn-sm btn-primary dropdown-toggle axis-btn" data-toggle="dropdown">
+    <span>${axisName}</span><span class="caret"></span>
+   </button>
+  </div>
+ </th>
+ """)
                 long colspan = 1
 
                 for (int j = i + 1; j < axisCount; j++)
@@ -239,10 +231,7 @@ public class HtmlFormatter implements NCubeFormatter
 
             for (Column column : topColumns)
             {
-                String colId = String.valueOf(column.id)
-                s.append(' <th data-id="').append(colId).append('" data-axis="').append(topAxisName).append('" class="th-ncube-top ')
-                s.append(getColumnCssClass(column))
-                s.append('">')
+                s.append(""" <th data-id="${column.id}" data-axis="${topAxisName}" class="th-ncube-top ${getColumnCssClass(column)}">""")
                 buildColumnGuts(s, column)
                 s.append('</th>\n')
             }
@@ -251,18 +240,16 @@ public class HtmlFormatter implements NCubeFormatter
 
             if (topAxis.size() != topColumnSize)
             {
-                s.append(' <th class="th-ncube-top ')
-                s.append(getColumnCssClass(topAxis.defaultColumn))
-                s.append('">Default</th>')
+                s.append(""" <th class="th-ncube-top ${getColumnCssClass(topAxis.defaultColumn)}">Default</th>""")
             }
 
-            s.append("</tr>\n")
+            s.append('</tr>\n')
             Map<String, Long> colIds = [:]
 
             // The left column headers and cells
             for (long h = 0; h < height; h++)
             {
-                s.append("<tr>\n")
+                s.append('<tr>\n')
                 // Column headers for the row
                 for (int i = 1; i < axisCount; i++)
                 {
@@ -278,7 +265,7 @@ public class HtmlFormatter implements NCubeFormatter
                         final long span = rowspan[axisName]
 
                         // Use column's ID as TH element's ID
-                        s.append(' <th data-id="').append(column.id).append('" data-axis="').append(axisName).append('" class="th-ncube ')
+                        s.append(""" <th data-id="${column.id}" data-axis="${axisName}" class="th-ncube """)
                         s.append(getColumnCssClass(column))
                         if (span != 1)
                         {   // Need to show rowspan attribute
@@ -290,7 +277,7 @@ public class HtmlFormatter implements NCubeFormatter
                         s.append('</th>\n')
 
                         // Increment column counter
-                        colIdx++;
+                        colIdx++
                         if (colIdx >= axis.size())
                         {
                             colIdx = 0L
@@ -298,7 +285,7 @@ public class HtmlFormatter implements NCubeFormatter
                         columnCounter[axisName] = colIdx
                     }
                     // Increment row counter (counts from 0 to rowspan of subordinate axes)
-                    count++;
+                    count++
                     if (count >= rowspan[axisName])
                     {
                         count = 0L
@@ -315,13 +302,11 @@ public class HtmlFormatter implements NCubeFormatter
                     buildCell(ncube, s, colIds.values() as Set, h % 2 == 0L)
                 }
 
-                s.append("</tr>\n")
+                s.append('</tr>\n')
             }
         }
 
-        s.append("</table>\n")
-        s.append("</body>\n")
-        s.append("</html>")
+        s.append('</table>\n</body>\n</html>')
         s.toString()
     }
 
@@ -338,7 +323,7 @@ public class HtmlFormatter implements NCubeFormatter
         s.append(column.default ? "Default" : escapeHTML(column.toString()))
         if (isUrlCmd)
         {
-            s.append("</a>")
+            s.append('</a>')
         }
     }
 
@@ -346,12 +331,10 @@ public class HtmlFormatter implements NCubeFormatter
     {
         if (column.value instanceof CommandCell)
         {
-            String name = (String)column.getMetaProperty("name")
+            String name = column.getMetaProperty("name") as String
             if (StringUtilities.hasContent(name))
             {
-                s.append('<span class="rule-name">')
-                s.append(name)
-                s.append('</span><hr class="hr-rule"/>')
+                s.append("""<span class="rule-name">${name}</span><hr class="hr-rule"/>""")
             }
         }
     }
@@ -510,32 +493,30 @@ th.ncube-dead:hover { background: #76A7FF; }
             CommandCell cmd = (CommandCell) col.value
             if (StringUtilities.hasContent(cmd.url))
             {
-                return "column column-url"
+                return 'column column-url'
             }
             else if (cmd instanceof GroovyBase)
             {
-                return "column column-code"
+                return 'column column-code'
             }
         }
-        return "column"
+        return 'column'
     }
 
     private static void buildCell(NCube ncube, StringBuilder s, Set<Long> coord, boolean odd)
     {
-        final String oddRow = odd ? '' : 'odd-row '
-        s.append(' <td data-id="').append(makeCellId(coord)).append('" class="td-ncube ' + oddRow)
+        final String oddRow = odd ? '' : 'odd-row'
+        s.append(""" <td data-id="${makeCellId(coord)}" class="td-ncube ${oddRow} """)
 
         if (ncube.containsCellById(coord))
         {   // Populated cell
             final Object cell = ncube.getCellByIdNoExecute(coord)
             if (cell instanceof CommandCell)
             {
-                final CommandCell cmd = (CommandCell) cell;
+                final CommandCell cmd = cell as CommandCell
                 if (StringUtilities.hasContent(cmd.url))
                 {
-                    s.append('cell cell-url"><a href="#">')
-                    s.append(cmd.url)
-                    s.append("</a>")
+                    s.append("""cell cell-url"><a href="#">${cmd.url}</a>""")
                 }
                 else
                 {
@@ -545,8 +526,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             }
             else if (cell == null)
             {
-                s.append('cell null-cell">')
-                s.append('null')
+                s.append('cell null-cell">null')
             }
             else
             {
@@ -556,43 +536,35 @@ th.ncube-dead:hover { background: #76A7FF; }
         }
         else
         {   // Handle default cells (n-cube or column)
-            def defVal = ncube.getColumnDefault(coord)
+            def defColVal = ncube.getColumnDefault(coord)
             String colorClass
-            if (defVal == null)
+            if (defColVal == null)
             {
                 colorClass = 'def-cell-color'
-                defVal = ncube.getDefaultCellValue()
+                defColVal = ncube.defaultCellValue
             }
             else
             {
                 colorClass = 'def-cell-col-color'
             }
 
-            if (defVal instanceof CommandCell)
+            if (defColVal instanceof CommandCell)
             {
-                final CommandCell cmd = (CommandCell) defVal;
+                final CommandCell cmd = defColVal as CommandCell
                 if (StringUtilities.hasContent(cmd.url))
                 {
-                    s.append('cell cell-url"><a class="')
-                    s.append(colorClass)
-                    s.append('" href="#">')
-                    s.append(cmd.url)
-                    s.append("</a>")
+                    s.append("""cell cell-url"><a class="${colorClass}" href="#">${cmd.url}</a>""")
                 }
                 else
                 {
-                    s.append('cell cell-code ')
-                    s.append(colorClass)
-                    s.append('">')
-                    s.append(escapeHTML(getCellValueAsString(defVal)))
+                    s.append("""cell cell-code ${colorClass}">""")
+                    s.append(escapeHTML(getCellValueAsString(defColVal)))
                 }
             }
-            else if (defVal != null)
+            else if (defColVal != null)
             {   // not null
-                s.append('cell ')
-                s.append(colorClass)
-                s.append('">')
-                s.append(escapeHTML(getCellValueAsString(defVal)))
+                s.append("""cell ${colorClass}">""")
+                s.append(escapeHTML(getCellValueAsString(defColVal)))
             }
             else
             {
@@ -611,7 +583,7 @@ th.ncube-dead:hover { background: #76A7FF; }
         {
             return 'null'
         }
-        boolean isArray = cellValue.getClass().array
+        boolean isArray = cellValue.class.array
 
         if (cellValue instanceof Date || cellValue instanceof String || cellValue instanceof Number)
         {
@@ -620,13 +592,13 @@ th.ncube-dead:hover { background: #76A7FF; }
         else if (cellValue instanceof CommandCell)
         {
             CommandCell cmd = cellValue as CommandCell
-            if (cmd.getUrl() == null)
+            if (cmd.url == null)
             {
                 return (cellValue as CommandCell).cmd
             }
             else
             {
-                return cmd.getUrl()
+                return cmd.url
             }
         }
         else if (cellValue instanceof Boolean || cellValue instanceof Character)
@@ -641,7 +613,7 @@ th.ncube-dead:hover { background: #76A7FF; }
         {
             return StringUtilities.encode(cellValue as byte[])
         }
-        else if (isArray && MetaUtils.isPrimitive(cellValue.getClass().componentType))
+        else if (isArray && MetaUtils.isPrimitive(cellValue.class.componentType))
         {
             final StringBuilder str = new StringBuilder()
             str.append('[')
@@ -660,7 +632,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             str.append(']')
             return str.toString()
         }
-        else if (isArray && ([] as Object[]).class.equals(cellValue.getClass()))
+        else if (isArray && ([] as Object[]).class == cellValue.class)
         {
             final StringBuilder str = new StringBuilder()
             str.append('[')
@@ -673,7 +645,7 @@ th.ncube-dead:hover { background: #76A7FF; }
                 str.append(escapeHTML(getCellValueAsString(elem)))  // recursive
                 if (i < len1)
                 {
-                    str.append(", ")
+                    str.append(', ')
                 }
             }
             str.append(']')
@@ -687,7 +659,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             }
             catch (IOException e)
             {
-                throw new IllegalStateException("Error with simple JSON format", e)
+                throw new IllegalStateException('Error with simple JSON format', e)
             }
         }
     }
@@ -706,7 +678,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             char c = s.charAt(i)
             if (c > 127 || c == ('"' as char) || c == ('<' as char) || c == ('>' as char) || c == ('&' as char))
             {
-                out.append("&#")
+                out.append('&#')
                 out.append(c as int)
                 out.append(';')
             }

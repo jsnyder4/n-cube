@@ -266,13 +266,13 @@ class TestNCubeManager
         NCubeManager.updateCube(defaultSnapshotApp, usa, true)
         NCubeManager.updateCube(defaultSnapshotApp, canada, true)
 
-        assertEquals(4, NCubeManager.getCubeNames(defaultSnapshotApp).size())
+        assertEquals(4, NCubeManager.search(defaultSnapshotApp, null, null, null).size())
 
         // make sure items aren't in cache for next load from db for next getCubeNames call
         // during create they got added to database.
         NCubeManager.clearCache()
 
-        assertEquals(4, NCubeManager.getCubeNames(defaultSnapshotApp).size())
+        assertEquals(4, NCubeManager.search(defaultSnapshotApp, null, null, null).size())
 
         NCubeManager.clearCache()
 
@@ -283,7 +283,7 @@ class TestNCubeManager
         NCubeManager.deleteCubes(defaultSnapshotApp, ['test.ContinentCountries'].toArray(), false)
         NCubeManager.deleteCubes(defaultSnapshotApp, ['test.States'].toArray(), false)
         NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Provinces'].toArray(), false)
-        assertEquals(1, NCubeManager.getCubeNames(defaultSnapshotApp).size())
+        assertEquals(1, NCubeManager.search(defaultSnapshotApp, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
         HtmlFormatter formatter = new HtmlFormatter();
         String s = formatter.format(continentCounty);
@@ -1096,7 +1096,7 @@ class TestNCubeManager
         assert 4 == deleted.size()  // Rollback of a create is a DELETE
 
         NCubeManager.restoreCubes(appId, cubes)
-        assert 4 == NCubeManager.getCubeNames(appId).size()
+        assert 4 == NCubeManager.search(appId, null, null, null).size()
 
         changes = VersionControl.getBranchChangesForHead(appId)
         assert 4 == changes.size()

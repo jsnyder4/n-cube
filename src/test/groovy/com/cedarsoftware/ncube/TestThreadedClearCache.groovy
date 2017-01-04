@@ -35,7 +35,7 @@ class TestThreadedClearCache
     private TestingDatabaseManager manager;
 
     @Before
-    public void setup()
+    void setup()
     {
         manager = TestingDatabaseHelper.testingDatabaseManager
         manager.setUp()
@@ -44,7 +44,7 @@ class TestThreadedClearCache
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         manager.tearDown()
         manager = null
@@ -52,7 +52,8 @@ class TestThreadedClearCache
         NCubeManager.clearCache()
     }
 
-    @Test
+    // Uncomment when testing threading.  This hits an external website, so use sparingly
+    @Ignore
     void testCubesWithThreadedClearCacheWithAppId()
     {
         NCube[] ncubes = TestingDatabaseHelper.getCubesFromDisk("sys.classpath.2per.app.json", "math.controller.json")
@@ -68,63 +69,68 @@ class TestThreadedClearCache
 
     private void concurrencyTestWithAppId()
     {
-        long time = 8000L
+        long time = 3000L
         int numThreads = 8
-        def run =
-        {
-            long start = System.currentTimeMillis()
-            while (System.currentTimeMillis() - start < time)
+        Runnable runnable = new Runnable() {
+            void run()
             {
-                try
+                long start = System.currentTimeMillis()
+                while (System.currentTimeMillis() - start < time)
                 {
-                    NCube cube = NCubeManager.getCube(usedId, "MathController")
-
-                    for (int i=0; i < 10; i++)
+                    try
                     {
-                        def input = [:]
-                        input.env = "a"
-                        input.x = 5
-                        input.method = 'square'
+                        NCube cube = NCubeManager.getCube(usedId, "MathController")
 
-                        assertEquals(25, cube.getCell(input))
+                        for (int i = 0; i < 10; i++)
+                        {
+                            def input = [:]
+                            input.env = "a"
+                            input.x = 5
+                            input.method = 'square'
 
-                        input.method = 'factorial'
-                        assertEquals(120, cube.getCell(input))
+                            assertEquals(25, cube.getCell(input))
 
-                        input.env = "b"
-                        input.x = 6
-                        input.method = 'square'
-                        assertEquals(6, cube.getCell(input))
-                        input.method = 'factorial'
-                        assertEquals(6, cube.getCell(input))
+                            input.method = 'factorial'
+                            assertEquals(120, cube.getCell(input))
+
+                            input.env = "b"
+                            input.x = 6
+                            input.method = 'square'
+                            assertEquals(6, cube.getCell(input))
+                            input.method = 'factorial'
+                            assertEquals(6, cube.getCell(input))
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Throwable t = getDeepestException(e)
-                    if (!(t.message?.contains('cleared while cell was executing') || t instanceof LinkageError))
+                    catch (Exception e)
                     {
-                        throw e
+                        Throwable t = getDeepestException(e)
+                        if (!(t.message?.contains('cleared while cell was executing')))
+                        {
+                            throw e
+                        }
                     }
                 }
             }
         }
 
-        def clearCache = {
-            long start = System.currentTimeMillis()
-            while (System.currentTimeMillis() - start < time)
+        Runnable clearCache = new Runnable() {
+            void run()
             {
-                try
+                long start = System.currentTimeMillis()
+                while (System.currentTimeMillis() - start < time)
                 {
-                    NCubeManager.clearCache()
-                    Thread.sleep(250)
-                }
-                catch (Exception e)
-                {
-                    Throwable t = getDeepestException(e)
-                    if (!(t.message?.contains('cleared while cell was executing') || t instanceof LinkageError))
+                    try
                     {
-                        throw e
+                        NCubeManager.clearCache()
+                        Thread.sleep(250)
+                    }
+                    catch (Exception e)
+                    {
+                        Throwable t = getDeepestException(e)
+                        if (!(t.message?.contains('cleared while cell was executing')))
+                        {
+                            throw e
+                        }
                     }
                 }
             }
@@ -134,7 +140,7 @@ class TestThreadedClearCache
 
         for (int i = 0; i < numThreads; i++)
         {
-            threads[i] = new Thread(run)
+            threads[i] = new Thread(runnable)
             threads[i].name = 'NCubeConcurrencyTest' + i
             threads[i].daemon = true
         }

@@ -1,5 +1,7 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.ncube.formatters.JsonFormatter
+import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -77,7 +79,7 @@ class TestColumn
         NCube ncube = NCubeBuilder.getRule1D()
         Axis rule = (Axis) ncube['rule']
         assert rule.size() == 2
-        assert false == ncube.deleteColumn('rule', new Date())
+        assert !ncube.deleteColumn('rule', new Date())
         assert rule.size() == 2
     }
 
@@ -103,5 +105,41 @@ class TestColumn
         col1 = new Column('a', 1)
         col2 = new Column('a', 2)
         assert 0 == col1.compareTo(col2)
+    }
+
+    @Test
+    void testMetaPropertiesOnDefaultColumn()
+    {
+        NCube ncube = NCubeBuilder.getDiscrete1DEmptyWithDefault()
+        Axis state = ncube.getAxis('state')
+        state.defaultColumn.setMetaProperty("default_value", 2017i)
+        assert 2017i == ncube.getCell([state: 'FL'])
+
+        String json = ncube.toFormattedJson()
+        NCube ncube2 = NCube.fromSimpleJson(json)
+        assert 2017i == ncube2.getCell([state:'FL'])
+        state = ncube2.getAxis('state')
+        state.defaultColumn.setMetaProperty('foo', 'bar')
+        state.defaultColumn.setMetaProperty('baz', 'qux')
+
+        json = ncube2.toFormattedJson()
+        NCube ncube3 = NCube.fromSimpleJson(json)
+        assert 2017i == ncube3.getCell([state:'FL'])
+        state = ncube2.getAxis('state')
+        assert 'bar' == state.defaultColumn.getMetaProperty('foo')
+        assert 'qux' == state.defaultColumn.getMetaProperty('baz')
+        assert 2017i == state.defaultColumn.getMetaProperty('default_value')
+
+        json = ncube2.toFormattedJson([indexFormat:true])
+        Map cube4 = JsonReader.jsonToMaps(json)
+        Map axes = cube4.axes as Map
+        Map<String, Object> state2 = axes.state as Map
+
+        Map<String, Object> defColMetaProps = state2.findAll { String key, Object value -> key.startsWith(JsonFormatter.DEFAULT_COLUMN_PREFIX) }
+        println defColMetaProps
+        assert defColMetaProps.size() == 3
+        assert defColMetaProps[JsonFormatter.DEFAULT_COLUMN_PREFIX + 'default_value'] instanceof Map    // because it was read as a Map, not with .hydrate
+        assert "bar" == defColMetaProps[JsonFormatter.DEFAULT_COLUMN_PREFIX + 'foo']
+        assert "qux" == defColMetaProps[JsonFormatter.DEFAULT_COLUMN_PREFIX + 'baz']
     }
 }

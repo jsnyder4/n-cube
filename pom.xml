@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>3.4.117-SNAPSHOT</version>
+	<version>3.5.2-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -66,8 +66,8 @@
     </developers>
 
     <properties>
-        <version.json-io>4.9.1</version.json-io>
-        <version.java-util>1.25.0</version.java-util>
+        <version.json-io>4.9.5</version.json-io>
+        <version.java-util>1.26.0</version.java-util>
         <version.log4j>2.5</version.log4j>
         <version.junit>4.12</version.junit>
         <version.groovy>2.4.7</version.groovy>
@@ -78,9 +78,9 @@
         <version.mockito>1.10.19</version.mockito>
         <!--<version.jgit>3.6.1.201501031845-r</version.jgit>-->
         <version.mongo>2.12.3</version.mongo>
-        <version.mysql.connector.java>5.1.37</version.mysql.connector.java>
+        <version.mysql.connector.java>5.1.40</version.mysql.connector.java>
         <version.nosqlunit>0.7.9</version.nosqlunit>
-        <version.tomcat.jdbc>8.0.32</version.tomcat.jdbc>
+        <version.tomcat.jdbc>8.0.39</version.tomcat.jdbc>
         <version.hsqldb>2.3.3</version.hsqldb>
         <version.oracle>11.2.0.3</version.oracle>
         <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
@@ -95,7 +95,7 @@
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.surefire>2.19.1</version.plugin.surefire>
         <version.servlet.api>2.5</version.servlet.api>
-        <version.java>1.7</version.java>
+        <version.java>1.8</version.java>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

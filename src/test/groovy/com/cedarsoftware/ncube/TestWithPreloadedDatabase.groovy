@@ -10,6 +10,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeManager.NCUBE_ACCEPTED_DOMAINS
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
@@ -59,7 +60,7 @@ class TestWithPreloadedDatabase
     private TestingDatabaseManager manager
 
     @Before
-    public void setup()
+    void setup()
     {
         manager = testingDatabaseManager
         manager.setUp()
@@ -68,7 +69,7 @@ class TestWithPreloadedDatabase
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         manager.removeBranches(branches)
         manager.tearDown()
@@ -77,12 +78,12 @@ class TestWithPreloadedDatabase
         NCubeManager.clearCache()
     }
 
-    TestingDatabaseManager getTestingDatabaseManager()
+    static TestingDatabaseManager getTestingDatabaseManager()
     {
         return TestingDatabaseHelper.testingDatabaseManager
     }
 
-    NCubePersister getNCubePersister()
+    static NCubePersister getNCubePersister()
     {
         return TestingDatabaseHelper.persister
     }
@@ -162,7 +163,7 @@ class TestWithPreloadedDatabase
             assertNull(e.axisName)
             assertNull(e.value)
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
             fail("should throw CoordinateNotFoundException")
         }
@@ -189,7 +190,7 @@ class TestWithPreloadedDatabase
             assertEquals("value", e.value)
 
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
             fail("should throw CoordinateNotFoundException")
         }
@@ -218,7 +219,7 @@ class TestWithPreloadedDatabase
             assertEquals(['coord1','coord2'] as  Set,invalidException.coordinateKeys)
             assertEquals(['req1','req2'] as Set, invalidException.requiredKeys)
        }
-        catch (Exception e)
+        catch (Exception ignored)
         {
             fail("should throw InvalidCoordinateException")
         }
@@ -295,6 +296,40 @@ class TestWithPreloadedDatabase
 
         dtos = VersionControl.getBranchChangesForHead(BRANCH2)
         assertEquals(1, dtos.length)
+    }
+
+    @Test
+    void updateWithNoChangeClearsChangedFlag()
+    {
+        NCube cube1 = NCubeManager.getNCubeFromResource("test.branch.1.json")
+        NCubeManager.updateCube(BRANCH1, cube1)
+        VersionControl.commitBranch(BRANCH1)
+        List<NCubeInfoDto> cubes0 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assert cubes0.size() == 1
+        NCubeInfoDto info0 = cubes0[0]
+        assert info0.revision == "0"
+        assert !info0.changed
+
+        cube1.setCell("XYZ", [code: 15])
+        NCubeManager.updateCube(BRANCH1, cube1)
+        List<NCubeInfoDto> cubes1 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assert cubes1.size() == 1
+        NCubeInfoDto info1 = cubes1[0]
+        assert info1.id != info0.id
+        assert info1.revision == "1"
+        assert info1.sha1 != info0.sha1
+        assert info1.changed
+
+        cube1.removeCell([code: 15])
+        NCubeManager.updateCube(BRANCH1, cube1)
+        List<NCubeInfoDto> cubes2 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assert cubes2.size() == 1
+        NCubeInfoDto info2 = cubes2[0]
+        assert info2.id != info1.id
+        assert info2.id != info0.id
+        assert info2.revision == "2"
+        assert info2.sha1 == info0.sha1
+        assert !info2.changed
     }
 
     @Test
@@ -2271,7 +2306,7 @@ class TestWithPreloadedDatabase
         VersionControl.commitBranch(BRANCH2, dtos)
 
         // Commit to branch 2 causes 1 pending update for BRANCH1
-        List dtos2 = VersionControl.getHeadChangesForBranch(BRANCH1)
+        List<NCubeInfoDto> dtos2 = VersionControl.getHeadChangesForBranch(BRANCH1)
         assert dtos2.size() == 1
         assert dtos2[0].name == 'TestAge'
 
@@ -3386,6 +3421,7 @@ class TestWithPreloadedDatabase
     @Test
     void testUpdateConsumerUpdateHeadUpdateSame()
 	{
+        //Includes additional checks to verify changed flag on update, commit and updateBranch
         preloadCubes(BRANCH2, "test.branch.1.json")
         VersionControl.commitBranch(BRANCH2)
         NCubeManager.copyBranch(HEAD, BRANCH1)
@@ -3393,11 +3429,17 @@ class TestWithPreloadedDatabase
         NCube producerCube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
         producerCube.setCell('AAA', [Code : -15])
         NCubeManager.updateCube(BRANCH2, producerCube)
+        NCubeInfoDto producerDto = NCubeManager.search(BRANCH2, 'TestBranch', null, null)[0]
+        assert producerDto.changed
         VersionControl.commitBranch(BRANCH2)
+        producerDto = NCubeManager.search(BRANCH2, 'TestBranch', null, null)[0]
+        assert !producerDto.changed
 
         NCube consumerCube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
         consumerCube.setCell('AAA', [Code : -15])
         NCubeManager.updateCube(BRANCH1, consumerCube)
+        NCubeInfoDto consumerDto = NCubeManager.search(BRANCH1, 'TestBranch', null, null)[0]
+        assert consumerDto.changed
 
         Map<String, Object> result = VersionControl.updateBranch(BRANCH1)
         assert (result[VersionControl.BRANCH_ADDS] as Map).size() == 0
@@ -3406,6 +3448,8 @@ class TestWithPreloadedDatabase
         assert (result[VersionControl.BRANCH_RESTORES] as Map).size() == 0
         assert (result[VersionControl.BRANCH_FASTFORWARDS] as Map).size() == 1
         assert (result[VersionControl.BRANCH_REJECTS] as Map).size() == 0
+        consumerDto = NCubeManager.search(BRANCH1, 'TestBranch', null, null)[0]
+        assert !consumerDto.changed
     }
 
     @Test
@@ -4794,7 +4838,7 @@ class TestWithPreloadedDatabase
         dtos = VersionControl.getBranchChangesForHead(BRANCH1)
         assertEquals(1, dtos.length)
 
-        List dtos2 = VersionControl.getHeadChangesForBranch(BRANCH1)
+        List<NCubeInfoDto> dtos2 = VersionControl.getHeadChangesForBranch(BRANCH1)
         assert dtos2[0].name == 'TestBranch'
         assert dtos2[0].changeType == ChangeType.CONFLICT.code
         assert dtos2[0].sha1 != cube.sha1()
@@ -5648,7 +5692,7 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testUserOverloadedClassPath()
+    void testUserOverloadedClassPath()
 	{
         preloadCubes(appId, "sys.classpath.user.overloaded.json", "sys.versions.json")
 
@@ -5712,7 +5756,7 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testSystemParamsOverloads()
+    void testSystemParamsOverloads()
 	{
         preloadCubes(appId, "sys.classpath.system.params.user.overloaded.json", "sys.versions.2.json", "sys.resources.base.url.json")
 
@@ -5777,7 +5821,7 @@ class TestWithPreloadedDatabase
     }
 
     @Test
-    public void testClearCacheWithClassLoaderLoadedByCubeRequest()
+    void testClearCacheWithClassLoaderLoadedByCubeRequest()
 	{
 
         preloadCubes(appId, "sys.classpath.cp1.json", "GroovyMethodClassPath1.json")
@@ -6088,7 +6132,8 @@ class TestWithPreloadedDatabase
     @Test
     void testDynamicallyLoadedCode()
     {
-        System.properties.setProperty(CdnClassLoader.NCUBE_ACCEPTED_DOMAINS, 'org.apache.')
+        String save = NCubeManager.systemParams[NCUBE_ACCEPTED_DOMAINS]
+        NCubeManager.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
         NCube ncube = NCubeBuilder.discrete1DEmpty
         GroovyExpression exp = new GroovyExpression('''\
 import org.apache.commons.collections.primitives.*
@@ -6100,10 +6145,17 @@ assert ints.size() == 1
 assert ints.get(0) == 42
 return ints''', null, false)
         ncube.setCell(exp, [state: 'OH'])
-
         def x = ncube.getCell([state: 'OH'])
-//        println x
         assert 'org.apache.commons.collections.primitives.ArrayIntList' == x.class.name
+
+        if (save)
+        {
+            NCubeManager.systemParams[NCUBE_ACCEPTED_DOMAINS] = save
+        }
+        else
+        {
+            NCubeManager.systemParams.remove(NCUBE_ACCEPTED_DOMAINS)
+        }
     }
 
     @Test

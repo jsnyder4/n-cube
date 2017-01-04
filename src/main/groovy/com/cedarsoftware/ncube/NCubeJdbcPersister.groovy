@@ -161,7 +161,7 @@ WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd
         {
             sqlStatement = """\
 /* getRevisions */
-SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, ${CUBE_VALUE_BIN}, sha1, head_sha1, changed
+SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch
 ORDER BY version_no_cd DESC, abs(revision_number) DESC
@@ -171,7 +171,7 @@ ORDER BY version_no_cd DESC, abs(revision_number) DESC
         {
             sqlStatement = """\
 /* getRevisions */
-SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, ${CUBE_VALUE_BIN}, sha1, head_sha1, changed
+SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, sha1, head_sha1, changed
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND status_cd = :status AND branch_id = :branch
 ORDER BY abs(revision_number) DESC
@@ -537,10 +537,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 return
             }
 
-            insertCube(c, appId, cube, Math.abs(revision as long) + 1, testData, "updated", true, headSha1, username, 'updateCube')
+            boolean changed = cube.sha1() != headSha1
+            insertCube(c, appId, cube, Math.abs(revision as long) + 1, testData, "updated", changed, headSha1, username, 'updateCube')
         })
 
-        // No existing row found, then create a new cube (updateCube can be used for update or create)
+        // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
         if (!rowFound)
         {
             insertCube(c, appId, cube, 0L, null, "created", true, null, username, 'updateCube')
@@ -953,6 +954,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
      * Fast forward branch cube to HEAD cube, because even though it's HEAD_SHA-1 value is out-of-date,
      * the cubes current SHA-1 is the same as the HEAD cube's SHA-1.  Therefore, we can 'scoot' up the
      * cube record's HEAD-SHA-1 value to the same as the HEAD Cube's SHA-1.
+     * In addition, reset the changed flag to 0.
      */
     static boolean updateBranchCubeHeadSha1(Connection c, Long cubeId, String headSha1)
     {
@@ -968,7 +970,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
 
         Map map = [sha1:headSha1, id: cubeId]
         Sql sql = new Sql(c)
-        int count = sql.executeUpdate(map, '/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1 WHERE n_cube_id = :id')
+        int count = sql.executeUpdate(map, '/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = 0 WHERE n_cube_id = :id')
         if (count == 0)
         {
             throw new IllegalArgumentException("error updating branch cube: ${cubeId}, to HEAD SHA-1: ${headSha1}, no record found.")

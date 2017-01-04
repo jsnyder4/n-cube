@@ -1086,6 +1086,519 @@ class NCubeBuilder
 }''')
     }
 
+
+    static NCube  getCubeWithDefaultColumns()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithDefaultColumns",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "@CubeA[:]"
+    },
+    {
+      "id": [],
+      "type": "exp",
+      "value": "@CubeD[:]"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "[]"
+    },
+    {
+      "id": [
+        1001328925773
+      ],
+      "type": "exp",
+      "value": "@CubeC[:]"
+    },
+    {
+      "id": [
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "@CubeB[:]"
+    }
+  ]
+}''')
+    }
+
+
+    static NCube  getCubeWithAllDefaults()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithAllDefaults",
+  "defaultCellValueType": "exp",
+  "defaultCellValue": "@CubeLevelDefault[:]",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        },
+        {
+          "id": 1001017210922,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "@Axis1Col3Default[:]"
+          },
+          "value": "Axis1Col3"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        },
+        {
+          "id": 2000580973802,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "@Axis2Col3Default[:]"
+          },
+          "value": "Axis2Col3"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "@CubeA[:]"
+    },
+    {
+      "id": [],
+      "type": "exp",
+      "value": "@CubeD[:]"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "[]"
+    },
+    {
+      "id": [
+        1001328925773
+      ],
+      "type": "exp",
+      "value": "@CubeC[:]"
+    },
+    {
+      "id": [
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "@CubeB[:]"
+    }
+  ]
+}''')
+    }
+
+    static NCube  getCubeWithMultipleRefCubesPerCoord()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithMultipleRefCubesPerCoord",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "@CubeA[:] && @CubeB[:]"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "@CubeA[:] && @CubeB[:] && @CubeC[:]"
+    }
+  ]
+}''')
+    }
+
+    static NCube  getRuleCubeWithAllDefaults()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.RuleCubeWithAllDefaults",
+  "defaultCellValueType": "exp",
+  "defaultCellValue": "@CubeLevelDefault[:]",
+  "axes": [
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "@Axis2Col2Default[:]"
+          },
+          "value": "Axis2Col2"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "RuleAxis1",
+      "hasDefault": true,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 3000480286806,
+          "type": "exp",
+          "name": "Condition1",
+          "value": "@Condition1[:]"
+        },
+        {
+          "id": 3000155851047,
+          "type": "exp",
+          "name": "Condition2",
+          "value": "true"
+        },
+        {
+          "id": 3001617015824,
+          "type": "exp",
+          "name": "Condition3",
+          "default_value": {
+            "type": "exp",
+            "value": "@Condition3ColumnDefault[:]"
+          },
+          "value": "true"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        2000453853552,
+        3000480286806
+      ],
+      "type": "exp",
+      "value": "@CubeB[:]"
+    },
+    {
+      "id": [
+        2000453853552,
+        3000155851047
+      ],
+      "type": "exp",
+      "value": "[]"
+    },
+    {
+      "id": [
+        2001566313159,
+        3000155851047
+      ],
+      "type": "exp",
+      "value": "@CubeC[:]"
+    }
+  ]
+}''')
+    }
+
+    static NCube  getCubeWithColumnDefault()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithColumnDefault",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "@Axis1Col2Default[:]"
+          },
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "@CubeA[:]"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "[]"
+    }
+  ]
+}''')
+    }
+
+
+    static NCube  getCubeWithCubeDefault()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithCubeDefault",
+  "defaultCellValueType": "exp",
+  "defaultCellValue": "@CubeA[:]",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "string",
+      "value": "not a reference"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "@CubeB[:]"
+    }
+  ]
+}''')
+    }
+
     static NCube getRuleWithOutboundRefs()
     {
         return NCube.fromSimpleJson('''\

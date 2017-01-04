@@ -1,9 +1,11 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.CaseInsensitiveMap
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertTrue
 
 /**
@@ -44,23 +46,23 @@ class TestGroovySourceParsing
     void testFindCubeName()
     {
         NCube cube = NCubeManager.getNCubeFromResource 'inlineExpression.json'
-        Set<String> names = cube.referencedCubeNames
+        Map<CaseInsensitiveMap, Set<String>> names = cube.referencedCubeNames
 
-        assertTrue names.contains('Beretta')
-        assertTrue names.contains('Bersa')
-        assertTrue names.contains('Browning')
-        assertTrue names.contains('Car')
-        assertTrue names.contains('Colt')
-        assertTrue names.contains('FNHerstal')
-        assertTrue names.contains('Glock')
-        assertTrue names.contains('Kimber')
-        assertTrue names.contains('Marlin')
-        assertTrue names.contains('Mossberg')
-        assertTrue names.contains('Remington')
-        assertTrue names.contains('RockRiverArms')
-        assertTrue names.contains('Sig')
-        assertTrue names.contains('SnW')
-        assertTrue names.contains('Springfield')
-        assertTrue names.contains('Winchester')
+        assertEquals(['RockRiverArms'] as Set, names[[Age:'jump2'] as CaseInsensitiveMap])
+        assertEquals(['Bersa'] as Set, names[[Age:'absRef3'] as CaseInsensitiveMap])
+        assertEquals(['Springfield'] as Set, names[[Age:'relRef4'] as CaseInsensitiveMap])
+        assertEquals(['Marlin'] as Set, names[[Age:'jump3'] as CaseInsensitiveMap])
+        assertEquals(['Glock'] as Set, names[[Age:'ncubeRef1'] as CaseInsensitiveMap])
+        assertEquals(['Mossberg'] as Set, names[[Age:'relRef1'] as CaseInsensitiveMap])
+        assertEquals(['Browning'] as Set, names[[Age:'absRef4'] as CaseInsensitiveMap])
+        assertEquals(['Remington'] as Set, names[[Age:'jump4'] as CaseInsensitiveMap])
+        assertEquals(['Car'] as Set, names[[Age:'ncubeRef2'] as CaseInsensitiveMap])
+        assertEquals(['Beretta'] as Set, names[[Age:'absRef2'] as CaseInsensitiveMap])
+        assertEquals(['Sig'] as Set, names[[Age:'runRuleRef1'] as CaseInsensitiveMap])
+        assertEquals(['Kimber'] as Set, names[[Age:'relRef3'] as CaseInsensitiveMap])
+        assertEquals(['Colt'] as Set, names[[Age:'runRuleRef2'] as CaseInsensitiveMap])
+        assertEquals(['SnW'] as Set, names[[Age:'jump1'] as CaseInsensitiveMap])
+        assertEquals(['FNHerstal'] as Set, names[[Age:'relRef2'] as CaseInsensitiveMap])
+        assertEquals(['Winchester'] as Set, names[[Age:'absRef1'] as CaseInsensitiveMap])
     }
 }

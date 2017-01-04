@@ -85,16 +85,6 @@ class NCubeGroovyExpression
     }
 
     /**
-     * @deprecated - Use search()
-     */
-    @Deprecated
-    List<NCubeInfoDto> getCubeRecords(String pattern, boolean activeOnly = true)
-    {
-        Map options = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):activeOnly]
-        return search(pattern, null, options)
-    }
-
-    /**
      * Fetch cube records that match the given pattern.
      * @param namePattern String text pattern or exact file name used to filter cube name(s)
      * @param textPattern String text pattern filter cubes returned.  This is matched
@@ -105,26 +95,6 @@ class NCubeGroovyExpression
     List<NCubeInfoDto> search(String namePattern, String textPattern, Map options = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
     {
         return NCubeManager.search(ncube.applicationID, namePattern, textPattern, options)
-    }
-
-    /**
-     * @deprecated - use at()
-     */
-    @Deprecated
-    def getRelativeCubeCell(String cubeName, Map coord, def defaultValue = null)
-    {
-        input.putAll(coord)
-        return getCube(cubeName).getCell(input, output, defaultValue)
-    }
-
-    /**
-     * @deprecated - use at()
-     */
-    @Deprecated
-    def runRuleCube(String cubeName, Map coord, def defaultValue = null)
-    {
-        input.putAll(coord)
-        return getCube(cubeName).getCell(input, output, defaultValue)
     }
 
     /**

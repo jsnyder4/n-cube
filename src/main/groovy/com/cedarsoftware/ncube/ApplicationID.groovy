@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.NCubeManager.NCUBE_PARAMS_BRANCH
+
 /**
  * This class binds together Tenant, App, version, status, and branch.  These fields together
  * completely identify the application that a given n-cube belongs to.
@@ -340,8 +342,7 @@ class ApplicationID
 
     static ApplicationID getBootVersion(String tenant, String app)
     {
-        Map systemParams = NCubeManager.systemParams
-        String branch = systemParams['branch']
+        String branch = NCubeManager.systemParams[NCUBE_PARAMS_BRANCH]
         return new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), StringUtilities.isEmpty(branch) ? HEAD : branch)
     }
 

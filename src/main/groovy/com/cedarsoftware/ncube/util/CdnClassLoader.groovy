@@ -1,10 +1,12 @@
 package com.cedarsoftware.ncube.util
 
+import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.SystemUtilities
 import groovy.transform.CompileStatic
 
 import java.util.concurrent.ConcurrentHashMap
+
+import static com.cedarsoftware.ncube.NCubeManager.NCUBE_ACCEPTED_DOMAINS
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
@@ -27,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap
 @CompileStatic
 class CdnClassLoader extends GroovyClassLoader
 {
-    public static final String NCUBE_ACCEPTED_DOMAINS = 'NCUBE_ACCEPTED_DOMAINS'
     private final boolean _preventRemoteBeanInfo
     private final boolean _preventRemoteCustomizer
     private final Map<String, URL> resourceCache = new ConcurrentHashMap<>()
@@ -46,7 +47,7 @@ class CdnClassLoader extends GroovyClassLoader
 
         if (acceptedDomains == null)
         {
-            String accepted = SystemUtilities.getExternalVariable(NCUBE_ACCEPTED_DOMAINS)
+            String accepted = NCubeManager.systemParams[(NCUBE_ACCEPTED_DOMAINS)]
             if (StringUtilities.hasContent(accepted))
             {
                 whiteList = Arrays.asList(accepted.split(";"))
@@ -87,6 +88,17 @@ class CdnClassLoader extends GroovyClassLoader
      */
     protected Class<?> findClass(final String name) throws ClassNotFoundException
     {
+//        println "findClass(${name})"
+        if (_preventRemoteBeanInfo && name.endsWith('BeanInfo'))
+        {
+            throw new ClassNotFoundException(name)
+        }
+
+        if (_preventRemoteCustomizer && name.endsWith('Customizer'))
+        {
+            throw new ClassNotFoundException(name)
+        }
+
         if (whiteList)
         {
             for (item in whiteList)
@@ -132,6 +144,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     protected boolean isLocalOnlyResource(String name)
     {
+//        println "isLocalOnlyResource(${name})"
         if (!whiteList)
         {   // If there is no whiteList, then we can skip the HTTP HEAD check for ASTTransformation
             if (name.endsWith('.class'))
@@ -207,6 +220,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     Enumeration<URL> getResources(String name) throws IOException
     {
+//        println "getResources(${name})"
         if (resourcesCache.containsKey(name))
         {
             return resourcesCache[name]
@@ -214,8 +228,8 @@ class CdnClassLoader extends GroovyClassLoader
         if (isLocalOnlyResource(name))
         {
             Enumeration<URL> nullEnum = new Enumeration() {
-                public boolean hasMoreElements() { return false }
-                public URL nextElement() { throw new NoSuchElementException() }
+                boolean hasMoreElements() { return false }
+                URL nextElement() { throw new NoSuchElementException() }
             }
             resourcesCache[name] = nullEnum
             return nullEnum
@@ -245,6 +259,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     URL getResource(String name)
     {
+//        println "getResource(${name})"
         if (resourceCache.containsKey(name))
         {
             URL url = resourceCache[name]
@@ -273,6 +288,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     Enumeration<URL> findResources(String name) throws IOException
     {
+//        println "findResources(${name})"
         if (resourcesCache.containsKey(name))
         {
             return resourcesCache[name]
@@ -299,6 +315,7 @@ class CdnClassLoader extends GroovyClassLoader
      */
     URL findResource(String name)
     {
+//        println "findResource(${name})"
         if (resourceCache.containsKey(name))
         {
             URL url = resourceCache[name]

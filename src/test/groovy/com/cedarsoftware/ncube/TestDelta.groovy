@@ -34,13 +34,13 @@ import static org.junit.Assert.fail
 class TestDelta
 {
     @Before
-    public void setUp()
+    void setUp()
     {
         TestingDatabaseHelper.setupDatabase()
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         TestingDatabaseHelper.tearDownDatabase()
     }
@@ -1005,7 +1005,7 @@ class TestDelta
 
         Axis state = cube1['state'] as Axis
         assert state.columnOrder == Axis.DISPLAY
-        List cols = state.getColumns()
+        List<Column> cols = state.getColumns()
         assert cols[0].value == 'OH'
         assert cols[1].value == 'GA'
         assert cols[2].value == 'TX'
@@ -1208,6 +1208,46 @@ class TestDelta
         assert desc.contains('default cell')
         assert desc.contains('changed from')
         assert desc.contains("'10' to '3.14'")
+    }
+
+    @Test
+    void testRefAxisWithColumnMetaProps()
+    {
+        NCube<String> states = (NCube<String>) NCubeBuilder.discrete1DEmptyWithDefault
+        ApplicationID appId = ApplicationID.testAppId.asVersion('1.0.0')
+        NCubeManager.updateCube(appId, states, true)
+        List<NCubeInfoDto> list = VersionControl.getBranchChangesForHead(appId)
+        VersionControl.commitBranch(appId, list as Object[])
+        NCubeManager.releaseCubes(appId, '1.0.1')
+
+        NCube ref = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        Axis state = ref.getAxis('state')
+        ref.addColumn('state', null)
+        Column ohio = state.findColumn('OH')
+        Column defCol = state.defaultColumn
+        ohio.setMetaProperty('default_value', 'btc')
+        ohio.setMetaProperty('foo', 'bar')
+        defCol.setMetaProperty('default_value', 'bitcoin')
+
+        assert 'btc' == ref.getCell([state:'OH', column: 'A'])
+        assert 'btc' == ref.getCell([state:'OH', column: 'B'])
+        assert 'btc' == ref.getCell([state:'OH', column: 'C'])
+        assert null == ref.getCell([state:'TX', column: 'A'])
+        assert null == ref.getCell([state:'TX', column: 'B'])
+        assert null == ref.getCell([state:'TX', column: 'C'])
+        assert 'bitcoin' == ref.getCell([state:'AZ', column: 'A'])
+        assert 'bitcoin' == ref.getCell([state:'AZ', column: 'B'])
+        assert 'bitcoin' == ref.getCell([state:'AZ', column: 'C'])
+
+        String json = ref.toFormattedJson([indexFormat:false])
+        NCube copy = NCube.fromSimpleJson(json)
+        Axis stateCopy = copy.getAxis('state')
+        Column ohioCopy = stateCopy.findColumn('OH')
+        Column defCopy = stateCopy.defaultColumn
+
+        assert 'btc' == ohioCopy.getMetaProperty('default_value')
+        assert 'bar' == ohioCopy.getMetaProperty('foo')
+        assert 'bitcoin' == defCopy.getMetaProperty('default_value')
     }
 
     // TODO: Swap order of above test

@@ -61,14 +61,14 @@ class CellInfo
     private static final Pattern HEX_DIGIT = ~/[0-9a-fA-F]+/
 
     private static final ThreadLocal<DecimalFormat> decimalIntFormat = new ThreadLocal<DecimalFormat>() {
-        public DecimalFormat initialValue()
+        DecimalFormat initialValue()
         {
             return new DecimalFormat('#,##0')
         }
     }
 
     private static final ThreadLocal<DecimalFormat> decimalFormat = new ThreadLocal<DecimalFormat>() {
-        public DecimalFormat initialValue()
+        DecimalFormat initialValue()
         {
             return new DecimalFormat('#,##0.0##############')
         }
@@ -101,7 +101,11 @@ class CellInfo
         isCached = false
         value = null
         dataType = null
+        createFrom(cell)
+    }
 
+    private void createFrom(Object cell)
+    {
         if (cell == null || cell instanceof String)
         {
             value = (String) cell
@@ -124,6 +128,14 @@ class CellInfo
             value = isUrl ? exp.url : exp.cmd
             dataType = 'exp'
             isCached = exp.cacheable
+        }
+        else if (cell instanceof CellInfo)
+        {   // clone
+            CellInfo cellInfo = cell as CellInfo
+            isUrl = cellInfo.isUrl
+            value = cellInfo.value
+            dataType = cellInfo.dataType
+            isCached = cellInfo.isCached
         }
         else if (cell instanceof Byte)
         {
@@ -231,7 +243,7 @@ class CellInfo
             isUrl = false
             StringBuilder builder = new StringBuilder()
             int len = set.size()
-            for (int i=0; i < len; i++)
+            for (int i = 0; i < len; i++)
             {
                 if (i != 0)
                 {

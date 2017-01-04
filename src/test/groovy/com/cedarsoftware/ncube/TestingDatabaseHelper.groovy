@@ -27,36 +27,40 @@ class TestingDatabaseHelper
     public static int HSQL = 2
     public static int test_db = HSQL
 
-    public static NCube[] getCubesFromDisk(String ...names) throws IOException
+    static NCube[] getCubesFromDisk(String ...names) throws IOException
     {
-        List<NCube> list = new ArrayList<NCube>(names.length);
+        List<NCube> list = new ArrayList<NCube>(names.length)
 
-        for (String name : names) {
-            URL url = NCubeManager.class.getResource("/" + name);
-            File jsonFile = new File(url.file);
+        for (String name : names)
+        {
+            URL url = NCubeManager.class.getResource("/" + name)
+            File jsonFile = new File(url.file)
 
-            InputStream input = null;
-            try {
-                input = new FileInputStream(jsonFile);
-                byte[] data = new byte[(int) jsonFile.length()];
-                input.read(data);
+            InputStream input = null
+            try
+            {
+                input = new FileInputStream(jsonFile)
+                byte[] data = new byte[(int) jsonFile.length()]
+                input.read(data)
 
-                String str = new String(data, "UTF-8");
-                list.add(NCube.fromSimpleJson(str));
-            } finally {
-                IOUtilities.close(input);
+                String str = new String(data, "UTF-8")
+                list.add(NCube.fromSimpleJson(str))
+            }
+            finally
+            {
+                IOUtilities.close(input)
             }
         }
 
-        return list.toArray(new NCube[list.size()]);
+        return list.toArray(new NCube[list.size()])
     }
 
-    public static NCubePersister getPersister()
+    static NCubePersister getPersister()
     {
         return new NCubeJdbcPersisterAdapter(createJdbcConnectionProvider())
     }
 
-    public static JdbcConnectionProvider createJdbcConnectionProvider()
+    static JdbcConnectionProvider createJdbcConnectionProvider()
     {
         if (test_db == HSQL)
         {
@@ -71,7 +75,7 @@ class TestingDatabaseHelper
         throw new IllegalArgumentException('Unknown Database:  ' + test_db)
     }
 
-    public static TestingDatabaseManager getTestingDatabaseManager()
+    static TestingDatabaseManager getTestingDatabaseManager()
     {
         if (test_db == HSQL)
         {
@@ -101,29 +105,29 @@ class TestingDatabaseHelper
 
         }
 
-        public void addCubes(ApplicationID appId, String username, NCube[] cubes)
+        void addCubes(ApplicationID appId, String username, NCube[] cubes)
         {
 
         }
 
-        public void removeBranches(ApplicationID[] appId)
+        void removeBranches(ApplicationID[] appId)
         {
         }
 
-        public void updateCube(ApplicationID appId, String username, NCube cube)
+        void updateCube(ApplicationID appId, String username, NCube cube)
         {
 
         }
     }
 
-    public static void setupDatabase()
+    static void setupDatabase()
     {
         testingDatabaseManager.setUp()
         NCubeManager.NCubePersister = persister
         setupTestClassPaths()
     }
 
-    public static void setupTestClassPaths()
+    static void setupTestClassPaths()
     {
         NCube cp = NCubeManager.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sys.classpath.tests.json')
         NCubeManager.updateCube(TestNCubeManager.defaultSnapshotApp, cp, true)
@@ -131,7 +135,7 @@ class TestingDatabaseHelper
         NCubeManager.updateCube(ApplicationID.testAppId, cp, true)
     }
 
-    public static void tearDownDatabase()
+    static void tearDownDatabase()
     {
         try
         {

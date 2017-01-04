@@ -68,6 +68,16 @@ class NCube<T>
     public static final String DEFAULT_CELL_VALUE_CACHE = 'defaultCellValueCache'
     public static final String validCubeNameChars = '0-9a-zA-Z._-'
     public static final String RULE_EXEC_INFO = '_rule'
+    protected static final byte[] TRUE_BYTES = 't'.bytes
+    protected static final byte[] FALSE_BYTES = 'f'.bytes
+    private static final byte[] A_BYTES = 'a'.bytes
+    private static final byte[] C_BYTES = 'c'.bytes
+    private static final byte[] O_BYTES = 'o'.bytes
+    private static final byte[] NULL_BYTES = 'null'.bytes
+    private static final byte[] ARRAY_BYTES = 'array'.bytes
+    private static final byte[] MAP_BYTES = 'map'.bytes
+    private static final byte[] COL_BYTES = 'col'.bytes
+
     private String name
     private String sha1
     private final Map<String, Axis> axisList = new CaseInsensitiveMap<>()
@@ -1779,19 +1789,19 @@ class NCube<T>
     }
 
     /**
-     * @return Set<String> names of all referenced cubes within this
-     * specific NCube.  It is not recursive.
+     * @return Map<Map, Set<String>> A map keyed by cell coordinates within this specific NCube.
+     * Each map entry contains the cube names referenced by the cell coordinate in question.
+     * It is not recursive.
      */
-    Set<String> getReferencedCubeNames()
+    Map<Map, Set<String>> getReferencedCubeNames()
     {
-        final Set<String> cubeNames = new LinkedHashSet<>()
+        Map<Map, Set<String>> refs = new LinkedHashMap<>()
 
-        for (cell in cells.values())
-        {
+        cells.each { LongHashSet ids, T cell ->
             if (cell instanceof CommandCell)
             {
-                final CommandCell cmdCell = cell as CommandCell
-                cmdCell.getCubeNamesFromCommandText(cubeNames)
+                Map<String, Object> coord = getDisplayCoordinateFromIds(ids)
+                getReferences(refs, coord, cell as CommandCell)
             }
         }
 
@@ -1801,8 +1811,18 @@ class NCube<T>
             {
                 for (column in axis.columnsWithoutDefault)
                 {
-                    CommandCell cmd = (CommandCell) column.value
-                    cmd.getCubeNamesFromCommandText(cubeNames)
+                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as LongHashSet)
+                    getReferences(refs, coord, column.value as CommandCell)
+                }
+            }
+
+            for (column in axis.columns)
+            {
+                Object defaultValue = column.metaProperties[Column.DEFAULT_VALUE]
+                if (defaultValue instanceof CommandCell)
+                {
+                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as LongHashSet)
+                    getReferences(refs, coord, defaultValue as CommandCell)
                 }
             }
         }
@@ -1810,10 +1830,20 @@ class NCube<T>
         // If the DefaultCellValue references another n-cube, add it into the dependency list.
         if (defaultCellValue instanceof CommandCell)
         {
-            CommandCell cmd = (CommandCell) defaultCellValue
-            cmd.getCubeNamesFromCommandText(cubeNames)
+            getReferences(refs, [:], defaultCellValue as CommandCell)
         }
-        return cubeNames
+        return refs
+    }
+
+    private static Map<Map, Set<String>> getReferences(Map<Map, Set<String>> refs, Map coord, CommandCell cmdCell)
+    {
+        final Set<String> cubeNames = new CaseInsensitiveSet<>()
+        cmdCell.getCubeNamesFromCommandText(cubeNames)
+        if (cubeNames)
+        {
+            refs[coord] = cubeNames
+        }
+        return refs
     }
 
     /**
@@ -1901,6 +1931,14 @@ class NCube<T>
         }
     }
 
+    /**
+     * Load an n-cube from JSON format, which was read in by json-io as a Map of Maps.  This is
+     * the 'regular' JSON format that is output from the JsonFormatter with no special settings.
+     * For example, the JSON format created when indexFormat=true is not loadable by this method.
+     * @param jsonNCube Map is the regular JSON format read and returned by json-io in Map of Map format.
+     * @return NCube created from the passed in Map of Maps, created by json-io, from the regular JSON
+     * format, which was created by the JsonFormatter.
+     */
     private static <T> NCube<T> hydrateCube(Map jsonNCube)
     {
         final String cubeName = getString(jsonNCube, "ncube")  // new cubes always have ncube as they key in JSON storage
@@ -1911,17 +1949,16 @@ class NCube<T>
         final NCube ncube = new NCube(cubeName)
         ncube.metaProps = new CaseInsensitiveMap()
         ncube.metaProps.putAll(jsonNCube)
-        ncube.metaProps.remove("ncube")
+        ncube.metaProps.remove('ncube')
         ncube.metaProps.remove(DEFAULT_CELL_VALUE)
         ncube.metaProps.remove(DEFAULT_CELL_VALUE_TYPE)
         ncube.metaProps.remove(DEFAULT_CELL_VALUE_URL)
         ncube.metaProps.remove(DEFAULT_CELL_VALUE_CACHE)
-        ncube.metaProps.remove("ruleMode")
-        ncube.metaProps.remove("axes")
-        ncube.metaProps.remove("cells")
-        ncube.metaProps.remove("ruleMode")
-        ncube.metaProps.remove("sha1")
-        loadMetaProperties(ncube.metaProps)
+        ncube.metaProps.remove('ruleMode')
+        ncube.metaProps.remove('axes')
+        ncube.metaProps.remove('cells')
+        ncube.metaProps.remove('sha1')
+        transformMetaProperties(ncube.metaProps)
 
         String defType = jsonNCube.containsKey(DEFAULT_CELL_VALUE_TYPE) ? getString(jsonNCube, DEFAULT_CELL_VALUE_TYPE) : null
         String defUrl = jsonNCube.containsKey(DEFAULT_CELL_VALUE_URL) ? getString(jsonNCube, DEFAULT_CELL_VALUE_URL) : null
@@ -1933,7 +1970,7 @@ class NCube<T>
             throw new IllegalArgumentException("Must specify a list of axes for the ncube, under the key 'axes' as [{axis 1}, {axis 2}, ... {axis n}], cube: ${cubeName}")
         }
 
-        Object[] axes = (Object[]) jsonNCube["axes"]
+        Object[] axes = jsonNCube.axes as Object[]
 
         if (ArrayUtilities.isEmpty(axes))
         {
@@ -1946,44 +1983,85 @@ class NCube<T>
         // Read axes
         for (item in axes)
         {
-            final Map jsonAxis = (Map) item
-            final String axisName = getString(jsonAxis, "name")
-            final boolean hasDefault = getBoolean(jsonAxis, "hasDefault")
-            boolean isRef = getBoolean(jsonAxis, "isRef")
-            if (isRef)
+            Map jsonAxis = item as Map
+            long axisId
+            if (jsonAxis.id)
             {
+                axisId = jsonAxis.id as Long
+            }
+            else
+            {    // Older n-cube format with no 'id' on the 'axes' in the JSON
+                axisId = idBase++
+            }
+            final String axisName = getString(jsonAxis, 'name')
+            final boolean hasDefault = getBoolean(jsonAxis, 'hasDefault')
+            boolean isRef = getBoolean(jsonAxis, 'isRef')
+
+            // Remove these so they are not kept as meta-properties
+            jsonAxis.remove('id')
+            jsonAxis.remove('name')
+            jsonAxis.remove('isRef')
+            jsonAxis.remove('hasDefault')
+            boolean hasColumnsKey = jsonAxis.containsKey('columns')
+            Object[] columns = (Object[]) jsonAxis.remove('columns')
+            transformMetaProperties(jsonAxis)
+
+            if (isRef)
+            {   // reference axis
                 ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, axisName, jsonAxis)
-                Axis newAxis = new Axis(axisName, idBase++, hasDefault, refAxisLoader)
+                Axis newAxis = new Axis(axisName, axisId, hasDefault, refAxisLoader)
                 ncube.addAxis(newAxis)
                 for (column in newAxis.columns)
                 {
                     userIdToUniqueId[column.id] = column.id
                 }
+
+                moveAxisMetaPropsToDefaultColumn(newAxis)
+                if (columns)
+                {
+                    columns.each { Map column ->
+                        Column col = newAxis.getColumnById(column.id as Long)
+                        Iterator<Map.Entry<String, Object>> i = column.entrySet().iterator()
+                        while (i.hasNext())
+                        {
+                            Map.Entry<String, Object> entry = i.next()
+                            String key = entry.key
+                            if ('id' != key)
+                            {
+                                col.setMetaProperty(key, entry.value)
+                            }
+                        }
+                        transformMetaProperties(col.metaProps)
+                    }
+                }
             }
             else
             {
-                AxisType type = AxisType.valueOf(getString(jsonAxis, "type"))
-                AxisValueType valueType = AxisValueType.valueOf(getString(jsonAxis, "valueType"))
-                final int preferredOrder = getLong(jsonAxis, "preferredOrder").intValue()
-                boolean fireAll = true
-                if (jsonAxis.containsKey("fireAll"))
+                if (!hasColumnsKey)
                 {
-                    fireAll = getBoolean(jsonAxis, "fireAll")
+                    throw new IllegalArgumentException("'columns' must be specified, axis: ${axisName}, cube: ${cubeName}")
                 }
-                Axis axis = new Axis(axisName, type, valueType, hasDefault, preferredOrder, idBase++, fireAll)
+
+                AxisType type = AxisType.valueOf(getString(jsonAxis, 'type'))
+                AxisValueType valueType = AxisValueType.valueOf(getString(jsonAxis, 'valueType'))
+                final int preferredOrder = getLong(jsonAxis, 'preferredOrder').intValue()
+                boolean fireAll = true
+                if (jsonAxis.containsKey('fireAll'))
+                {
+                    fireAll = getBoolean(jsonAxis, 'fireAll')
+                }
+
+                // Remove known fields so that they are not listed as meta properties.
+                jsonAxis.remove('type')
+                jsonAxis.remove('valueType')
+                jsonAxis.remove('preferredOrder')
+                jsonAxis.remove('multiMatch')
+                jsonAxis.remove('fireAll')
+
+                Axis axis = new Axis(axisName, type, valueType, hasDefault, preferredOrder, axisId, fireAll)
                 ncube.addAxis(axis)
                 axis.metaProps = new CaseInsensitiveMap<>()
                 axis.metaProps.putAll(jsonAxis)
-
-                axis.metaProps.remove("name")
-                axis.metaProps.remove("isRef")
-                axis.metaProps.remove("type")
-                axis.metaProps.remove("hasDefault")
-                axis.metaProps.remove("valueType")
-                axis.metaProps.remove("preferredOrder")
-                axis.metaProps.remove("multiMatch")
-                axis.metaProps.remove("columns")
-                axis.metaProps.remove("fireAll")
 
                 if (axis.metaProps.size() < 1)
                 {
@@ -1991,24 +2069,18 @@ class NCube<T>
                 }
                 else
                 {
-                    loadMetaProperties(axis.metaProps)
-                }
-
-                if (!jsonAxis.containsKey('columns'))
-                {
-                    throw new IllegalArgumentException("'columns' must be specified, axis: ${axisName}, cube: ${cubeName}")
+                    moveAxisMetaPropsToDefaultColumn(axis)
                 }
 
                 // Read columns
-                Object[] cols = (Object[]) jsonAxis['columns']
-                for (col in cols)
+                for (col in columns)
                 {
-                    Map jsonColumn = (Map) col
+                    Map jsonColumn = col as Map
                     Object value = jsonColumn['value']
-                    String url = (String)jsonColumn['url']
-                    String colType = (String) jsonColumn['type']
+                    String url = jsonColumn['url'] as String
+                    String colType = jsonColumn['type'] as String
                     Object id = jsonColumn['id']
-                    String colName = (String) jsonColumn[Column.NAME]
+                    String colName = jsonColumn[Column.NAME] as String
 
                     if (value == null)
                     {
@@ -2030,43 +2102,43 @@ class NCube<T>
                     }
 
                     Column colAdded
-                    Long suggestedId = (id instanceof Long) ? (Long) id : null
+                    Long suggestedId = (id instanceof Long) ? id as Long: null
                     if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
                     {
-                        colAdded = ncube.addColumn(axis.name, (Comparable) CellInfo.parseJsonValue(value, null, colType, false), colName, suggestedId)
+                        colAdded = ncube.addColumn(axis.name, CellInfo.parseJsonValue(value, null, colType, false) as Comparable, colName, suggestedId)
                     }
                     else if (type == AxisType.RANGE)
                     {
-                        Object[] rangeItems = (Object[])value
+                        Object[] rangeItems = value as Object[]
                         if (rangeItems.length != 2)
                         {
                             throw new IllegalArgumentException("Range must have exactly two items, axis: ${axisName}, cube: ${cubeName}")
                         }
-                        Comparable low = (Comparable) CellInfo.parseJsonValue(rangeItems[0], null, colType, false)
-                        Comparable high = (Comparable) CellInfo.parseJsonValue(rangeItems[1], null, colType, false)
+                        Comparable low = CellInfo.parseJsonValue(rangeItems[0], null, colType, false) as Comparable
+                        Comparable high = CellInfo.parseJsonValue(rangeItems[1], null, colType, false) as Comparable
                         colAdded = ncube.addColumn(axis.name, new Range(low, high), colName, suggestedId)
                     }
                     else if (type == AxisType.SET)
                     {
-                        Object[] rangeItems = (Object[])value
+                        Object[] rangeItems = value as Object[]
                         RangeSet rangeSet = new RangeSet()
                         for (pt in rangeItems)
                         {
                             if (pt instanceof Object[])
                             {
-                                Object[] rangeValues = (Object[]) pt
+                                Object[] rangeValues = pt as Object[]
                                 if (rangeValues.length != 2)
                                 {
                                     throw new IllegalArgumentException("Set Ranges must have two values only, range length: ${rangeValues.length}, axis: ${axisName}, cube: ${cubeName}")
                                 }
-                                Comparable low = (Comparable) CellInfo.parseJsonValue(rangeValues[0], null, colType, false)
-                                Comparable high = (Comparable) CellInfo.parseJsonValue(rangeValues[1], null, colType, false)
+                                Comparable low = CellInfo.parseJsonValue(rangeValues[0], null, colType, false) as Comparable
+                                Comparable high = CellInfo.parseJsonValue(rangeValues[1], null, colType, false) as Comparable
                                 Range range = new Range(low, high)
                                 rangeSet.add(range)
                             }
                             else
                             {
-                                rangeSet.add((Comparable)CellInfo.parseJsonValue(pt, null, colType, false))
+                                rangeSet.add(CellInfo.parseJsonValue(pt, null, colType, false) as Comparable)
                             }
                         }
                         colAdded = ncube.addColumn(axis.name, rangeSet, colName, suggestedId)
@@ -2078,7 +2150,7 @@ class NCube<T>
                         {
                             cmd = new GroovyExpression('false', null, cache)
                         }
-                        colAdded = ncube.addColumn(axis.name, (CommandCell)cmd, colName, suggestedId)
+                        colAdded = ncube.addColumn(axis.name, cmd as CommandCell, colName, suggestedId)
                     }
                     else
                     {
@@ -2104,23 +2176,23 @@ class NCube<T>
                     }
                     else
                     {
-                        loadMetaProperties(colAdded.metaProps)
+                        transformMetaProperties(colAdded.metaProps)
                     }
                 }
             }
         }
 
         // Read cells
-        if (jsonNCube.containsKey("cells"))
+        if (jsonNCube.containsKey('cells'))
         {   // Allow JSON to have no cells - empty cube
             Object[] cells = (Object[]) jsonNCube['cells']
 
             for (cell in cells)
             {
-                JsonObject cMap = (JsonObject) cell
+                JsonObject cMap = cell as JsonObject
                 Object ids = cMap['id']
-                String type = (String) cMap['type']
-                String url = (String) cMap['url']
+                String type = cMap['type'] as String
+                String url = cMap['url'] as String
                 boolean cache = false
 
                 if (cMap.containsKey('cache'))
@@ -2177,7 +2249,37 @@ class NCube<T>
         return ncube
     }
 
-    private static void loadMetaProperties(Map props)
+    /**
+     * Snag all meta-properties on Axis that start with Axis.DEFAULT_COLUMN_PREFIX, as this
+     * is where the default column's meta properties are stored, and copy them to the default
+     * column (if one exists)
+     */
+    private static void moveAxisMetaPropsToDefaultColumn(Axis axis)
+    {
+        Column defCol = axis.defaultColumn
+        if (!defCol)
+        {
+            return
+        }
+        Iterator<Map.Entry<String, Object>> i = axis.metaProps.entrySet().iterator()
+        while (i.hasNext())
+        {
+            Map.Entry<String, Object> entry = i.next()
+            String key = entry.key
+            if (key.startsWith(JsonFormatter.DEFAULT_COLUMN_PREFIX))
+            {
+                defCol.setMetaProperty(key - JsonFormatter.DEFAULT_COLUMN_PREFIX, entry.value)
+                i.remove()  // do not leave the column_default_* properties on the Axis
+            }
+        }
+    }
+
+    /**
+     * Convert the values on the value side of the Map from JsonObject to an appropriate
+     * CellInfo.  If the value is not a JsonObject, it is left alone (primitives).
+     * @param props Map of String meta-property keys to values
+     */
+    private static void transformMetaProperties(Map props)
     {
         List<MapEntry> entriesToUpdate = []
         for (entry in props.entrySet())
@@ -2335,7 +2437,7 @@ class NCube<T>
 
         // Need deterministic ordering (sorted by Axis name will do that)
         Map<String, Axis> sortedAxes = new TreeMap<>(axisList)
-        sha1Digest.update('a'.bytes)       // a=axes
+        sha1Digest.update(A_BYTES)       // a=axes
         sha1Digest.update(sep)
 
         for (entry in sortedAxes.entrySet())
@@ -2349,11 +2451,11 @@ class NCube<T>
             sha1Digest.update(sep)
             sha1Digest.update(axis.valueType.name().bytes)
             sha1Digest.update(sep)
-            sha1Digest.update(axis.hasDefaultColumn() ? 't'.bytes : 'f'.bytes)
+            sha1Digest.update(axis.hasDefaultColumn() ? TRUE_BYTES : FALSE_BYTES)
             sha1Digest.update(sep)
             if (!axis.fireAll)
             {   // non-default value, add to SHA1 because it's been changed (backwards sha1 compatible)
-                sha1Digest.update('o'.bytes)
+                sha1Digest.update(O_BYTES)
                 sha1Digest.update(sep)
             }
             if (!MapUtilities.isEmpty(axis.metaProps))
@@ -2362,7 +2464,17 @@ class NCube<T>
             }
             sha1Digest.update(sep)
             boolean displayOrder = axis.columnOrder == Axis.DISPLAY
-            if (!axis.reference)
+            if (axis.reference)
+            {
+                for (column in axis.columns)
+                {
+                    if (!MapUtilities.isEmpty(column.metaProps))
+                    {
+                        deepSha1(sha1Digest, column.metaProps, sep)
+                    }
+                }
+            }
+            else
             {
                 for (column in axis.columnsWithoutDefault)
                 {
@@ -2382,6 +2494,11 @@ class NCube<T>
                         sha1Digest.update(sep)
                     }
                 }
+
+                if (axis.hasDefaultColumn() && !MapUtilities.isEmpty(axis.defaultColumn.metaProperties))
+                {
+                    deepSha1(sha1Digest, axis.defaultColumn.metaProperties, sep)
+                }
             }
         }
 
@@ -2389,12 +2506,12 @@ class NCube<T>
         // 1. Build String SHA-1 of coordinate + SHA-1 of cell contents.
         // 2. Combine and then sort.
         // 3. Build SHA-1 from this.
-        sha1Digest.update('c'.bytes)  // c = cells
+        sha1Digest.update(C_BYTES)  // c = cells
         sha1Digest.update(sep)
 
         if (numCells > 0)
         {
-            List<String> sha1s = []
+            List<String> sha1s = new ArrayList<>(cells.size()) as List
             MessageDigest tempDigest = EncryptionUtilities.SHA1Digest
 
             for (entry in cells.entrySet())
@@ -2419,7 +2536,7 @@ class NCube<T>
 
     private String columnIdsToString(Set<Long> columns)
     {
-        List<String> list = []
+        List<String> list = new ArrayList(columns.size())
         for (colId in columns)
         {
             Axis axis = getAxisFromColumnId(colId)
@@ -2446,7 +2563,7 @@ class NCube<T>
         stack.addFirst(value)
         Set<Object> visited = new HashSet<>()
 
-        while (!stack.isEmpty())
+        while (!stack.empty)
         {
             value = stack.removeFirst()
             if (visited.contains(value))
@@ -2457,14 +2574,14 @@ class NCube<T>
 
             if (value == null)
             {
-                md.update('null'.bytes)
+                md.update(NULL_BYTES)
                 md.update(sep)
             }
             else if (value.class.array)
             {
                 int len = Array.getLength(value)
 
-                md.update('array'.bytes)
+                md.update(ARRAY_BYTES)
                 md.update(String.valueOf(len).bytes)
                 md.update(sep)
                 for (int i=0; i < len; i++)
@@ -2475,7 +2592,7 @@ class NCube<T>
             else if (value instanceof Collection)
             {
                 Collection col = (Collection) value
-                md.update('col'.bytes)
+                md.update(COL_BYTES)
                 md.update(String.valueOf(col.size()).bytes)
                 md.update(sep)
                 stack.addAll(col)
@@ -2483,7 +2600,7 @@ class NCube<T>
             else if (value instanceof Map)
             {
                 Map map = value as Map
-                md.update('map'.bytes)
+                md.update(MAP_BYTES)
                 md.update(String.valueOf(map.size()).bytes)
                 md.update(sep)
 
@@ -2515,15 +2632,15 @@ class NCube<T>
                         md.update(cmdCell.cmd.bytes)
                         md.update(sep)
                     }
-                    md.update(cmdCell.url != null ? 't'.bytes : 'f'.bytes)  // t (url) or f (no url)
+                    md.update(cmdCell.url != null ? TRUE_BYTES : FALSE_BYTES)  // t (url) or f (no url)
                     md.update(sep)
-                    md.update(cmdCell.cacheable ? 't'.bytes : 'f'.bytes)
+                    md.update(cmdCell.cacheable ? TRUE_BYTES : FALSE_BYTES)
                     md.update(sep)
                 }
                 else
                 {
                     String strKey = value.toString()
-                    if (strKey.contains("@"))
+                    if (strKey.contains('@'))
                     {
                         md.update(toJson(value).bytes)
                     }
@@ -2557,7 +2674,7 @@ class NCube<T>
         Set<String> a2 = new CaseInsensitiveSet<>(other.axisList.keySet())
         a1.removeAll(a2)
 
-        if (!a1.isEmpty())
+        if (!a1.empty)
         {   // Axis names must be all be the same (ignoring case)
             return false
         }

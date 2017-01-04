@@ -10,23 +10,10 @@ import com.cedarsoftware.ncube.RangeSet
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
+import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
-
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_METHOD_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_VERSION
 
 /**
  * Format an NCube into an JSON document
@@ -48,18 +35,19 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_VERSION
  *         limitations under the License.
  */
 @CompileStatic
-public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
+class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 {
+    public static final String DEFAULT_COLUMN_PREFIX = 'd3fault_c0lumn_'
     private static final String MAX_INT = Long.toString(Integer.MAX_VALUE)
 
-    public JsonFormatter() {}
+    JsonFormatter() {}
 
-    public JsonFormatter(OutputStream stream) { super(stream) }
+    JsonFormatter(OutputStream stream) { super(stream) }
 
     /**
      * Use this API to generate JSON view of this NCube.
      */
-    public String format(NCube ncube, Map<String, Object> options = null)
+    String format(NCube ncube, Map<String, Object> options = null)
     {
         if (!(builder instanceof StringWriter))
         {
@@ -70,7 +58,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         return builder.toString()
     }
 
-    public void formatCube(NCube ncube, Map<String, Object> options)
+    void formatCube(NCube ncube, Map<String, Object> options)
     {
         if (ncube == null)
         {
@@ -192,10 +180,13 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         if (options.indexFormat)
         {
             startObject()
-            Iterator i = axes.iterator()
+            Iterator<Axis> i = axes.iterator()
             while (i.hasNext())
             {
-                writeIndexAxis(i.next(), options)
+                Axis axis = i.next()
+                copyDefaultColumnMetaPropsToAxis(axis.defaultColumn, axis)
+                writeIndexAxis(axis, options)
+                removeDefaultColumnMetaPropsFromAxis(axis)
                 if (i.hasNext())
                 {
                     comma()
@@ -206,10 +197,13 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         else
         {
             startArray()
-            Iterator i = axes.iterator()
+            Iterator<Axis> i = axes.iterator()
             while (i.hasNext())
             {
-                writeAxis(i.next(), options)
+                Axis axis = i.next()
+                copyDefaultColumnMetaPropsToAxis(axis.defaultColumn, axis)
+                writeAxis(axis, options)
+                removeDefaultColumnMetaPropsFromAxis(axis)
                 if (i.hasNext())
                 {
                     comma()
@@ -220,6 +214,41 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         comma()
     }
 
+    /**
+     * Copy the meta-properties from the default column to the Axis.  Since the default column is not
+     * persisted, they are moved here, and then moved back to the default column on save / load.
+     */
+    private static void copyDefaultColumnMetaPropsToAxis(Column defCol, Axis axis)
+    {
+        if (defCol == null)
+        {
+            return
+        }
+
+        Map<String, Object> props = defCol.metaProperties
+        props.each { String key, Object value ->
+            axis.setMetaProperty("${DEFAULT_COLUMN_PREFIX}${key}", value)
+        }
+    }
+
+    /**
+     * Remove the default column's meta-properties from the Axis meta-properties.
+     * They were put there temporarily, only during writing of the Axis JSON.
+     */
+    private static void removeDefaultColumnMetaPropsFromAxis(Axis axis)
+    {
+        Map<String, Object> copy = new CaseInsensitiveMap<>(axis.metaProperties)
+        Iterator<String> i = copy.keySet().iterator()
+        while (i.hasNext())
+        {
+            String key = i.next()
+            if (key.startsWith(DEFAULT_COLUMN_PREFIX))
+            {
+                axis.removeMetaProperty(key)
+            }
+        }
+    }
+
     // default is false, so no need to write those out.
     void writeAxis(Axis axis, Map<String, Object> options) throws IOException
     {
@@ -227,6 +256,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
 
         // required inputs
         writeAxisGuts(axis, options)
+        endObject()
     }
 
     // default is false, so no need to write those out.
@@ -236,68 +266,60 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         writeObjectKey(axis.name.toLowerCase())
         startObject()
         writeAxisGuts(axis, options)
+        endObject()
     }
 
     private void writeAxisGuts(Axis axis, Map<String, Object> options)
     {
+        writeObjectKeyValue("id", axis.id, true)
         writeObjectKeyValue("name", axis.name, true)
         writeObjectKeyValue("hasDefault", axis.hasDefaultColumn(), true)
-        if (axis.reference)
+        if (!axis.metaProperties.isEmpty())
         {
-            writeReferenceAxisInfo(axis)
-            if (options.indexFormat)
+            if (axis.reference)
             {
-                comma()
+                writeObjectKeyValue("isRef", true, true)
             }
+            writeMetaProperties(axis.metaProperties)
+            comma()
         }
 
         if (options.indexFormat || !axis.reference)
-        {
+        {   // indexFormat (with or without reference axis) or regular format without reference axis
             writeObjectKeyValue("type", axis.type.name(), true)
             writeObjectKeyValue("valueType", axis.valueType.name(), true)
 
             //  optional inputs that can use defaults
             writeObjectKeyValue("preferredOrder", axis.columnOrder, true)
             writeObjectKeyValue("fireAll", axis.fireAll, true)
-            if (axis.metaProperties.size() > 0)
-            {
-                writeMetaProperties(axis.metaProperties)
-                comma()
-            }
             writeColumns(axis.columns, options)
         }
-        endObject()
-    }
-
-    private void writeReferenceAxisInfo(Axis axis)
-    {
-        Map meta = axis.metaProperties
-        boolean hasTransformer = axis.referenceTransformed
-
-        writeObjectKeyValue("isRef", true, true)
-        writeObjectKeyValue(REF_TENANT, meta[REF_TENANT], true)
-        writeObjectKeyValue(REF_APP, meta[REF_APP], true)
-        writeObjectKeyValue(REF_VERSION, meta[REF_VERSION], true)
-        writeObjectKeyValue(REF_STATUS, meta[REF_STATUS], true)
-        writeObjectKeyValue(REF_BRANCH, meta[REF_BRANCH], true)
-        writeObjectKeyValue(REF_CUBE_NAME, meta[REF_CUBE_NAME], true)
-        writeObjectKeyValue(REF_AXIS_NAME, meta[REF_AXIS_NAME], false)
-
-        if (hasTransformer)
-        {
-            comma()
-            writeObjectKeyValue(TRANSFORM_APP, meta[TRANSFORM_APP], true)
-            writeObjectKeyValue(TRANSFORM_VERSION, meta[TRANSFORM_VERSION], true)
-            writeObjectKeyValue(TRANSFORM_STATUS, meta[TRANSFORM_STATUS], true)
-            writeObjectKeyValue(TRANSFORM_BRANCH, meta[TRANSFORM_BRANCH], true)
-            writeObjectKeyValue(TRANSFORM_CUBE_NAME, meta[TRANSFORM_CUBE_NAME], true)
-            writeObjectKeyValue(TRANSFORM_METHOD_NAME, meta[TRANSFORM_METHOD_NAME], false)
+        else
+        {   // regular format with reference axis
+            append('"columns":[')
+            boolean first = true
+            Iterator<Column> i = axis.columnsWithoutDefault.iterator()
+            while (i.hasNext())
+            {
+                Column column = i.next()
+                Map<String, Object> metaProps = column.metaProperties
+                if (!metaProps.isEmpty())
+                {
+                    if (first)
+                    {
+                        first = false
+                    }
+                    else
+                    {
+                        comma()
+                    }
+                    append("""{"id":${column.id},""")
+                    writeMetaProperties(metaProps)
+                    append('}')
+                }
+            }
+            append(']')
         }
-        if (axis.metaProperties.size() > 0)
-        {
-            comma()
-        }
-        writeMetaProperties(axis.metaProperties)
     }
 
     void writeColumns(List<Column> columns, Map<String, Object> options) throws IOException
@@ -399,13 +421,13 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         if (options.indexFormat)
         {   // {"1000000000001_2000000000001":{"type":"string", "value":10}}
             startObject()
-            Iterator i = cells.entrySet().iterator()
+            Iterator<Map.Entry<Set<Long>, Object>> i = cells.entrySet().iterator()
             while (i.hasNext())
             {
                 // Write key, e.g. "1000000000001_2000000000001"
                 Map.Entry<Set<Long>, Object> entry = i.next()
                 append('"')
-                Iterator j = entry.key.iterator()
+                Iterator<Long> j = entry.key.iterator()
                 while (j.hasNext())
                 {
                     append(j.next())
@@ -432,7 +454,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         else
         {
             startArray()
-            Iterator i = cells.entrySet().iterator()
+            Iterator<Map.Entry<Set<Long>, Object>> i = cells.entrySet().iterator()
             while (i.hasNext())
             {
                 writeCell(i.next())
@@ -502,7 +524,7 @@ public class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         append(longId)
     }
 
-    public static String getColumnType(Object o)
+    static String getColumnType(Object o)
     {
         if (o instanceof Range || o instanceof RangeSet)
         {
