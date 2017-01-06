@@ -1,4 +1,10 @@
 ### Revision History
+* 3.5.2
+  * Added additional information on input.* for reference axis transforms.
+    * 'refCube' is a reference to the Cube that contains the referenced axis.
+    * 'refAxis' is a reference to the Referenced Axis on the referenced cube
+    * 'referencingAxis' is a reference to the referencing Axis (the one being built from the transformation's output.columns Collection
+  * AddColumn(Column column) added so that an existing column (e.g. from a Referenced Axis) can be added en masse.  The code will attempt to re-use the existing ID, but if it matches an ID of an existing column, then an ID will be generated from the value of the column.
 * 3.5.1
   * Bug fix: NCube.sha1() now takes reference axis meta-properties into account.
   * Bug fix: NCube.hydrateCube() was not converting the value side of reference axis meta-properties from JsonObject to CellInfo.  

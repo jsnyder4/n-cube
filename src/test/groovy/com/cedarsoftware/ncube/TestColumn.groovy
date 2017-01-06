@@ -134,9 +134,8 @@ class TestColumn
         Map cube4 = JsonReader.jsonToMaps(json)
         Map axes = cube4.axes as Map
         Map<String, Object> state2 = axes.state as Map
-
         Map<String, Object> defColMetaProps = state2.findAll { String key, Object value -> key.startsWith(JsonFormatter.DEFAULT_COLUMN_PREFIX) }
-        println defColMetaProps
+
         assert defColMetaProps.size() == 3
         assert defColMetaProps[JsonFormatter.DEFAULT_COLUMN_PREFIX + 'default_value'] instanceof Map    // because it was read as a Map, not with .hydrate
         assert "bar" == defColMetaProps[JsonFormatter.DEFAULT_COLUMN_PREFIX + 'foo']

@@ -1,10 +1,16 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.Executor
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -42,50 +48,61 @@ class TestNCubeConcurrency
     @Ignore
     void testConcurrencyWithDifferentFiles()
     {
-        Runnable test1 = { concurrencyTest('StringFromRemoteUrlBig') } as Runnable
-        Runnable test2 = { concurrencyTest('StringFromLocalUrl') } as Runnable
-        Runnable test3 = { concurrencyTest('BinaryFromRemoteUrl') } as Runnable
-        Runnable test4 = { concurrencyTest('BinaryFromLocalUrl') } as Runnable
+        final CountDownLatch startLatch = new CountDownLatch(1)
+        int numTests = 4
+        final CountDownLatch finishedLatch = new CountDownLatch(numTests)
 
-        Thread t1 = new Thread(test1)
-        Thread t2 = new Thread(test2)
-        Thread t3 = new Thread(test3)
-        Thread t4 = new Thread(test4)
+        Runnable test1 = {
+            startLatch.await()
+            concurrencyTest('StringFromRemoteUrlBig')
+            finishedLatch.countDown()
+        } as Runnable
 
-        t1.name = 'test 1'
-        t1.daemon = true
+        Runnable test2 = {
+            startLatch.await()
+            concurrencyTest('StringFromLocalUrl')
+            finishedLatch.countDown()
+        } as Runnable
 
-        t2.name = 'test 2'
-        t2.daemon = true
+        Runnable test3 = {
+            startLatch.await()
+            concurrencyTest('BinaryFromRemoteUrl')
+            finishedLatch.countDown()
+        } as Runnable
 
-        t3.name = 'test 3'
-        t3.daemon = true
+        Runnable test4 = {
+            startLatch.await()
+            concurrencyTest('BinaryFromLocalUrl')
+            finishedLatch.countDown()
+        } as Runnable
 
-        t4.name = 'test 4'
-        t4.daemon = true
+        ExecutorService executor = Executors.newFixedThreadPool(numTests)
+        executor.execute(test1)
+        executor.execute(test2)
+        executor.execute(test3)
+        executor.execute(test4)
 
-        t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
-
-        t1.join()
-        t2.join()
-        t3.join()
-        t4.join()
+        startLatch.countDown()  // trigger all threads to begin
+        finishedLatch.await()   // wait for all threads to finish
+        executor.shutdown()
     }
 
     private static void concurrencyTest(final String site)
     {
         int numThreads = 8
         long timeToRun = 3000L
-        Thread[] threads = new Thread[numThreads]
+        final AtomicBoolean failed = new AtomicBoolean(false)
         NCube n1 = NCubeManager.getNCubeFromResource('urlContent.json')
+
+        final CountDownLatch startLatch = new CountDownLatch(1)
+        final CountDownLatch finishedLatch = new CountDownLatch(numThreads)
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads)
 
         // Ensure that the URL fetching does not have issues with high contention
         Runnable runnable = {
             try
             {
+                startLatch.await()
                 long start = System.currentTimeMillis()
                 while (System.currentTimeMillis() - start < timeToRun)
                 {
@@ -97,27 +114,30 @@ class TestNCubeConcurrency
             }
             catch (Exception e)
             {
-                e.printStackTrace()
+                Throwable t = TestThreadedClearCache.getDeepestException(e)
+                if (!(t.message?.contains('cleared while cell was executing')))
+                {
+                    failed.set(true)
+                    throw e
+                }
+                else
+                {
+                    println 'benign - code cleared while cell was executing'
+                }
+            }
+            finally
+            {
+                finishedLatch.countDown()
             }
         } as Runnable
 
         for (int i = 0; i < numThreads; i++)
         {
-            threads[i] = new Thread(runnable)
-            threads[i].name = 'NCubeConcurrencyTest' + i
-            threads[i].daemon = true
+            executor.execute(runnable)
         }
-
-        // Start all at the same time (more concurrent that starting them during construction)
-        for (int i = 0; i < numThreads; i++)
-        {
-            threads[i].start()
-        }
-
-        for (int i = 0; i < numThreads; i++)
-        {
-            threads[i].join()
-        }
+        startLatch.countDown()
+        finishedLatch.await()
+        assert !failed.get()
     }
 
     @Test

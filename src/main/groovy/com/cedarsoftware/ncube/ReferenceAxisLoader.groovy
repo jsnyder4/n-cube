@@ -70,6 +70,11 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 
     /**
      * Axis calls this method to load itself from this AxisRefProvider.
+     * Keys that are added to input for the transformer to use:
+     *  input.refCube = refCube
+     *  input.refAxis = refAxis
+     *  input.columns = refAxis.columnsWithoutDefault
+     *  input.referencingAxis = axis
      * @param axis Axis to 'fill-up' from the reference and 'transform' from the optional transformer.
      */
     void load(Axis axis)
@@ -90,7 +95,11 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         Axis refAxis = getReferencedAxis(refCube, args[REF_AXIS_NAME] as String, axis)
 
         Map<String, Object> input = new CaseInsensitiveMap<>()
+        // Allow the transformer access to the referenced n-cube (from which they can get ApplicationID and another reference axis for combining)
+        input.refCube = refCube
+        input.refAxis = refAxis
         input.columns = refAxis.columnsWithoutDefault
+        input.referencingAxis = axis
         Map<String, Object> output = new CaseInsensitiveMap<>()
 
         if (transformCube != null)
@@ -122,7 +131,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         List<Column> columns = output.columns as List
         for (Column column : columns)
         {
-            Column colAdded = axis.addColumn(column.value, column.columnName, column.id)
+            Column colAdded = axis.addColumn(column)
 
             // Bring over referenced column meta properties
             for (Map.Entry<String, Object> entry : column.metaProperties.entrySet())

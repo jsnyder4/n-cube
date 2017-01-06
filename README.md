@@ -89,7 +89,7 @@ The next cube maps the logical name to the desired actual name.  In the example 
 HTTP Request ===> dyn/html/account ===> tomcat ===> UrlRewrite.xml ===> CdnRouter ===> content-n-cubes ===> physical file.  The content-n-cubes have the logical file names on the content.name axis, and the associated cell has the physical name.  If it is not found, the default cell will add the appropriate extension to the file type, and then make an attempt at fetching the content. This way, these mime-type routing cubes only require entries on their axis when the logical to phsyical file name mapping is non-standard (changing based on device type, date, business unit, etc.)
 
 ### Creating n-cubes
-Use either the Simple JSON format to create n-cubes, or the nCubeEditor to editing the pages.  At the moment, there is no cloud-based editor for n-cube, so you need to set up the nCubeEditor as a web-app within a Java container like tomcat or jetty.  See the sample .json files in the test / resources directories for examples.
+Use either the Simple JSON format to create n-cubes, or the nCubeEditor to editing the pages.  At the moment, there is no cloud-based editor for n-cube, so you need to set up the nCubeEditor as a web-app within a Java container like tomcat or jetty.  See the sample JSON files in the test / resources directories for examples.
 
 These are read in using the `NCubeManager.getNCubeFromResource()` API.  You can also call `ncube.fromSimpleJson(String json)`.
 

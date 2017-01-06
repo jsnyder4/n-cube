@@ -6,6 +6,12 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+import java.security.SecureRandom
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+
 import static org.junit.Assert.assertEquals
 
 /**
@@ -61,44 +67,55 @@ class TestThreadedClearCache
         // add cubes for this test.
         manager.addCubes(usedId, USER_ID, ncubes)
 
-        concurrencyTestWithAppId()
+        concurrencyTest()
 
         // remove cubes
         manager.removeBranches([usedId] as ApplicationID[])
     }
 
-    private void concurrencyTestWithAppId()
+    private void concurrencyTest()
     {
-        long time = 3000L
         int numThreads = 8
-        Runnable runnable = new Runnable() {
-            void run()
-            {
-                long start = System.currentTimeMillis()
-                while (System.currentTimeMillis() - start < time)
-                {
+        final CountDownLatch startLatch = new CountDownLatch(1)
+        final CountDownLatch finishedLatch = new CountDownLatch(numThreads)
+        final AtomicBoolean failed = new AtomicBoolean(false)
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads)
+        Random random = new SecureRandom()
+
+        for (int taskCount = 0; taskCount < numThreads; taskCount++)
+        {
+            executor.execute(new Runnable() {
+                void run() {
                     try
                     {
+                        startLatch.await()
                         NCube cube = NCubeManager.getCube(usedId, "MathController")
 
-                        for (int i = 0; i < 10; i++)
+                        for (int i = 0; i < 1000; i++)
                         {
-                            def input = [:]
-                            input.env = "a"
-                            input.x = 5
-                            input.method = 'square'
+                            if (random.nextInt(100) == 42)
+                            {   // 1/100th of the time, clear the cache
+                                NCubeManager.clearCache()
+                            }
+                            else
+                            {   // 99/100ths of the time, execute cells
+                                def input = [:]
+                                input.env = "a"
+                                input.x = 5
+                                input.method = 'square'
 
-                            assertEquals(25, cube.getCell(input))
+                                assertEquals(25, cube.getCell(input))
 
-                            input.method = 'factorial'
-                            assertEquals(120, cube.getCell(input))
+                                input.method = 'factorial'
+                                assertEquals(120, cube.getCell(input))
 
-                            input.env = "b"
-                            input.x = 6
-                            input.method = 'square'
-                            assertEquals(6, cube.getCell(input))
-                            input.method = 'factorial'
-                            assertEquals(6, cube.getCell(input))
+                                input.env = "b"
+                                input.x = 6
+                                input.method = 'square'
+                                assertEquals(6, cube.getCell(input))
+                                input.method = 'factorial'
+                                assertEquals(6, cube.getCell(input))
+                            }
                         }
                     }
                     catch (Exception e)
@@ -106,66 +123,25 @@ class TestThreadedClearCache
                         Throwable t = getDeepestException(e)
                         if (!(t.message?.contains('cleared while cell was executing')))
                         {
+                            failed.set(true)
                             throw e
                         }
-                    }
-                }
-            }
-        }
-
-        Runnable clearCache = new Runnable() {
-            void run()
-            {
-                long start = System.currentTimeMillis()
-                while (System.currentTimeMillis() - start < time)
-                {
-                    try
-                    {
-                        NCubeManager.clearCache()
-                        Thread.sleep(250)
-                    }
-                    catch (Exception e)
-                    {
-                        Throwable t = getDeepestException(e)
-                        if (!(t.message?.contains('cleared while cell was executing')))
+                        else
                         {
-                            throw e
+                            println 'benign - code cleared while cell was executing'
                         }
                     }
+                    finally
+                    {
+                        finishedLatch.countDown()
+                    }
                 }
-            }
+            })
         }
-
-        Thread[] threads = new Thread[numThreads]
-
-        for (int i = 0; i < numThreads; i++)
-        {
-            threads[i] = new Thread(runnable)
-            threads[i].name = 'NCubeConcurrencyTest' + i
-            threads[i].daemon = true
-        }
-
-        Thread clear = new Thread(clearCache)
-        clear.name = "ClearCache";
-        clear.daemon = true;
-
-        // Start all at the same time (more concurrent that starting them during construction)
-        for (int i = 0; i < numThreads; i++)
-        {
-            threads[i].start()
-        }
-        clear.start()
-
-        for (int i = 0; i < numThreads; i++)
-        {
-            try
-            {
-                threads[i].join()
-            }
-            catch (InterruptedException ignored)
-            { }
-        }
-        clear.join()
+        startLatch.countDown()  // trigger all Runnables to start
+        finishedLatch.await()   // wait for all Runnables to finish
+        executor.shutdown()
+        assert !failed.get()
     }
 
     /**

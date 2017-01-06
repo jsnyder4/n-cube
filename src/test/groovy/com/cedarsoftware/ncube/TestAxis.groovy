@@ -13,6 +13,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+import java.security.SecureRandom
+
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
@@ -135,32 +137,32 @@ class TestAxis
     }
 
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     void testConvertStringToColumnValueWithEmptyString()
     {
         Axis axis = new Axis('test axis', AxisType.DISCRETE, AxisValueType.LONG, true)
-        axis.convertStringToColumnValue('')
+        assert 0L == axis.standardizeColumnValue('')
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     void testConvertStringToColumnValueWithNull()
     {
         Axis axis = new Axis('test axis', AxisType.DISCRETE, AxisValueType.LONG, true)
-        axis.convertStringToColumnValue(null)
+        assert null == axis.standardizeColumnValue(null)
     }
 
     @Test(expected = IllegalArgumentException.class)
     void testConvertStringToColumnValueWihInvalidRangeDefinition()
     {
         Axis axis = new Axis('test axis', AxisType.SET, AxisValueType.LONG, true)
-        axis.convertStringToColumnValue('[[5]]')
+        axis.standardizeColumnValue('[[5]]')
     }
 
     @Test(expected = IllegalArgumentException.class)
     void testConvertStringToColumnValueWihRangeException()
     {
         Axis axis = new Axis('test axis', AxisType.SET, AxisValueType.LONG, true)
-        axis.convertStringToColumnValue('[null]')
+        axis.standardizeColumnValue('[null]')
     }
 
     @Test
@@ -712,11 +714,11 @@ class TestAxis
     void testAddingNullToAxis()
     {
         Axis axis = new Axis('foo', AxisType.DISCRETE, AxisValueType.LONG, false)
-        axis.addColumn null    // Add default column
+        axis.addColumn((Comparable)null)    // Add default column
         assert axis.hasDefaultColumn()
         try
         {
-            axis.addColumn null
+            axis.addColumn((Comparable)null)
             fail 'should throw exception'
         }
         catch (IllegalArgumentException expected)
@@ -873,7 +875,7 @@ class TestAxis
         Axis nearest = new Axis('points', AxisType.NEAREST, AxisValueType.COMPARABLE, false)
         try
         {
-            nearest.addColumn null
+            nearest.addColumn((Comparable)null)
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
@@ -921,18 +923,18 @@ class TestAxis
     {
         // Strings
         Axis states = NCubeBuilder.statesAxis
-        assert states.convertStringToColumnValue('OH') == 'OH'
+        assert states.standardizeColumnValue('OH') == 'OH'
 
         // Longs
         Axis longs = new Axis('longs', AxisType.DISCRETE, AxisValueType.LONG, false)
-        assert -1L == longs.convertStringToColumnValue('-1')
-        assert 0L == longs.convertStringToColumnValue('0')
-        assert 1L == longs.convertStringToColumnValue('1')
-        assert 12345678901234L == longs.convertStringToColumnValue('12345678901234')
-        assert -12345678901234L == longs.convertStringToColumnValue('-12345678901234')
+        assert -1L == longs.standardizeColumnValue('-1')
+        assert 0L == longs.standardizeColumnValue('0')
+        assert 1L == longs.standardizeColumnValue('1')
+        assert 12345678901234L == longs.standardizeColumnValue('12345678901234')
+        assert -12345678901234L == longs.standardizeColumnValue('-12345678901234')
         try
         {
-            longs.convertStringToColumnValue '-12345.678901234'
+            longs.standardizeColumnValue '-12345.678901234'
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
@@ -942,34 +944,34 @@ class TestAxis
 
         // BigDecimals
         Axis bigDec = new Axis('bigDec', AxisType.DISCRETE, AxisValueType.BIG_DECIMAL, false)
-        assert -1g == bigDec.convertStringToColumnValue('-1')
-        assert 0g == bigDec.convertStringToColumnValue('0')
-        assert 1g == bigDec.convertStringToColumnValue('1')
-        assert 12345678901234g == bigDec.convertStringToColumnValue('12345678901234')
-        assert -12345678901234g ==  bigDec.convertStringToColumnValue('-12345678901234')
-        assert -12345.678901234g == bigDec.convertStringToColumnValue('-12345.678901234')
+        assert -1g == bigDec.standardizeColumnValue('-1')
+        assert 0g == bigDec.standardizeColumnValue('0')
+        assert 1g == bigDec.standardizeColumnValue('1')
+        assert 12345678901234g == bigDec.standardizeColumnValue('12345678901234')
+        assert -12345678901234g ==  bigDec.standardizeColumnValue('-12345678901234')
+        assert -12345.678901234g == bigDec.standardizeColumnValue('-12345.678901234')
 
         // Doubles
         Axis doubles = new Axis('bigDec', AxisType.DISCRETE, AxisValueType.DOUBLE, false)
-        assertEquals(-1.0, (double) doubles.convertStringToColumnValue('-1'), 0.000001d)
-        assertEquals(0.0, (double) doubles.convertStringToColumnValue('0'), 0.000001d)
-        assertEquals(1.0, (double) doubles.convertStringToColumnValue('1'), 0.00001d)
-        assertEquals(12345678901234.0, (double) doubles.convertStringToColumnValue('12345678901234'), 0.00001d)
-        assertEquals(-12345678901234.0, (double) doubles.convertStringToColumnValue('-12345678901234'), 0.00001d)
-        assertEquals(-12345.678901234d, (double) doubles.convertStringToColumnValue('-12345.678901234'), 0.00001d)
+        assertEquals(-1.0, (double) doubles.standardizeColumnValue('-1'), 0.000001d)
+        assertEquals(0.0, (double) doubles.standardizeColumnValue('0'), 0.000001d)
+        assertEquals(1.0, (double) doubles.standardizeColumnValue('1'), 0.00001d)
+        assertEquals(12345678901234.0, (double) doubles.standardizeColumnValue('12345678901234'), 0.00001d)
+        assertEquals(-12345678901234.0, (double) doubles.standardizeColumnValue('-12345678901234'), 0.00001d)
+        assertEquals(-12345.678901234d, (double) doubles.standardizeColumnValue('-12345.678901234'), 0.00001d)
 
         // Dates
         Axis dates = new Axis('Dates', AxisType.DISCRETE, AxisValueType.DATE, false)
         Calendar cal = Calendar.instance
         cal.clear()
         cal.set(2014, 0, 18, 0, 0, 0)
-        assert dates.convertStringToColumnValue('1/18/2014') == cal.time
+        assert dates.standardizeColumnValue('1/18/2014') == cal.time
         cal.clear()
         cal.set(2014, 6, 9, 13, 10, 58)
-        assert dates.convertStringToColumnValue('2014 Jul 9 13:10:58') == cal.time
+        assert dates.standardizeColumnValue('2014 Jul 9 13:10:58') == cal.time
         try
         {
-            dates.convertStringToColumnValue('2014 Ju1y 9 13:10:58')
+            dates.standardizeColumnValue('2014 Ju1y 9 13:10:58')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -979,30 +981,30 @@ class TestAxis
 
         // Expression
         Axis exp = new Axis('Condition', AxisType.RULE, AxisValueType.EXPRESSION, false, Axis.DISPLAY)
-        assert new GroovyExpression('println \'Hello\'', null, false) == exp.convertStringToColumnValue('println \'Hello\'')
+        assert new GroovyExpression('println \'Hello\'', null, false) == exp.standardizeColumnValue('println \'Hello\'')
 
         // Comparable (this allows user to create Java Comparable object instances as Column values!
         Axis comp = new Axis('Comparable', AxisType.DISCRETE, AxisValueType.COMPARABLE, false)
         cal.clear()
         cal.set 2014, 0, 18, 16, 26, 0
         String json = JsonWriter.objectToJson cal
-        assert cal == comp.convertStringToColumnValue(json)
+        assert cal == comp.standardizeColumnValue(json)
     }
 
     @Test
     void testRangeParsing()
     {
         Axis axis = new Axis('ages', AxisType.RANGE, AxisValueType.LONG, true, Axis.SORTED)
-        Range range = (Range) axis.convertStringToColumnValue('10,20')
+        Range range = (Range) axis.standardizeColumnValue('10,20')
         assert 10L == range.low
         assert 20L == range.high
 
-        range = (Range) axis.convertStringToColumnValue('  10 ,\t20  \n')
+        range = (Range) axis.standardizeColumnValue('  10 ,\t20  \n')
         assert 10L == range.low
         assert 20L == range.high
 
         axis = new Axis('ages', AxisType.RANGE, AxisValueType.DATE, false)
-        range = (Range) axis.convertStringToColumnValue('12/25/2014, 12/25/2016')
+        range = (Range) axis.standardizeColumnValue('12/25/2014, 12/25/2016')
         Calendar calendar = Calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1011,7 +1013,7 @@ class TestAxis
         calendar.set 2016, 11, 25
         assert calendar.time == range.high
 
-        range = (Range) axis.convertStringToColumnValue('Dec 25 2014, 12/25/2016')
+        range = (Range) axis.standardizeColumnValue('Dec 25 2014, 12/25/2016')
         calendar = calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1020,7 +1022,7 @@ class TestAxis
         calendar.set 2016, 11, 25
         assert calendar.time == range.high
 
-        range = (Range) axis.convertStringToColumnValue('Dec 25 2014, Dec 25 2016')
+        range = (Range) axis.standardizeColumnValue('Dec 25 2014, Dec 25 2016')
         calendar = calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1029,7 +1031,7 @@ class TestAxis
         calendar.set 2016, 11, 25
         assert calendar.time == range.high
 
-        range = (Range) axis.convertStringToColumnValue('12/25/2014, Dec 25 2016')
+        range = (Range) axis.standardizeColumnValue('12/25/2014, Dec 25 2016')
         calendar = calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1043,11 +1045,11 @@ class TestAxis
     void testRangeWithBrackets()
     {
         Axis axis = new Axis('brackets', AxisType.RANGE, AxisValueType.LONG, true, Axis.SORTED)
-        Range range = (Range) axis.convertStringToColumnValue('[10,20]')
+        Range range = (Range) axis.standardizeColumnValue('[10,20]')
         assert 10L == range.low
         assert 20L == range.high
 
-        range = (Range) axis.convertStringToColumnValue('  [  10 ,  20  ]  ')
+        range = (Range) axis.standardizeColumnValue('  [  10 ,  20  ]  ')
         assert 10L == range.low
         assert 20L == range.high
     }
@@ -1056,21 +1058,21 @@ class TestAxis
     void testDiscreteSetParsing()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.LONG, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('10,20')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('10,20')
         assert 10L == set.get(0)
         assert 20L == set.get(1)
 
-        set = (RangeSet) axis.convertStringToColumnValue('  10 ,\t20  \n')
+        set = (RangeSet) axis.standardizeColumnValue('  10 ,\t20  \n')
         assert 10L == set.get(0)
         assert 20L == set.get(1)
 
         // Support no outer brackets
-        axis.convertStringToColumnValue('10, 20')
+        axis.standardizeColumnValue('10, 20')
         assert 10L == set.get(0)
         assert 20L == set.get(1)
 
         axis = new Axis('ages', AxisType.SET, AxisValueType.DATE, false)
-        set = (RangeSet) axis.convertStringToColumnValue(' "12/25/2014", "12/25/2016"')
+        set = (RangeSet) axis.standardizeColumnValue(' "12/25/2014", "12/25/2016"')
         Calendar calendar = Calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1079,7 +1081,7 @@ class TestAxis
         calendar.set 2016, 11, 25
         assert calendar.time == set.get(1)
 
-        set = (RangeSet) axis.convertStringToColumnValue(' "Dec 25th 2014", "Dec 25th 2016"')
+        set = (RangeSet) axis.standardizeColumnValue(' "Dec 25th 2014", "Dec 25th 2016"')
         calendar = calendar.instance
         calendar.clear()
         calendar.set 2014, 11, 25
@@ -1093,18 +1095,18 @@ class TestAxis
     void testRangeSetParsing()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.LONG, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('[10,20]')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('[10,20]')
         Range range = (Range) set.get(0)
         assert 10L == range.low
         assert 20L == range.high
 
-        set = (RangeSet) axis.convertStringToColumnValue(' [  10 ,\t20  \n] ')
+        set = (RangeSet) axis.standardizeColumnValue(' [  10 ,\t20  \n] ')
         range = (Range) set.get(0)
         assert 10L == range.low
         assert 20L == range.high
 
         axis = new Axis('ages', AxisType.SET, AxisValueType.DATE, false)
-        set = (RangeSet) axis.convertStringToColumnValue('[ "12/25/2014", "12/25/2016"]')
+        set = (RangeSet) axis.standardizeColumnValue('[ "12/25/2014", "12/25/2016"]')
         range = (Range) set.get(0)
         Calendar calendar = Calendar.instance
         calendar.clear()
@@ -1119,20 +1121,20 @@ class TestAxis
     void testRangeAndDiscreteSetParsing()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.LONG, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('[10,20], 1979')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('[10,20], 1979')
         Range range = (Range) set.get(0)
         assert 10L == range.low
         assert 20L == range.high
         assert 1979L == set.get(1)
 
-        set = (RangeSet) axis.convertStringToColumnValue(' [  10 ,\t20  \n] , 1979 ')
+        set = (RangeSet) axis.standardizeColumnValue(' [  10 ,\t20  \n] , 1979 ')
         range = (Range) set.get(0)
         assert 10L == range.low
         assert 20L == range.high
         assert 1979L == set.get(1)
 
         axis = new Axis('ages', AxisType.SET, AxisValueType.DATE, false)
-        set = (RangeSet) axis.convertStringToColumnValue('[ "12/25/2014", "12/25/2016"], "12/25/2020"')
+        set = (RangeSet) axis.standardizeColumnValue('[ "12/25/2014", "12/25/2016"], "12/25/2020"')
         range = (Range) set.get(0)
         Calendar calendar = Calendar.instance
         calendar.clear()
@@ -1150,13 +1152,13 @@ class TestAxis
     void testRangeAndDiscreteSetParsing2()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.BIG_DECIMAL, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('[10,20], 1979')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('[10,20], 1979')
         Range range = (Range) set.get(0)
         assert 10g == range.low
         assert 20g == range.high
         assert 1979g == set.get(1)
 
-        set = (RangeSet) axis.convertStringToColumnValue(' [  10.0 ,\t20  \n] , 1979 ')
+        set = (RangeSet) axis.standardizeColumnValue(' [  10.0 ,\t20  \n] , 1979 ')
         range = (Range) set.get(0)
         assert 10g == range.low
         assert 20g == range.high
@@ -1167,20 +1169,20 @@ class TestAxis
     void testNearestWithDoubles()
     {
         Axis axis = new Axis('loc', AxisType.NEAREST, AxisValueType.COMPARABLE, false)
-        LatLon latlon = (LatLon) axis.convertStringToColumnValue('1.0, 2.0')
+        LatLon latlon = (LatLon) axis.standardizeColumnValue('1.0, 2.0')
         assertEquals 1.0, latlon.lat, 0.00001d
         assertEquals 2.0, latlon.lon, 0.00001d
 
-        latlon = (LatLon) axis.convertStringToColumnValue('1,2')
+        latlon = (LatLon) axis.standardizeColumnValue('1,2')
         assertEquals 1.0, latlon.lat, 0.00001d
         assertEquals 2.0, latlon.lon, 0.00001d
 
-        latlon = (LatLon) axis.convertStringToColumnValue('-1,-2')
+        latlon = (LatLon) axis.standardizeColumnValue('-1,-2')
         assertEquals(-1.0, latlon.lat, 0.00001d)
         assertEquals(-2.0, latlon.lon, 0.001d)
 
         axis = new Axis('loc', AxisType.NEAREST, AxisValueType.COMPARABLE, false)
-        Point3D pt3d = (Point3D) axis.convertStringToColumnValue('1.0, 2.0, 3.0')
+        Point3D pt3d = (Point3D) axis.standardizeColumnValue('1.0, 2.0, 3.0')
         assertEquals 1.0, pt3d.x, 0.00001d
         assertEquals 2.0, pt3d.y, 0.00001d
         assertEquals 3.0, pt3d.z, 0.00001d
@@ -1259,7 +1261,7 @@ class TestAxis
     {
         Axis axis = new Axis('loc', AxisType.SET, AxisValueType.LONG, true)
         Axis axis2 = new Axis('loc', AxisType.SET, AxisValueType.LONG, true)
-        axis2.addColumn '[1, 2]'
+        axis2.addColumn('[1, 2]')
         try
         {
             axis.updateColumns(axis2.columns)
@@ -1279,7 +1281,7 @@ class TestAxis
         Axis axis = new Axis('foo', AxisType.RANGE, AxisValueType.LONG, false)
         try
         {
-            axis.convertStringToColumnValue('this is not a range')
+            axis.standardizeColumnValue('this is not a range')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -1295,7 +1297,7 @@ class TestAxis
         Axis axis = new Axis('foo', AxisType.SET, AxisValueType.LONG, false)
         try
         {
-            axis.convertStringToColumnValue('[null, false]')
+            axis.standardizeColumnValue('[null, false]')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -1305,7 +1307,7 @@ class TestAxis
 
         try
         {
-            axis.convertStringToColumnValue('null, false')
+            axis.standardizeColumnValue('null, false')
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
@@ -2525,34 +2527,34 @@ class TestAxis
     void testIntSetParsing()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.LONG, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('10, 20, [50, 90], 100')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('10, 20, [50, 90], 100')
         assert set.size() == 4
         assert set.get(0) == 10
         assert set.get(1) == 20
         assert set.get(2) == new Range(50L, 90L)
         assert set.get(3) == 100
 
-        set = (RangeSet) axis.convertStringToColumnValue('10, 20, [50, 90]')
+        set = (RangeSet) axis.standardizeColumnValue('10, 20, [50, 90]')
         assert set.size() == 3
         assert set.get(0) == 10
         assert set.get(1) == 20
         assert set.get(2) == new Range(50L, 90L)
 
-        set = (RangeSet) axis.convertStringToColumnValue('[50, 90], 94')
+        set = (RangeSet) axis.standardizeColumnValue('[50, 90], 94')
         assert set.size() == 2
         assert set.get(0) == new Range(50L, 90L)
         assert set.get(1) == 94
 
-        set = (RangeSet) axis.convertStringToColumnValue('[50, 90]')
+        set = (RangeSet) axis.standardizeColumnValue('[50, 90]')
         assert set.size() == 1
         assert set.get(0) == new Range(50L, 90L)
 
-        set = (RangeSet) axis.convertStringToColumnValue('[50, 90], [20, 60]')
+        set = (RangeSet) axis.standardizeColumnValue('[50, 90], [20, 60]')
         assert set.size() == 2
         assert set.get(0) == new Range(50L, 90L)
         assert set.get(1) == new Range(20L, 60L)
 
-        set = (RangeSet) axis.convertStringToColumnValue('[50, 90], 789, [20, 60]')
+        set = (RangeSet) axis.standardizeColumnValue('[50, 90], 789, [20, 60]')
         assert set.size() == 3
         assert set.get(0) == new Range(50L, 90L)
         assert set.get(1) == 789
@@ -2563,7 +2565,7 @@ class TestAxis
     void testFloatSetParsing()
     {
         Axis axis = new Axis('ages', AxisType.SET, AxisValueType.BIG_DECIMAL, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('10.1, 20, [50, 90.5], 100.1')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('10.1, 20, [50, 90.5], 100.1')
         assert set.size() == 4
         assert set.get(0) == 10.1d
         assert set.get(1) == 20
@@ -2575,7 +2577,7 @@ class TestAxis
     void testDateSetParsing()
     {
         Axis axis = new Axis('dates', AxisType.SET, AxisValueType.DATE, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('"10 Dec 1995", "1995/12/25", ["1996 dec 17", "2001-01-31"], "Jun 10th 2010"')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('"10 Dec 1995", "1995/12/25", ["1996 dec 17", "2001-01-31"], "Jun 10th 2010"')
         assert set.size() == 4
         assert set.get(0) == Converter.convert("10 Dec 1995", Date.class)
         assert set.get(1) == Converter.convert("25 Dec 1995", Date.class)
@@ -2587,14 +2589,14 @@ class TestAxis
     void testStringSetParsing()
     {
         Axis axis = new Axis('strings', AxisType.SET, AxisValueType.STRING, true, Axis.SORTED)
-        RangeSet set = (RangeSet) axis.convertStringToColumnValue('"10 Dec 1995", "1995/12/25", ["1996 dec 17", "2001-01-31"], "Jun 10th 2010"')
+        RangeSet set = (RangeSet) axis.standardizeColumnValue('"10 Dec 1995", "1995/12/25", ["1996 dec 17", "2001-01-31"], "Jun 10th 2010"')
         assert set.size() == 4
         assert set.get(0) == "10 Dec 1995"
         assert set.get(1) == "1995/12/25"
         assert set.get(2) == new Range("1996 dec 17", '2001-01-31')
         assert set.get(3) == "Jun 10th 2010"
 
-        set = (RangeSet) axis.convertStringToColumnValue('  "The quick", "brown fox", [ "jumps over", "the lazy dog"], "I\'m dead serious", "\\"this is quoted\\""')
+        set = (RangeSet) axis.standardizeColumnValue('  "The quick", "brown fox", [ "jumps over", "the lazy dog"], "I\'m dead serious", "\\"this is quoted\\""')
         assert set.size() == 5
         assert set.get(0) == "The quick"
         assert set.get(1) == "brown fox"
@@ -2607,26 +2609,26 @@ class TestAxis
     void testRuleConditionParsing()
     {
         Axis axis = new Axis('rule', AxisType.RULE, AxisValueType.EXPRESSION, true)
-        GroovyExpression exp = (GroovyExpression) axis.convertStringToColumnValue("true")
+        GroovyExpression exp = (GroovyExpression) axis.standardizeColumnValue("true")
         assert "true".equals(exp.cmd)
         assert exp.url == null
 
-        exp = (GroovyExpression) axis.convertStringToColumnValue("cache|true")
+        exp = (GroovyExpression) axis.standardizeColumnValue("cache|true")
         assert 'true'.equals(exp.cmd)
         assert  null == exp.url
         assert exp.cacheable
 
         // These values allow a single-line edit widget to feed a GroovyExpression with all capabilities.
-        exp = (GroovyExpression) axis.convertStringToColumnValue("url|http://www.foxnews.com")
+        exp = (GroovyExpression) axis.standardizeColumnValue("url|http://www.foxnews.com")
         assert "http://www.foxnews.com".equals(exp.url)
         assert !exp.cacheable
 
-        exp = (GroovyExpression) axis.convertStringToColumnValue("url|cache|http://www.foxnews.com")
+        exp = (GroovyExpression) axis.standardizeColumnValue("url|cache|http://www.foxnews.com")
         assert "http://www.foxnews.com".equals(exp.url)
         assert exp.cmd == null
         assert exp.cacheable
 
-        exp = (GroovyExpression) axis.convertStringToColumnValue("cache|url|http://www.foxnews.com")
+        exp = (GroovyExpression) axis.standardizeColumnValue("cache|url|http://www.foxnews.com")
         assert "http://www.foxnews.com".equals(exp.url)
         assert exp.cmd == null
         assert exp.cacheable
@@ -3112,6 +3114,38 @@ class TestAxis
         assert 'bravo' == meta.get('b')
         assert 'charlie' == meta.get('c')
         assert 'delta' == meta.get('d')
+    }
+
+    @Test
+    void testAddColumnWithSuggestedIdThatCollides()
+    {
+        Axis state = NCubeBuilder.statesAxis
+        assert state.size() == 50
+        Column oh = state.findColumn('OH')
+        long ohId = oh.id
+        Column dc = new Column('DC', oh.id)
+        Column colAdded = state.addColumn(dc)
+        dc = state.findColumn('DC')
+        assert dc.id != ohId
+        assert dc.value == colAdded.value
+        assert state.size() == 51
+    }
+
+    @Test
+    void testAddColumnWithSuggestedIdThatDoesNotCollides()
+    {
+        SecureRandom random = new SecureRandom()
+        Axis state = NCubeBuilder.statesAxis
+        assert state.size() == 50
+        Column oh = state.findColumn('OH')
+        long startId = random.nextInt(Axis.MAX_COLUMN_ID as Integer)
+        Column dc = new Column('DC', startId)
+        state.addColumn(dc)
+        dc = state.findColumn('DC')
+        assert oh.id != dc.id
+        assert dc.value == 'DC'
+        assert dc.id % Axis.MAX_COLUMN_ID == startId
+        assert state.size() == 51
     }
 
     private static boolean isValidRange(Axis axis, Range range)

@@ -7,6 +7,7 @@ import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonReader
@@ -15,6 +16,7 @@ import com.google.common.collect.TreeRangeMap
 import gnu.trove.map.hash.TLongObjectHashMap
 import groovy.transform.CompileStatic
 
+import java.security.SecureRandom
 import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 
@@ -92,7 +94,9 @@ class Axis
     private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
         Random initialValue()
         {
-            return new Random()
+            String s = Converter.convert(System.nanoTime(), String.class)
+            s = EncryptionUtilities.calculateSHA1Hash(s.bytes)
+            return new SecureRandom(s.bytes)
         }
     }
 
@@ -287,7 +291,6 @@ class Axis
                 StringUtilities.hasContent(branch) &&
                 StringUtilities.hasContent(transformCubeName) &&
                 StringUtilities.hasContent(transformMethodName)
-
     }
 
     /**
@@ -589,41 +592,35 @@ class Axis
      */
     protected Column createColumnFromValue(Comparable value, Long suggestedId)
     {
-        Comparable v
-        if (value == null)
-        {  // Attempting to add Default column to axis
-            v = null
-        }
-        else
-        {
-            if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
-            {
-                v = standardizeColumnValue(value)
-            }
-            else if (type == AxisType.RANGE || type == AxisType.SET)
-            {
-                v = value instanceof String ? convertStringToColumnValue(value as String) : standardizeColumnValue(value)
-            }
-            else if (type == AxisType.RULE)
-            {
-                v = value instanceof String ? convertStringToColumnValue(value as String) : value
-            }
-            else
-            {
-                throw new IllegalStateException("New axis type added without complete support.")
-            }
-        }
-
+        value = standardizeColumnValue(value)
         if (suggestedId != null && suggestedId > 0)
         {
             long attemptId = (id * BASE_AXIS_ID) + (suggestedId % BASE_AXIS_ID)
-            long finalId = idToCol.containsKey(attemptId) ? nextColId : attemptId
-            return new Column(v, finalId)
+            long finalId
+
+            if (idToCol.containsKey(attemptId))
+            {
+                long colId = getValueBasedColumnId(value)
+                finalId = idToCol.containsKey(colId) ? nextColId : colId
+            }
+            else
+            {
+                finalId = attemptId
+            }
+            return new Column(value, finalId)
         }
         else
         {
-            return new Column(v, v == null ? defaultColId : nextColId)
+            return new Column(value, value == null ? defaultColId : nextColId)
         }
+    }
+
+    private long getValueBasedColumnId(Comparable value)
+    {
+        String s = value == null ? '' : value.toString()
+        long hash = abs(EncryptionUtilities.calculateSHA1Hash(s.getBytes('UTF-8')).hashCode()) % MAX_COLUMN_ID
+        hash += id * BASE_AXIS_ID
+        return hash
     }
 
     /**
@@ -686,46 +683,51 @@ class Axis
      * axis is SORTED, it will be returned in sorted order if getColumns() or getColumnsWithoutDefault()
      * are called.
      * @param value Comparable value to add to this Axis.
-     * @return Column instanced created from the passed in value.
-     */
-    Column addColumn(Comparable value)
-    {
-        return addColumn(value, null)
-    }
-
-    /**
-     * Add a new Column to this axis.  It will be added at the end in terms of display order.  If the
-     * axis is SORTED, it will be returned in sorted order if getColumns() or getColumnsWithoutDefault()
-     * are called.
-     * @param value Comparable value to add to this Axis.
-     * @param colName The name of the column (useful for Rule axes.  Any column can be given a name).
-     * @return Column instanced created from the passed in value.
-     */
-    Column addColumn(Comparable value, String colName)
-    {
-        if (isRef)
-        {
-            throw new IllegalStateException("You cannot add columns to a reference Axis, axis: ${name}")
-        }
-        return addColumn(value, colName, null)
-    }
-
-    /**
-     * Add a new Column to this axis.  It will be added at the end in terms of display order.  If the
-     * axis is SORTED, it will be returned in sorted order if getColumns() or getColumnsWithoutDefault()
-     * are called.
-     * @param value Comparable value to add to this Axis.
-     * @param colName The name of the column (useful for Rule axes.  Any column can be given a name).
+     * @param colName The name of the column (useful for Rule axes.  Any column can be given a name). Optional.
      * @param suggestedId Long use the suggested ID if possible.  This allows an axis to be recreated
-     * from persistent storage and have the same IDs.
+     * from persistent storage and have the same IDs. Optional.
      * @return Column instanced created from the passed in value.
      */
-    Column addColumn(Comparable value, String colName, Long suggestedId)
+    Column addColumn(Comparable value, String colName = null, Long suggestedId = null)
     {
         final Column column = createColumnFromValue(value, suggestedId)
         if (StringUtilities.hasContent(colName))
         {
             column.columnName = colName
+        }
+        addColumnInternal(column)
+        return column
+    }
+
+    /**
+     * Add a Column from another Axis to this Axis.  It will
+     * attempt to use the ID that is already on the Column, ignoring
+     * the Axis portion of the ID.  If there is a conflict, it will
+     * then use an ID deterministically generated from the value of
+     * the column.
+     * @param column Column to add
+     * @return Column added - the ID may not be the same as the ID from
+     * the Column passed in.
+     */
+    Column addColumn(Column column)
+    {
+        column.value = standardizeColumnValue(column.value)
+        long baseAxisId = id * BASE_AXIS_ID
+        long colId = column.id % MAX_COLUMN_ID
+        long axisColId = baseAxisId + colId
+
+        if (idToCol.containsKey(axisColId))
+        {
+            colId = getValueBasedColumnId(column.value)
+            if (idToCol.containsKey(colId))
+            {
+                throw new IllegalArgumentException('See https://en.wikipedia.org/wiki/Mesh_(disambiguation)')
+            }
+            column.id = colId
+        }
+        else
+        {
+            column.id = axisColId
         }
         addColumnInternal(column)
         return column
@@ -841,7 +843,6 @@ class Axis
         {
             throw new IllegalStateException("You cannot update columns on a reference Axis, axis: ${name}")
         }
-
         Column col = idToCol.get(colId)
         deleteColumnById(colId)
         Column newCol = createColumnFromValue(value, colId)     // re-use ID
@@ -971,75 +972,6 @@ class Axis
         return colsToDelete
     }
 
-    // Take the passed in value, and prepare it to be allowed on a given axis type.
-    Comparable convertStringToColumnValue(String value)
-    {
-        if (StringUtilities.isEmpty(value))
-        {
-            throw new IllegalArgumentException("Column value cannot be empty, axis: ${name}")
-        }
-        value = value.trim()
-
-        switch(type)
-        {
-            case AxisType.DISCRETE:
-            case AxisType.NEAREST:
-                return standardizeColumnValue(value)
-
-            case AxisType.RANGE:
-                return standardizeColumnValue(parseRange(value))
-
-            case AxisType.SET:
-                try
-                {   // input will always be comma delimited list of items and ranges (we add the final array brackets)
-                    value = '[' + value + ']'
-                    Object[] list = (Object[]) JsonReader.jsonToJava(value, [(JsonReader.USE_MAPS):true] as Map)
-                    final RangeSet set = new RangeSet()
-
-                    for (Object item : list)
-                    {
-                        if (item instanceof Object[])
-                        {   // Convert to Range
-                            Object[] subList = (Object[]) item
-                            if (subList.length != 2)
-                            {
-                                throw new IllegalArgumentException("Range inside set must have exactly two (2) entries.")
-                            }
-                            Range range = new Range((Comparable)subList[0], (Comparable)subList[1])
-                            set.add(range)
-                        }
-                        else if (item == null)
-                        {
-                            throw new IllegalArgumentException("Set cannot have null value inside.")
-                        }
-                        else
-                        {
-                            set.add((Comparable)item)
-                        }
-                    }
-                    if (set.size() > 0)
-                    {
-                        return standardizeColumnValue(set)
-                    }
-                    throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set. Must have at least one element within the set, axis: ${name}")
-                }
-                catch (IllegalArgumentException e)
-                {
-                    throw e
-                }
-                catch (Exception e)
-                {
-                    throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set.  Use v1, v2, [low, high], v3, ... , axis: ${name}", e)
-                }
-
-            case AxisType.RULE:
-                return createExpressionFromValue(value)
-
-            default:
-                throw new IllegalStateException("Unsupported axis type (${type}) for axis '${name}', trying to parse value: ${value}")
-        }
-    }
-
     private static GroovyExpression createExpressionFromValue(String value)
     {
         value = value.trim()
@@ -1094,6 +1026,51 @@ class Axis
         else
         {
             throw new IllegalArgumentException("Value (${value}) cannot be parsed as a Range.  Use [value1, value2], axis: ${name}")
+        }
+    }
+
+    private Comparable parseSet(String value)
+    {
+        try
+        {   // input will always be comma delimited list of items and ranges (we add the final array brackets)
+            value = '[' + value + ']'
+            Object[] list = (Object[]) JsonReader.jsonToJava(value, [(JsonReader.USE_MAPS):true] as Map)
+            final RangeSet set = new RangeSet()
+
+            for (Object item : list)
+            {
+                if (item instanceof Object[])
+                {   // Convert to Range
+                    Object[] subList = (Object[]) item
+                    if (subList.length != 2)
+                    {
+                        throw new IllegalArgumentException("Range inside set must have exactly two (2) entries.")
+                    }
+                    Range range = promoteRange(new Range((Comparable)subList[0], (Comparable)subList[1]))
+                    set.add(range)
+                }
+                else if (item == null)
+                {
+                    throw new IllegalArgumentException("Set cannot have null value inside.")
+                }
+                else
+                {
+                    set.add(promoteValue(valueType, item as Comparable))
+                }
+            }
+            if (set.size() > 0)
+            {
+                return set
+            }
+            throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set. Must have at least one element within the set, axis: ${name}")
+        }
+        catch (IllegalArgumentException e)
+        {
+            throw e
+        }
+        catch (Exception e)
+        {
+            throw new IllegalArgumentException("Value: ${value} cannot be parsed as a Set.  Use v1, v2, [low, high], v3, ... , axis: ${name}", e)
         }
     }
 
@@ -1157,6 +1134,10 @@ class Axis
         }
         else if (type == AxisType.RULE)
         {
+            if (value instanceof String)
+            {
+                return createExpressionFromValue(value as String)
+            }
             if (!(value instanceof CommandCell))
             {
                 throw new IllegalArgumentException("Must only add CommandCell values to ${type} axis '${name}' - attempted to add: ${value.class.name}")
@@ -1165,24 +1146,32 @@ class Axis
         }
         else if (type == AxisType.RANGE)
         {
+            if (value instanceof String)
+            {
+                value = parseRange(value as String)
+            }
             if (!(value instanceof Range))
             {
                 throw new IllegalArgumentException("Must only add Range values to ${type} axis '${name}' - attempted to add: ${value.class.name}")
             }
-            return promoteRange(new Range(((Range)value).low, ((Range)value).high))
+            return promoteRange((Range)value)
         }
         else if (type == AxisType.SET)
         {
-            if (value instanceof Range)
+            if (value instanceof String)
             {
-                value = new RangeSet(value)
+                return parseSet(value)
+            }
+            else if (value instanceof Range)
+            {
+                return new RangeSet(promoteRange(value as Range))
             }
             else if (!(value instanceof RangeSet))
             {
-                value = new RangeSet(promoteValue(valueType, value))
+                return new RangeSet(promoteValue(valueType, value))
             }
             RangeSet set = new RangeSet()
-            Iterator<Comparable> i = ((RangeSet)value).iterator()
+            Iterator<Comparable> i = (value as RangeSet).iterator()
             while (i.hasNext())
             {
                 Comparable val = i.next()
