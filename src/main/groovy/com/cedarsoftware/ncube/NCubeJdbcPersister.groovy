@@ -10,6 +10,7 @@ import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
+import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
@@ -1334,7 +1335,13 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
     {
         Map map = appId as Map
         map.tenant = padTenant(c, appId.tenant)
-        new Sql(c).execute(map, "/* deleteBranch */ DELETE FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch")
+        Sql sql = new Sql(c);
+        sql.execute(map, "/* deleteBranch */ DELETE FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch")
+        GroovyRowResult row = sql.firstRow(map, "/* deleteBranch */ SELECT count(1) FROM n_cube WHERE app_cd = :app AND version_no_cd != '0.0.0' AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = :branch")
+        if (!row[0])
+        {
+            sql.execute(map, "/* deleteBranch */ DELETE FROM n_cube WHERE app_cd = :app AND version_no_cd = '0.0.0' AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = :branch")
+        }
         return true
     }
 

@@ -269,6 +269,53 @@ class TestNCube
     }
 
     @Test
+    void testAddAxisWithExistingCells()
+    {
+        NCube<String> ncube = new NCube<String>("existingCells")
+        Axis buAxis = new Axis("BU", AxisType.DISCRETE, AxisValueType.STRING, false)
+        buAxis.addColumn("foo")
+        buAxis.addColumn("bar")
+        ncube.addAxis(buAxis)
+
+        def coord = [:]
+        coord.put("BU", "foo")
+        ncube.setCell("cell foo", coord)
+        coord.put("BU", "bar")
+        ncube.setCell("cell bar", coord)
+
+        //Add a new axis with a default column
+        Axis ageAxis = new Axis("age", AxisType.RANGE, AxisValueType.LONG, true)
+        ncube.addAxis(ageAxis)
+
+        //The existing cells should now be on the default column of the new axis
+        coord.put("BU", "foo")
+        coord.put("age", null)
+        String s = ncube.getCell(coord)
+        assertEquals("cell foo", s)
+        coord.put("BU", "bar")
+        coord.put("age", null)
+        String t = ncube.getCell(coord)
+        assertEquals("cell bar", t)
+
+        //Add a new axis with no default column
+        Axis prodLineAxis = new Axis("PROD_LINE", AxisType.DISCRETE, AxisValueType.STRING, false)
+        prodLineAxis.addColumn("CommAuto")
+        ncube.addAxis(prodLineAxis)
+
+        //Cells should be cleared
+        coord.put("BU", "foo")
+        coord.put("age", null)
+        coord.put("PROD_LINE", "CommAuto")
+        s = ncube.getCell(coord)
+        assertNull(s)
+        coord.put("BU", "bar")
+        coord.put("age", null)
+        coord.put("PROD_LINE", "CommAuto")
+        t = ncube.getCell(coord)
+        assertNull(t)
+    }
+
+    @Test
     void testClearCells()
     {
         NCube<Boolean> ncube = new NCube<Boolean>("Test.Default.Column")

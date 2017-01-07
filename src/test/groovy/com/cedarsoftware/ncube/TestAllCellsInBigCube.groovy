@@ -114,7 +114,7 @@ class TestAllCellsInBigCube
         NCube<Boolean> ncube = new NCube("bigCube")
         Axis axis = new Axis("axis", AxisType.DISCRETE, AxisValueType.LONG, false)
         ncube.addAxis(axis)
-        int max = 6000000
+        int max = 2000000
         for (int j = 0; j < max; j++)
         {
             ncube.addColumn("axis", j)
@@ -137,6 +137,15 @@ class TestAllCellsInBigCube
         long stop = System.nanoTime()
         double diff = (stop - start) / 1000000.0
         println("time to test large 1D = " + diff)
+
+        axis = new Axis("gender", AxisType.DISCRETE, AxisValueType.STRING, true)
+        axis.addColumn('M')
+        axis.addColumn('F')
+        start = System.nanoTime()
+        ncube.addAxis(axis)
+        stop = System.nanoTime()
+        diff = (stop - start) / 1000000.0
+        println("time to add axis to big cube = " + diff)
     }
 
     // Uncomment for memory size testing

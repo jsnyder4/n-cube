@@ -350,6 +350,60 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testDeleteBranchRemovesTripZeroWhenNoOtherVersionsOfBranchExist()
+    {
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        List<NCubeInfoDto> dtos = NCubeManager.search(BRANCH1, '*', null, null)
+        assertEquals(1, dtos.size())
+
+        dtos = NCubeManager.search(BRANCH1.asVersion('0.0.0'), '*', null, null)
+        assertEquals(4, dtos.size())
+
+        assertTrue(NCubeManager.deleteBranch(BRANCH1))
+
+        dtos = NCubeManager.search(BRANCH1, '*', null, null)
+        assertEquals(0, dtos.size())
+
+        dtos = NCubeManager.search(BRANCH1.asVersion('0.0.0'), '*', null, null)
+        assertEquals(0, dtos.size())
+    }
+
+    @Test
+    void testDeleteBranchDoesNotRemoveTripZeroWhenOtherVersionsOfBranchExist()
+    {
+        ApplicationID patch = BRANCH1.asVersion('1.28.1')
+        ApplicationID tripZero = BRANCH1.asVersion('0.0.0')
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+        NCubeManager.releaseCubes(HEAD, '1.29.0')
+        NCubeManager.copyBranch(BRANCH3, patch)
+
+        List<NCubeInfoDto> dtos = NCubeManager.search(patch, '*', null, null)
+        assertEquals(1, dtos.size())
+
+        dtos = NCubeManager.search(BRANCH3, '*', null, null)
+        assertEquals(1, dtos.size())
+
+        dtos = NCubeManager.search(tripZero, '*', null, null)
+        assertEquals(4, dtos.size())
+
+        assertTrue(NCubeManager.deleteBranch(patch))
+
+        dtos = NCubeManager.search(patch, '*', null, null)
+        assertEquals(0, dtos.size())
+
+        dtos = NCubeManager.search(BRANCH3, '*', null, null)
+        assertEquals(1, dtos.size())
+
+        dtos = NCubeManager.search(tripZero, '*', null, null)
+        assertEquals(4, dtos.size())
+    }
+
+    @Test
     void testUpdateBranchOnCubeCreatedInBranch()
     {
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.age.1.json")

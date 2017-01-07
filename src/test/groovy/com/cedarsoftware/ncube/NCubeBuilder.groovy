@@ -639,7 +639,7 @@ class NCubeBuilder
         1000000000001
       ],
       "type": "exp",
-      "value": "        output.columns = new ArrayList()
+      "value": "        output.columns = new ArrayList(); assert input.refCube instanceof NCube; assert input.refAxis instanceof Axis; assert input.referencingAxis instanceof Axis; 
         for (Column column : input.columns)
         {
             Column copy = new Column(column.value * 2, column.id)
@@ -652,7 +652,7 @@ class NCubeBuilder
         1000000000002
       ],
       "type": "exp",
-      "value": "output.columns = new ArrayList()\nfor (Column column : input.columns)\n{\noutput.columns.add(column.value * 2)\n}"
+      "value": "assert input.refCube instanceof NCube; assert input.refAxis instanceof Axis; assert input.referencingAxis instanceof Axis; output.columns = new ArrayList()\nfor (Column column : input.columns)\n{\noutput.columns.add(column.value * 2)\n}"
     }
   ]
 }''')

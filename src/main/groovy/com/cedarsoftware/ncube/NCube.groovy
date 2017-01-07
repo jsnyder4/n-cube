@@ -1604,7 +1604,8 @@ class NCube<T>
 
     /**
      * Add an Axis to this NCube.
-     * All cells will be cleared when axis is added.
+     * If the axis has a default column, all cells will be added to the default column.
+     * Otherwise, all cells will be cleared.
      * @param axis Axis to add
      */
     void addAxis(final Axis axis)
@@ -1623,7 +1624,29 @@ class NCube<T>
             }
         }
 
-        cells.clear()
+        if (axis.hasDefaultColumn())
+        {   // Add default column ID of the new axis to all populated cells, effectively shifting them to the
+            // default column on the new axis.
+            Collection<Map.Entry<LongHashSet, T>> newCells = new ArrayDeque<>()
+            long defaultColumnId = axis.defaultColId
+            for (cell in cells)
+            {
+                LongHashSet cellKey = cell.key
+                cellKey.add(defaultColumnId)
+                newCells.add(cell)
+            }
+
+            cells.clear()
+            for (cell in newCells)
+            {
+                cells[cell.key] = cell.value
+            }
+        }
+        else
+        {
+            cells.clear()
+        }
+
         axisList[axisName] = axis
         idToAxis.put(axis.id, axis)
         clearSha1()
