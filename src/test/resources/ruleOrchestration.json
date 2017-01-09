@@ -1,0 +1,229 @@
+{
+  "ncube": "RuleOrchestration",
+  "default_view_axis_order": "[\"rule\",\"state\"]",
+  "axes": [
+    {
+      "id": 3,
+      "name": "rule",
+      "hasDefault": false,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 3001242485122,
+          "type": "exp",
+          "name": "init",
+          "foo": true,
+          "value": "true"
+        },
+        {
+          "id": 3001893411642,
+          "type": "exp",
+          "name": "add1",
+          "value": "true"
+        },
+        {
+          "id": 3000999698934,
+          "type": "exp",
+          "name": "add5",
+          "value": "false"
+        },
+        {
+          "id": 3001338430390,
+          "type": "exp",
+          "name": "add10",
+          "value": "true"
+        },
+        {
+          "id": 3000722203228,
+          "type": "exp",
+          "name": "add100",
+          "foo": true,
+          "bar": "baz",
+          "value": "true"
+        },
+        {
+          "id": 3001988018730,
+          "type": "exp",
+          "name": "minus1",
+          "value": "true"
+        },
+        {
+          "id": 3000700455775,
+          "type": "exp",
+          "name": "minus5",
+          "value": "false"
+        },
+        {
+          "id": 3000248508773,
+          "type": "exp",
+          "name": "minus10",
+          "foo": true,
+          "bar": "baz",
+          "value": "true"
+        },
+        {
+          "id": 3001572805754,
+          "type": "exp",
+          "name": "minus100",
+          "value": "true"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "State",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000395953583,
+          "type": "string",
+          "value": "OH"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        3001988018730
+      ],
+      "type": "exp",
+      "value": "output.total -= 1.1"
+    },
+    {
+      "id": [
+        1000395953583,
+        3001572805754
+      ],
+      "type": "exp",
+      "value": "output.total -= 100.0"
+    },
+    {
+      "id": [
+        1000395953583,
+        3000999698934
+      ],
+      "type": "exp",
+      "value": "output.total += 5.0"
+    },
+    {
+      "id": [
+        1000395953583,
+        3000248508773
+      ],
+      "type": "exp",
+      "value": "output.total -= 10.0"
+    },
+    {
+      "id": [
+        3001338430390
+      ],
+      "type": "exp",
+      "value": "output.total += 10.1"
+    },
+    {
+      "id": [
+        1000395953583,
+        3001893411642
+      ],
+      "type": "exp",
+      "value": "output.total += 1.0"
+    },
+    {
+      "id": [
+        1000395953583,
+        3001338430390
+      ],
+      "type": "exp",
+      "value": "output.total += 10.0"
+    },
+    {
+      "id": [
+        1000395953583,
+        3001988018730
+      ],
+      "type": "exp",
+      "value": "output.total -= 1.0"
+    },
+    {
+      "id": [
+        3001242485122
+      ],
+      "type": "exp",
+      "value": "output.total = 0.0"
+    },
+    {
+      "id": [
+        3000700455775
+      ],
+      "type": "exp",
+      "value": "output.total -= 5.1"
+    },
+    {
+      "id": [
+        3000722203228
+      ],
+      "type": "exp",
+      "value": "output.total += 100.1"
+    },
+    {
+      "id": [
+        3001572805754
+      ],
+      "type": "exp",
+      "value": "output.total -= 100.1"
+    },
+    {
+      "id": [
+        1000395953583,
+        3001242485122
+      ],
+      "type": "exp",
+      "value": "output.total = 0.0"
+    },
+    {
+      "id": [
+        3000999698934
+      ],
+      "type": "exp",
+      "value": "output.total += 5.1"
+    },
+    {
+      "id": [
+        1000395953583,
+        3000700455775
+      ],
+      "type": "exp",
+      "value": "output.total -= 5.0"
+    },
+    {
+      "id": [
+        3000248508773
+      ],
+      "type": "exp",
+      "value": "output.total -= 10.1"
+    },
+    {
+      "id": [
+        1000395953583,
+        3000722203228
+      ],
+      "type": "exp",
+      "value": "output.total += 100.0"
+    },
+    {
+      "id": [
+        3001893411642
+      ],
+      "type": "exp",
+      "value": "output.total += 1.1"
+    }
+  ]
+}

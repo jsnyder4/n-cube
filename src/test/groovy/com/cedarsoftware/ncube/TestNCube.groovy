@@ -6,6 +6,7 @@ import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
+import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import org.junit.After
@@ -45,13 +46,13 @@ class TestNCube
     private static final boolean _debug = false
 
     @Before
-    public void setUp()
+    void setUp()
     {
         TestingDatabaseHelper.setupDatabase()
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         TestingDatabaseHelper.tearDownDatabase()
     }
@@ -5098,6 +5099,28 @@ class TestNCube
         ncube.setCell('null', input)
         assert ncube.numCells == 2
         assert ncube.toHtml() != null
+    }
+
+    @Test
+    void testVersionComparator()
+    {
+        Set sorted = new TreeSet(new VersionComparator())
+        sorted.add('1.0.1')
+        sorted.add('1.0.2')
+        sorted.add('1.0.10')
+        sorted.add('1.0.11')
+        sorted.add('1.0.12')
+        sorted.add('1.0.20')
+        sorted.add('1.1.0')
+        sorted.add('1.11.0')
+        sorted.add('1.111.0')
+        sorted.add('1.2.0')
+        sorted.add('1.20.0')
+        sorted.add('2.9.88')
+        sorted.add('11.999.8888')
+        sorted.add('12.999.8888')
+
+        sorted.toString() == '[12.999.8888, 11.999.8888, 2.9.88, 1.111.0, 1.20.0, 1.11.0, 1.2.0, 1.1.0, 1.0.20, 1.0.12, 1.0.11, 1.0.10, 1.0.2, 1.0.1]'
     }
 
     // For testing getCube speed()

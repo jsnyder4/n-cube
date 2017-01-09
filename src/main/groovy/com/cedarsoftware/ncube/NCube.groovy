@@ -491,12 +491,34 @@ class NCube<T>
     }
 
     /**
-     * Fetch the contents of the cell at the location specified by the coordinate argument.
-     * Be aware that if you have any rule cubes in the execution path, they can execute
-     * more than one cell.  The cell value returned is the value of the last cell executed.
-     * Typically, in a rule cube, you are writing to specific keys within the rule cube, and
-     * the calling code then accesses the 'output' Map to fetch the values at these specific
-     * keys.
+     * <pre>Fetch the contents of the cell at the location specified by the coordinate argument.
+     *
+     * Note that if you have any rule axes, they can execute more than one time.  The value
+     * returned by this method is the value of the last cell executed. Typically, in a rule cube,
+     * you are writing to specific keys within the output Map, and the calling code then accesses
+     * the 'output' Map to fetch the values at these specific keys.
+     *
+     * A rule axis name can have a String, Collection, Map, or nothing associated to it.
+     *   - If the value is a String, then it is the name of the rule to begin execution
+     *     (skips past rules ahead of it).
+     *   - If the value associated to a rule axis name is a Collection, then it is considered a
+     *     Collection of rule names to run (orchestration).  In that case, only the named rules
+     *     will be executed (their conditions evaluated, and if true, the associated statements).
+     *   - If the associated value is a Map, then the keys will be the names of meta-property keys
+     *     associated to the rule condition column meta-property keys, and the values must match
+     *     the value associated to the meta-property. The special value NCUBE.DONT_CARE can be
+     *     associated to the key, in which case only the key name of the meta-property must match
+     *     the key name in the passed in map in order for the rule to be selected.  If there
+     *     is more than one entry in the passed in Map, then the rules must match on all entries.
+     *     This is a conjunction (or AND) - the rules match all keys are selected.
+     *   - If nothing is associated to the rule axis name (or null), then all rules are selected.
+     *
+     * Once the rules are selected, all rule conditions are executed.  If the condition is true,
+     * then the associated statement is executed.
+     *
+     * Note: More than one rule axis can be added to an n-cube.  In this case, each rule axis
+     * name can have its own orchestration (rule list) to select the rules on the given axis.
+     * </pre>
      * @param coordinate Map of String keys to values meant to bind to each axis of the n-cube.
      * @param output Map that can be written to by the code within the the n-cubes (for example,
      *               GroovyExpressions.
@@ -528,18 +550,18 @@ class NCube<T>
         final int depth = executionStack.get().size()
         final int dimensions = numDimensions
         final String[] axisNames = axisList.keySet().toArray(new String[dimensions])
+        Map ctx = prepareExecutionContext(input, output)
 
         while (run)
         {
             run = false
-            final Map<String, List<Column>> columnToAxisBindings = bindCoordinateToAxisColumns(input)
+            final Map<String, List<Column>> selectedColumns = selectColumns(input)   // get [potential subset of] rule columns to execute, per Axis
             final Map<String, Integer> counters = getCountersPerAxis(axisNames)
             final Map<Long, Object> cachedConditionValues = [:]
             final Map<String, Integer> conditionsFiredCountPerAxis = [:]
 
             try
             {
-                Map ctx = prepareExecutionContext(input, output)
                 while (true)
                 {
                     final Binding binding = new Binding(name, depth)
@@ -547,7 +569,7 @@ class NCube<T>
                     for (axis in axisList.values())
                     {
                         final String axisName = axis.name
-                        final Column boundColumn = columnToAxisBindings[axisName][counters[axisName] - 1]
+                        final Column boundColumn = selectedColumns[axisName][counters[axisName] - 1]
 
                         if (axis.type == AxisType.RULE)
                         {
@@ -569,9 +591,7 @@ class NCube<T>
                                     if (!axis.fireAll)
                                     {   // Only fire one condition on this axis (fireAll is false)
                                         counters[axisName] = 1
-                                        List<Column> boundCols = []
-                                        boundCols.add(boundColumn)
-                                        columnToAxisBindings[axisName] = boundCols
+                                        selectedColumns[axisName] = [boundColumn]
                                     }
                                 }
                             }
@@ -607,7 +627,7 @@ class NCube<T>
                     }
 
                     // Step #3 increment counters (variable radix increment)
-                    if (!incrementVariableRadixCount(counters, columnToAxisBindings, axisNames))
+                    if (!incrementVariableRadixCount(counters, selectedColumns, axisNames))
                     {
                         break
                     }
@@ -1013,22 +1033,46 @@ class NCube<T>
      * of binding to an axis results in a List<Column>.
      * @param input The passed in input coordinate to bind (or multi-bind) to each axis.
      */
-    private Map<String, List<Column>> bindCoordinateToAxisColumns(Map input)
+    private Map<String, List<Column>> selectColumns(Map<String, Object> input)
     {
         Map<String, List<Column>> bindings = new CaseInsensitiveMap<>()
         for (entry in axisList.entrySet())
         {
             final String axisName = entry.key
             final Axis axis = entry.value
-            final Comparable value = (Comparable) input[axisName]
+            final Object value = input[axisName]
 
             if (AxisType.RULE == axis.type)
             {   // For RULE axis, all possible columns must be added (they are tested later during execution)
-                bindings[axisName] = axis.getRuleColumnsStartingAt((String) input[axisName])
+                if (value instanceof String)
+                {
+                    bindings[axisName] = axis.getRuleColumnsStartingAt((String) value)
+                }
+                else if (value instanceof Collection)
+                {   // Collection of rule names to select (orchestration)
+                    Collection<String> orchestration = value as Collection
+                    bindings[axisName] = axis.findColumns(orchestration)
+                    assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, rule names ${orchestration}, cube: ${name}")
+                }
+                else if (value instanceof Map)
+                {   // key-value pairs that meta-properties of rule columns must match to select rules.
+                    Map<String, Object> required = value as Map
+                    bindings[axisName] = axis.findColumns(required)
+                    assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match ${required}, cube: ${name}")
+                }
+                else if (value instanceof Closure)
+                {
+                    bindings[axisName] = axis.findColumns(value as Closure)
+                    assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match closure, cube: ${name}")
+                }
+                else
+                {
+                    bindings[axisName] = axis.columns
+                }
             }
             else
             {   // Find the single column that binds to the input coordinate on a regular axis.
-                final Column column = axis.findColumn(value)
+                final Column column = axis.findColumn(value as Comparable)
                 if (column == null)
                 {
                    throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axisName}, cube: ${name}",
@@ -1039,6 +1083,14 @@ class NCube<T>
         }
 
         return bindings
+    }
+
+    private void assertAtLeast1Rule(Collection<Column> columns, String errorMessage)
+    {
+        if (columns.empty)
+        {   // Match default (if it exists) and none of the orchestration columns have matched
+            throw new CoordinateNotFoundException(errorMessage)
+        }
     }
 
     private static Map<String, Integer> getCountersPerAxis(final String[] axisNames)

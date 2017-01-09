@@ -68,6 +68,7 @@ import static java.lang.Math.abs
 @CompileStatic
 class Axis
 {
+    public static final String DONT_CARE = '_︿_ψ_☼'
     public static final int SORTED = 0
     public static final int DISPLAY = 1
     private static final AtomicLong baseAxisIdForTesting = new AtomicLong(1)
@@ -1329,6 +1330,12 @@ class Axis
         }
     }
 
+    /**
+     * Fetch Columns on a rule axis where the passed in name is the first rule desired.  All columns
+     * until the ends will also be selected.
+     * @param ruleName String name of rule to locate.
+     * @return List of Columns starting with the column whose name matches 'ruleName'
+     */
     protected List<Column> getRuleColumnsStartingAt(String ruleName)
     {
         if (StringUtilities.isEmpty(ruleName))
@@ -1356,6 +1363,135 @@ class Axis
             cols.add(defaultCol)
         }
         return cols
+    }
+
+    /**
+     * Find all rule Columns which have meta-properties that match all of the passed in required meta-properties.
+     * In order for a Column to be selected, all keys in the requiredProps Map must match (case-insensitively) keys
+     * in the meta-properties map of the Column, and the values must match each other.  If a value is the special
+     * value Axis.DONT_CARE, then only the key must be present, no comparison is performed on the value.
+     * @param requiredProps Map of String key / value pair criteria
+     * @return A List<Column> that properly match the passed in requiredProps Map.  If no Columns match, then if
+     * there is a Default column, it will be the single Column in the returned List.  The order of the Columns
+     * returned in the list will be in the order listed when .columns() is called.  A Column instance will be
+     * included only one or zero times.
+     */
+    List<Column> findColumns(Map<String, Object> requiredProps)
+    {
+        Iterator<Column> i = columns.iterator()
+        List<Column> columns = []
+
+        while (i.hasNext())
+        {
+            Column column = i.next()
+            Map<String, Object> colProps = column.metaProperties
+            if (hasRequiredProps(requiredProps, colProps))
+            {
+                columns.add(column)
+            }
+        }
+
+        if (columns.empty && hasDefaultColumn())
+        {
+            columns.add(defaultCol)
+        }
+
+        return columns
+    }
+
+    /**
+     * Pass the Axis (this) to the passed in Closure. The closure is expected to take one argument, this
+     * Axis, and return a List<Column> instances.  The closure can do whatever filtering it wants in
+     * order to generated the List of Columns.  The list can contain a column more than once.  The generated
+     * List is the orchestration (or order) in which the columns will be selected and used.
+     * <pre>
+     * Example:
+     * axis.findColumns { Axis axis -> List columns = []; ... ; return columns }
+     * </pre>
+     * @param Closure that takes a single Axis argument and returns a List of Column instances.
+     * @param
+     * @return A List<Column> selected by the Closure. If the closure returns no columns, then if
+     * there is a Default column, it will be the single Column in the returned List.  The order of
+     * the Columns returned in the list will be in the order the closure returned them.  A Column
+     * instance can be included more than one time.
+     */
+    List<Column> findColumns(Closure closure)
+    {
+        List<Column> columns = closure(this) as List
+
+        if (columns.empty && hasDefaultColumn())
+        {
+            columns.add(defaultCol)
+        }
+
+        return columns
+    }
+
+    /**
+     * Find all Columns which have a name (meta-property name) in the passed in Collection.
+     * The Columns are returned based on the order in the passed in Collection.  A Column
+     * could be returned more than once.
+     * @param orchestration Collection of String names used to select Columns.
+     * @return List<Column> that matches the passed in orchestration list.  If no Columns match, then if
+     * there is a Default column, it will be the single Column in the returned List.  The same Column
+     * can be returned more than once if it was listed more than once in the passed in Collection.  The
+     * order of the Columns returned in the list will match the orchestration Collection order.
+     */
+    List<Column> findColumns(Collection<String> orchestration)
+    {
+        List<Column> columns = []
+        Iterator<String> i = orchestration.iterator()
+
+        while (i.hasNext())
+        {
+            String ruleName = i.next()
+            Column column = findColumnByName(ruleName) // O(1)
+            if (column)
+            {
+                columns.add(column)
+            }
+        }
+
+        if (columns.empty && hasDefaultColumn())
+        {
+            columns.add(defaultCol)
+        }
+
+        return columns
+    }
+
+    /**
+     * @param requiredProps Map of required key-value pairs (Criteria)
+     * @param metaProps Map of key-value meta properties
+     * @return true if the meta-Props contains all of the keys from the requiredProps Map, and all of the
+     * values from the corresponding entries match.  If the requireProps has the special value Axis.DONT_CARE
+     * associated to it, then only the key must be present.
+     */
+    private static boolean hasRequiredProps(Map<String, Object> requiredProps, Map<String, Object> metaProps)
+    {
+        Iterator<Map.Entry<String, Object>> i = requiredProps.entrySet().iterator()
+
+        while (i.hasNext())
+        {
+            Map.Entry<String, Object> entry = i.next()
+            if (metaProps.containsKey(entry.key))
+            {
+                Object value = metaProps[entry.key]
+                if (DONT_CARE != entry.value)
+                {
+                    if (value != entry.value)
+                    {
+                        return false
+                    }
+                }
+            }
+            else
+            {
+                return false
+            }
+        }
+
+        return true
     }
 
     /**

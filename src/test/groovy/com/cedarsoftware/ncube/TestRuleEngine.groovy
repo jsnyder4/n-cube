@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import org.junit.After
@@ -56,7 +57,7 @@ class TestRuleEngine
         Axis state = ncube.getAxis 'state'
         assert state.columns[0].id != 10
 
-        Map input = [vehiclePrice:5000.0, driveAge:22, gender:'male', vehicleCylinders:8, state:'TX']
+        Map input = [vehiclePrice: 5000.0, driveAge: 22, gender: 'male', vehicleCylinders: 8, state: 'TX']
         Map output = [:]
         Object out = ncube.getCell(input, output)
         assert out == 10
@@ -97,7 +98,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'duplicateExpression.json'
         Map output = [:]
-        def out = ncube.getCell([vehiclePrice:5000.0, driveAge:22, gender:'male', vehicleCylinders:8], output)
+        def out = ncube.getCell([vehiclePrice: 5000.0, driveAge: 22, gender: 'male', vehicleCylinders: 8], output)
         assert out == 10
         assert output.premium == 119.0
     }
@@ -132,7 +133,7 @@ class TestRuleEngine
         optScope = ncube2.getOptionalScope([:], [:])
         assert 1 == optScope.size()
 
-        def coord = [age:18,state:'OH'];
+        def coord = [age: 18, state: 'OH'];
         Map output = [:]
         ncube2.getCell(coord, output)
         assert 5.0 == output.premium
@@ -143,7 +144,7 @@ class TestRuleEngine
         assert -5.0 == output.premium
 
         output.clear()
-        ncube2.getCell([state:'OH',Age:23], output)
+        ncube2.getCell([state: 'OH', Age: 23], output)
         assert 1.0 == output.premium
     }
 
@@ -152,7 +153,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'multiRule.json'
         Map output = [:]
-        ncube.getCell([age:10, weight:50], output)
+        ncube.getCell([age: 10, weight: 50], output)
 
         assert output.weight == 'medium-weight'
         assert output.age == 'adult'
@@ -160,21 +161,21 @@ class TestRuleEngine
         assert 4L == ruleInfo.getNumberOfRulesExecuted()
 
         output.clear()
-        ncube.getCell([age:10, weight:150], output)
+        ncube.getCell([age: 10, weight: 150], output)
         assert output.weight == 'medium-weight'
         assert output.age == 'adult'
         ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
         assert 2L == ruleInfo.getNumberOfRulesExecuted()
 
         output.clear()
-        ncube.getCell([age:35, weight:150], output)
+        ncube.getCell([age: 35, weight: 150], output)
         assert output.weight == 'medium-weight'
         assert output.age == 'adult'
         ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
         assert 1L == ruleInfo.getNumberOfRulesExecuted()
 
         output.clear()
-        ncube.getCell([age:42, weight:205], output)
+        ncube.getCell([age: 42, weight: 205], output)
         assert output.weight == 'heavy-weight'
         assert output.age == 'middle-aged'
         ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
@@ -186,7 +187,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'multiRule2.json'
         Map output = [:]
-        ncube.getCell([age:10, weight:60], output)
+        ncube.getCell([age: 10, weight: 60], output)
         assert output.weight == 'light-weight'
 
         // The age is 'adult' because two rules are matching on the age axis (intentional rule error)
@@ -200,7 +201,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'multiRuleHalt.json'
         Map output = [:]
-        ncube.getCell([age:10, weight:60], output)
+        ncube.getCell([age: 10, weight: 60], output)
         assert output.age == 'young'
         assert output.weight == 'light-weight'
         RuleInfo ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
@@ -208,14 +209,14 @@ class TestRuleEngine
         assertFalse ruleInfo.wasRuleStopThrown()
 
         output.clear()
-        ncube.getCell([age:25,weight:60], output)
+        ncube.getCell([age: 25, weight: 60], output)
         ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
         assert 0 == ruleInfo.getNumberOfRulesExecuted()
         assert ruleInfo.wasRuleStopThrown()
 
         output.clear()
-        ncube.getCell([age:45, weight:60], output)
-        assert output.age== 'middle-aged'
+        ncube.getCell([age: 45, weight: 60], output)
+        assert output.age == 'middle-aged'
         assert output.weight == 'light-weight'
         ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
         assert 1 == ruleInfo.getNumberOfRulesExecuted()
@@ -320,7 +321,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'ruleNoMatch.json'
 
-        def coord = [age:85]
+        def coord = [age: 85]
         Map output = [:]
         try
         {
@@ -360,7 +361,7 @@ class TestRuleEngine
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'containsCellRule.json'
 
-        def coord = [condition:'Male']
+        def coord = [condition: 'Male']
         assert ncube.containsCell(coord, true)
         try
         {
@@ -410,7 +411,7 @@ class TestRuleEngine
     {
         NCubeManager.getNCubeFromResource 'ruleSet2.json'
         NCube ncube = NCubeManager.getNCubeFromResource 'ruleSet1.json'
-        Map input = [age:10]
+        Map input = [age: 10]
         Map output = [:]
         ncube.getCell input, output
         assert 1.0 == output.total
@@ -428,7 +429,7 @@ class TestRuleEngine
     void testBasicJump()
     {
         NCube ncube = NCubeManager.getNCubeFromResource('basicJump.json')
-        Map input = [age:10]
+        Map input = [age: 10]
         Map output = [:]
         ncube.getCell(input, output)
 
@@ -452,14 +453,14 @@ class TestRuleEngine
     void testMultipleRuleAxesWithMoreThanOneRuleFiring()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'multiRule.json'
-        assert 'medium-weight' == ncube.getCell([age:35, weight:99])
+        assert 'medium-weight' == ncube.getCell([age: 35, weight: 99])
     }
 
     @Test
     void testRuleFalseValues()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'ruleFalseValues.json'
-        Map input = [state:'OH']
+        Map input = [state: 'OH']
         Map output = [:]
         ncube.getCell input, output
         RuleInfo ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
@@ -499,7 +500,7 @@ class TestRuleEngine
         assert NCube.isTrue(BigInteger.ONE)
         assert NCube.isTrue(BigDecimal.ONE)
         assert NCube.isTrue('Yo')
-        Map map = [foo:'bar']
+        Map map = [foo: 'bar']
         assert NCube.isTrue(map)
         assert NCube.isTrue(map.keySet().iterator())
         List list = new ArrayList()
@@ -515,7 +516,7 @@ class TestRuleEngine
     void testJumpStart()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'basicJumpStart.json'
-        Map input = [letter:'e']
+        Map input = [letter: 'e']
         Map output = [:] as CaseInsensitiveMap
         ncube.getCell input, output
 
@@ -546,7 +547,7 @@ class TestRuleEngine
     void testJumpStart2D()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'basicJumpStart2D.json'
-        Map input = [letter:'f', column:'y', condition:'f', condition2:'y']
+        Map input = [letter: 'f', column: 'y', condition: 'f', condition2: 'y']
         Map output = [:] as CaseInsensitiveMap
         ncube.getCell input, output
 
@@ -572,7 +573,7 @@ class TestRuleEngine
     void testJumpRestart()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'basicJumpRestart.json'
-        Map input = [letter:'e']
+        Map input = [letter: 'e']
         Map output = [:] as CaseInsensitiveMap
         output.a = 0
         output.b = 0
@@ -633,7 +634,7 @@ class TestRuleEngine
         NCube ncube = NCubeManager.getNCubeFromResource 'expressionTests.json'
         NCubeManager.getNCubeFromResource 'months.json'
 
-        Map input = ['Age':10]
+        Map input = ['Age': 10]
         Map output = [:]
         ncube.getCell input, output
         assert output.isAxis
@@ -683,7 +684,7 @@ class TestRuleEngine
     void testRuleInfoRuleName()
     {
         NCube ncube = NCubeManager.getNCubeFromResource 'multiRule.json'
-        Map input = [age:18, weight:125]
+        Map input = [age: 18, weight: 125]
         Map output = [:]
         def ret = ncube.getCell input, output
         assert 'medium-weight' == ret
@@ -702,63 +703,63 @@ class TestRuleEngine
     void testRuleSimpleWithDefault()
     {
         NCube ncube = NCubeManager.getNCubeFromResource('ruleSimpleWithDefault.json')
-        Map input = [state:'OH']
+        Map input = [state: 'OH']
         Map output = [:]
         def ret = ncube.getCell(input, output)
         assert ret == 'Ohio'
         assert output.text == 'Ohio'
 
-        input = [state:'OH', rule:'OhioRule']
+        input = [state: 'OH', rule: 'OhioRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Ohio'
         assert output.text == 'Ohio'
 
-        input = [state:'O', rule:'OhioRule']
+        input = [state: 'O', rule: 'OhioRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'nope'
         assert output.text == 'nope'
 
-        input = [state:'O']
+        input = [state: 'O']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'nope'
         assert output.text == 'nope'
 
-        input = [state:'TX']
+        input = [state: 'TX']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Texas'
         assert output.text == 'Texas'
 
-        input = [state:'TX', rule:'TexasRule']
+        input = [state: 'TX', rule: 'TexasRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Texas'
         assert output.text == 'Texas'
 
-        input = [state:'O', rule:'TexasRule']
+        input = [state: 'O', rule: 'TexasRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'nope'
         assert output.text == 'nope'
 
         // Starting at 'OhioRule' but input value is TX so we should get Texas
-        input = [state:'TX', rule:'OhioRule']
+        input = [state: 'TX', rule: 'OhioRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Texas'
         assert output.text == 'Texas'
 
         // Starting at 'TexasRule' but input value is OH so we should get 'no state' (because of rule order)
-        input = [state:'OH', rule:'TexasRule']
+        input = [state: 'OH', rule: 'TexasRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'nope'
         assert output.text == 'nope'
 
-        input = [state:'OH', rule:'MatchesNoRuleName']
+        input = [state: 'OH', rule: 'MatchesNoRuleName']
         output = [:]
         ncube.getCell(input, output)
         assert ret == 'nope'
@@ -775,13 +776,13 @@ class TestRuleEngine
         assert ret == 'Ohio'
         assert output.text == 'Ohio'
 
-        input = [state:'OH', rule:'OhioRule']
+        input = [state: 'OH', rule: 'OhioRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Ohio'
         assert output.text == 'Ohio'
 
-        input = [state:'O', rule:'OhioRule']
+        input = [state: 'O', rule: 'OhioRule']
         output = [:]
         try
         {
@@ -793,13 +794,13 @@ class TestRuleEngine
             ruleAxisDidNotBind(e, ncube.name, input)
         }
 
-        input = [state:'TX', rule:'OhioRule']
+        input = [state: 'TX', rule: 'OhioRule']
         output = [:]
         ret = ncube.getCell(input, output)
         assert ret == 'Texas'
         assert output.text == 'Texas'
 
-        input = [state:'OH', rule:'TexasRule']
+        input = [state: 'OH', rule: 'TexasRule']
         output = [:]
         try
         {
@@ -811,7 +812,7 @@ class TestRuleEngine
             ruleAxisDidNotBind(e, ncube.name, input)
         }
 
-        input = [state:'OH', rule:'MatchesNoRuleName']
+        input = [state: 'OH', rule: 'MatchesNoRuleName']
         output = [:]
         try
         {
@@ -840,7 +841,7 @@ class TestRuleEngine
         assert output.size() == 3   // A, _rule, return
 
         // Start on 2nd rule
-        input = [rule:'SecondRule']
+        input = [rule: 'SecondRule']
         output.clear()
         ret = ncube.getCell(input, output)
         assert output.B == 'B fired'
@@ -869,21 +870,21 @@ class TestRuleEngine
         assert ret == 'A1 fired'
         assert output.size() == 3   // B, _rule, return
 
-        input = [ruleLetter:'BRule']
+        input = [ruleLetter: 'BRule']
         output.clear()
         ret = ncube.getCell(input, output)
         assert output.B1 == 'B1 fired'
         assert ret == 'B1 fired'
         assert output.size() == 3   // B, _rule, return
 
-        input = [ruleNumber:'2Rule']
+        input = [ruleNumber: '2Rule']
         output.clear()
         ret = ncube.getCell(input, output)
         assert output.A2 == 'A2 fired'
         assert ret == 'A2 fired'
         assert output.size() == 3   // B, _rule, return
 
-        input = [ruleNumber:'2Rule', ruleLetter:'BRule']
+        input = [ruleNumber: '2Rule', ruleLetter: 'BRule']
         output.clear()
         ret = ncube.getCell(input, output)
         assert output.B2 == 'B2 fired'
@@ -923,5 +924,134 @@ class TestRuleEngine
         assert output.initialize == true
         assert output.active == true
         assertFalse output.containsValue('defaultExecuted')
+    }
+
+    @Test
+    void testNamedOrchestration()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        Map input = [rule: ['init', 'add1', 'add5', 'add10', 'add1']]
+        Map output = [:]
+        ncube.getCell(input, output)
+        assert output.total == 12.3
+
+        input = [rule: ['init', 'add1', 'add5', 'add10', 'add1', 'minus5'], state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 12.0
+
+        // Ignores add11
+        input = [rule: ['init', 'add1', 'add1', 'add11', 'add1'], state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 3.0
+
+        // Match none (and no default, so blow up)
+        try
+        {
+            input = [rule: ['initd', 'add2'], state: 'OH']
+            ncube.getCell(input, output)
+            fail()
+        }
+        catch (CoordinateNotFoundException ignored)
+        {
+        }
+
+        // run rules backward (except init)
+        input = [rule: ['init', 'add100', 'add10', 'add1'], state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 111.0
+    }
+
+    @Test
+    void testNamedOrchestrationWithDefault()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        ncube.addColumn('rule', null)
+        Map input = [rule: ['none-ya']]
+        Map output = [total: 'qux']
+        ncube.getCell(input, output)    // does not blow up because there is a no-op default column
+        assert output.total == 'qux'     // no rules called so .total is never initialized
+    }
+
+    @Test
+    void testOrchestrationMap()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        Map required = [foo: true]
+        Map input = [rule: required]
+        Map output = [:]
+        ncube.getCell(input, output)
+        assert output.total == 90.0
+
+        input = [rule: required, state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 90.0
+
+        required = [foo: true, bar: 'baz']
+        input = [rule: required, state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 180.0    // skipped init (did not have 'bar/baz' key-value pair)
+
+        try
+        {
+            output = [:]
+            required = [foo: true, bar: 'baz']
+            input = [rule: required, state: 'OH']
+            ncube.getCell(input, output)
+            fail()
+        }
+        catch (CommandCellException ignored)
+        {
+        }    // .total field never established on output
+
+        output = [total: 10.0]
+        required = [foo: true, bar: 'baz']
+        input = [rule: required, state: 'OH']
+        ncube.getCell(input, output)
+        assert output.total == 100.0
+    }
+
+    @Test
+    void testOrchestrationMapWithDefault()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        ncube.addColumn('rule', null)
+        Map required = [foo: false]
+        Map input = [rule: required]
+        Map output = [total: 'foo']
+        ncube.getCell(input, output)
+        assert output.total == 'foo'
+    }
+
+    @Test
+    void testOrchestrationClosure()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        Map input = [state: 'OH', rule: { Axis axis ->
+            List<Column> columns = []
+            axis.columns.each { Column column ->
+                String name = column.columnName
+                if (name.startsWith('add'))
+                {
+                    columns.add(column)
+                    columns.add(column)
+                }
+            }
+            columns.add(axis.findColumnByName('minus10'))
+            return columns
+        }]
+        Map output = [total: 0.0]
+        ncube.getCell(input, output)
+        assert output.total == 212.0
+    }
+
+    @Test
+    void testOrchestrationClosureWithDefault()
+    {
+        NCube ncube = NCubeManager.getNCubeFromResource('ruleOrchestration.json')
+        ncube.addColumn('rule', null)
+        Map input = [state: 'OH', rule: { Axis axis -> return [] }]
+        Map output = [total: 'garply']
+        ncube.getCell(input, output)
+        assert output.total == 'garply'
     }
 }
