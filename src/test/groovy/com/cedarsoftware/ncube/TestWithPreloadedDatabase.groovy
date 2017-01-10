@@ -6184,6 +6184,74 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testMultipleInstanceOfSameReferenceAxis()
+    {
+        NCube one = NCubeBuilder.discrete1DAlt
+        Axis state = one.getAxis('state')
+        state.setMetaProperty('nose', 'smell')
+        state.setMetaProperty('ear', 'sound')
+        state.findColumn('OH').setMetaProperty('foo', 'bar')
+        state.findColumn('TX').setMetaProperty('baz', 'qux')
+        NCubeManager.updateCube(ApplicationID.testAppId, one, true)
+        assert one.getAxis('state').size() == 2
+        NCubeManager.addCube(ApplicationID.testAppId, one)
+
+        Map<String, Object> args = [:]
+
+        ApplicationID appId = ApplicationID.testAppId
+        args[REF_TENANT] = appId.tenant
+        args[REF_APP] = appId.app
+        args[REF_VERSION] = appId.version
+        args[REF_STATUS] = appId.status
+        args[REF_BRANCH] = appId.branch
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        axis.setMetaProperty('nose', 'sniff')
+        axis.findColumn('OH').setMetaProperty('foo', 'bart')    // over-ride meta-property on referenced axis
+        NCube two = new NCube('Mongo')
+        two.addAxis(axis)
+
+        refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource2', args)
+        axis = new Axis('stateSource2', 2, false, refAxisLoader)
+        axis.findColumn('TX').setMetaProperty('baz', 'quux')
+        axis.setMetaProperty('ear', 'hear')
+        two.addAxis(axis)
+
+        two.setCell('a', [stateSource1:'OH', stateSource2:'OH'] as Map)
+        two.setCell('b', [stateSource1:'TX', stateSource2:'OH'] as Map)
+
+        String json = two.toFormattedJson()
+        NCube reload = NCube.fromSimpleJson(json)
+        assert reload.numCells == 2
+        assert 'a' == reload.getCell([stateSource1:'OH', stateSource2:'OH'] as Map)
+        assert 'b' == reload.getCell([stateSource1:'TX', stateSource2:'OH'] as Map)
+        Axis refAxis1 = reload.getAxis('stateSource1')
+        Axis refAxis2 = reload.getAxis('stateSource2')
+        assert refAxis1.reference
+        assert refAxis2.reference
+
+        // Ensure Axis meta-properties are brought over (and appropriately overridden) from referenced axis
+        assert 'sniff' == refAxis1.getMetaProperty('nose')
+        assert 'sound' == refAxis1.getMetaProperty('ear')
+        assert 'smell' == refAxis2.getMetaProperty('nose')
+        assert 'hear' == refAxis2.getMetaProperty('ear')
+
+        // Ensure Column meta-properties are brought over (and appropriately overridden) from referenced axis
+        assert 'bart' == refAxis1.findColumn('OH').getMetaProperty('foo')
+        assert 'qux' == refAxis1.findColumn('TX').getMetaProperty('baz')
+        assert 'bar' == refAxis2.findColumn('OH').getMetaProperty('foo')
+        assert 'quux' == refAxis2.findColumn('TX').getMetaProperty('baz')
+        NCubeManager.updateCube(ApplicationID.testAppId, two, true)
+
+        List<AxisRef> axisRefs = NCubeManager.getReferenceAxes(ApplicationID.testAppId)
+        assert axisRefs.size() == 2
+    }
+
+    @Test
     void testDynamicallyLoadedCode()
     {
         String save = NCubeManager.systemParams[NCUBE_ACCEPTED_DOMAINS]

@@ -712,26 +712,10 @@ class Axis
      */
     Column addColumn(Column column)
     {
-        column.value = standardizeColumnValue(column.value)
-        long baseAxisId = id * BASE_AXIS_ID
-        long colId = column.id % MAX_COLUMN_ID
-        long axisColId = baseAxisId + colId
-
-        if (idToCol.containsKey(axisColId))
-        {
-            colId = getValueBasedColumnId(column.value)
-            if (idToCol.containsKey(colId))
-            {
-                throw new IllegalArgumentException('See https://en.wikipedia.org/wiki/Mesh_(disambiguation)')
-            }
-            column.id = colId
-        }
-        else
-        {
-            column.id = axisColId
-        }
-        addColumnInternal(column)
-        return column
+        final Column newColumn = createColumnFromValue(column.value, column.id)
+        newColumn.addMetaProperties(column.metaProperties)
+        addColumnInternal(newColumn)
+        return newColumn
     }
 
     protected Column addColumnInternal(Column column)
@@ -772,12 +756,13 @@ class Axis
 
     protected Column deleteColumnById(long colId)
     {
-        if (isRef)
+        Column col = idToCol.get(colId)
+
+        if (isRef && !col.default)
         {
-            throw new IllegalStateException("You cannot delete columns from a reference Axis, axis: ${name}")
+            throw new IllegalStateException("You cannot delete non-default columns from a reference Axis, axis: ${name}")
         }
 
-        Column col = idToCol.get(colId)
         if (col == null)
         {
             return null
@@ -844,19 +829,13 @@ class Axis
         {
             throw new IllegalStateException("You cannot update columns on a reference Axis, axis: ${name}")
         }
-        Column col = idToCol.get(colId)
+        Column column = idToCol.get(colId)
         deleteColumnById(colId)
-        Column newCol = createColumnFromValue(value, colId)     // re-use ID
-        ensureUnique(newCol.value)
-        newCol.displayOrder = col.displayOrder           // re-use displayOrder
-        String colName = col.columnName
-
-        if (StringUtilities.hasContent(colName))
-        {
-            newCol.columnName = col.columnName           // re-use name
-        }
-
-        indexColumn(newCol)
+        Column newColumn = createColumnFromValue(value, colId)      // re-use ID
+        ensureUnique(newColumn.value)
+        newColumn.displayOrder = column.displayOrder                // re-use displayOrder
+        newColumn.addMetaProperties(column.metaProperties)          // bring over meta-properties
+        indexColumn(newColumn)
     }
 
     /**

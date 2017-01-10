@@ -2826,6 +2826,69 @@ class TestAxis
     }
 
     @Test
+    void testReferenceAxisDeleteColumn()
+    {
+        NCube one = NCubeBuilder.discrete1DEmptyWithDefault
+        NCubeManager.addCube(ApplicationID.testAppId, one)
+
+        Map<String, Object> args = [:]
+
+        ApplicationID appId = ApplicationID.testAppId
+        args[REF_TENANT] = appId.tenant
+        args[REF_APP] = appId.app
+        args[REF_VERSION] = appId.version
+        args[REF_STATUS] = appId.status
+        args[REF_BRANCH] = appId.branch
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
+        Axis axis = new Axis('stateSource', 1, true, refAxisLoader)
+        NCube two = new NCube('Mongo')
+        two.addAxis(axis)
+
+        two.setCell('a', [stateSource:'OH'] as Map)
+        two.setCell('b', [stateSource:'TX'] as Map)
+        two.setCell('c', [stateSource:'AZ'] as Map)         // Hits Default axis
+
+        String json = two.toFormattedJson()
+        NCube reload = NCube.fromSimpleJson(json)
+
+        reload.deleteColumn('stateSource', 'Default')
+        Axis reloadAxis = reload.getAxis('stateSource')
+
+        // default column and related cells should be deleted
+        assertFalse(reloadAxis.hasDefaultColumn())
+        assert 2 == reloadAxis.columns.size()
+        assert 2 == reload.numCells
+        try
+        {
+            reload.getCell([stateSource:'AZ'] as Map)
+        }
+        catch (CoordinateNotFoundException e)
+        {
+            String message = e.message
+            assert message.contains('Value \'[stateSource:AZ]\' not found on axis: stateSource, cube: Mongo')
+        }
+
+        try
+        {
+            reload.deleteColumn('stateSource', 'OH')
+        }
+        catch (IllegalStateException e)
+        {
+            String message = e.message
+            assert message.contains('You cannot delete non-default columns from a reference Axis, axis: stateSource')
+        }
+
+        // column should not be deleted
+        assert 2 == reloadAxis.columns.size()
+        assert 2 == reload.numCells
+        assert 'a' == reload.getCell([stateSource:'OH'] as Map)
+    }
+
+    @Test
     void testReferenceAxisWithTransform()
     {
         NCube one = NCubeBuilder.discrete1DLong

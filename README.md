@@ -10,7 +10,7 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>3.5.2</version>
+  <version>3.5.3</version>
 </dependency>
 ```
 
@@ -94,7 +94,7 @@ Use either the Simple JSON format to create n-cubes, or the nCubeEditor to editi
 These are read in using the `NCubeManager.getNCubeFromResource()` API.  You can also call `ncube.fromSimpleJson(String json)`.
 
 #### Licensing
-Copyright 2012-2016 Cedar Software, LLC
+Copyright 2012-2017 Cedar Software, LLC
 
 Licensed under the Apache License, Version 2.0
 

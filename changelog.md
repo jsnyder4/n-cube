@@ -1,4 +1,7 @@
 ### Revision History
+* 3.5.3
+  * Bug fix: When adding the same reference axis twice or more to an n-cube strange things would happen - due to column IDs not being set differently.  Rare, but sometimes it makes sense to use same reference axis more than once on the same n-cube.
+  * Bug fix: Allow the default column to be deleted from a reference axis.
 * 3.5.2
   * Enhancement: Rule Orchestration support added.  Rules can orchestrated three (3) new ways in addition to the existing two (*all* or *start with named*).  Note that orchestration is supported for n-cubes with one or more rule axes.  Pass the orchestration argument by associating it to the rule axis name.  In the examples below, the rule axis is named *ruleAxis*
     * Orchestration #1: Example: `.getCell([ruleAxis:['br1', 'br4', 'br7', 'br1'], state:`OH`])` or `.at(...)` will select the named rules in the listed order for execution. The rules are passed in a `Collection<String>` names of the rules.  Each of the selected rules will have their associated conditions run, and if evaluated to `true`, associated statement will be executed.  A rule can be listed more than once and it will execute for each time listed.  The order of the Collection dictates the execution order of the rules.
