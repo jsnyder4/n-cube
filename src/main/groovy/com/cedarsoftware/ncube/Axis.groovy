@@ -1531,8 +1531,8 @@ class Axis
             }
         }
         else if (type == AxisType.NEAREST)
-        {   // The NEAREST axis type must be searched linearly O(n)
-            return findNearest(promotedValue)
+        {
+            return findNearest(promotedValue)   // O(Log n)
         }
         else
         {
@@ -1688,11 +1688,9 @@ class Axis
     /**
      * @return List<Column> representing all of the Columns on this list.  This is a copy, so operations
      * on the List will not affect the Axis columns.  However, the Column instances inside the List are
-     * not 'deep copied' so no modifications to them should not be made, as it would violate the internal
+     * not 'deep copied' so modifications to them should not be made, as it would violate the internal
      * Map structures maintaining the column indexing. The Columms are in SORTED or DISPLAY order
-     * depending on the 'preferredOrder' setting. If you want to obtain the columns more quickly,
-     * you can use getColumnsWithoutDefault() - they will always be in sorted order and will not
-     * contain the default.
+     * depending on the 'preferredOrder' setting.
      */
     List<Column> getColumns()
     {

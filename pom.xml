@@ -72,7 +72,7 @@
         <version.junit>4.12</version.junit>
         <version.groovy>2.4.7</version.groovy>
         <version.jgit>3.6.1.201501031845-r</version.jgit>
-        <version.guava>19.0</version.guava>
+        <version.guava>20.0</version.guava>
         <version.commons.math>3.5</version.commons.math>
         <version.encog.core>3.3.0</version.encog.core>
         <version.mockito>1.10.19</version.mockito>
@@ -81,8 +81,7 @@
         <version.mysql.connector.java>5.1.40</version.mysql.connector.java>
         <version.nosqlunit>0.7.9</version.nosqlunit>
         <version.tomcat.jdbc>8.0.39</version.tomcat.jdbc>
-        <version.hsqldb>2.3.3</version.hsqldb>
-        <version.oracle>11.2.0.3</version.oracle>
+        <version.hsqldb>2.3.4</version.hsqldb>
         <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
         <version.plugin.assembly>2.6</version.plugin.assembly>
         <version.plugin.compiler>3.5.1</version.plugin.compiler>
@@ -257,13 +256,6 @@
             <!--<artifactId>mongo-java-driver</artifactId>-->
             <!--<version>${version.mongo}</version>-->
         <!--</dependency>-->
-
-        <!--<dependency>-->
-			<!--<groupId>oracle</groupId>-->
-			<!--<artifactId>ojdbc6</artifactId>-->
-			<!--<version>${version.oracle}</version>-->
-            <!--<scope>test</scope>-->
-		<!--</dependency>-->
 
         <dependency>
             <groupId>javax.servlet</groupId>
