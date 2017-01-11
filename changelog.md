@@ -1,4 +1,6 @@
 ### Revision History
+* 3.5.4
+  * Enhancement: JDBC statement fetchSize is set before query is executed, and ResultSet uses same value.  Set to 1,000.
 * 3.5.3
   * Bug fix: When adding the same reference axis twice or more to an n-cube strange things would happen - due to column IDs not being set differently.  Rare, but sometimes it makes sense to use same reference axis more than once on the same n-cube.
   * Bug fix: Allow the default column to be deleted from a reference axis.

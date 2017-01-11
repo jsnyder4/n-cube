@@ -591,7 +591,7 @@ class Axis
      * @return a Column with the up-promoted value as the column's value, and a unique ID on the column.  If
      * the original value is a Range or RangeSet, the components in the Range or RangeSet are also up-promoted.
      */
-    protected Column createColumnFromValue(Comparable value, Long suggestedId)
+    protected Column createColumnFromValue(Comparable value, Long suggestedId, Map<String, Object> metaProperties = null)
     {
         value = standardizeColumnValue(value)
         if (suggestedId != null && suggestedId > 0)
@@ -608,11 +608,11 @@ class Axis
             {
                 finalId = attemptId
             }
-            return new Column(value, finalId)
+            return new Column(value, finalId, metaProperties)
         }
         else
         {
-            return new Column(value, value == null ? defaultColId : nextColId)
+            return new Column(value, value == null ? defaultColId : nextColId, metaProperties)
         }
     }
 
@@ -689,9 +689,9 @@ class Axis
      * from persistent storage and have the same IDs. Optional.
      * @return Column instanced created from the passed in value.
      */
-    Column addColumn(Comparable value, String colName = null, Long suggestedId = null)
+    Column addColumn(Comparable value, String colName = null, Long suggestedId = null, Map<String, Object> colMetaProps = null)
     {
-        final Column column = createColumnFromValue(value, suggestedId)
+        final Column column = createColumnFromValue(value, suggestedId, colMetaProps)
         if (StringUtilities.hasContent(colName))
         {
             column.columnName = colName
@@ -712,8 +712,7 @@ class Axis
      */
     Column addColumn(Column column)
     {
-        final Column newColumn = createColumnFromValue(column.value, column.id)
-        newColumn.addMetaProperties(column.metaProperties)
+        final Column newColumn = createColumnFromValue(column.value, column.id, column.metaProperties)
         addColumnInternal(newColumn)
         return newColumn
     }
@@ -831,10 +830,9 @@ class Axis
         }
         Column column = idToCol.get(colId)
         deleteColumnById(colId)
-        Column newColumn = createColumnFromValue(value, colId)      // re-use ID
+        Column newColumn = createColumnFromValue(value, colId, column.metaProperties)  // re-use ID & column meta-props
         ensureUnique(newColumn.value)
         newColumn.displayOrder = column.displayOrder                // re-use displayOrder
-        newColumn.addMetaProperties(column.metaProperties)          // bring over meta-properties
         indexColumn(newColumn)
     }
 
@@ -860,8 +858,7 @@ class Axis
         // Step 1. Map all columns from passed in Collection by ID
         for (Column col : newCols)
         {
-            Column newColumn = createColumnFromValue(col.value, col.id)
-            newColumn.addMetaProperties(col.metaProperties)
+            Column newColumn = createColumnFromValue(col.value, col.id, col.metaProperties)
             newColumnMap[col.id] = newColumn
         }
 
