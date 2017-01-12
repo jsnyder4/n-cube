@@ -2795,7 +2795,7 @@ class NCube<T>
 
                 case Delta.Location.NCUBE_META:
                     String key = delta.sourceVal as String
-                    if (delta.type == Delta.Type.ADD)
+                    if (delta.type == Delta.Type.DELETE)
                     {
                         removeMetaProperty(key)
                     }

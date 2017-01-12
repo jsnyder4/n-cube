@@ -5360,6 +5360,7 @@ class TestWithPreloadedDatabase
 
         NCube headCube = NCubeManager.loadCube(HEAD, 'TestBranch')
         NCube cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        NCube cube2 = NCubeManager.loadCube(BRANCH2, 'TestBranch')
 
         // get original values from the cube
         List<Column> columns = cube.getAxis('Code').columns
@@ -5386,27 +5387,39 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(BRANCH1, cube)
 
         // get our delta list, which should include all the changes we made
-        List<Delta> deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(cube, cube2)
         assertEquals(9, deltas.size())
 
-        // merge deltas, we should be back to our original cube
-        NCube cube2 = NCubeManager.mergeDeltas(BRANCH2, 'TestBranch', deltas)
-        VersionControl.commitBranch(BRANCH2)
+        // merge deltas into BRANCH2
+        cube2.mergeDeltas(deltas)
+        NCubeManager.updateCube(BRANCH2, cube2)
 
-        // test our original values to make sure they are the same
-        assertEquals(columns.size(), cube.getAxis('Code').columns.size())
-        assertEquals(addedCell, cube.getCell([Code : 15]))
-        assertEquals(deletedCell, cube.getCell([Code : -10]))
-        assertEquals(defaultCellValue, cube.defaultCellValue)
-        assertEquals(cubeMetaProps.size(), cube.metaProperties.size())
-        assertEquals(axisMetaProps.size(), cube.getAxis('Code').metaProperties.size())
-        assertEquals(colMetaProps.size(), cube.getAxis('Code').findColumn(0).metaProperties.size())
-        assertEquals(colVal, cube.getAxis('Code').findColumn(10).value)
+        VersionControl.commitBranch(BRANCH2)
+        headCube = NCubeManager.loadCube(HEAD, headCube.name)
+
+        // verify cube2 is the same as cube
+        assertEquals(columns.size(), cube2.getAxis('Code').columns.size())
+        assertEquals(addedCell, cube2.getCell([Code : 15]))
+        assertEquals(deletedCell, cube2.getCell([Code : -10]))
+        assertEquals(defaultCellValue, cube2.defaultCellValue)
+        assertEquals(cubeMetaProps.size(), cube2.metaProperties.size())
+        assertEquals(axisMetaProps.size(), cube2.getAxis('Code').metaProperties.size())
+        assertEquals(colMetaProps.size(), cube2.getAxis('Code').findColumn(0).metaProperties.size())
+        assertEquals(colVal, cube2.getAxis('Code').findColumn(10).value)
+    }
+
+    @Test
+    void testAddAxis()
+    {
+        preloadCubes(BRANCH1, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH1)
+        NCube headCube = NCubeManager.loadCube(HEAD, 'TestBranch')
+        NCube cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
 
         // test for add axis
-        cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false))
+        cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.SORTED, 2))
         NCubeManager.updateCube(BRANCH1, cube)
-        deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
         assertEquals(1, deltas.size())
         cube = NCubeManager.mergeDeltas(BRANCH1, 'TestBranch', deltas)
         assert cube.getAxis('Axis') != null // Verify axis added

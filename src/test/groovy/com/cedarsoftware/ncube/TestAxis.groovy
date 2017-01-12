@@ -1784,7 +1784,7 @@ class TestAxis
         assert !axis1.areAxisPropsEqual(axis3)
 
         Axis axis4 = new Axis('foo', AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY)
-        assert !axis1.areAxisPropsEqual(axis4)
+        assert axis1.areAxisPropsEqual(axis4)
 
         Axis axis5 = new Axis('foo', AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY)
         assert axis1.areAxisPropsEqual(axis5)
