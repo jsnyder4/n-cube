@@ -5356,6 +5356,7 @@ class TestWithPreloadedDatabase
         VersionControl.commitBranch(BRANCH1)
         NCubeManager.deleteBranch(BRANCH1)
         assertEquals(1, NCubeManager.copyBranch(HEAD, BRANCH1))
+        assertEquals(1, NCubeManager.copyBranch(HEAD, BRANCH2))
 
         NCube headCube = NCubeManager.loadCube(HEAD, 'TestBranch')
         NCube cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
@@ -5389,7 +5390,8 @@ class TestWithPreloadedDatabase
         assertEquals(9, deltas.size())
 
         // merge deltas, we should be back to our original cube
-        cube = NCubeManager.mergeDeltas(BRANCH1, 'TestBranch', deltas)
+        NCube cube2 = NCubeManager.mergeDeltas(BRANCH2, 'TestBranch', deltas)
+        VersionControl.commitBranch(BRANCH2)
 
         // test our original values to make sure they are the same
         assertEquals(columns.size(), cube.getAxis('Code').columns.size())
@@ -5407,10 +5409,9 @@ class TestWithPreloadedDatabase
         deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
         assertEquals(1, deltas.size())
         cube = NCubeManager.mergeDeltas(BRANCH1, 'TestBranch', deltas)
-        assertNull(cube.getAxis('Axis'))
+        assert cube.getAxis('Axis') != null // Verify axis added
 
         // test for delete axis
-        cube.addAxis(new Axis('Axis', AxisType.DISCRETE, AxisValueType.STRING, false))
         NCubeManager.updateCube(BRANCH1, cube)
         VersionControl.commitBranch(BRANCH1)
         headCube = NCubeManager.loadCube(HEAD, 'TestBranch')
@@ -5419,7 +5420,7 @@ class TestWithPreloadedDatabase
         deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
         assertEquals(1, deltas.size())
         cube = NCubeManager.mergeDeltas(BRANCH1, 'TestBranch', deltas)
-        assertNotNull(cube.getAxis('Axis'))
+        assert null == cube.getAxis('Axis')
     }
 
     @Test
@@ -6322,6 +6323,42 @@ return ints''', null, false)
 
         List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_EXCLUDE):['red', 'white']])
         assert list.size() == 5
+    }
+
+    @Test
+    void testMergedAddDefaultColumn()
+    {
+        preloadCubes(BRANCH2, "mergeDefaultColumn.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        NCube producerCube = NCubeManager.loadCube(BRANCH2, 'merge')
+        producerCube.addColumn('Column', null)
+
+        NCube consumerCube = NCubeManager.loadCube(BRANCH1, 'merge')
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producerCube, consumerCube)
+        NCube merged = NCubeManager.mergeDeltas(BRANCH1, 'merge', deltas)
+        Axis axis = merged.getAxis('Column')
+        assert axis.hasDefaultColumn()
+        assert axis.size() == 4
+    }
+
+    @Test
+    void testMergedAddRegularColumn()
+    {
+        preloadCubes(BRANCH2, "mergeDefaultColumn.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        NCube producerCube = NCubeManager.loadCube(BRANCH2, 'merge')
+        producerCube.addColumn('Column', 'D')
+
+        NCube consumerCube = NCubeManager.loadCube(BRANCH1, 'merge')
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producerCube, consumerCube)
+        NCube merged = NCubeManager.mergeDeltas(BRANCH1, 'merge', deltas)
+        Axis axis = merged.getAxis('Column')
+        assert axis.size() == 4
+        assert axis.findColumn('D') instanceof Column
     }
 
     /**

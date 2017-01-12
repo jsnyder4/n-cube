@@ -61,7 +61,17 @@ class Delta implements Comparable
         loc = location
         this.type = type
         this.locId = locId
+        if (sourceVal instanceof Column)
+        {
+            Column column = sourceVal as Column
+            sourceVal = new Column(column.value, column.id, column.metaProps)
+        }
         this.sourceVal = sourceVal
+        if (destVal instanceof Column)
+        {
+            Column column = destVal as Column
+            destVal = new Column(column.value, column.id, column.metaProps)
+        }
         this.destVal = destVal
         this.sourceList = sourceList
         this.destList = destList

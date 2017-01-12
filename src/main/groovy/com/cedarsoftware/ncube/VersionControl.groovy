@@ -738,7 +738,16 @@ class VersionControl
             }
         }
 
-        List<Delta> diff = DeltaProcessor.getDeltaDescription(branchCube, headCube)
+        List<Delta> diff
+        if (headToBranch)
+        {
+            diff = DeltaProcessor.getDeltaDescription(headCube, branchCube)
+        }
+        else
+        {
+            diff = DeltaProcessor.getDeltaDescription(branchCube, headCube)
+        }
+
         if (diff.size() > 0)
         {
             return null

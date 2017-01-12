@@ -2806,14 +2806,29 @@ class NCube<T>
                     break
 
                 case Delta.Location.AXIS:
-                    if (delta.destVal != null)
+                    Axis sourceAxis = delta.sourceVal as Axis
+                    Axis destAxis = delta.destVal as Axis
+
+                    if (delta.type == Delta.Type.ADD)
                     {
-                        Axis axis = delta.destVal as Axis
-                        deleteAxis(axis.name)
+                        if (getAxis(destAxis.name) == null)
+                        {
+                            addAxis(delta.destVal as Axis)
+                        }
                     }
-                    if (delta.type != Delta.Type.ADD)
+                    else if (delta.type == Delta.Type.UPDATE)
                     {
-                        addAxis(delta.sourceVal as Axis)
+                        Axis axis = getAxis(sourceAxis.name)
+
+                        // Bring over any change to sort-order
+                        axis.columnOrder = sourceAxis.columnOrder
+
+                        // Bring over any change to fireAll
+                        axis.fireAll = sourceAxis.fireAll
+                    }
+                    else if (delta.type == Delta.Type.DELETE)
+                    {
+                        deleteAxis(sourceAxis.name)
                     }
                     break
 
@@ -2833,22 +2848,25 @@ class NCube<T>
 
                 case Delta.Location.COLUMN:
                     String axisName = delta.locId as String
-                    List<Column> columns = getAxis(axisName).columnsWithoutDefault
+                    Axis oldAxis = getAxis(axisName)
                     switch (delta.type)
                     {
                         case Delta.Type.ADD:
-                            columns.remove(delta.destVal as Column)
+                            Column column = delta.destVal as Column
+                            oldAxis.addColumn(column)
                             break
                         case Delta.Type.DELETE:
-                            columns.add(delta.sourceVal as Column)
+                            Column column = delta.sourceVal as Column
+                            oldAxis.deleteColumn(column.value)
                             break
                         case Delta.Type.UPDATE:
+                            List<Column> columns = oldAxis.columnsWithoutDefault
                             int prevIdx = columns.indexOf(delta.destVal as Column)
                             columns.remove(prevIdx)
                             columns.add(prevIdx, delta.sourceVal as Column)
+                            updateColumns(axisName, columns, true)
                             break
                     }
-                    updateColumns(axisName, columns, true)
                     break
 
                 case Delta.Location.COLUMN_META:

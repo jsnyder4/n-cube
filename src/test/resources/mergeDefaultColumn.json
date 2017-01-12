@@ -1,0 +1,32 @@
+{
+  "ncube": "merge",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Column",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000334254744,
+          "type": "string",
+          "value": "A"
+        },
+        {
+          "id": 1001463688492,
+          "type": "string",
+          "value": "B"
+        },
+        {
+          "id": 1000806388493,
+          "type": "string",
+          "value": "C"
+        }
+      ]
+    }
+  ],
+  "cells": []
+}

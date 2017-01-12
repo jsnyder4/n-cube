@@ -1758,10 +1758,6 @@ class Axis
         {
             return false
         }
-        if (defaultCol != null ? defaultCol != axis.defaultCol : axis.defaultCol != null)
-        {
-            return false
-        }
         if (name != axis.name)
         {
             return false
