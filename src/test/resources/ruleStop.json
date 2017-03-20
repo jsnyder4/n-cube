@@ -8,9 +8,9 @@
             "hasDefault":false,
             "preferredOrder":1,
             "columns":[
-                { "id":1, "type":"exp", "value":"true" },
-                { "id":2, "type":"exp", "value":"true" },
-                { "id":3, "type":"exp", "value":"true" }
+                { "id":1, "name":"br1", "type":"exp", "value":"true" },
+                { "id":2, "name":"br2", "type":"exp", "value":"true" },
+                { "id":3, "name":"br3", "type":"exp", "value":"true" }
             ]
         }
     ],

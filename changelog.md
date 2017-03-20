@@ -1,4 +1,47 @@
 ### Revision History
+* 3.6.12
+  * Bug fix: Committing merged cube into branch was not resetting the change flag in the case when the n-cube SHA-1 was the same as the HEAD n-cube's SHA-1.
+* 3.6.11
+  * Bug fix: Duplicate cube was not setting changed flag.
+* 3.6.10
+  * Bug fix: Merge accept theirs incorrectly setting head_sha1 and changed flag.
+* 3.6.9
+  * Bug fix: Merge column order delta would overwrite all column changes on the axis.
+* 3.6.8
+  * Bug fix: Contains search now searches column values for reference axes.
+  * Bug fix: Contains search now does not return a result when the text matches only the cube name.
+  * Enhancement: Greatly improved speed of getting all reference axes.
+  * Enhancement: Added ability for admins of an app to impersonate users to debug user- or group-specific issues.
+    * Note: All database transactions use real user for a proper audit trail.
+* 3.6.7
+  * Enhancement: Easily remove a transform from a reference axis
+  * Enhancement: NCube serialized through json-io now brings along ApplicationID
+* 3.6.6
+  * Enhancement: Added custom reader and writer for NCube when used with json-io.
+* 3.6.5
+  * Enhancement: Rewrite copy branch in persister to allow a thin copy of branch instead of with full history.
+* 3.6.4
+  * Enhancement: Create NCubeConstants
+* 3.6.3
+  * Enhancement: Re-ordering of columns on a non-sorted axis are now handled in all cases, API: `DeltaProcessor.getDeltaDescription()` and `NCube.mergeDeltas()`.  Reorder column delta's only show up when there are no outstanding `ADD` or `DELETE` deltas for the same axis.
+* 3.6.2
+  * Enhancement: Added additional information to the output map - for each call to `ncube.getCell()`, `at()`, or `go()`, if an input coordinate fails to bind to an axis value, and instead bind to the Default column (or completely misses [`CoordianteNotFoundException` case]), the n-cube name, axis name, and input bind-value are added to a list.  This list grows as cells call other cells until it pops-the-stack to the original call.  Use the `RuleInfo.getUnboundAxesList()` and `.getUnboundAxesMap()` to see these values. `RuleInfo.getUnboundAxesList()` shows them in order of occurrence, whereas `.getUnboundAxesMap()` packages this information up by n-cube name and axis name.
+* 3.6.1
+  * Bug fix: In `VersionControl` - When user modified cube, then deleted it, and there was no change in head, it was being incorrectly marked as a conflict.
+  * Bug fix: Fixed bug in self healing code for rule names.
+* 3.6.0
+  * Columns on a rule axis must have a name.  The name must be unique on the axis.  This is now enforced with an IllegalArgumentException.
+  * When a new branch is created, sys.permissions is set to allow UPDATE action by default.  @tpollack 
+  * Re-ordering support added for delta/merge.
+  * Bug fix: NCubeManager.updateAxisMetaProperties() was temporarily not working on a non-reference axis.  Fixed and test added.  @jsynder4 
+* 3.5.6
+  * Bug fix: When merging updated reference axis, the cells from deleted columns were being attached to the default column if present.
+  * Bug fix: When merging reference axis, the column meta-properties were being overwritten from the new column on the updated reference.  Now those properties are brought over, and then the existing meta-properties are overlaid.
+  * Bug fix: When merging cells, if the cell was not able to be located by iD (same id on both ncubes), then it was failing to use its old-id to new-id map for locating the cells on the new (transmitting changes) ncube.
+* 3.5.5
+  * Improved the robustness of `DeltaProcessor.getDelta()`.  Renaming a colum in case only now supported.  @jsnyder4
+  * Improved the robustness of `DeltaProcessor.getDeltaDescription()` API.  It handles adding and removing the default column on regular or reference axis, detecting meta-property changes.
+  * Improved the robustness of `NCube.mergeDeltas()` API.  It handles applying delta changes in many more cases, and makes attempts to locate target items first by ID, and if not found, by value.
 * 3.5.4
   * Enhancement: JDBC statement fetchSize is set before query is executed, and ResultSet uses same value.  Set to 1,000.
 * 3.5.3

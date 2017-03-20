@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 
 import java.util.concurrent.ConcurrentHashMap
 
-import static com.cedarsoftware.ncube.NCubeManager.NCUBE_ACCEPTED_DOMAINS
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)

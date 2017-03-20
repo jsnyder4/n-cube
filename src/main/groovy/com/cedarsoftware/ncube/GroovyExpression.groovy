@@ -6,6 +6,9 @@ import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
 import java.util.regex.Matcher
+
+import static com.cedarsoftware.ncube.NCubeConstants.*
+
 /**
  * This class is used to hold Groovy Expressions.  This means that
  * the code can start without any class or method signatures.  For
@@ -90,7 +93,7 @@ import com.cedarsoftware.util.io.*
         // If loaded, add the import statement list from this cube to the list of imports for generated cells
         String expClassName = null
 
-        if (!NCubeManager.SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
+        if (!SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
         {
             NCube prototype = getSysPrototype(ncube.applicationID)
 
@@ -130,11 +133,11 @@ class N_${L2CacheKey} extends ${expClassName}
     {
         try
         {
-            return NCubeManager.getCube(appId, NCubeManager.SYS_PROTOTYPE)
+            return NCubeManager.getCube(appId, SYS_PROTOTYPE)
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching ${NCubeManager.SYS_PROTOTYPE}")
+            handleException(e, "Exception occurred fetching ${SYS_PROTOTYPE}")
             return null
         }
     }
@@ -172,7 +175,7 @@ class N_${L2CacheKey} extends ${expClassName}
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching imports from ${NCubeManager.SYS_PROTOTYPE}")
+            handleException(e, "Exception occurred fetching imports from ${SYS_PROTOTYPE}")
         }
     }
 
@@ -190,7 +193,7 @@ class N_${L2CacheKey} extends ${expClassName}
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching base class for Groovy Expression cells from ${NCubeManager.SYS_PROTOTYPE}")
+            handleException(e, "Exception occurred fetching base class for Groovy Expression cells from ${SYS_PROTOTYPE}")
         }
         return null
     }

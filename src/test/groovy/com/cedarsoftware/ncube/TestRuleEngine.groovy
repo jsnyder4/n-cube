@@ -700,6 +700,182 @@ class TestRuleEngine
     }
 
     @Test
+    void testRuleInfoUnboundAxes_ruleCube_noUnboundAxes()
+    {
+        NCube cube = NCubeBuilder.getRuleCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, cube)
+
+        //No unbound axes
+        Map input = [RuleAxis1: "${'(Condition1): true'}",
+                     Axis2    : 'Axis2Col2',
+                     foo      : true]
+        Map output = [:]
+        cube.getCell(input, output)
+        RuleInfo ruleInfo = cube.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 0
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_ruleCube_nonRuleAxisIsUnbound()
+    {
+        NCube cube = NCubeBuilder.getRuleCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, cube)
+
+        //Non-rule axis is unbound
+        Map input = [RuleAxis1: "${'(Condition1): true'}",
+                     Axis2: 'bogus',
+                     foo: true]
+        Map output = [:]
+        cube.getCell(input, output)
+        RuleInfo ruleInfo = cube.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 1
+        Map unboundAxes = ruleInfo.getUnboundAxesMap()
+        assert unboundAxes.size() == 1
+        Map unboundAxesForCube = unboundAxes[cube.name]
+        assert unboundAxesForCube.size() == 1
+        Set values = unboundAxesForCube['Axis2']
+        assert values.size() == 1
+        assert values.contains('bogus')
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_ruleCube_ruleAxisIsUnbound()
+    {
+        NCube cube = NCubeBuilder.getRuleCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, cube)
+
+        //Rule axis is unbound
+        Map input = [Axis2 : 'Axis2Col2']
+        Map output = [:]
+        cube.getCell(input, output)
+        RuleInfo ruleInfo = cube.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 1
+        Map unboundAxes = ruleInfo.getUnboundAxesMap()
+        assert unboundAxes.size() == 1
+        Map unboundAxesForCube = unboundAxes[cube.name]
+        assert unboundAxesForCube.size() == 1
+        Set values = unboundAxesForCube['RuleAxis1']
+        assert values.size() == 1
+        assert values.contains(null)
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_noUnboundAxes()
+    {
+        NCube primary = NCubeBuilder.getCubeCallingCubeWithDefaultColumn()
+        NCube secondary = NCubeBuilder.getCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, primary)
+        NCubeManager.addCube(ApplicationID.testAppId, secondary)
+
+        //Primary cube calls secondary cube.
+        //No unbound axes
+        Map input = [Axis1Primary  : 'Axis1Col1',
+                     Axis2Primary  : 'Axis2Col1',
+                     Axis1Secondary: 'Axis1Col1',
+                     Axis2Secondary: 'Axis2Col1',
+                     Axis3Secondary: 'Axis3Col1']
+        Map output = [:]
+        primary.getCell(input, output)
+        RuleInfo ruleInfo = primary.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 0
+
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_valueNotFound()
+    {
+        NCube primary = NCubeBuilder.getCubeCallingCubeWithDefaultColumn()
+        NCube secondary = NCubeBuilder.getCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, primary)
+        NCubeManager.addCube(ApplicationID.testAppId, secondary)
+
+        //Primary cube calls secondary cube.
+        //One unbound column with a value provided, but not found.
+        Map input = [Axis1Primary  : 'Axis1Col1',
+                     Axis2Primary  : 'Axis2Col1',
+                     Axis1Secondary: 'bogus',
+                     Axis2Secondary: 'Axis2Col1',
+                     Axis3Secondary: 'Axis3Col1']
+        Map output = [:]
+        primary.getCell(input, output)
+        RuleInfo ruleInfo = primary.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 1
+        Map unboundAxes = ruleInfo.getUnboundAxesMap()
+        assert unboundAxes.size() == 1
+        Map unboundAxesForCube = unboundAxes[secondary.name]
+        assert unboundAxesForCube.size() == 1
+        Set values = unboundAxesForCube['Axis1Secondary']
+        assert values.size() == 1
+        assert values.contains('bogus')
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_noValueProvided()
+    {
+        NCube primary = NCubeBuilder.getCubeCallingCubeWithDefaultColumn()
+        NCube secondary = NCubeBuilder.getCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, primary)
+        NCubeManager.addCube(ApplicationID.testAppId, secondary)
+
+        //Primary cube calls secondary cube.
+        //One unbound column with a value provided, but not found.
+        //One unbound column, no value was provided.
+        Map input = [Axis1Primary  : 'Axis1Col1',
+                     Axis2Primary  : 'Axis2Col1',
+                     Axis1Secondary: 'bogus',
+                     Axis2Secondary: 'Axis2Col2']
+        Map output = [:]
+        primary.getCell(input, output)
+        RuleInfo ruleInfo = primary.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 1
+        Map unboundAxes = ruleInfo.getUnboundAxesMap()
+        assert unboundAxes.size() == 1
+        Map unboundAxesForCube = unboundAxes[secondary.name]
+        assert unboundAxesForCube.size() == 2
+        Set values = unboundAxesForCube['Axis1Secondary']
+        assert values.size() == 1
+        assert values.contains('bogus')
+        values = unboundAxesForCube['Axis3Secondary']
+        assert values.size() == 1
+        assert values.contains(null)
+    }
+
+    @Test
+    void testRuleInfoUnboundAxes_unboundAxesOnTwoCubes()
+    {
+        NCube primary = NCubeBuilder.getCubeCallingCubeWithDefaultColumn()
+        NCube secondary = NCubeBuilder.getCubeWithDefaultColumn()
+        NCubeManager.addCube(ApplicationID.testAppId, primary)
+        NCubeManager.addCube(ApplicationID.testAppId, secondary)
+
+        //Primary cube calls secondary cube and secondary cube calls back to different cell on primary.
+        Map input = [Axis1Primary  : 'Axis1Col2',
+                     Axis2Primary  : 'Axis2Col2',
+                     Axis1Secondary: 'bogus2',
+                     Axis2Secondary: 'Axis2Col1',
+                     Axis3Secondary: 'bogus3']
+        Map output = [:]
+        primary.getCell(input, output)
+        RuleInfo ruleInfo = primary.getRuleInfo(output)
+        assert ruleInfo.getUnboundAxesMap().size() == 2
+        Map unboundAxes =  ruleInfo.getUnboundAxesMap()
+        assert unboundAxes.size() == 2
+        Map unboundAxesForCube = unboundAxes[secondary.name]
+        assert unboundAxesForCube.size() == 2
+        Set values = unboundAxesForCube['Axis1Secondary']
+        assert values.size() == 1
+        assert values.contains('bogus2')
+        values = unboundAxesForCube['Axis3Secondary']
+        assert values.size() == 1
+        assert values.contains('bogus3')
+        unboundAxesForCube = unboundAxes[primary.name]
+        assert unboundAxesForCube.size() == 1
+        values = unboundAxesForCube['Axis1Primary']
+        assert values.size() == 1
+        assert values.contains(null)
+    }
+
+    @Test
     void testRuleSimpleWithDefault()
     {
         NCube ncube = NCubeManager.getNCubeFromResource('ruleSimpleWithDefault.json')

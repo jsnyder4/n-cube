@@ -7,6 +7,8 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.ncube.NCubeConstants.*
+
 /**
  * This class provides version control for persisted NCubes.
  *
@@ -50,12 +52,7 @@ class VersionControl
         NCubeManager.assertPermissions(appId, null, Action.READ)
 
         ApplicationID headAppId = appId.asHead()
-
-        List<NCubeInfoDto> records = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false])
-        if (records.empty)
-        {
-            return []
-        }
+        List<NCubeInfoDto> records = NCubeManager.search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
         Map<String, NCubeInfoDto> branchRecordMap = new CaseInsensitiveMap<>()
 
         for (NCubeInfoDto info : records)
@@ -63,7 +60,7 @@ class VersionControl
             branchRecordMap[info.name] = info
         }
 
-        List<NCubeInfoDto> headRecords = NCubeManager.search(headAppId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> headRecords = NCubeManager.search(headAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
         List<NCubeInfoDto> cubeDiffs = []
 
         for (NCubeInfoDto head : headRecords)
@@ -137,8 +134,15 @@ class VersionControl
                     }
                     else
                     {
-                        head.changeType = ChangeType.CONFLICT.code
-                        cubeDiffs.add(head)
+                        if (infoRev < 0)
+                        {   // If branch cube was changed and then deleted...
+                            // don't care
+                        }
+                        else
+                        {
+                            head.changeType = ChangeType.CONFLICT.code
+                            cubeDiffs.add(head)
+                        }
                     }
                 }
                 else
@@ -189,7 +193,7 @@ class VersionControl
         ApplicationID headAppId = appId.asHead()
         Map<String, NCubeInfoDto> headMap = new CaseInsensitiveMap<>()
 
-        List<NCubeInfoDto> branchList = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_CHANGED_RECORDS_ONLY):true])
+        List<NCubeInfoDto> branchList = NCubeManager.search(appId, null, null, [(SEARCH_CHANGED_RECORDS_ONLY):true])
         List<NCubeInfoDto> headList = NCubeManager.search(headAppId, null, null, null)   // active and deleted
         List<NCubeInfoDto> list = []
 
@@ -292,7 +296,7 @@ class VersionControl
         NCubeManager.assertPermissions(appId, null, Action.READ)
         NCubeManager.assertPermissions(branchAppId, null, Action.READ)
 
-        List<NCubeInfoDto> records = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> records = NCubeManager.search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
         Map<String, NCubeInfoDto> branchRecordMap = new CaseInsensitiveMap<>()
 
         for (NCubeInfoDto info : records)
@@ -300,7 +304,7 @@ class VersionControl
             branchRecordMap[info.name] = info
         }
 
-        List<NCubeInfoDto> otherBranchRecords = NCubeManager.search(branchAppId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> otherBranchRecords = NCubeManager.search(branchAppId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
         if (otherBranchRecords.empty)
         {
             return []
@@ -609,7 +613,7 @@ class VersionControl
         ret[BRANCH_RESTORES] = persister.commitCubes(appId, buildIdList(restores), userId, txId)
         ret[BRANCH_REJECTS] = rejects
 
-        if (!rejects.isEmpty())
+        if (!rejects.empty)
         {
             int rejectSize = rejects.size()
             throw new BranchMergeException("Unable to commit ${rejectSize} ${rejectSize == 1 ? 'cube' : 'cubes'}.", ret)
@@ -760,7 +764,7 @@ class VersionControl
 
     private static NCubeInfoDto getCubeInfo(ApplicationID appId, NCubeInfoDto dto)
     {
-        List<NCubeInfoDto> cubeDtos = NCubeManager.search(appId, dto.name, null, [(NCubeManager.SEARCH_EXACT_MATCH_NAME):true, (NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):false])
+        List<NCubeInfoDto> cubeDtos = NCubeManager.search(appId, dto.name, null, [(SEARCH_EXACT_MATCH_NAME):true, (SEARCH_ACTIVE_RECORDS_ONLY):false])
         if (cubeDtos.empty)
         {
             throw new IllegalStateException('Cube ' + dto.name + ' does not exist (' + dto + ')')

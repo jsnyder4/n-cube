@@ -21,8 +21,6 @@ import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
-import gnu.trove.map.hash.THashMap
-import gnu.trove.map.hash.TLongObjectHashMap
 import groovy.transform.CompileStatic
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -81,8 +79,8 @@ class NCube<T>
     private String name
     private String sha1
     private final Map<String, Axis> axisList = new CaseInsensitiveMap<>()
-    private final TLongObjectHashMap<Axis> idToAxis = new TLongObjectHashMap<>(16, 0.8f)
-    protected final Map<LongHashSet, T> cells = new THashMap<>(128, 0.8f)
+    private final Map<Long, Axis> idToAxis = new HashMap<>(16, 0.8f)
+    protected final Map<LongHashSet, T> cells = new HashMap<>(128, 0.8f)
     private T defaultCellValue
     private final Map<String, Advice> advices = [:]
     private Map metaProps = new CaseInsensitiveMap<>()
@@ -93,6 +91,84 @@ class NCube<T>
         {
             return new ArrayDeque<>()
         }
+    }
+
+    /**
+     * Permanently add Custom Reader / Writer to json-io so that n-cube will use its native JSON
+     * format when written or read with json-io.
+     */
+    static
+    {
+        JsonReader.addReaderPermanent(NCube.class, new NCubeReader())
+        JsonWriter.addWriterPermanent(NCube.class, new NCubeWriter())
+    }
+
+    /**
+     * Custom reader for NCube when used with json-io
+     */
+    static class NCubeReader implements JsonReader.JsonClassReaderEx
+    {
+        Object read(Object jOb, Deque<JsonObject<String, Object>> stack, Map<String, Object> args)
+        {
+            Map map = (Map)jOb
+            if (map.size() == 1)
+            {   // If "@type" was added, then you need to extract the n-cube instance from the "ncube" field.
+                map = map.ncube as Map
+            }
+            NCube ncube = hydrateCube(map)
+            String tenant = ncube.getMetaProperty('n-tenant')
+            String app = ncube.getMetaProperty('n-app')
+            String version = ncube.getMetaProperty('n-version')
+            String status = ncube.getMetaProperty('n-status')
+            String branch = ncube.getMetaProperty('n-branch')
+
+            ApplicationID appId = new ApplicationID(tenant, app, version, status, branch)
+            ncube.applicationID = appId
+
+            stripFoistedAppId(ncube)
+            return ncube
+        }
+    }
+
+    /**
+     * Custom writer for NCube when used with json-io
+     */
+    static class NCubeWriter implements JsonWriter.JsonClassWriterEx
+    {
+        void write(Object o, boolean showType, Writer output, Map<String, Object> args) throws IOException
+        {
+            NCube ncube = (NCube)o
+
+            // Temporarily set App ID as meta-properties before json-io serialization
+            ApplicationID appId1 = ncube.applicationID
+            ncube.setMetaProperty('n-tenant', appId1.tenant)
+            ncube.setMetaProperty('n-app', appId1.app)
+            ncube.setMetaProperty('n-version', appId1.version)
+            ncube.setMetaProperty('n-status', appId1.status)
+            ncube.setMetaProperty('n-branch', appId1.branch)
+
+            String json = ncube.toFormattedJson()
+            if (showType)
+            {   // {"@type":"com.cedarsoftware.ncube.NCube", "ncube": xxx }.  xxx = NCube's native JSON format.
+                output.write(""""ncube":${json}""")
+            }
+            else
+            {   // Write out NCube's native JSON format, minus the { and } at the beginning and end, as this is
+                // written by json-io.
+                output.write(json.substring(1, json.length() - 1))
+            }
+
+            stripFoistedAppId(ncube)
+        }
+    }
+    
+    private static void stripFoistedAppId(NCube ncube)
+    {
+        ncube.removeMetaProperty('n-tenant')
+        ncube.removeMetaProperty('n-app')
+        ncube.removeMetaProperty('n-version')
+        ncube.removeMetaProperty('n-status')
+        ncube.removeMetaProperty('n-branch')
     }
 
     /**
@@ -191,6 +267,30 @@ class NCube<T>
     {
         metaProps.clear()
         clearSha1()
+    }
+
+    /**
+     * Walk cell map and ensure all coordinates are fully resolvable
+     */
+    protected void dropOrphans(Set<Long> columnIds, long axisId)
+    {
+        Iterator<LongHashSet> i = cells.keySet().iterator()
+        while (i.hasNext())
+        {
+            LongHashSet cols = i.next()
+            for (id in cols)
+            {
+                Axis axis = getAxisFromColumnId(id, false)
+                if (axis && axis.id == axisId)
+                {
+                    if (!columnIds.contains(id))
+                    {
+                        i.remove()
+                        break
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -432,7 +532,7 @@ class NCube<T>
         LongHashSet ids = ensureFullCoordinate(coordinate)
         if (ids == null)
         {
-            throw new InvalidCoordinateException("Unable to setCellById() into n-cube: ${name} using coordinate: ${coordinate}", name)
+            throw new InvalidCoordinateException("Unable to setCellById() into n-cube: ${name} using coordinate: ${coordinate}. Add column(s) before assigning cells.", name)
         }
         return cells[ids] = value
     }
@@ -540,7 +640,7 @@ class NCube<T>
 
         if (!hasRuleAxis())
         {   // Perform fast bind and execute.
-            lastStatementValue = getCellById(getCoordinateKey(input), input, output, defaultValue)
+            lastStatementValue = getCellById(getCoordinateKey(input, output), input, output, defaultValue)
             ruleInfo.setLastExecutedStatement(lastStatementValue)
             return output.return = lastStatementValue
         }
@@ -555,7 +655,7 @@ class NCube<T>
         while (run)
         {
             run = false
-            final Map<String, List<Column>> selectedColumns = selectColumns(input)   // get [potential subset of] rule columns to execute, per Axis
+            final Map<String, List<Column>> selectedColumns = selectColumns(input, output)   // get [potential subset of] rule columns to execute, per Axis
             final Map<String, Integer> counters = getCountersPerAxis(axisNames)
             final Map<Long, Object> cachedConditionValues = [:]
             final Map<String, Integer> conditionsFiredCountPerAxis = [:]
@@ -592,6 +692,10 @@ class NCube<T>
                                     {   // Only fire one condition on this axis (fireAll is false)
                                         counters[axisName] = 1
                                         selectedColumns[axisName] = [boundColumn]
+                                    }
+                                    if (cmd == null)
+                                    {
+                                        trackUnboundAxis(output, name, axisName, coordinate[axisName])
                                     }
                                 }
                             }
@@ -1033,7 +1137,7 @@ class NCube<T>
      * of binding to an axis results in a List<Column>.
      * @param input The passed in input coordinate to bind (or multi-bind) to each axis.
      */
-    private Map<String, List<Column>> selectColumns(Map<String, Object> input)
+    private Map<String, List<Column>> selectColumns(Map<String, Object> input, Map output)
     {
         Map<String, List<Column>> bindings = new CaseInsensitiveMap<>()
         for (entry in axisList.entrySet())
@@ -1073,6 +1177,10 @@ class NCube<T>
             else
             {   // Find the single column that binds to the input coordinate on a regular axis.
                 final Column column = axis.findColumn(value as Comparable)
+                if (column == null || column.default)
+                {
+                    trackUnboundAxis(output, name, axisName, value)
+                }
                 if (column == null)
                 {
                    throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axisName}, cube: ${name}",
@@ -1085,7 +1193,13 @@ class NCube<T>
         return bindings
     }
 
-    private void assertAtLeast1Rule(Collection<Column> columns, String errorMessage)
+    private static void trackUnboundAxis(Map output, String cubeName, String axisName, Object value)
+    {
+        RuleInfo ruleInfo = getRuleInfo(output)
+        ruleInfo.addUnboundAxis(cubeName, axisName, value)
+    }
+
+    private static void assertAtLeast1Rule(Collection<Column> columns, String errorMessage)
     {
         if (columns.empty)
         {   // Match default (if it exists) and none of the orchestration columns have matched
@@ -1285,7 +1399,7 @@ class NCube<T>
      * stored within in NCube.  The returned Set is the 'key' of NCube's cells Map, which
      * maps a coordinate (Set of column IDs) to the cell value.
      */
-    LongHashSet getCoordinateKey(final Map coordinate)
+    LongHashSet getCoordinateKey(final Map coordinate, Map output = new CaseInsensitiveMap())
     {
         Map safeCoord
 
@@ -1310,7 +1424,7 @@ class NCube<T>
             safeCoord = (coordinate == null) ? new CaseInsensitiveMap<>() : new CaseInsensitiveMap<>(coordinate)
         }
 
-        Set<Long> ids = new HashSet<>()
+        LongHashSet ids = new LongHashSet()
         Iterator<Axis> i = axisList.values().iterator()
 
         while (i.hasNext())
@@ -1319,6 +1433,10 @@ class NCube<T>
             String axisName = axis.name
             final Comparable value = (Comparable) safeCoord[axisName]
             final Column column = (Column) axis.findColumn(value)
+            if (column == null || column.default)
+            {
+                trackUnboundAxis(output, name, axisName, value)
+            }
             if (column == null)
             {
                 throw new CoordinateNotFoundException("Value '${coordinate}' not found on axis: ${axisName}, cube: ${name}",
@@ -1327,7 +1445,7 @@ class NCube<T>
             ids.add(column.id)
         }
 
-        return new LongHashSet(ids)
+        return ids
     }
 
     /**
@@ -1524,11 +1642,31 @@ class NCube<T>
     }
 
     /**
+     * Convenience method to locate column when you have the axis name as a String and the value to find.
+     * If the named axis is a rule axis, then it is expected that value is either a String name of the rule
+     * or the long ID of the rule column.
+     * @param axisName String name of axis.  Case does not matter when locating by name.
+     * @param value Comparable value used to find the column.
+     * @return Column instance if located, otherwise null.
+     */
+    Column findColumn(String axisName, Comparable value)
+    {
+        Axis axis = getAxis(axisName)
+        if (!axis)
+        {
+            return null
+        }
+
+        return axis.findColumn(value)
+    }
+
+    /**
      * Change the value of a Column along an axis.
      * @param id long indicates the column to change
      * @param value Comparable new value to set into the column
+     * @param order int (optional) new display order for column
      */
-    void updateColumn(long id, Comparable value)
+    void updateColumn(long id, Comparable value, String name = null, int order = -1i)
     {
         Axis axis = getAxisFromColumnId(id)
         if (axis == null)
@@ -1536,7 +1674,7 @@ class NCube<T>
             throw new IllegalArgumentException("No column exists with the id ${id} within cube: ${name}")
         }
         clearSha1()
-        axis.updateColumn(id, value)
+        axis.updateColumn(id, value, name, order)
     }
 
     /**
@@ -1560,10 +1698,10 @@ class NCube<T>
 
         final Axis axisToUpdate = axisList[axisName]
         final Set<Long> colsToDel = axisToUpdate.updateColumns(newCols, allowPositiveColumnIds)
-        Iterator<LongHashSet> i = cells.keySet().iterator()
 
         if (!colsToDel.empty)
         {   // If there are columns to delete, then delete any cells referencing those columns
+            Iterator<LongHashSet> i = cells.keySet().iterator()
             while (i.hasNext())
             {
                 LongHashSet cols = i.next()
@@ -1738,6 +1876,17 @@ class NCube<T>
     {
         Axis axis = getAxis(axisName)
         axis.breakReference()
+        clearSha1()
+    }
+
+    /**
+     * Remove transform from a reference axis.
+     * @param axisName String name of reference axis.
+     */
+    void removeAxisReferenceTransform(final String axisName)
+    {
+        Axis axis = getAxis(axisName)
+        axis.removeTransform()
         clearSha1()
     }
 
@@ -2096,17 +2245,20 @@ class NCube<T>
                 {
                     columns.each { Map column ->
                         Column col = newAxis.getColumnById(column.id as Long)
-                        Iterator<Map.Entry<String, Object>> i = column.entrySet().iterator()
-                        while (i.hasNext())
-                        {
-                            Map.Entry<String, Object> entry = i.next()
-                            String key = entry.key
-                            if ('id' != key)
+                        if (col)
+                        {    // skip deleted columns
+                            Iterator<Map.Entry<String, Object>> i = column.entrySet().iterator()
+                            while (i.hasNext())
                             {
-                                col.setMetaProperty(key, entry.value)
+                                Map.Entry<String, Object> entry = i.next()
+                                String key = entry.key
+                                if ('id' != key)
+                                {
+                                    col.setMetaProperty(key, entry.value)
+                                }
                             }
+                            transformMetaProperties(col.metaProps)
                         }
-                        transformMetaProperties(col.metaProps)
                     }
                 }
             }
@@ -2147,6 +2299,9 @@ class NCube<T>
                     moveAxisMetaPropsToDefaultColumn(axis)
                 }
 
+                // Temporary - eventually should be removed.  Fixes rule columns with no or non-unique names
+                healUnamedRules(type, columns)
+
                 // Read columns
                 for (col in columns)
                 {
@@ -2170,7 +2325,6 @@ class NCube<T>
                     }
 
                     boolean cache = false
-
                     if (jsonColumn.containsKey('cache'))
                     {
                         cache = getBoolean(jsonColumn, 'cache')
@@ -2324,7 +2478,43 @@ class NCube<T>
         return ncube
     }
 
-    /**
+    static void healUnamedRules(AxisType type, Object[] columns)
+    {
+        if (type != AxisType.RULE)
+        {
+            return
+        }
+
+        int count = 1
+        Set<String> names = new CaseInsensitiveSet<>()
+
+        for (Object col : columns)
+        {
+            Map column = col as Map
+            String name = column.name
+            if (!name || names.contains(name))
+            {
+                MapEntry result = generateRuleName(names, count)
+                column.name = result.key
+                count = result.value as int
+                names.add(column.name as String)
+            }
+            else
+            {
+                names.add(name)
+            }
+        }
+    }
+
+    static MapEntry generateRuleName(Set<String> names, int count)
+    {
+        String name
+        while (names.contains(name = "BR${count++}"))
+            ;
+        return new MapEntry(name, count)
+    }
+
+   /**
      * Snag all meta-properties on Axis that start with Axis.DEFAULT_COLUMN_PREFIX, as this
      * is where the default column's meta properties are stored, and copy them to the default
      * column (if one exists)
@@ -2354,7 +2544,7 @@ class NCube<T>
      * CellInfo.  If the value is not a JsonObject, it is left alone (primitives).
      * @param props Map of String meta-property keys to values
      */
-    private static void transformMetaProperties(Map props)
+    protected static void transformMetaProperties(Map props)
     {
         List<MapEntry> entriesToUpdate = []
         for (entry in props.entrySet())
@@ -2365,6 +2555,11 @@ class NCube<T>
                 Boolean cache = (Boolean) map['cache']
                 Object value = CellInfo.parseJsonValue(map['value'], (String) map['url'], (String) map['type'], cache == null ? false : cache)
                 entriesToUpdate.add(new MapEntry(entry.key, value))
+            }
+            else if (entry.value instanceof CellInfo)
+            {
+                CellInfo info = entry.value as CellInfo
+                entriesToUpdate.add(new MapEntry(entry.key, info.recreate()))
             }
         }
 
@@ -2776,6 +2971,7 @@ class NCube<T>
      */
     void mergeDeltas(List<Delta> deltas)
     {
+        List<Delta> columnReorders = []
         for (Delta delta : deltas)
         {
             switch (delta.location)
@@ -2783,122 +2979,215 @@ class NCube<T>
                 case Delta.Location.NCUBE:
                     switch (delta.locId)
                     {
+                        case 'NAME':
+                            name = delta.destVal
+                            break
+
                         case 'DEFAULT_CELL':
-                            CellInfo cellInfo = delta.sourceVal as CellInfo
+                            CellInfo cellInfo = delta.destVal as CellInfo
                             Object cellValue = cellInfo.isUrl ?
                                     CellInfo.parseJsonValue(null, cellInfo.value, cellInfo.dataType, cellInfo.isCached) :
                                     CellInfo.parseJsonValue(cellInfo.value, null, cellInfo.dataType, cellInfo.isCached)
-                            setDefaultCellValue((T)cellValue)
+                            setDefaultCellValue((T) cellValue)
                             break
                     }
                     break
 
                 case Delta.Location.NCUBE_META:
-                    String key = delta.sourceVal as String
-                    if (delta.type == Delta.Type.DELETE)
+                    switch (delta.type)
                     {
-                        removeMetaProperty(key)
-                    }
-                    else
-                    {
-                        setMetaProperty(key, delta.destVal)
+                        case Delta.Type.ADD:
+                        case Delta.Type.UPDATE:
+                            MapEntry entry = delta.destVal as MapEntry
+                            setMetaProperty(entry.key as String, entry.value)
+                            break
+
+                        case Delta.Type.DELETE:
+                            MapEntry entry = delta.sourceVal as MapEntry
+                            removeMetaProperty(entry.key as String)
+                            break
                     }
                     break
 
                 case Delta.Location.AXIS:
-                    Axis sourceAxis = delta.sourceVal as Axis
-                    Axis destAxis = delta.destVal as Axis
+                    Axis receiverAxis = delta.sourceVal as Axis
+                    Axis transmitterAxis = delta.destVal as Axis
 
-                    if (delta.type == Delta.Type.ADD)
+                    switch (delta.type)
                     {
-                        if (getAxis(destAxis.name) == null)
-                        {
-                            addAxis(delta.destVal as Axis)
-                        }
-                    }
-                    else if (delta.type == Delta.Type.UPDATE)
-                    {
-                        Axis axis = getAxis(sourceAxis.name)
+                        case Delta.Type.ADD:
+                            if (getAxis(transmitterAxis.name) == null)
+                            {   // Only add if not already there.
+                                addAxis(transmitterAxis)
+                            }
+                            break
 
-                        // Bring over any change to sort-order
-                        axis.columnOrder = sourceAxis.columnOrder
+                        case Delta.Type.UPDATE:
+                            if (receiverAxis)
+                            {
+                                receiverAxis.columnOrder = transmitterAxis.columnOrder
+                                receiverAxis.fireAll = transmitterAxis.fireAll
+                            }
+                            break
 
-                        // Bring over any change to fireAll
-                        axis.fireAll = sourceAxis.fireAll
-                    }
-                    else if (delta.type == Delta.Type.DELETE)
-                    {
-                        deleteAxis(sourceAxis.name)
+                        case Delta.Type.DELETE:
+                            deleteAxis(receiverAxis.name)
+                            break
                     }
                     break
 
                 case Delta.Location.AXIS_META:
                     Axis axis = getAxis(delta.locId as String)
-                    String key = delta.sourceVal as String
-                    if (delta.type == Delta.Type.ADD)
+                    if (!axis)
                     {
-                        axis.removeMetaProperty(key)
+                        break
                     }
-                    else
+                    switch (delta.type)
                     {
-                        axis.setMetaProperty(key, delta.destVal)
+                        case Delta.Type.ADD:
+                        case Delta.Type.UPDATE:
+                            MapEntry entry = delta.destVal as MapEntry
+                            axis.setMetaProperty(entry.key as String, entry.value)
+                            break
+                        case Delta.Type.DELETE:
+                            MapEntry entry = delta.sourceVal as MapEntry
+                            axis.removeMetaProperty(entry.key as String)
+                            break
                     }
-                    clearSha1()
                     break
 
                 case Delta.Location.COLUMN:
                     String axisName = delta.locId as String
-                    Axis oldAxis = getAxis(axisName)
+                    Axis axis = getAxis(axisName)
+                    if (!axis)
+                    {   // axis not found
+                        break
+                    }
                     switch (delta.type)
                     {
                         case Delta.Type.ADD:
                             Column column = delta.destVal as Column
-                            oldAxis.addColumn(column)
+                            if (column.default)
+                            {
+                                if (!axis.hasDefaultColumn())
+                                {
+                                    addColumn(axisName, null, column.columnName)
+                                }
+                            }
+                            else
+                            {
+                                Column existingCol = axis.locateDeltaColumn(column)
+                                if (!existingCol || existingCol.default)
+                                {   // Only add column if it is not already there
+                                    addColumn(axisName, column.value, column.columnName, column.id)
+                                }
+                            }
                             break
+
                         case Delta.Type.DELETE:
                             Column column = delta.sourceVal as Column
-                            oldAxis.deleteColumn(column.value)
+                            Column existingCol = axis.locateDeltaColumn(column)
+                            if (axis.type == AxisType.RULE)
+                            {
+                                deleteColumn(axisName, existingCol.columnName ?: existingCol.id as Long)
+                            }
+                            else
+                            {
+                                deleteColumn(axisName, existingCol.value)
+                            }
                             break
+
                         case Delta.Type.UPDATE:
-                            List<Column> columns = oldAxis.columnsWithoutDefault
-                            int prevIdx = columns.indexOf(delta.destVal as Column)
-                            columns.remove(prevIdx)
-                            columns.add(prevIdx, delta.sourceVal as Column)
-                            updateColumns(axisName, columns, true)
+                            Column oldCol = delta.sourceVal as Column
+                            Column newCol = delta.destVal as Column
+                            Column existingCol = axis.locateDeltaColumn(oldCol)
+                            if (existingCol)
+                            {
+                                updateColumn(existingCol.id, newCol.value)
+                            }
+                            break
+
+                        case Delta.Type.ORDER:
+                            columnReorders.add(delta)
                             break
                     }
                     break
 
                 case Delta.Location.COLUMN_META:
-                    String key = delta.sourceVal as String
                     Map<String, Object> helperId = delta.locId as Map<String, Object>
                     Axis axis = getAxis(helperId.axis as String)
-                    Column column = axis.findColumn(helperId.column as Comparable)
-                    if (delta.type == Delta.Type.ADD)
+                    if (!axis)
                     {
-                        column.removeMetaProperty(key)
+                        break
                     }
-                    else
+                    Column column = axis.locateDeltaColumn(helperId.column as Column)
+                    if (!column)
                     {
-                        column.setMetaProperty(key, delta.destVal)
+                        break
                     }
-                    clearSha1()
+                    MapEntry oldPair = delta.sourceVal as MapEntry
+                    MapEntry newPair = delta.destVal as MapEntry
+
+                    switch (delta.type)
+                    {
+                        case Delta.Type.ADD:
+                        case Delta.Type.UPDATE:
+                            column.setMetaProperty(newPair.key as String, newPair.value)
+                            break
+
+                        case Delta.Type.DELETE:
+                            column.removeMetaProperty(oldPair.key as String)
+                            break
+                    }
                     break
 
                 case Delta.Location.CELL:
                     Set<Long> coords = delta.locId as Set<Long>
-                    removeCellById(coords)
-                    if (delta.type != Delta.Type.ADD)
+
+                    switch (delta.type)
                     {
-                        setCellById((T)((CellInfo)delta.sourceVal).recreate(), coords)
+                        case Delta.Type.ADD:
+                        case Delta.Type.UPDATE:
+                            setCellById((T) (delta.destVal as CellInfo).recreate(), coords)
+                            break
+
+                        case Delta.Type.DELETE:
+                            removeCellById(coords)
+                            break
                     }
                     break
 
                 case Delta.Location.CELL_META:
-                    // TODO - cell metaproperties not yet implemented
+                    // TODO - cell meta-properties not yet implemented
                     break
             }
         }
+
+        for (Delta delta : columnReorders)
+        {
+            String axisName = delta.locId as String
+            if (axisName)
+            {
+                Axis axis = getAxis(delta.locId as String)
+                if (axis)
+                {
+                    Set<Column> updatedCols = []
+                    Set<Column> oldCols = delta.destVal as Set<Column>
+                    for (Column oldCol : oldCols)
+                    {
+                        Column newCol = axis.getColumnById(oldCol.id)
+                        if (newCol)
+                        {
+                            newCol.displayOrder = oldCol.displayOrder
+                            updatedCols.add(newCol)
+                        }
+                    }
+                    updateColumns(axisName, updatedCols, true)
+                }
+            }
+        }
+
+        clearSha1()
     }
 
     /**

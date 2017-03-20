@@ -11,6 +11,7 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException
 
+import static com.cedarsoftware.ncube.NCubeConstants.*
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
@@ -65,7 +66,7 @@ class TestNCubeJdbcPersister
         persister.updateCube(defaultSnapshotApp, ncube1, USER_ID)
         persister.updateCube(defaultSnapshotApp, ncube2, USER_ID)
 
-        Object[] cubeList = persister.search(defaultSnapshotApp, "test.%", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY) : true])
+        Object[] cubeList = persister.search(defaultSnapshotApp, "test.%", null, [(SEARCH_ACTIVE_RECORDS_ONLY) : true])
 
         assertTrue(cubeList != null)
         assertTrue(cubeList.length == 2)
@@ -79,7 +80,7 @@ class TestNCubeJdbcPersister
         int numRelease = NCubeManager.releaseCubes(defaultSnapshotApp, "0.2.0")
         assertEquals(0, numRelease)
 
-        cubeList = NCubeManager.search(next, 'test.*', null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        cubeList = NCubeManager.search(next, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         // Two cubes at the new 1.2.3 SNAPSHOT version.
         assert cubeList.length == 2
 

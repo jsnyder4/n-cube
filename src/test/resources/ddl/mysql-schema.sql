@@ -20,5 +20,6 @@ CREATE TABLE if not exists n_cube (
   KEY fourIdx (tenant_cd, app_cd, version_no_cd, branch_id),
   KEY versionIdx (version_no_cd),
   KEY revIdx (revision_number),
-  KEY branchIdx (branch_id)
+  KEY branchIdx (branch_id),
+  KEY sha1Idx (sha1)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

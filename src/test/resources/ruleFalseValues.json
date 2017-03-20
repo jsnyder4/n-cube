@@ -9,17 +9,17 @@
             "preferredOrder":1,
             "columns":[
                 { "id":0, "name":"step1", "type":"exp", "value":"true" },
-                { "id":1, "type":"exp", "value":"false" },
-                { "id":2, "type":"exp", "value":"0" },
-                { "id":3, "type":"exp", "value":"Boolean.FALSE" },
-                { "id":4, "type":"exp", "value": "0 == 1"},
-                { "id":5, "type":"exp", "value": "def x = [a:false]; x.a"},
-                { "id":6, "type":"exp", "value": "def x = [a:Boolean.FALSE]; x.a"},
-                { "id":7, "type":"exp", "value": "[:]"},
-                { "id":8, "type":"exp", "value": "[:].keySet().iterator()"},
-                { "id":9, "type":"exp", "value": "[]"},
-                { "id":10, "type":"exp", "value": "[].iterator()"},
-                { "id":11, "type":"exp", "value": "''"}
+                { "id":1, "name":"step2", "type":"exp", "value":"false" },
+                { "id":2, "name":"step3", "type":"exp", "value":"0" },
+                { "id":3, "name":"step4", "type":"exp", "value":"Boolean.FALSE" },
+                { "id":4, "name":"step5", "type":"exp", "value": "0 == 1"},
+                { "id":5, "name":"step6", "type":"exp", "value": "def x = [a:false]; x.a"},
+                { "id":6, "name":"step7", "type":"exp", "value": "def x = [a:Boolean.FALSE]; x.a"},
+                { "id":7, "name":"step8", "type":"exp", "value": "[:]"},
+                { "id":8, "name":"step9", "type":"exp", "value": "[:].keySet().iterator()"},
+                { "id":9, "name":"step10", "type":"exp", "value": "[]"},
+                { "id":10, "name":"step11", "type":"exp", "value": "[].iterator()"},
+                { "id":11, "name":"step12", "type":"exp", "value": "''"}
             ]
         }
     ],

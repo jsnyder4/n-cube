@@ -27,6 +27,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.zip.GZIPOutputStream
+
+import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+
 /**
  * SQL Persister for n-cubes.  Manages all reads and writes of n-cubes to an SQL database.
  *
@@ -60,6 +64,7 @@ class NCubeJdbcPersister
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
+    private static final Pattern REF_APP_SEARCH_PATTERN = Pattern.compile(StringUtilities.wildcardToRegexString('*' + REF_APP + '*'), Pattern.CASE_INSENSITIVE)
     private static volatile AtomicBoolean isOracle = null
 
     static List<NCubeInfoDto> search(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
@@ -69,23 +74,23 @@ class NCubeJdbcPersister
 
         Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
         boolean hasSearchContent = StringUtilities.hasContent(searchContent)
-        copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent
+        copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent
         if (hasSearchContent)
         {
             searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
         }
 
         // Convert INCLUDE or EXCLUDE filter query from String, Set, or Map to Set.
-        copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE] = getFilter(copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE])
-        copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE] = getFilter(copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE])
-        Set includeTags = copyOptions[NCubeManager.SEARCH_FILTER_INCLUDE] as Set
-        Set excludeTags = copyOptions[NCubeManager.SEARCH_FILTER_EXCLUDE] as Set
+        copyOptions[SEARCH_FILTER_INCLUDE] = getFilter(copyOptions[SEARCH_FILTER_INCLUDE])
+        copyOptions[SEARCH_FILTER_EXCLUDE] = getFilter(copyOptions[SEARCH_FILTER_EXCLUDE])
+        Set includeTags = copyOptions[SEARCH_FILTER_INCLUDE] as Set
+        Set excludeTags = copyOptions[SEARCH_FILTER_EXCLUDE] as Set
 
         // If filtering by tags, we need to include CUBE DATA, so add that flag to the search
-        boolean includeCubeData = copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA]
+        boolean includeCubeData = copyOptions[SEARCH_INCLUDE_CUBE_DATA]
         includeCubeData |= includeTags || excludeTags  // Set to true if either inclusion or exclusion filter has content, or if it was already set to true.
 
-        copyOptions[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = includeCubeData
+        copyOptions[SEARCH_INCLUDE_CUBE_DATA] = includeCubeData
         copyOptions[METHOD_NAME] = 'search'
         runSelectCubesStatement(c, appId, cubeNamePattern, copyOptions, { ResultSet row -> getCubeInfoRecords(appId, searchPattern, list, copyOptions, row) })
         return list
@@ -93,9 +98,9 @@ class NCubeJdbcPersister
 
     static NCube loadCube(Connection c, ApplicationID appId, String cubeName)
     {
-        Map<String, Object> options = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY): true,
-                                       (NCubeManager.SEARCH_INCLUDE_CUBE_DATA): true,
-                                       (NCubeManager.SEARCH_EXACT_MATCH_NAME): true] as Map
+        Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
+                                       (SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_EXACT_MATCH_NAME): true] as Map
 
         NCube cube = null
         options[METHOD_NAME] = 'loadCube'
@@ -350,10 +355,10 @@ sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             long txId = UniqueIdGenerator.uniqueId
-            Map<String, Object> options = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY): true,
-                                           (NCubeManager.SEARCH_INCLUDE_CUBE_DATA)  : true,
-                                           (NCubeManager.SEARCH_INCLUDE_TEST_DATA)  : true,
-                                           (NCubeManager.SEARCH_EXACT_MATCH_NAME)   : true,
+            Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
+                                           (SEARCH_INCLUDE_CUBE_DATA)  : true,
+                                           (SEARCH_INCLUDE_TEST_DATA)  : true,
+                                           (SEARCH_EXACT_MATCH_NAME)   : true,
                                            (METHOD_NAME) : 'deleteCubes'] as Map
             cubeNames.each { String cubeName ->
                 Long revision = null
@@ -392,10 +397,10 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
 sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
-            Map<String, Object> options = [(NCubeManager.SEARCH_DELETED_RECORDS_ONLY): true,
-                                           (NCubeManager.SEARCH_INCLUDE_CUBE_DATA)   : true,
-                                           (NCubeManager.SEARCH_INCLUDE_TEST_DATA)   : true,
-                                           (NCubeManager.SEARCH_EXACT_MATCH_NAME)    : true,
+            Map<String, Object> options = [(SEARCH_DELETED_RECORDS_ONLY): true,
+                                           (SEARCH_INCLUDE_CUBE_DATA)   : true,
+                                           (SEARCH_INCLUDE_TEST_DATA)   : true,
+                                           (SEARCH_EXACT_MATCH_NAME)    : true,
                                            (METHOD_NAME) : 'restoreCubes'] as Map
             int count = 0
             long txId = UniqueIdGenerator.uniqueId
@@ -517,9 +522,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
     static void updateCube(Connection c, ApplicationID appId, NCube cube, String username)
     {
-        Map<String, Object> options = [(NCubeManager.SEARCH_INCLUDE_CUBE_DATA): true,
-                                       (NCubeManager.SEARCH_INCLUDE_TEST_DATA): true,
-                                       (NCubeManager.SEARCH_EXACT_MATCH_NAME): true,
+        Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_INCLUDE_TEST_DATA): true,
+                                       (SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'updateCube'] as Map
         boolean rowFound = false
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
@@ -560,9 +565,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         String sha1 = null
 
         Map<String, Object> options = [
-                (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
-                (NCubeManager.SEARCH_INCLUDE_TEST_DATA):true,
-                (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+                (SEARCH_INCLUDE_CUBE_DATA):true,
+                (SEARCH_INCLUDE_TEST_DATA):true,
+                (SEARCH_EXACT_MATCH_NAME):true,
                 (METHOD_NAME) : 'duplicateCube'] as Map
 
         runSelectCubesStatement(c, oldAppId, oldName, options, 1, { ResultSet row ->
@@ -586,7 +591,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         String headSha1 = null
 
         // Do not include test, n-cube, or notes blob columns in search - much faster
-        Map<String, Object> options1 = [(NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+        Map<String, Object> options1 = [(SEARCH_EXACT_MATCH_NAME):true,
                                         (METHOD_NAME) : 'duplicateCube'] as Map
         runSelectCubesStatement(c, newAppId, newName, options1, 1, { ResultSet row ->
             newRevision = row.getLong('revision_number')
@@ -598,11 +603,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             throw new IllegalArgumentException("Unable to duplicate cube, cube already exists with the new name, app:  " + newAppId + ", name: " + newName)
         }
 
-        boolean changed = !StringUtilities.equalsIgnoreCase(oldName, newName)
+        boolean nameChanged = !StringUtilities.equalsIgnoreCase(oldName, newName)
         boolean sameExceptBranch = oldAppId.equalsNotIncludingBranch(newAppId)
 
         // If names are different we need to recalculate the sha-1
-        if (changed)
+        if (nameChanged)
         {
             NCube ncube = NCube.createCubeFromBytes(jsonBytes)
             ncube.name = newName
@@ -613,7 +618,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         String notes = 'Cube duplicated from app: ' + oldAppId + ', name: ' + oldName
         Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
-        insertCube(c, newAppId, newName, rev, jsonBytes, oldTestData, notes, changed, sha1, sameExceptBranch ? headSha1 : null, username, 'duplicateCube')
+        insertCube(c, newAppId, newName, rev, jsonBytes, oldTestData, notes, true, sha1, sameExceptBranch ? headSha1 : null, username, 'duplicateCube')
         return true
     }
 
@@ -626,9 +631,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         byte[] testData = null
 
         Map<String, Object> options = [
-                (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
-                (NCubeManager.SEARCH_INCLUDE_TEST_DATA):true,
-                (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+                (SEARCH_INCLUDE_CUBE_DATA):true,
+                (SEARCH_INCLUDE_TEST_DATA):true,
+                (SEARCH_EXACT_MATCH_NAME):true,
                 (METHOD_NAME) : 'renameCube'] as Map
 
         NCube ncube = null
@@ -654,7 +659,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         String newHeadSha1 = null
 
         // Do not include n-cube, tests, or notes in search
-        Map<String, Object> options1 = [(NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+        Map<String, Object> options1 = [(SEARCH_EXACT_MATCH_NAME):true,
                                         (METHOD_NAME) : 'renameCube'] as Map
         runSelectCubesStatement(c, appId, newName, options1, 1, { ResultSet row ->
             newRevision = row.getLong('revision_number')
@@ -681,17 +686,18 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
     static NCubeInfoDto commitMergedCubeToBranch(Connection c, ApplicationID appId, NCube cube, String headSha1, String username, long txId)
     {
-        Map options = [(NCubeManager.SEARCH_INCLUDE_TEST_DATA):true,
-                       (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+        Map options = [(SEARCH_INCLUDE_TEST_DATA):true,
+                       (SEARCH_EXACT_MATCH_NAME):true,
                        (METHOD_NAME) : 'commitMergedCubeToBranch'] as Map
 
         NCubeInfoDto result = null
+        boolean changed = cube.sha1() != headSha1
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             Long revision = row.getLong('revision_number')
             byte[] testData = row.getBytes(TEST_DATA_BIN)
             revision = revision < 0 ? revision - 1 : revision + 1
-            result = insertCube(c, appId, cube, revision, testData, 'merged to branch, txId: [' + txId + ']', true, headSha1, username, 'commitMergedCubeToBranch')
+            result = insertCube(c, appId, cube, revision, testData, 'merged to branch, txId: [' + txId + ']', changed, headSha1, username, 'commitMergedCubeToBranch')
         })
         return result
     }
@@ -699,8 +705,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
     static NCubeInfoDto commitMergedCubeToHead(Connection c, ApplicationID appId, NCube cube, String username, long txId)
     {
         final String methodName = 'commitMergedCubeToHead'
-        Map options = [(NCubeManager.SEARCH_INCLUDE_TEST_DATA):true,
-                       (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+        Map options = [(SEARCH_INCLUDE_TEST_DATA):true,
+                       (SEARCH_EXACT_MATCH_NAME):true,
                        (METHOD_NAME) : methodName]
 
         ApplicationID headAppId = appId.asHead()
@@ -990,7 +996,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         Long headRevision = null
         String headSha1 = null
 
-        Map<String, Object> options = [(NCubeManager.SEARCH_EXACT_MATCH_NAME): true,
+        Map<String, Object> options = [(SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'mergeAcceptMine'] as Map
 
         runSelectCubesStatement(c, headId, cubeName, options, 1, { ResultSet row ->
@@ -1008,8 +1014,8 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         byte[] myTestData = null
         byte[] myBytes = null
         boolean changed = false
-        options[NCubeManager.SEARCH_INCLUDE_CUBE_DATA] = true
-        options[NCubeManager.SEARCH_INCLUDE_TEST_DATA] = true
+        options[SEARCH_INCLUDE_CUBE_DATA] = true
+        options[SEARCH_INCLUDE_TEST_DATA] = true
         options[METHOD_NAME] = 'mergeAcceptMine'
 
         runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
@@ -1038,12 +1044,13 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         Long sourceRevision = null
         byte[] sourceTestData = null
         String sourceSha1 = null
+        String sourceHeadSha1 = null
         boolean sourceChanged = false
 
         Map<String, Object> options = [
-                (NCubeManager.SEARCH_INCLUDE_CUBE_DATA):true,
-                (NCubeManager.SEARCH_INCLUDE_TEST_DATA):true,
-                (NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+                (SEARCH_INCLUDE_CUBE_DATA):true,
+                (SEARCH_INCLUDE_TEST_DATA):true,
+                (SEARCH_EXACT_MATCH_NAME):true,
                 (METHOD_NAME) : 'mergeAcceptTheirs'] as Map
 
         runSelectCubesStatement(c, sourceId, cubeName, options, 1, { ResultSet row ->
@@ -1051,6 +1058,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             sourceTestData = row.getBytes(TEST_DATA_BIN)
             sourceRevision = row.getLong('revision_number')
             sourceSha1 = row.getString('sha1')
+            sourceHeadSha1 = row.getString('head_sha1')
             sourceChanged = (boolean)row.getBoolean(CHANGED)
         })
 
@@ -1063,18 +1071,47 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         String targetHeadSha1 = null
 
         // Do not use cube_value_bin, test data, or notes to speed up search
-        Map<String, Object> options1 = [(NCubeManager.SEARCH_EXACT_MATCH_NAME):true,
+        Map<String, Object> options1 = [(SEARCH_EXACT_MATCH_NAME):true,
                                         (METHOD_NAME) : 'mergeAcceptTheirs'] as Map
         runSelectCubesStatement(c, appId, cubeName, options1, 1, { ResultSet row ->
             newRevision = row.getLong('revision_number')
             targetHeadSha1 = row.getString('head_sha1')
         })
 
+        String actualHeadSha1 = null
+
+        // Do not use cube_value_bin, test data, or notes to speed up search
+        Map<String, Object> options2 = [(SEARCH_EXACT_MATCH_NAME):true,
+                                        (METHOD_NAME) : 'mergeAcceptTheirs'] as Map
+        runSelectCubesStatement(c, appId.asHead(), cubeName, options2, 1, { ResultSet row ->
+            actualHeadSha1 = row.getString('sha1')
+        })
+
         String notes = "merge: ${sourceBranch} accepted over branch"
         long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
         rev = sourceRevision < 0 ? -rev : rev
-        String headSha1 = sourceBranch == ApplicationID.HEAD ? sourceSha1 : targetHeadSha1
-        insertCube(c, appId, cubeName, rev, sourceBytes, sourceTestData, notes, sourceChanged, sourceSha1, headSha1, username, 'mergeAcceptTheirs')
+
+        String headSha1
+        boolean changed = false
+        if (sourceBranch == ApplicationID.HEAD)
+        {
+            headSha1 = sourceSha1
+        }
+        else if (sourceSha1 == actualHeadSha1)
+        {
+            headSha1 = actualHeadSha1
+        }
+        else
+        {
+            headSha1 = targetHeadSha1
+            changed = true
+        }
+
+        if (sourceSha1 == sourceHeadSha1 && (sourceRevision < 0 != newRevision < 0)) {
+            changed = true
+        }
+
+        insertCube(c, appId, cubeName, rev, sourceBytes, sourceTestData, notes, changed, sourceSha1, headSha1, username, 'mergeAcceptTheirs')
         return true
     }
 
@@ -1098,13 +1135,13 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
      */
     protected static void runSelectCubesStatement(Connection c, ApplicationID appId, String namePattern, Map options, int max, Closure closure)
     {
-        boolean includeCubeData = toBoolean(options[NCubeManager.SEARCH_INCLUDE_CUBE_DATA])
-        boolean includeTestData = toBoolean(options[NCubeManager.SEARCH_INCLUDE_TEST_DATA])
-        boolean includeNotes = toBoolean(options[NCubeManager.SEARCH_INCLUDE_NOTES])
-        boolean changedRecordsOnly = toBoolean(options[NCubeManager.SEARCH_CHANGED_RECORDS_ONLY])
-        boolean activeRecordsOnly = toBoolean(options[NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY])
-        boolean deletedRecordsOnly = toBoolean(options[NCubeManager.SEARCH_DELETED_RECORDS_ONLY])
-        boolean exactMatchName = toBoolean(options[NCubeManager.SEARCH_EXACT_MATCH_NAME])
+        boolean includeCubeData = toBoolean(options[SEARCH_INCLUDE_CUBE_DATA])
+        boolean includeTestData = toBoolean(options[SEARCH_INCLUDE_TEST_DATA])
+        boolean includeNotes = toBoolean(options[SEARCH_INCLUDE_NOTES])
+        boolean changedRecordsOnly = toBoolean(options[SEARCH_CHANGED_RECORDS_ONLY])
+        boolean activeRecordsOnly = toBoolean(options[SEARCH_ACTIVE_RECORDS_ONLY])
+        boolean deletedRecordsOnly = toBoolean(options[SEARCH_DELETED_RECORDS_ONLY])
+        boolean exactMatchName = toBoolean(options[SEARCH_EXACT_MATCH_NAME])
         String methodName = (String)options[METHOD_NAME]
         if (StringUtilities.isEmpty(methodName))
         {
@@ -1178,8 +1215,10 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
             throw new IllegalStateException("Branch '" + targetAppId.branch + "' already exists, app: " + targetAppId)
         }
 
-        Map<String, Object> options = [(NCubeManager.SEARCH_INCLUDE_CUBE_DATA): true,
-                                       (NCubeManager.SEARCH_INCLUDE_TEST_DATA): true,
+        int headCount = srcAppId.head ? 0 : copyBranchInitialRevisions(c, srcAppId, targetAppId)
+
+        Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_INCLUDE_TEST_DATA): true,
                                        (METHOD_NAME) : 'copyBranch'] as Map
         int count = 0
         boolean autoCommit = c.autoCommit
@@ -1191,7 +1230,8 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                     "/* copyBranch */ INSERT /*+append*/ INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectCubesStatement(c, srcAppId, null, options, { ResultSet row ->
-                String sha1 = row.getString('sha1')
+                byte[] notes = row.getBytes(NOTES_BIN)
+                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
@@ -1201,12 +1241,12 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, ("target ${targetAppId} copied from ${srcAppId}").getBytes('UTF-8'))
+                insert.setBytes(10, ("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
-                insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
+                insert.setLong(13, row.getLong('revision_number'))
                 insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean(CHANGED))
-                insert.setString(15, sha1)
+                insert.setString(15, row.getString('sha1'))
 
                 String headSha1 = null
                 if (!targetAppId.head)
@@ -1214,6 +1254,74 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                     headSha1 = row.getString(srcAppId.head ? 'sha1' : 'head_sha1')
                 }
                 insert.setString(16, headSha1)
+
+                insert.addBatch()
+                count++
+                if (count % EXECUTE_BATCH_CONSTANT == 0)
+                {
+                    insert.executeBatch()
+                }
+            })
+            if (count % EXECUTE_BATCH_CONSTANT != 0)
+            {
+                insert.executeBatch()
+            }
+            return count + headCount
+        }
+        finally
+        {
+            c.autoCommit = autoCommit
+            insert?.close()
+        }
+    }
+
+    private static int copyBranchInitialRevisions(Connection c, ApplicationID srcAppId, ApplicationID targetAppId)
+    {
+        Map map = srcAppId as Map
+        map.tenant = padTenant(c, srcAppId.tenant)
+
+        Sql sql = getSql(c)
+        String select = """SELECT n.n_cube_id, n.n_cube_nm, n.app_cd, n.notes_bin, n.cube_value_bin, n.test_data_bin,
+                n.version_no_cd, n.status_cd, n.create_dt, n.create_hid, n.revision_number, n.branch_id, n.changed, n.sha1
+        FROM n_cube n,
+        (SELECT x.n_cube_nm, x.head_sha1, x.sha1
+            FROM n_cube x
+            JOIN (SELECT n_cube_nm, MAX(ABS(revision_number)) AS max_rev
+                            FROM n_cube
+                            WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = :branch GROUP BY n_cube_nm) y
+                    ON LOWER(x.n_cube_nm) = LOWER(y.n_cube_nm) AND ABS(x.revision_number) = y.max_rev
+                            WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = :branch) m
+        WHERE LOWER(m.n_cube_nm) = LOWER(n.n_cube_nm) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status
+                AND n.branch_id = 'HEAD' AND n.sha1 = m.head_sha1 AND m.head_sha1 <> m.sha1"""
+
+        int count = 0
+        boolean autoCommit = c.autoCommit
+        PreparedStatement insert = null
+        try
+        {
+            c.autoCommit = false
+            insert = c.prepareStatement(
+                    "/* copyBranch */ INSERT /*+append*/ INTO n_cube (n_cube_id, n_cube_nm, ${CUBE_VALUE_BIN}, create_dt, create_hid, version_no_cd, status_cd, app_cd, test_data_bin, notes_bin, tenant_cd, branch_id, revision_number, changed, sha1, head_sha1) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            sql.eachRow(map, select, { ResultSet row ->
+                byte[] notes = row.getBytes(NOTES_BIN)
+                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
+                insert.setLong(1, UniqueIdGenerator.uniqueId)
+                insert.setString(2, row.getString('n_cube_nm'))
+                insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
+                insert.setTimestamp(4, nowAsTimestamp())
+                insert.setString(5, row.getString('create_hid'))
+                insert.setString(6, targetAppId.version)
+                insert.setString(7, ReleaseStatus.SNAPSHOT.name())
+                insert.setString(8, targetAppId.app)
+                insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
+                insert.setBytes(10, ("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
+                insert.setString(11, targetAppId.tenant)
+                insert.setString(12, targetAppId.branch)
+                insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
+                insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean(CHANGED))
+                insert.setString(15, row.getString('sha1'))
+                insert.setString(16, null)
 
                 insert.addBatch()
                 count++
@@ -1254,6 +1362,8 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectAllCubesInBranch(c, srcAppId, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')
+                byte[] notes = row.getBytes(NOTES_BIN)
+                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
@@ -1263,7 +1373,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2}"""
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, ("target ${targetAppId} full copied from ${srcAppId}").getBytes('UTF-8'))
+                insert.setBytes(10, ("target ${targetAppId} full copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))
@@ -1559,8 +1669,8 @@ ORDER BY abs(revision_number) DESC"""
     protected static void getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
     {
         boolean hasSearchPattern = searchPattern != null
-        Set<String> includeFilter = options[NCubeManager.SEARCH_FILTER_INCLUDE] as Set
-        Set<String> excludeFilter = options[NCubeManager.SEARCH_FILTER_EXCLUDE] as Set
+        Set<String> includeFilter = options[SEARCH_FILTER_INCLUDE] as Set
+        Set<String> excludeFilter = options[SEARCH_FILTER_EXCLUDE] as Set
 
         if (hasSearchPattern || includeFilter || excludeFilter)
         {   // Only read CUBE_VALUE_BIN if needed (searching content or filtering by cube_tags)
@@ -1569,17 +1679,49 @@ ORDER BY abs(revision_number) DESC"""
 
             if (hasSearchPattern)
             {
-                Matcher matcher = searchPattern.matcher(cubeData)
-                if (!matcher.find())
+                if (!searchPattern.matcher(cubeData.substring(cubeData.indexOf(','))).find()) // don't search name of cube
                 {   // Did not contains-match content pattern
-                    return
+                    // check if cube has reference axes before returning, as the value may exist on a referenced column
+
+                    if (REF_APP_SEARCH_PATTERN.matcher(cubeData).find())
+                    {
+                        boolean foundInRefAxColumn = false
+                        NCube cube = NCube.fromSimpleJson(cubeData)
+                        for (Axis axis : cube.axes)
+                        {
+                            if (axis.reference)
+                            {
+                                for (Column column : axis.columnsWithoutDefault)
+                                {
+                                    if (searchPattern.matcher(column.value.toString())
+                                            || (column.columnName != null && searchPattern.matcher(column.columnName)))
+                                    {
+                                        foundInRefAxColumn = true
+                                        break
+                                    }
+                                }
+                                if (foundInRefAxColumn)
+                                {
+                                    break
+                                }
+                            }
+                        }
+                        if (!foundInRefAxColumn)
+                        {
+                            return
+                        }
+                    }
+                    else
+                    {
+                        return
+                    }
                 }
             }
 
             if (includeFilter || excludeFilter)
             {
                 Map jsonNCube = (Map) JsonReader.jsonToJava(StringUtilities.createUtf8String(bytes), [(JsonReader.USE_MAPS):true] as Map)
-                Set<String> cubeTags = getFilter(jsonNCube[NCubeManager.CUBE_TAGS])
+                Set<String> cubeTags = getFilter(jsonNCube[CUBE_TAGS])
                 Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
 
                 if (includeFilter)
@@ -1614,7 +1756,7 @@ ORDER BY abs(revision_number) DESC"""
             notes = row.getBytes(NOTES_BIN)
         }
         catch (Exception ignored) { }
-        dto.notes = new String(notes == null ? "".bytes : notes, 'UTF-8')
+        dto.notes = new String(notes ?: "".bytes, 'UTF-8')
         dto.version = row.getString('version_no_cd')
         dto.status = row.getString('status_cd')
         dto.app = appId.app

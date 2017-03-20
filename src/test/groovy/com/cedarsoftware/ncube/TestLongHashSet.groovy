@@ -188,4 +188,21 @@ class TestLongHashSet
         assert set2.containsAll(set1)
         assert !set1.containsAll(set2)
     }
+
+    @Test
+    void testActsAsSetNotCollection()
+    {
+        LongHashSet set = new LongHashSet()
+        set.add(7)
+        set.add(7)
+        assert set.size() == 1
+        assert set.contains(7)
+
+        set = new LongHashSet([1, 2, 3, 3, 4, 5])
+        assert set.size() == 5
+
+        set = new LongHashSet()
+        set.addAll([1, 2, 3, 3, 4, 5])
+        assert set.size() == 5
+    }
 }

@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
@@ -16,13 +15,12 @@ import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.tools.GroovyClass
 
 import java.lang.reflect.InvocationTargetException
-import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
 
-import static com.cedarsoftware.ncube.NCubeManager.NCUBE_PARAMS_BYTE_CODE_DEBUG
-import static com.cedarsoftware.ncube.NCubeManager.NCUBE_PARAMS_BYTE_CODE_VERSION
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_DEBUG
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_VERSION
 
 /**
  * Base class for Groovy CommandCells.

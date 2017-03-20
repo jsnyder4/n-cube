@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 enum AxisValueType
 {
+    CISTRING, 		// For case insensitive Java Strings.  Strings will be compared with .equalsIgnoreCase()
     STRING, 		// For Java Strings.  Strings will be compared with .equals()
     LONG, 			// For any integral java type (byte, short, int, long).  All of those will be promoted to long internally.
     BIG_DECIMAL, 	// For float, double, or BigDecimal.  All of those will be promoted to BigDecimal internally.

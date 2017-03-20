@@ -42,7 +42,7 @@ class Column implements Comparable<Comparable>
     private Comparable value
     protected Map<String, Object> metaProps = null
 
-    Column(Comparable value, long id = 0L, Map metaProps = null)
+    Column(Comparable value, long id = 0L, Map metaProps = null, int order = -1)
     {
         this.value = value
         this.id = id
@@ -51,9 +51,25 @@ class Column implements Comparable<Comparable>
             displayOrder = Integer.MAX_VALUE
         }
 
+        if (order != -1)
+        {
+            displayOrder = order
+        }
+
         if (metaProps)
         {
             addMetaProperties(metaProps)
+        }
+    }
+
+    Column(Column source)
+    {
+        value = source.value
+        id = source.id
+        displayOrder = source.displayOrder
+        if (source.metaProps)
+        {
+            addMetaProperties(source.metaProps)
         }
     }
 

@@ -35,6 +35,7 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
     public static final String LAST_EXECUTED_STATEMENT = 'LAST_EXECUTED_STATEMENT'
     public static final String AXIS_BINDINGS = 'AXIS_BINDINGS'
     public static final String INPUT_KEYS_USED = 'INPUT_KEYS_ACCESSED'
+    public static final String UNBOUND_AXES_USED = 'UNBOUND_AXES_ACCESSED'
 
     RuleInfo()
     {
@@ -48,10 +49,13 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
      */
     long getNumberOfRulesExecuted()
     {
-        return getAxisBindings().size()
+        return axisBindings.size()
     }
 
-    void ruleStopThrown()
+    /**
+     * Set the indicator that a ruleStop was thrown
+     */
+    protected void ruleStopThrown()
     {
         put(RULE_STOP, Boolean.TRUE)
     }
@@ -61,16 +65,20 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
      */
     boolean wasRuleStopThrown()
     {
-        return containsKey(RULE_STOP) && (Boolean.TRUE.equals(get(RULE_STOP)))
+        return containsKey(RULE_STOP) && Boolean.TRUE == get(RULE_STOP)
     }
 
+    /**
+     * @return String output of all println calls that occurred from the start of the initial getCell() call
+     * until it returned.
+     */
     String getSystemOut()
     {
         if (containsKey(SYSTEM_OUT))
         {
             return (String) get(SYSTEM_OUT)
         }
-        return ""
+        return ''
     }
 
     void setSystemOut(String out)
@@ -78,13 +86,17 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
         put(SYSTEM_OUT, out)
     }
 
+    /**
+     * @return String output of system.err that occurred from the start of the initial getCell() call
+     * until it returned.  Kept separately per thread.
+     */
     String getSystemErr()
     {
         if (containsKey(SYSTEM_ERR))
         {
             return (String) get(SYSTEM_ERR)
         }
-        return ""
+        return ''
     }
 
     void setSystemErr(String err)
@@ -92,6 +104,9 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
         put(SYSTEM_ERR, err)
     }
 
+    /**
+     * @return Set of String assert failures that occurred when runTest was called.
+     */
     Set<String> getAssertionFailures()
     {
         if (containsKey(ASSERTION_FAILURES))
@@ -109,6 +124,9 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
         put(ASSERTION_FAILURES, failures)
     }
 
+    /**
+     * @return Object value of last executed statement value.
+     */
     Object getLastExecutedStatementValue()
     {
         if (containsKey(LAST_EXECUTED_STATEMENT))
@@ -118,11 +136,15 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
         return null
     }
 
-    protected void setLastExecutedStatement(def value)
+    protected void setLastExecutedStatement(Object value)
     {
         put(LAST_EXECUTED_STATEMENT, value)
     }
 
+    /**
+     * @return List of Binding instances which describe each Binding per getCell() call.  A binding
+     * holds the axisNames and values that were supplied.
+     */
     List<Binding> getAxisBindings()
     {
         if (containsKey(AXIS_BINDINGS))
@@ -134,6 +156,9 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
         return bindings
     }
 
+    /**
+     * @return Set of input keys that were used (.get() or .containsKey() accessed) from the input Map.
+     */
     Set getInputKeysUsed()
     {
         Set keysUsed = (Set)get(INPUT_KEYS_USED)
@@ -147,6 +172,58 @@ class RuleInfo extends CaseInsensitiveMap<String, Object>
 
     protected void addInputKeysUsed(Collection keys)
     {
-        getInputKeysUsed().addAll(keys)
+        inputKeysUsed.addAll(keys)
+    }
+
+    /**
+     * @return List of map entries where the key is a cube name and the value is
+     * another map entry. The second map entry contains the name of an
+     * unbound axis and the value that could not be bound.
+     */
+    List<MapEntry> getUnboundAxesList()
+    {
+        List<MapEntry> unBoundAxesList = get(UNBOUND_AXES_USED) as List<MapEntry>
+        if (unBoundAxesList == null)
+        {
+            unBoundAxesList = []
+            put(UNBOUND_AXES_USED, unBoundAxesList)
+        }
+        return unBoundAxesList
+    }
+
+    /**
+     * @return Map of cube names containing a map keyed by axis name.
+     * Each axis name map contains a list of column values that could
+     * not be bound.
+     */
+    Map<String, Map<String, Set<Object>>> getUnboundAxesMap()
+    {
+        Map<String, Map<String, Set<Object>>> unBoundAxesMap = new CaseInsensitiveMap<>()
+        unboundAxesList.each { MapEntry entry ->
+            String cubeName = entry.key
+            MapEntry axisBinding = entry.value as MapEntry
+            String axisName = axisBinding.key
+            
+            Map<String, Set<Object>> axisMap = unBoundAxesMap[cubeName]
+            if (axisMap == null)
+            {
+                axisMap = new CaseInsensitiveMap<>()
+                unBoundAxesMap[cubeName] = axisMap
+            }
+
+            Set<Object> values = axisMap[axisName]
+            if (values == null)
+            {
+                values = new LinkedHashSet<>()
+                axisMap[axisName] = values
+            }
+            values << axisBinding.value
+        }
+        return unBoundAxesMap
+    }
+
+    protected void addUnboundAxis(String cubeName, String axisName, Object value)
+    {
+        unboundAxesList << new MapEntry(cubeName, new MapEntry(axisName, value))
     }
 }

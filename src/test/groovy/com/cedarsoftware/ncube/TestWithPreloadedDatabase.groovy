@@ -10,7 +10,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.NCubeManager.NCUBE_ACCEPTED_DOMAINS
+import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
@@ -279,7 +279,7 @@ class TestWithPreloadedDatabase
         assert dtos.size() == 0
 
         ApplicationID headId = HEAD
-        assert 1 == NCubeManager.search(headId, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size()
+        assert 1 == NCubeManager.search(headId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size()
     }
 
     @Test
@@ -304,7 +304,7 @@ class TestWithPreloadedDatabase
         NCube cube1 = NCubeManager.getNCubeFromResource("test.branch.1.json")
         NCubeManager.updateCube(BRANCH1, cube1)
         VersionControl.commitBranch(BRANCH1)
-        List<NCubeInfoDto> cubes0 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> cubes0 = NCubeManager.search(BRANCH1, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assert cubes0.size() == 1
         NCubeInfoDto info0 = cubes0[0]
         assert info0.revision == "0"
@@ -312,7 +312,7 @@ class TestWithPreloadedDatabase
 
         cube1.setCell("XYZ", [code: 15])
         NCubeManager.updateCube(BRANCH1, cube1)
-        List<NCubeInfoDto> cubes1 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> cubes1 = NCubeManager.search(BRANCH1, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assert cubes1.size() == 1
         NCubeInfoDto info1 = cubes1[0]
         assert info1.id != info0.id
@@ -322,7 +322,7 @@ class TestWithPreloadedDatabase
 
         cube1.removeCell([code: 15])
         NCubeManager.updateCube(BRANCH1, cube1)
-        List<NCubeInfoDto> cubes2 = NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> cubes2 = NCubeManager.search(BRANCH1, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assert cubes2.size() == 1
         NCubeInfoDto info2 = cubes2[0]
         assert info2.id != info1.id
@@ -457,8 +457,8 @@ class TestWithPreloadedDatabase
         assert (result[VersionControl.BRANCH_RESTORES] as Map).size() == 0
         assert (result[VersionControl.BRANCH_REJECTS] as Map).size() == 0
 
-        assertEquals(1, NCubeManager.search(HEAD, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
-        assertEquals(1, NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, NCubeManager.search(HEAD, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, NCubeManager.search(BRANCH1, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
         NCubeManager.deleteCubes(BRANCH1, 'TestBranch')
 
@@ -492,8 +492,8 @@ class TestWithPreloadedDatabase
         assert (result[VersionControl.BRANCH_RESTORES] as Map).size() == 0
         assert (result[VersionControl.BRANCH_REJECTS] as Map).size() == 0
 
-        assertEquals(1, NCubeManager.search(HEAD, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
-        assertEquals(1, NCubeManager.search(BRANCH1, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, NCubeManager.search(HEAD, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, NCubeManager.search(BRANCH1, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
         NCubeManager.deleteCubes(BRANCH1, cubeName)
         assertNull(NCubeManager.getCube(BRANCH1, cubeName))
@@ -565,7 +565,7 @@ class TestWithPreloadedDatabase
         def cube1Sha1 = NCubeManager.getCube(HEAD, "TestBranch").sha1()
         def cube2Sha1 = NCubeManager.getCube(HEAD, "TestAge").sha1()
 
-        List<NCubeInfoDto> objects = NCubeManager.search(HEAD, "*", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> objects = NCubeManager.search(HEAD, "*", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         objects.each { NCubeInfoDto dto ->
             assertNull(dto.headSha1)
         }
@@ -575,7 +575,7 @@ class TestWithPreloadedDatabase
         assertEquals(cube1Sha1, NCubeManager.getCube(BRANCH1, "TestBranch").sha1())
         assertEquals(cube2Sha1, NCubeManager.getCube(BRANCH1, "TestAge").sha1())
 
-        objects = NCubeManager.search(BRANCH1, "*", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        objects = NCubeManager.search(BRANCH1, "*", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         objects.each { NCubeInfoDto dto ->
             assertNotNull(dto.headSha1)
         }
@@ -1099,7 +1099,7 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.search(HEAD, null, "ZZZ", map).size())
 
         map = new HashMap()
-        map.put(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY, true)
+        map.put(SEARCH_ACTIVE_RECORDS_ONLY, true)
 
         assertEquals(3, NCubeManager.search(HEAD, null, null, map).size())
         assertEquals(3, NCubeManager.search(HEAD, "", "", map).size())
@@ -1108,9 +1108,10 @@ class TestWithPreloadedDatabase
         assertEquals(0, NCubeManager.search(HEAD, "*Codes*", "ZZZ", map).size())
         assertEquals(1, NCubeManager.search(HEAD, "*Codes*", "OH", map).size())
         assertEquals(0, NCubeManager.search(HEAD, null, "ZZZ", map).size())
+        assertEquals(0, NCubeManager.search(HEAD, null, "TestCubeLevelDefault", map).size())
 
-        map.put(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY, false)
-        map.put(NCubeManager.SEARCH_DELETED_RECORDS_ONLY, true)
+        map.put(SEARCH_ACTIVE_RECORDS_ONLY, false)
+        map.put(SEARCH_DELETED_RECORDS_ONLY, true)
 
         assertEquals(1, NCubeManager.search(HEAD, null, null, map).size())
         assertEquals(1, NCubeManager.search(HEAD, "", "", map).size())
@@ -1120,8 +1121,8 @@ class TestWithPreloadedDatabase
         assertEquals(0, NCubeManager.search(HEAD, "*Codes*", "OH", map).size())
         assertEquals(1, NCubeManager.search(HEAD, null, "ZZZ", map).size())
 
-        map.put(NCubeManager.SEARCH_DELETED_RECORDS_ONLY, false)
-        map.put(NCubeManager.SEARCH_CHANGED_RECORDS_ONLY, true)
+        map.put(SEARCH_DELETED_RECORDS_ONLY, false)
+        map.put(SEARCH_CHANGED_RECORDS_ONLY, true)
     }
 
     @Test
@@ -1132,7 +1133,7 @@ class TestWithPreloadedDatabase
         testValuesOnBranch(HEAD)
 
         Map map = new HashMap()
-        map.put(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY, true)
+        map.put(SEARCH_ACTIVE_RECORDS_ONLY, true)
 
         assertEquals(2, NCubeManager.search(HEAD, "Test*", null, map).size())
         assertEquals(1, NCubeManager.search(HEAD, "TestBranch", "ZZZ", map).size())
@@ -1151,7 +1152,7 @@ class TestWithPreloadedDatabase
         String cubeName = 'bracketsInString'
         preloadCubes(HEAD, cubeName + '.json')
 
-        Map map = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY): true]
+        Map map = [(SEARCH_ACTIVE_RECORDS_ONLY): true]
 
         NCube cube = NCubeManager.getCube(HEAD, cubeName)
         String value = cube.getCell([axis1: 'column1', axis2: 'column2'])
@@ -1171,10 +1172,50 @@ class TestWithPreloadedDatabase
         assertEquals(1, NCubeManager.search(HEAD, 'racketsIn', null, map).size())
 
         //Test search with cube name pattern, with or without wildcard, exact match
-        map[NCubeManager.SEARCH_EXACT_MATCH_NAME] = true
+        map[SEARCH_EXACT_MATCH_NAME] = true
         assertEquals(1, NCubeManager.search(HEAD, cubeName, null, map).size())
         assertEquals(0, NCubeManager.search(HEAD, '*racketsIn*', null, map).size())
         assertEquals(0, NCubeManager.search(HEAD, 'racketsIn', null, map).size())
+    }
+
+    @Test
+    void testSearchReferenceAxesContent()
+    {
+        NCube one = NCubeBuilder.discrete1DAlt
+        NCubeManager.updateCube(ApplicationID.testAppId, one, true)
+        assert one.getAxis('state').size() == 2
+        NCubeManager.addCube(ApplicationID.testAppId, one)
+
+        Map<String, Object> args = [:]
+
+        ApplicationID appId = ApplicationID.testAppId
+        args[REF_TENANT] = appId.tenant
+        args[REF_APP] = appId.app
+        args[REF_VERSION] = appId.version
+        args[REF_STATUS] = appId.status
+        args[REF_BRANCH] = appId.branch
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
+        Axis axis = new Axis('stateSource', 1, false, refAxisLoader)
+        NCube two = new NCube('Mongo')
+        two.addAxis(axis)
+
+        two.setCell('a', [stateSource:'OH'] as Map)
+        two.setCell('b', [stateSource:'TX'] as Map)
+
+        String json = two.toFormattedJson()
+        NCube reload = NCube.fromSimpleJson(json)
+        assert reload.numCells == 2
+        assert 'a' == reload.getCell([stateSource:'OH'] as Map)
+        assert 'b' == reload.getCell([stateSource:'TX'] as Map)
+        assert reload.getAxis('stateSource').reference
+        NCubeManager.updateCube(ApplicationID.testAppId, two, true)
+
+        List<NCubeInfoDto> result = NCubeManager.search(ApplicationID.testAppId, 'Mongo', 'OH', [(SEARCH_ACTIVE_RECORDS_ONLY): true])
+        assert 1 == result.size()
     }
 
     @Test
@@ -2235,6 +2276,10 @@ class TestWithPreloadedDatabase
         assertEquals(0, getDeletedCubesFromDatabase(HEAD, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(BRANCH1, null).size())
         assertEquals(0, getDeletedCubesFromDatabase(BRANCH2, null).size())
+
+        ApplicationID newAppAppId = new ApplicationID('NONE', 'test2', '1.0.0', ReleaseStatus.SNAPSHOT.toString(), 'foo')
+        NCubeManager.duplicate(BRANCH1, newAppAppId, 'TestBranch', 'TestBranch')
+        assert 1 == VersionControl.getBranchChangesForHead(newAppAppId).size()
     }
 
     @Test
@@ -2452,17 +2497,17 @@ class TestWithPreloadedDatabase
 
         // set permission on cube to deny commit for normal user
         ApplicationID branchBoot = BRANCH1.asVersion('0.0.0')
-        NCube sysPermissions = NCubeManager.getCube(branchBoot, NCubeManager.SYS_PERMISSIONS)
-        sysPermissions.addColumn(NCubeManager.AXIS_RESOURCE, cubeName)
-        sysPermissions.setCell(true, [(NCubeManager.AXIS_RESOURCE): cubeName, (NCubeManager.AXIS_ROLE): NCubeManager.ROLE_USER, (NCubeManager.AXIS_ACTION): Action.READ.lower()])
+        NCube sysPermissions = NCubeManager.getCube(branchBoot, SYS_PERMISSIONS)
+        sysPermissions.addColumn(AXIS_RESOURCE, cubeName)
+        sysPermissions.setCell(true, [(AXIS_RESOURCE): cubeName, (AXIS_ROLE): ROLE_USER, (AXIS_ACTION): Action.READ.lower()])
         NCubeManager.updateCube(branchBoot, sysPermissions)
         VersionControl.commitBranch(branchBoot)
 
         // set testUser to have user role on branch
-        NCube sysBranchPermissions = NCubeManager.getCube(branchBoot, NCubeManager.SYS_BRANCH_PERMISSIONS)
+        NCube sysBranchPermissions = NCubeManager.getCube(branchBoot, SYS_BRANCH_PERMISSIONS)
         String testUser = 'testUser'
-        sysBranchPermissions.addColumn(NCubeManager.AXIS_USER, testUser)
-        sysBranchPermissions.setCell(true, [(NCubeManager.AXIS_USER): testUser])
+        sysBranchPermissions.addColumn(AXIS_USER, testUser)
+        sysBranchPermissions.setCell(true, [(AXIS_USER): testUser])
         NCubeManager.updateCube(branchBoot, sysBranchPermissions)
 
         // impersonate testUser, who shouldn't be able to commit the changed cube
@@ -3166,6 +3211,27 @@ class TestWithPreloadedDatabase
         assert (result[VersionControl.BRANCH_RESTORES] as Map).size() == 0
         assert (result[VersionControl.BRANCH_FASTFORWARDS] as Map).size() == 0
         assert (result[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testConsumerUpdateCubeDeleteCubePullFromHead()
+    {
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+
+        NCube consumerCube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        consumerCube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(BRANCH1, consumerCube)
+        NCubeManager.deleteCubes(BRANCH1, 'TestBranch')
+
+        Map<String, Object> result = VersionControl.updateBranch(BRANCH1)
+        assert (result[VersionControl.BRANCH_ADDS] as Map).size() == 0
+        assert (result[VersionControl.BRANCH_DELETES] as Map).size() == 0
+        assert (result[VersionControl.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[VersionControl.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[VersionControl.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[VersionControl.BRANCH_REJECTS] as Map).size() == 0
     }
 
     @Test
@@ -4542,6 +4608,45 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testMergedCubesIfPossibleResultsInNewCubeMatchingHead() {
+        ApplicationID teamBranch = BRANCH1.asBranch('TEAM')
+        preloadCubes(BRANCH2, "test.branch.1.json")
+        VersionControl.commitBranch(BRANCH2)
+        NCubeManager.copyBranch(HEAD, BRANCH1)
+        NCubeManager.copyBranch(HEAD, teamBranch)
+        // all 3 branches on HEAD
+
+        // branch1 makes change
+        NCube branch1Cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        branch1Cube.setCell('AAA', [Code : -15])
+        NCubeManager.updateCube(BRANCH1, branch1Cube)
+
+        // branch2 makes different change
+        NCube branch2Cube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        branch2Cube.setCell('DDD', [Code : 0])
+        NCubeManager.updateCube(BRANCH2, branch2Cube)
+
+        // team branch takes branch2 change and commits
+        NCube teamCube = NCubeManager.loadCube(teamBranch, 'TestBranch')
+        teamCube.setCell('DDD', [Code : 0])
+        NCubeManager.updateCube(teamBranch, teamCube)
+        VersionControl.commitBranch(teamBranch)
+
+        // branch1 updates then commits change
+        VersionControl.updateBranch(BRANCH1)
+        VersionControl.commitBranch(BRANCH1)
+
+        NCubeInfoDto head = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+
+        // branch2 updates, should have all changes and match HEAD
+        Map result = VersionControl.updateBranch(BRANCH2)
+        NCubeInfoDto dto = (result[VersionControl.BRANCH_UPDATES] as List).first() as NCubeInfoDto
+        assert dto.headSha1 == head.sha1
+        assert dto.sha1 == dto.headSha1
+        assert !dto.changed // should no longer be changed after matching HEAD
+    }
+
+    @Test
     void testCommitWithReject()
 	{
         preloadCubes(BRANCH2, "test.branch.1.json")
@@ -4977,6 +5082,385 @@ class TestWithPreloadedDatabase
     }
 
     @Test
+    void testMergeAcceptTheirsTheirSha1IsHeadsSha1OursIsBehindHeadsSha1AndNotChanged()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCube branch1Cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        branch1Cube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(BRANCH1, branch1Cube)
+        VersionControl.commitBranch(BRANCH1)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = A, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = B
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = A, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = A, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 == headDto.sha1
+        assert branch2Dto.sha1 == headDto.sha1
+        assert !branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirSha1IsHeadsSha1OursIsBehindHeadsSha1AndChanged()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCube branch1Cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        branch1Cube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(BRANCH1, branch1Cube)
+        VersionControl.commitBranch(BRANCH1)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = A, HEAD_SHA1 = A
+
+        NCube branch2Cube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        branch2Cube.setCell('AAA', [Code:-15])
+        NCubeManager.updateCube(BRANCH2, branch2Cube)
+        // BRANCH2 SHA1 = X, HEAD_SHA1 = B
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = A, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = A, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 == headDto.sha1
+        assert branch2Dto.sha1 == headDto.sha1
+        assert !branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirSha1MatchesHeadSha1ButBehindHeadsSha1OursIsNotChanged()
+    {
+        ApplicationID producer = BRANCH1.asBranch('producer')
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+        NCubeManager.copyBranch(HEAD, producer)
+
+        NCube producerCube = NCubeManager.loadCube(producer, 'TestBranch')
+        producerCube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = B
+
+        VersionControl.updateBranch(BRANCH1)
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        producerCube.setCell('GGG', [Code:-10])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+        // BRANCH2 SHA1 = C, HEAD_SHA1 = C
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = C
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 != headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.headSha1 != branch2Dto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirSha1MatchesHeadSha1ButBehindHeadsSha1OursIsChanged()
+    {
+        ApplicationID producer = BRANCH1.asBranch('producer')
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+        NCubeManager.copyBranch(HEAD, producer)
+
+        NCube producerCube = NCubeManager.loadCube(producer, 'TestBranch')
+        producerCube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = B
+
+        VersionControl.updateBranch(BRANCH1)
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        producerCube.setCell('GGG', [Code:-10])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        NCube branch2Cube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        branch2Cube.setCell('AAA', [Code:-15])
+        NCubeManager.updateCube(BRANCH2, branch2Cube)
+        // BRANCH2 SHA1 = X, HEAD_SHA1 = C
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = C
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 != headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.headSha1 != branch2Dto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirHeadSha1BehindHeadsSha1OurHeadSha1MatchesHeadsSha1AndIsNotChanged()
+    {
+        ApplicationID producer = BRANCH1.asBranch('producer')
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+        NCubeManager.copyBranch(HEAD, producer)
+
+        NCube producerCube = NCubeManager.loadCube(producer, 'TestBranch')
+        producerCube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = B
+
+        VersionControl.updateBranch(BRANCH1)
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        producerCube.setCell('GGG', [Code:-10])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        VersionControl.updateBranch(BRANCH2)
+        // BRANCH2 SHA1 = A, HEAD_SHA1 = A
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 != headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.headSha1 != branch2Dto.sha1
+        assert branch2Dto.headSha1 == headDto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirHeadSha1BehindHeadsSha1OurHeadSha1MatchesHeadsSha1AndIsChanged()
+    {
+        ApplicationID producer = BRANCH1.asBranch('producer')
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+        NCubeManager.copyBranch(HEAD, producer)
+
+        NCube producerCube = NCubeManager.loadCube(producer, 'TestBranch')
+        producerCube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = B
+
+        VersionControl.updateBranch(BRANCH1)
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        producerCube.setCell('GGG', [Code:-10])
+        NCubeManager.updateCube(producer, producerCube)
+        VersionControl.commitBranch(producer)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+
+        VersionControl.updateBranch(BRANCH2)
+        // BRANCH2 SHA1 = A, HEAD_SHA1 = A
+
+        NCube branch2Cube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        branch2Cube.setCell('AAA', [Code:-15])
+        NCubeManager.updateCube(BRANCH2, branch2Cube)
+        // BRANCH2 SHA1 = X, HEAD_SHA1 = A
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = B
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 == branch1Dto.sha1
+        assert branch1Dto.headSha1 != headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.headSha1 != branch2Dto.sha1
+        assert branch2Dto.headSha1 == headDto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirsIsChangeAndOursIsNotChanged()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCube branch1Cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        branch1Cube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(BRANCH1, branch1Cube)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = A, HEAD_SHA1 = A
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 != branch1Dto.sha1
+        assert branch1Dto.headSha1 == headDto.sha1
+        assert branch2Dto.headSha1 == headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirsIsChangeAndOursIsChanged()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCube branch1Cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
+        branch1Cube.setCell('DDD', [Code:0])
+        NCubeManager.updateCube(BRANCH1, branch1Cube)
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = A
+
+        NCube branch2Cube = NCubeManager.loadCube(BRANCH2, 'TestBranch')
+        branch2Cube.setCell('AAA', [Code:-15])
+        NCubeManager.updateCube(BRANCH2, branch2Cube)
+        // BRANCH2 SHA1 = X, HEAD_SHA1 = A
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        NCubeInfoDto headDto = NCubeManager.search(HEAD, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        // HEAD SHA1 = A
+        // BRANCH1 SHA1 = B, HEAD_SHA1 = A
+        // BRANCH2 SHA1 = B, HEAD_SHA1 = A
+        assert branch1Dto.headSha1 != branch1Dto.sha1
+        assert branch1Dto.headSha1 == headDto.sha1
+        assert branch2Dto.headSha1 == headDto.sha1
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.changed
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirsIsDeleted()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCubeManager.deleteCubes(BRANCH1, ['TestBranch'] as Object[])
+        VersionControl.commitBranch(BRANCH1)
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.changed
+        assert Integer.parseInt(branch2Dto.revision) < 0
+    }
+
+    @Test
+    void testMergeAcceptTheirsTheirsIsRestored()
+    {
+        preloadCubes(BRANCH1, 'test.branch.1.json')
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.deleteCubes(BRANCH1, ['TestBranch'] as Object[])
+        VersionControl.commitBranch(BRANCH1)
+        NCubeManager.copyBranch(HEAD, BRANCH2)
+
+        NCubeManager.restoreCubes(BRANCH1, ['TestBranch'] as Object[])
+        VersionControl.commitBranch(BRANCH1)
+
+        NCubeInfoDto branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+        assert !branch2Dto.changed
+
+        assert 1 == VersionControl.mergeAcceptTheirs(BRANCH2, ['TestBranch'] as Object[], BRANCH1.branch)
+
+        NCubeInfoDto branch1Dto = NCubeManager.search(BRANCH1, 'TestBranch', null, null).first()
+        branch2Dto = NCubeManager.search(BRANCH2, 'TestBranch', null, null).first()
+
+        assert branch2Dto.sha1 == branch1Dto.sha1
+        assert branch2Dto.changed
+        assert Integer.parseInt(branch2Dto.revision) > 0
+    }
+
+    @Test
     void testConflictAcceptMine()
     {
         NCube cube = NCubeManager.getNCubeFromResource("test.branch.2.json")
@@ -5335,7 +5819,7 @@ class TestWithPreloadedDatabase
             assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
         }
 
-        dtos = NCubeManager.search(HEAD, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        dtos = NCubeManager.search(HEAD, "TestAge", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         String sha1 = dtos[0].sha1
         assertNotEquals(sha1, newSha1)
 
@@ -5345,7 +5829,7 @@ class TestWithPreloadedDatabase
         String branchHeadSha1 = dtos[0].headSha1
         assertEquals(1, dtos.size())
 
-        dtos = NCubeManager.search(HEAD, "TestAge", null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+        dtos = NCubeManager.search(HEAD, "TestAge", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(branchHeadSha1, dtos[0].sha1)
     }
 
@@ -5362,16 +5846,6 @@ class TestWithPreloadedDatabase
         NCube cube = NCubeManager.loadCube(BRANCH1, 'TestBranch')
         NCube cube2 = NCubeManager.loadCube(BRANCH2, 'TestBranch')
 
-        // get original values from the cube
-        List<Column> columns = cube.getAxis('Code').columns
-        Object addedCell = cube.getCell([Code : 15])
-        Object deletedCell = cube.getCell([Code : -10])
-        Object defaultCellValue = cube.defaultCellValue
-        Map cubeMetaProps = cube.metaProperties
-        Map axisMetaProps = cube.getAxis('Code').metaProperties
-        Map colMetaProps = cube.getAxis('Code').findColumn(0).metaProperties
-        Comparable colVal = cube.getAxis('Code').findColumn(10).value
-
         // make changes
         cube.addColumn('Code', 20)
         cube.deleteColumn('Code', -15)
@@ -5381,7 +5855,8 @@ class TestWithPreloadedDatabase
         cube.addMetaProperties([key : 'value' as Object])
         cube.getAxis('Code').addMetaProperties([key : 'value' as Object])
         cube.getAxis('Code').findColumn(0).addMetaProperties([key : 'value' as Object])
-        cube.getAxis('Code').findColumn(10).value = 9
+        Column column = cube.getAxis('Code').findColumn(10)
+        cube.updateColumn(column.id, 9)
 
         // save changes
         NCubeManager.updateCube(BRANCH1, cube)
@@ -5395,17 +5870,17 @@ class TestWithPreloadedDatabase
         NCubeManager.updateCube(BRANCH2, cube2)
 
         VersionControl.commitBranch(BRANCH2)
-        headCube = NCubeManager.loadCube(HEAD, headCube.name)
 
         // verify cube2 is the same as cube
-        assertEquals(columns.size(), cube2.getAxis('Code').columns.size())
-        assertEquals(addedCell, cube2.getCell([Code : 15]))
-        assertEquals(deletedCell, cube2.getCell([Code : -10]))
-        assertEquals(defaultCellValue, cube2.defaultCellValue)
-        assertEquals(cubeMetaProps.size(), cube2.metaProperties.size())
-        assertEquals(axisMetaProps.size(), cube2.getAxis('Code').metaProperties.size())
-        assertEquals(colMetaProps.size(), cube2.getAxis('Code').findColumn(0).metaProperties.size())
-        assertEquals(colVal, cube2.getAxis('Code').findColumn(10).value)
+        assertEquals(5, cube2.getAxis('Code').columns.size())
+        assertEquals('JKL', cube2.getCell([Code : 15]))     // Newly set value
+        assertEquals('AAA', cube2.getCell([Code : -10]))    // default cell value
+        assertEquals('AAA', cube2.defaultCellValue)         // default cell value
+        assertEquals(1, cube2.metaProperties.size())
+        assertEquals(1, cube2.getAxis('Code').metaProperties.size())
+        assertEquals(1, cube2.getAxis('Code').findColumn(0).metaProperties.size())
+        assert cube2.getAxis('Code').findColumn(9)
+        assert !cube2.getAxis('Code').findColumn(10)
     }
 
     @Test
@@ -6306,15 +6781,15 @@ return ints''', null, false)
 
         // Mark TestBranch as red & white
         NCube testBranch = NCubeManager.getCube(appId, 'TestBranch')
-        testBranch.addMetaProperties([(NCubeManager.CUBE_TAGS): new CellInfo('string', 'rEd , whiTe', false, false)] as Map)
+        testBranch.addMetaProperties([(CUBE_TAGS): new CellInfo('string', 'rEd , whiTe', false, false)] as Map)
         NCubeManager.updateCube(appId, testBranch)
 
-        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_INCLUDE):['red', 'white']])
+        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(SEARCH_FILTER_INCLUDE):['red', 'white']])
         assert list.size() == 2
         assert 'TestCube' == list[0].name || 'TestBranch' == list[0].name
         assert 'TestCube' == list[1].name || 'TestBranch' == list[1].name
 
-        list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_INCLUDE):['red', 'white'], (NCubeManager.SEARCH_FILTER_EXCLUDE):['white', 'blue']])
+        list = NCubeManager.search(appId, null, null, [(SEARCH_FILTER_INCLUDE):['red', 'white'], (SEARCH_FILTER_EXCLUDE):['white', 'blue']])
         assert list.size() == 1
         assert 'TestCube' == list[0].name
     }
@@ -6334,7 +6809,7 @@ return ints''', null, false)
         testBranch.setMetaProperty("cube_tags", "red , WHIte")
         NCubeManager.updateCube(appId, testBranch)
 
-        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(NCubeManager.SEARCH_FILTER_EXCLUDE):['red', 'white']])
+        List<NCubeInfoDto> list = NCubeManager.search(appId, null, null, [(SEARCH_FILTER_EXCLUDE):['red', 'white']])
         assert list.size() == 5
     }
 
@@ -6384,7 +6859,7 @@ return ints''', null, false)
     static List<NCubeInfoDto> getDeletedCubesFromDatabase(ApplicationID appId, String pattern)
     {
         Map options = new HashMap()
-        options.put(NCubeManager.SEARCH_DELETED_RECORDS_ONLY, true)
+        options.put(SEARCH_DELETED_RECORDS_ONLY, true)
 
         return NCubeManager.search(appId, pattern, null, options)
     }

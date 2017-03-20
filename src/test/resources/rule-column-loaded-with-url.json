@@ -9,9 +9,9 @@
             "hasDefault":false,
             "preferredOrder":1,
             "columns":[
-                { "id":1, "type":"exp", "url":"files/rules/ageBracket1.groovy" },
-                { "id":2, "type":"exp", "url":"files/rules/ageBracket2.groovy" },
-                { "id":3, "type":"exp", "value":"input.age >= 40" }
+                { "id":1, "name":"br1", "type":"exp", "url":"files/rules/ageBracket1.groovy" },
+                { "id":2, "name":"br2", "type":"exp", "url":"files/rules/ageBracket2.groovy" },
+                { "id":3, "name":"br3", "type":"exp", "value":"input.age >= 40" }
             ]
         },
         {
@@ -21,9 +21,9 @@
             "hasDefault":false,
             "preferredOrder":1,
             "columns":[
-                { "id":10, "type":"exp", "value":"input.weight < 100" },
-                { "id":20, "type":"exp", "value":"input.weight >= 100 && input.weight < 200" },
-                { "id":30, "type":"exp", "value":"input.weight >= 200" }
+                { "id":10, "name":"br1", "type":"exp", "value":"input.weight < 100" },
+                { "id":20, "name":"br2", "type":"exp", "value":"input.weight >= 100 && input.weight < 200" },
+                { "id":30, "name":"br3", "type":"exp", "value":"input.weight >= 200" }
             ]
         }
     ],

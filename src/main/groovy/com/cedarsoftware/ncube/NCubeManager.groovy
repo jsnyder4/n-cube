@@ -26,6 +26,9 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+
 /**
  * This class manages a list of NCubes.  This class is referenced
  * by NCube in one place - when it joins to other cubes, it consults
@@ -54,53 +57,11 @@ import java.util.regex.Pattern
 @CompileStatic
 class NCubeManager
 {
-    public static final String ERROR_CANNOT_MOVE_000 = 'Version 0.0.0 is for system configuration and cannot be move.'
-    public static final String ERROR_CANNOT_MOVE_TO_000 = 'Version 0.0.0 is for system configuration and branch cannot be moved to it.'
-    public static final String ERROR_CANNOT_RELEASE_000 = 'Version 0.0.0 is for system configuration and cannot be released.'
-    public static final String ERROR_CANNOT_RELEASE_TO_000 = 'Version 0.0.0 is for system configuration and cannot be created from the release process.'
-
-    public static final String SEARCH_INCLUDE_CUBE_DATA = 'includeCubeData'
-    public static final String SEARCH_INCLUDE_TEST_DATA = 'includeTestData'
-    public static final String SEARCH_INCLUDE_NOTES = 'includeNotes'
-    public static final String SEARCH_DELETED_RECORDS_ONLY = 'deletedRecordsOnly'
-    public static final String SEARCH_ACTIVE_RECORDS_ONLY = 'activeRecordsOnly'
-    public static final String SEARCH_CHANGED_RECORDS_ONLY = 'changedRecordsOnly'
-    public static final String SEARCH_EXACT_MATCH_NAME = 'exactMatchName'
-    public static final String SEARCH_FILTER_INCLUDE = 'includeTags'
-    public static final String SEARCH_FILTER_EXCLUDE = 'excludeTags'
-
-    public static final String SYS_BOOTSTRAP = 'sys.bootstrap'
-    public static final String SYS_PROTOTYPE = 'sys.prototype'
-    public static final String SYS_PERMISSIONS = 'sys.permissions'
-    public static final String SYS_USERGROUPS = 'sys.usergroups'
-    public static final String SYS_LOCK = 'sys.lock'
-    public static final String SYS_BRANCH_PERMISSIONS = 'sys.branch.permissions'
-    public static final String CLASSPATH_CUBE = 'sys.classpath'
-
-    public static final String ROLE_ADMIN = 'admin'
-    public static final String ROLE_USER = 'user'
-    public static final String ROLE_READONLY = 'readonly'
-
-    public static final String AXIS_ROLE = 'role'
-    public static final String AXIS_USER = 'user'
-    public static final String AXIS_RESOURCE = 'resource'
-    public static final String AXIS_ACTION = 'action'
-    public static final String AXIS_SYSTEM = 'system'
-
-    public static final String PROPERTY_CACHE = 'cache'
-
-    public static final String CUBE_TAGS = 'cube_tags'
-
     // Maintain cache of 'wildcard' patterns to Compiled Pattern instance
     private static final ConcurrentMap<String, Pattern> wildcards = new ConcurrentHashMap<>()
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Object>> ncubeCache = new ConcurrentHashMap<>()
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Advice>> advices = new ConcurrentHashMap<>()
     private static final ConcurrentMap<ApplicationID, GroovyClassLoader> localClassLoaders = new ConcurrentHashMap<>()
-    public static final String NCUBE_PARAMS = 'NCUBE_PARAMS'
-    public static final String NCUBE_PARAMS_BYTE_CODE_DEBUG = 'byteCodeDebug'
-    public static final String NCUBE_PARAMS_BYTE_CODE_VERSION = 'byteCodeVersion'
-    public static final String NCUBE_ACCEPTED_DOMAINS = 'acceptedDomains'
-    public static final String NCUBE_PARAMS_BRANCH = 'branch'
     private static NCubePersister nCubePersister
     private static final Logger LOG = LogManager.getLogger(NCubeManager.class)
 
@@ -113,6 +74,14 @@ class NCubeManager
             Map params = systemParams
             String userId = params.user instanceof String ? params.user : System.getProperty('user.name')
             return userId?.trim()
+        }
+    }
+
+    private static final ThreadLocal<String> fakeId = new ThreadLocal<String>() {
+        String initialValue()
+        {
+            Map params = systemParams
+            return params.fakeuser instanceof String ? params.fakeuser.trim() : ''
         }
     }
 
@@ -795,6 +764,31 @@ class NCubeManager
         {
             throw new IllegalArgumentException("No ncube exists with the name: ${cubeName}, no changes will be merged, app: ${appId}")
         }
+
+        assertPermissions(appId, cubeName, Action.UPDATE)
+        deltas.each { Delta delta ->
+            if ([Delta.Location.AXIS, Delta.Location.AXIS_META, Delta.Location.COLUMN, Delta.Location.COLUMN_META].contains(delta.location))
+            {
+                String axisName
+                switch (delta.location)
+                {
+                    case Delta.Location.AXIS:
+                        axisName = ((delta.sourceVal ?: delta.destVal) as Axis).name
+                        break
+                    case Delta.Location.AXIS_META:
+                    case Delta.Location.COLUMN:
+                        axisName = delta.locId as String
+                        break
+                    case Delta.Location.COLUMN_META:
+                        axisName = (delta.locId as Map<String, Object>).axis
+                        break
+                    default:
+                        throw new IllegalArgumentException("Invalid properties on delta, no changes will be merged, app: ${appId}, cube: ${cubeName}")
+                }
+                assertPermissions(appId, cubeName + '/' + axisName, Action.UPDATE)
+            }
+        }
+
         ncube.mergeDeltas(deltas)
         updateCube(appId, ncube)
         return ncube
@@ -1168,7 +1162,7 @@ class NCubeManager
         assertPermissions(appId, null)
 
         // Step 1: Fetch all NCubeInfoDto's for the passed in ApplicationID
-        List<NCubeInfoDto> list = persister.search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> list = persister.search(appId, null, "*${REF_APP}*", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         List<AxisRef> refAxes = []
 
         for (NCubeInfoDto dto : list)
@@ -1297,12 +1291,33 @@ Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${transformMethodName}""")
                         }
                     }
+                    else
+                    {
+                        axis.removeTransform()
+                    }
 
                     ncube.clearSha1()   // changing meta properties does not clear SHA-1 for recalculation.
                     persister.updateCube(axisRef.srcAppId, ncube, getUserId())
                 }
             }
         }
+    }
+
+    /**
+     * Update an Axis meta-properties
+     */
+    static void updateAxisMetaProperties(ApplicationID appId, String cubeName, String axisName, Map<String, Object> newMetaProperties)
+    {
+        NCube.transformMetaProperties(newMetaProperties)
+        String resourceName = cubeName + '/' + axisName
+        assertPermissions(appId, resourceName, Action.UPDATE)
+        NCube ncube = loadCube(appId, cubeName)
+        Axis axis = ncube.getAxis(axisName)
+        axis.updateMetaProperties(newMetaProperties, cubeName, { Set<Long> colIds ->
+            ncube.dropOrphans(colIds, axis.id)
+        })
+        ncube.clearSha1()
+        updateCube(appId, ncube)
     }
 
     // ----------------------------------------- Resource APIs ---------------------------------------------------------
@@ -1523,7 +1538,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
     {
         final String sep = '/'
         final StringBuilder builder = new StringBuilder()
-        builder.append(userId.get())
+        builder.append(impliedId)
         builder.append(sep)
         builder.append(appId.tenant)
         builder.append(sep)
@@ -1622,7 +1637,6 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         {
             return allowed
         }
-        long now = System.currentTimeMillis()
 
         if (Action.READ == action && SYS_LOCK.equalsIgnoreCase(resource))
         {
@@ -1686,9 +1700,9 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
 
     private static boolean checkBranchPermission(NCube branchPermissions, String resource)
     {
+        String impId = impliedId
         final List<Column> resourceColumns = getResourcesToMatch(branchPermissions, resource)
-        final String userId = getUserId()
-        final Column column = resourceColumns.find { branchPermissions.getCell([resource: it.value, user: userId])}
+        final Column column = resourceColumns.find { branchPermissions.getCell([resource: it.value, user: impId])}
         return column != null
     }
 
@@ -1703,9 +1717,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
     {
         Axis role = userGroups.getAxis(AXIS_ROLE)
         Set<String> groups = new HashSet()
+        String impId = impliedId
         for (Column column : role.columns)
         {
-            if (userGroups.getCell([(AXIS_ROLE): column.value, (AXIS_USER): getUserId()]))
+            if (userGroups.getCell([(AXIS_ROLE): column.value, (AXIS_USER): impId]))
             {
                 groups.add(column.value as String)
             }
@@ -1766,19 +1781,19 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         return p.matcher(text).matches()
     }
 
-    static boolean isAdmin(ApplicationID appId)
+    static boolean isAdmin(ApplicationID appId, boolean useRealId = false)
     {
         NCube userCube = getCubeInternal(getBootAppId(appId), SYS_USERGROUPS)
         if (userCube == null)
         {   // Allow everything if no permissions are set up.
             return true
         }
-        return isUserInGroup(userCube, ROLE_ADMIN)
+        return isUserInGroup(userCube, ROLE_ADMIN, useRealId ? getUserId() : impliedId)
     }
 
-    private static boolean isUserInGroup(NCube userCube, String groupName)
+    private static boolean isUserInGroup(NCube userCube, String groupName, String userName)
     {
-        return userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): null]) || userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): getUserId()])
+        return userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): null]) || userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): userName])
     }
 
     protected static void detectNewAppId(ApplicationID appId)
@@ -1801,7 +1816,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
             return
         }
 
-        String userId = getUserId()
+        String impId = impliedId
         NCube branchPermCube = new NCube(SYS_BRANCH_PERMISSIONS)
         branchPermCube.applicationID = permAppId
         branchPermCube.defaultCellValue = false
@@ -1811,13 +1826,13 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         branchPermCube.addAxis(resourceAxis)
 
         Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.STRING, true)
-        userAxis.addColumn(userId)
+        userAxis.addColumn(impId)
         branchPermCube.addAxis(userAxis)
 
-        branchPermCube.setCell(true, [(AXIS_USER):userId, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS])
-        branchPermCube.setCell(true, [(AXIS_USER):userId, (AXIS_RESOURCE):null])
+        branchPermCube.setCell(true, [(AXIS_USER):impId, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS])
+        branchPermCube.setCell(true, [(AXIS_USER):impId, (AXIS_RESOURCE):null])
 
-        persister.updateCube(permAppId, branchPermCube, userId)
+        persister.updateCube(permAppId, branchPermCube, getUserId())
         VersionControl.updateBranch(permAppId)
     }
 
@@ -1864,11 +1879,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
     static boolean lockApp(ApplicationID appId)
     {
         assertPermissions(appId, null, Action.RELEASE)
-        String userId = getUserId()
+        String impId = impliedId
         ApplicationID bootAppId = getBootAppId(appId)
 
         String lockOwner = getAppLockedBy(appId)
-        if (userId == lockOwner)
+        if (impId == lockOwner)
         {
             return false
         }
@@ -1882,8 +1897,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         {
             return false
         }
-        sysLockCube.setCell(userId, [(AXIS_SYSTEM):null])
-        persister.updateCube(bootAppId, sysLockCube, userId)
+        sysLockCube.setCell(impId, [(AXIS_SYSTEM):null])
+        persister.updateCube(bootAppId, sysLockCube, getUserId())
         return true
     }
 
@@ -1901,9 +1916,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
             return
         }
 
-        String userId = getUserId()
         String lockOwner = getAppLockedBy(appId)
-        if (userId != lockOwner && !isAdmin(appId))
+        if (impliedId != lockOwner && !isAdmin(appId))
         {
             throw new SecurityException("Application ${appId} locked by ${lockOwner}")
         }
@@ -1918,13 +1932,13 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
             return
         }
 
-        String userId = getUserId()
+        String impId = impliedId
         NCube userGroupsCube = new NCube(SYS_USERGROUPS)
         userGroupsCube.applicationID = appId
         userGroupsCube.defaultCellValue = false
 
         Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.STRING, true)
-        userAxis.addColumn(userId)
+        userAxis.addColumn(impId)
         userGroupsCube.addAxis(userAxis)
 
         Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.STRING, false)
@@ -1933,11 +1947,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         roleAxis.addColumn(ROLE_USER)
         userGroupsCube.addAxis(roleAxis)
 
-        userGroupsCube.setCell(true, [(AXIS_USER):userId, (AXIS_ROLE):ROLE_ADMIN])
-        userGroupsCube.setCell(true, [(AXIS_USER):userId, (AXIS_ROLE):ROLE_USER])
+        userGroupsCube.setCell(true, [(AXIS_USER):impId, (AXIS_ROLE):ROLE_ADMIN])
+        userGroupsCube.setCell(true, [(AXIS_USER):impId, (AXIS_ROLE):ROLE_USER])
         userGroupsCube.setCell(true, [(AXIS_USER):null, (AXIS_ROLE):ROLE_USER])
 
-        persister.updateCube(appId, userGroupsCube, userId)
+        persister.updateCube(appId, userGroupsCube, getUserId())
     }
 
     private static void addAppPermissionsCube(ApplicationID appId)
@@ -1964,38 +1978,27 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
         appPermCube.addAxis(roleAxis)
 
         Axis actionAxis = new Axis(AXIS_ACTION, AxisType.DISCRETE, AxisValueType.STRING, false)
-        actionAxis.addColumn(Action.UPDATE.lower())
-        actionAxis.addColumn(Action.READ.lower())
+        actionAxis.addColumn(Action.UPDATE.lower(), null, null, [(Column.DEFAULT_VALUE):true as Object])
+        actionAxis.addColumn(Action.READ.lower(), null, null, [(Column.DEFAULT_VALUE):true as Object])
         actionAxis.addColumn(Action.RELEASE.lower())
         actionAxis.addColumn(Action.COMMIT.lower())
         appPermCube.addAxis(actionAxis)
 
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.READ.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
+
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
 
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.READ.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ.lower()])
 
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.READ.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ.lower()])
-
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.READ.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
 
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.READ.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ.lower()])
         appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.COMMIT.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.READ.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
 
         persister.updateCube(appId, appPermCube, getUserId())
     }
@@ -2048,6 +2051,29 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${tran
     static String getUserId()
     {
         return userId.get()
+    }
+
+    /**
+     * Set the user ID on the current thread
+     * @param user String user Id
+     */
+    static void setFakeId(String fake)
+    {
+        fakeId.set(fake?.trim())
+    }
+
+    /**
+     * Retrieve the user ID from the current thread
+     * @return String user ID of the user associated to the requesting thread
+     */
+    static String getFakeId()
+    {
+        return fakeId.get()
+    }
+
+    static String getImpliedId()
+    {
+        return getFakeId() ?: getUserId()
     }
 
     /**

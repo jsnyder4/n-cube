@@ -235,14 +235,11 @@ class NCubeBuilder
         return axis
     }
 
-    static Axis getFullGenderAxis()
+    static Axis getCaseInsensitiveAxis(boolean defCol)
     {
-        Axis axis = new Axis("Gender", AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY)
+        Axis axis = new Axis("Gender", AxisType.DISCRETE, AxisValueType.CISTRING, defCol)
         axis.addColumn("Male")
         axis.addColumn("Female")
-        axis.addColumn("Trans Female->Male")
-        axis.addColumn("Trans Male->Female")
-        axis.addColumn("Hermaphrodite")
         return axis
     }
 
@@ -395,6 +392,89 @@ class NCubeBuilder
     }
   ]
 }''')
+    }
+
+    static NCube getSimpleAutoBadRule()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "SmokerPenalty",
+  "axes": [
+    {
+      "name": "Smoker",
+      "hasDefault": false,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000000000001,
+          "type": "exp",
+          "value": "input.age < 18"
+        },
+        {
+          "id": 1000000000002,
+          "type": "exp",
+          "name": "credit-score",
+          "value": "input.creditScore > 700"
+        }
+      ]
+    },
+    {
+      "name": "Obesity",
+      "hasDefault": false,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000000000001,
+          "type": "exp",
+          "value": "input.age < 18"
+        },
+        {
+          "id": 2000000000002,
+          "type": "exp",
+          "value": "input.creditScore > 700"
+        }
+      ]
+    }
+  ],
+  "cells": []}''')
+    }
+
+    static NCube getDuplicateRule()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "SmokerPenalty",
+  "axes": [
+    {
+      "name": "Smoker",
+      "hasDefault": false,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000000000001,
+          "type": "exp",
+          "name": "credit-score",
+          "value": "input.age < 18"
+        },
+        {
+          "id": 1000000000002,
+          "type": "exp",
+          "name": "credit-score",
+          "value": "input.creditScore > 700"
+        }
+      ]
+    }
+  ],
+  "cells": []}''')
     }
 
     static NCube getTrackingTestCube()
@@ -566,7 +646,7 @@ class NCubeBuilder
       "type": "DISCRETE",
       "valueType": "LONG",
       "preferredOrder": 1,
-      "hasDefault": false,
+      "hasDefault": true,
       "columns": [
         {
           "id": 1000000000001,
@@ -1042,19 +1122,19 @@ class NCubeBuilder
         {
           "id": 1000000000001,
           "type": "exp",
-          "name": "",
+          "name": "init",
           "value": "true"
         },
         {
           "id": 1000000000002,
           "type": "exp",
-          "name": "",
+          "name": "br1",
           "value": "true"
         },
         {
           "id": 1000000000003,
           "type": "exp",
-          "name": "",
+          "name": "br2",
           "value": "true"
         }
       ]
@@ -1286,6 +1366,153 @@ class NCubeBuilder
 }''')
     }
 
+    static NCube  getCubeCallingCubeWithDefaultColumn()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeCallingCubeWithDefaultColumn",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1Primary",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2Primary",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000527254003,
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "@test.CubeWithDefaultColumn[:]"
+    },
+    {
+      "id": [
+        1001328925773,
+        2001566313159
+      ],
+      "type": "exp",
+      "value": "@test.CubeWithDefaultColumn[:]"
+    }
+  ]
+}''')
+    }
+
+    static NCube  getCubeWithDefaultColumn()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.CubeWithDefaultColumn",
+  "axes": [
+    {
+      "id": 1,
+      "name": "Axis1Secondary",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1000527254003,
+          "type": "string",
+          "value": "Axis1Col1"
+        },
+        {
+          "id": 1001328925773,
+          "type": "string",
+          "value": "Axis1Col2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Axis2Secondary",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Axis3Secondary",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 3000813453087,
+          "type": "string",
+          "value": "Axis3Col1"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        2000453853552
+      ],
+      "type": "exp",
+      "value": "input.remove('Axis1Primary')\\n@test.CubeCallingCubeWithDefaultColumn[:]"
+    }
+  ]
+}''')
+    }
+
     static NCube  getCubeWithMultipleRefCubesPerCoord()
     {
         return NCube.fromSimpleJson('''\
@@ -1354,6 +1581,62 @@ class NCubeBuilder
     }
   ]
 }''')
+    }
+
+    static NCube  getRuleCubeWithDefaultColumn()
+    {
+        return NCube.fromSimpleJson('''\
+{
+  "ncube": "test.RuleCubeWithDefaultColumn",
+  "axes": [
+    {
+      "id": 2,
+      "name": "Axis2",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2000453853552,
+          "type": "string",
+          "value": "Axis2Col1"
+        },
+        {
+          "id": 2001566313159,
+          "type": "string",
+          "value": "Axis2Col2"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "RuleAxis1",
+      "hasDefault": true,
+      "type": "RULE",
+      "valueType": "EXPRESSION",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 3000480286806,
+          "type": "exp",
+          "name": "Condition1",
+          "value": "input.foo == true"
+        },
+        {
+          "id": 3000155851047,
+          "type": "exp",
+          "name": "Condition2",
+          "value": "input.foo == true"
+        }
+      ]
+    }
+  ],
+  "cells": []
+}
+''')
     }
 
     static NCube  getRuleCubeWithAllDefaults()

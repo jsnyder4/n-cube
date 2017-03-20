@@ -6,7 +6,7 @@ import groovy.transform.CompileStatic
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-import static com.cedarsoftware.ncube.NCubeManager.NCUBE_PARAMS_BRANCH
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BRANCH
 
 /**
  * This class binds together Tenant, App, version, status, and branch.  These fields together

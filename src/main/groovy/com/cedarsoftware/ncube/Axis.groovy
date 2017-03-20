@@ -71,7 +71,7 @@ class Axis
     public static final String DONT_CARE = '_︿_ψ_☼'
     public static final int SORTED = 0
     public static final int DISPLAY = 1
-    private static final AtomicLong baseAxisIdForTesting = new AtomicLong(1)
+    private static final AtomicLong BASE_AXIS_ID_FOR_TESTING = new AtomicLong(1)
     protected static final long BASE_AXIS_ID = 1000000000000L
     protected static final long MAX_COLUMN_ID = 2000000000L
 
@@ -89,10 +89,10 @@ class Axis
     private final transient TLongObjectHashMap<Column> idToCol = new TLongObjectHashMap<>(16, 0.8f)   // Setting load factor to 0.8 because trove uses 0.5 (uses too much memory)
     private final transient Map<String, Column> colNameToCol = new CaseInsensitiveMap<>()
     private final transient SortedMap<Integer, Column> displayOrder = new TreeMap<>()
-    private transient NavigableMap<Comparable, Column> valueToCol = new TreeMap<>()
+    private transient NavigableMap<Comparable, Column> valueToCol
     protected transient RangeMap<Comparable, Column> rangeToCol = TreeRangeMap.create()
 
-    private static final ThreadLocal<Random> localRandom = new ThreadLocal<Random>() {
+    private static final ThreadLocal<Random> LOCAL_RANDOM = new ThreadLocal<Random>() {
         Random initialValue()
         {
             String s = Converter.convert(System.nanoTime(), String.class)
@@ -109,10 +109,13 @@ class Axis
         void load(Axis axis)
     }
 
+    // for construction during serialization
+    private Axis() { id=0 }
+
     // for testing
     protected Axis(String name, AxisType type, AxisValueType valueType, boolean hasDefault, int order = SORTED)
     {
-        this(name, type, valueType, hasDefault, order, baseAxisIdForTesting.getAndIncrement())
+        this(name, type, valueType, hasDefault, order, BASE_AXIS_ID_FOR_TESTING.getAndIncrement())
     }
 
     /**
@@ -133,6 +136,7 @@ class Axis
         this.id = id
         this.name = name
         this.type = type
+        this.valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
         preferredOrder = order
         this.fireAll = fireAll
         if (type == AxisType.RULE)
@@ -160,9 +164,6 @@ class Axis
         verifyAxisType()
     }
 
-    // for construction during serialization
-    private Axis() { id=0 }
-
     /**
      * Use this constructor to create a 'reference' axis.  This allows a single MASTER DATA axis to be referenced
      * by many other axes without repeating the columnar data.
@@ -176,6 +177,7 @@ class Axis
         this.name = name
         this.id = id
         isRef = true
+        this.valueToCol = new TreeMap<>()
 
         // Ask the provider to load this axis up.
         axisRefProvider.load(this)
@@ -200,9 +202,52 @@ class Axis
         }
     }
 
+    private void reloadReferenceAxis(String cubeName, Map<String, Object> props)
+    {
+        clearIndexes()
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, name, props)
+        refAxisLoader.load(this)
+    }
+
+    protected updateMetaProperties(Map<String, Object> newMetaProperties, String cubeName, Closure dropOrphans)
+    {
+        // Backup meta-properties
+        Map<Long, Map> metaMap = [:] as Map
+        columns.each { Column column ->
+            metaMap[column.id] = column.metaProperties
+        }
+
+        clearMetaProperties()
+        addMetaProperties(newMetaProperties)
+        if (isRef)
+        {
+            reloadReferenceAxis(cubeName, newMetaProperties)
+        }
+
+        Set<Long> colIds = new HashSet()
+        columns.each { Column column ->
+            colIds.add(column.id)
+        }
+
+        dropOrphans(colIds)
+
+        // Restore meta-properties
+        columns.each { Column column ->
+            if (metaMap.containsKey(column.id))
+            {
+                column.addMetaProperties(metaMap[column.id])
+            }
+        }
+    }
+
     private void verifyAxisType()
     {
-        if (type == AxisType.DISCRETE || type == AxisType.NEAREST || type == AxisType.RULE)
+        if (type == AxisType.RULE)
+        {
+            rangeToCol = null
+            valueToCol = null
+        }
+        else if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {
             rangeToCol = null
         }
@@ -317,6 +362,14 @@ class Axis
         removeMetaProperty(REF_BRANCH)
         removeMetaProperty(REF_CUBE_NAME)
         removeMetaProperty(REF_AXIS_NAME)
+        removeTransform()
+    }
+
+    /**
+     * Remove transform from reference axis.
+     */
+    void removeTransform()
+    {
         removeMetaProperty(TRANSFORM_APP)
         removeMetaProperty(TRANSFORM_VERSION)
         removeMetaProperty(TRANSFORM_STATUS)
@@ -331,7 +384,7 @@ class Axis
     protected long getNextColId()
     {
         long baseAxisId = id * BASE_AXIS_ID
-        Random random = localRandom.get()
+        Random random = LOCAL_RANDOM.get()
         long uniqueId = random.nextLong()
         long total = uniqueId % MAX_COLUMN_ID
 
@@ -399,15 +452,15 @@ class Axis
 
     /**
      * Add a Map of meta properties all at once.
-     * @param allAtOnce Map of meta properties to add
+     * @param props Map of meta properties to add
      */
-    void addMetaProperties(Map<String, Object> allAtOnce)
+    void addMetaProperties(Map<String, Object> props)
     {
         if (metaProps == null)
         {
             metaProps = new CaseInsensitiveMap<>()
         }
-        metaProps.putAll(allAtOnce)
+        metaProps.putAll(props)
     }
 
     /**
@@ -470,9 +523,14 @@ class Axis
         }
 
         // 4. Index columns by display order
-        displayOrder[column.displayOrder] = column
+        int order = column.displayOrder
+        if (displayOrder.containsKey(column.displayOrder))
+        {   // collision - move it to end
+            order = displayOrder.lastKey() + 1
+        }
+        displayOrder[order] = column
 
-        if (type == AxisType.DISCRETE || type == AxisType.NEAREST || type == AxisType.RULE)
+        if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {
             valueToCol[standardizeColumnValue(column.value)] = column
         }
@@ -570,7 +628,7 @@ class Axis
         valueType = newValueType
     }
 
-    protected void clear()
+    protected void clearIndexes()
     {
         idToCol.clear()
         colNameToCol.clear()
@@ -594,7 +652,7 @@ class Axis
     protected Column createColumnFromValue(Comparable value, Long suggestedId, Map<String, Object> metaProperties = null)
     {
         value = standardizeColumnValue(value)
-        if (suggestedId != null && suggestedId > 0)
+        if (suggestedId != null && suggestedId > 0 && value != null)
         {
             long attemptId = (id * BASE_AXIS_ID) + (suggestedId % BASE_AXIS_ID)
             long finalId
@@ -727,6 +785,20 @@ class Axis
             defaultCol = column
         }
 
+        if (type == AxisType.RULE && !column.default)
+        {
+            String colName = column.columnName
+            if (StringUtilities.isEmpty(colName))
+            {
+                throw new IllegalArgumentException('Rule name cannot be empty.')
+            }
+
+            if (findColumnByName(colName))
+            {
+                throw new IllegalArgumentException("There is already a rule named: ${colName} on axis: ${name}.")
+            }
+        }
+
         // New columns are always added at the end in terms of displayOrder.
         int order = displayOrder.isEmpty() ? 1 : displayOrder.lastKey() + 1
         column.setDisplayOrder(column.default ? Integer.MAX_VALUE : order)
@@ -783,13 +855,14 @@ class Axis
         idToCol.remove(col.id)
         colNameToCol.remove(col.columnName)
         displayOrder.remove(col.displayOrder)
-        if (col.value == null)
+        if (col.value == null || type == AxisType.RULE)
         {   // Default Column is not indexed by value/range (null), so we are done.
+            // Rule columns are not indexed by value/range
             return
         }
 
         // Remove from 'value' storage
-        if (type == AxisType.DISCRETE || type == AxisType.NEAREST || type == AxisType.RULE)
+        if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {   // O(1) remove
             valueToCol.remove(standardizeColumnValue(col.value))
         }
@@ -821,8 +894,9 @@ class Axis
      * does not change it's display order.)
      * @param colId long Column ID to update
      * @param value 'raw' value to set into the new column (will be up-promoted).
+     * @param order int (optional) new display order for column
      */
-    void updateColumn(long colId, Comparable value)
+    void updateColumn(long colId, Comparable value, String name = null, int order = -1i)
     {
         if (isRef)
         {
@@ -830,9 +904,16 @@ class Axis
         }
         Column column = idToCol.get(colId)
         deleteColumnById(colId)
+
+        if (StringUtilities.hasContent(name))
+        {
+            column.columnName = name
+        }
         Column newColumn = createColumnFromValue(value, colId, column.metaProperties)  // re-use ID & column meta-props
         ensureUnique(newColumn.value)
-        newColumn.displayOrder = column.displayOrder                // re-use displayOrder
+
+        // re-use displayOrder or take it from order arg
+        newColumn.setDisplayOrder(order == -1i ? column.displayOrder : order)
         indexColumn(newColumn)
     }
 
@@ -874,8 +955,8 @@ class Axis
             {   // Update case - matches existing column
                 Column newCol = newColumnMap[col.id]
                 col.value = newCol.value
-
                 Map<String, Object> metaProperties = newCol.metaProperties
+                
                 for (Map.Entry<String, Object> entry : metaProperties.entrySet())
                 {
                     col.setMetaProperty(entry.key, entry.value)
@@ -890,7 +971,7 @@ class Axis
                 }
             }
         }
-        clear()
+        clearIndexes()
 
         // Step 3. Save existing before clearing all columns
         Map<Long, Column> existingColumns = [:]
@@ -940,7 +1021,7 @@ class Axis
             }
         }
 
-        clear()
+        clearIndexes()
         for (Column col : existingColumns.values())
         {
             indexColumn(col)
@@ -1219,7 +1300,7 @@ class Axis
      */
     static Comparable promoteValue(AxisValueType srcValueType, Comparable value)
     {
-        if (AxisValueType.STRING == srcValueType)
+        if (AxisValueType.STRING == srcValueType || AxisValueType.CISTRING == srcValueType)
         {
             return (Comparable) Converter.convert(value, String.class)
         }
@@ -1519,7 +1600,7 @@ class Axis
             }
             else if (promotedValue instanceof String)
             {
-                Column colToFind = findColumnByName(promotedValue as String)
+                Column colToFind = colNameToCol[promotedValue as String]
                 return colToFind == null ? defaultCol : colToFind
             }
             else
@@ -1546,12 +1627,7 @@ class Axis
      */
     Column findColumnByName(String colName)
     {
-        Column col = colNameToCol[colName]
-        if (col != null)
-        {
-            return col
-        }
-        return null
+        return colNameToCol[colName]
     }
 
     private Column findNearest(final Comparable promotedValue)
@@ -1771,5 +1847,38 @@ class Axis
             return false
         }
         return fireAll == axis.fireAll
+    }
+
+    /**
+     * Return a display-friendly String for the passed in column.
+     */
+    protected static String getDisplayColumnName(Column column)
+    {
+        String colName = StringUtilities.hasContent(column.columnName) ? column.columnName : column.value
+        return colName ?: 'default'
+    }
+
+    /**
+     * Find the Column on 'this' axis which has the same ID as the passed in axis.  If not found,
+     * then check for Column with the same value (or name in case of RULE axis).
+     * @param source
+     * @return
+     */
+    protected Column locateDeltaColumn(Column source)
+    {
+        Column column = getColumnById(source.id)
+        if (column)
+        {
+            return column
+        }
+
+        if (type == AxisType.RULE)
+        {
+            return findColumn(source.columnName)
+        }
+        else
+        {
+            return findColumn(source.value)
+        }
     }
 }

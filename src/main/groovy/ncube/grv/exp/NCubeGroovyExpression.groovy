@@ -13,6 +13,8 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.ncube.NCubeConstants.*
+
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
  * @see com.cedarsoftware.ncube.GroovyBase
@@ -76,7 +78,7 @@ class NCubeGroovyExpression
      */
     Set<String> getCubeNames(boolean activeOnly = true)
     {
-        List<NCubeInfoDto> infoDtoList = NCubeManager.search(ncube.applicationID, null, null, [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):activeOnly])
+        List<NCubeInfoDto> infoDtoList = NCubeManager.search(ncube.applicationID, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):activeOnly])
         Set<String> names = new CaseInsensitiveSet()
         infoDtoList.each {
             names.add(it.name)
@@ -92,7 +94,7 @@ class NCubeGroovyExpression
      * @param options Map of NCubeManager.SEARCH_* options. Optional.  Defaults to active records only.
      * @return Object[] of NCubeInfoDto instances.
      */
-    List<NCubeInfoDto> search(String namePattern, String textPattern, Map options = [(NCubeManager.SEARCH_ACTIVE_RECORDS_ONLY):true])
+    List<NCubeInfoDto> search(String namePattern, String textPattern, Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true])
     {
         return NCubeManager.search(ncube.applicationID, namePattern, textPattern, options)
     }

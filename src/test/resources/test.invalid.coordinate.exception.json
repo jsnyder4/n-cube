@@ -8,7 +8,7 @@
       "hasDefault":false,
       "preferredOrder":1,
       "columns":[
-        { "id":1, "type":"exp", "value":"true" }
+        { "id":1, "name":"br1", "type":"exp", "value":"true" }
       ]
     }
   ],

@@ -1,11 +1,14 @@
 package com.cedarsoftware.ncube.formatters
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeBuilder
 import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.ncube.TestNCubeManager
 import com.cedarsoftware.ncube.TestingDatabaseHelper
 import com.cedarsoftware.ncube.TestingDatabaseManager
 import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.io.JsonReader
+import com.cedarsoftware.util.io.JsonWriter
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -43,7 +46,7 @@ class TestJsonFormatter
     private TestingDatabaseManager manager;
 
     @Before
-    public void setup()
+    void setup()
     {
         manager = TestingDatabaseHelper.testingDatabaseManager
         manager.setUp()
@@ -51,7 +54,7 @@ class TestJsonFormatter
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
         manager.tearDown()
         manager = null;
@@ -254,6 +257,25 @@ class TestJsonFormatter
         assert json.contains(',"type":"string","value":"CA"}')
     }
 
+    @Test
+    void testNCubeUsesCustomReaderWriterWithJsonIo()
+    {
+        NCube ncube = NCubeBuilder.get5DTestCube()
+        ApplicationID appId = new ApplicationID('foo', 'bar', '1.0.4', 'SNAPSHOT', 'baz')
+        ncube.applicationID = appId
+        String json = JsonWriter.objectToJson(ncube)
+        NCube cube = JsonReader.jsonToJava(json) as NCube
+        assert cube.name == 'testMerge'
+        assert cube.numDimensions == 5
+        assert cube.getAxis('age').size() == 2
+        assert cube.getAxis('salary').size() == 2
+        assert cube.getAxis('log').size() == 2
+        assert cube.getAxis('rule').size() == 2
+        assert cube.getAxis('state').size() == 3
+        assert cube.applicationID == appId
+        assert cube.metaProperties.size() == 0
+    }
+
     private static class TestFilenameFilter implements FilenameFilter
     {
         boolean accept(File dir, String name)
@@ -269,7 +291,7 @@ class TestJsonFormatter
         }
     }
 
-    public List<String> getAllTestFiles()
+    List<String> getAllTestFiles()
     {
         URL u = getClass().classLoader.getResource('')
         File dir = new File(u.file)
@@ -283,7 +305,7 @@ class TestJsonFormatter
         return names;
     }
 
-    public void runAllTests(List<String> strings)
+    void runAllTests(List<String> strings)
     {
         for (String f : strings)
         {

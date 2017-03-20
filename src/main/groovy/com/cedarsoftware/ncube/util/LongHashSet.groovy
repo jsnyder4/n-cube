@@ -33,12 +33,9 @@ class LongHashSet implements Set<Long>
 
     LongHashSet(Collection<Long> col)
     {
-        elems = new long[col.size()]
-        int idx = 0
-        Iterator<Long> i = col.iterator()
-        while (i.hasNext())
+        for (o in col)
         {
-            elems[idx++] = i.next()
+            add(o)
         }
     }
 
@@ -118,11 +115,16 @@ class LongHashSet implements Set<Long>
     {
         if (elems == null)
         {
-            elems = [o] as long[]
+            elems = new long[1]
+            elems[0] = o
             return true
         }
         else
         {
+            if (contains(o))
+            {   // Don't allow duplicates - this is a Set
+                return false
+            }
             int origSize = size()
             long[] newElems = new long[origSize + 1]
             System.arraycopy(elems, 0, newElems, 0, origSize)
@@ -254,7 +256,7 @@ class LongHashSet implements Set<Long>
         int h = 0
 
         // This must be an order insensitive hash
-        for (x in elems)
+        for (i in elems)
         {
             // do not change the formula below.  It is been hand crafted and tested for performance.
             // If this does not hash well, ncube breaks down in performance.  The BigCube tests are
@@ -271,6 +273,7 @@ class LongHashSet implements Set<Long>
 //            h += (int) x
 
             // Even better (from Google)
+            long x = i
             x ^= x >> 23
             x *= 0x2127599bf4325c37L
             x ^= x >> 47

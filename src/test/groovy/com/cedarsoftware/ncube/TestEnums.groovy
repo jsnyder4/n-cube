@@ -23,7 +23,7 @@ class TestEnums
     void testDeltaEnum()
     {
         assert Delta.Location.values().length == 8
-        assert Delta.Type.values().length == 3
+        assert Delta.Type.values().length == 4
     }
 
     @Test

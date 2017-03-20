@@ -1404,134 +1404,6 @@ class TestAxis
     }
 
     @Test
-    void testStringAxis()
-    {
-        NCube<Integer> ncube = new NCube<Integer>("SingleStringAxis")
-        Axis genderAxis = NCubeBuilder.getGenderAxis(false)
-        ncube.addAxis(genderAxis)
-
-        Map coord = [Gender:'Male'] as Map
-        ncube.setCell(0, coord)
-        coord.Gender = 'Female'
-        ncube.setCell(1, coord)
-
-        try
-        {
-            genderAxis.addColumn(new Comparable() {
-                int compareTo(Object o) {
-                    return 0
-                }
-            })
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('unsupported value type')
-        }
-
-        coord.put("Gender", "Male")
-        assertTrue(ncube.getCell(coord) == 0)
-        coord.put("Gender", "Female")
-        assertTrue(ncube.getCell(coord) == 1)
-        assertTrue(TestNCube.countMatches(ncube.toHtml(), "<tr") == 3)
-
-        try
-        {
-            coord.Gender = "Jones"
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (CoordinateNotFoundException e)
-        {
-            assertTrue(e.message.contains("alue"))
-            assertTrue(e.message.contains("not"))
-            assertTrue(e.message.contains("found"))
-            assertTrue(e.message.contains("axis"))
-            assertEquals(ncube.name, e.cubeName)
-            assertEquals(coord, e.coordinate)
-            assertEquals("Gender", e.axisName)
-            assertEquals("Jones", e.value)
-        }
-
-        // 'null' value to find on String axis:
-        try
-        {
-            coord.Gender = null
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (CoordinateNotFoundException e)
-        {
-            assert e.message.toLowerCase().contains('null')
-            assert e.message.toLowerCase().contains('not found on axis')
-            assert ncube.name == e.cubeName
-            assert coord == e.coordinate
-            assert "Gender" == e.axisName
-            assert !e.value
-        }
-
-        // Illegal value to find on String axis:
-        try
-        {
-            coord.Gender = 8
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (CoordinateNotFoundException e)
-        {
-            assert e.message.toLowerCase().contains('value')
-            assert e.message.toLowerCase().contains('not found on axis')
-            assert ncube.name == e.cubeName
-            assert coord == e.coordinate
-            assert "Gender" == e.axisName
-            assert 8 == e.value
-        }
-
-        // 'null' for coordinate
-        try
-        {
-            ncube.getCell((Map)null)
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('null')
-            assert e.message.toLowerCase().contains('passed in for coordinate map')
-        }
-
-        // 0-length coordinate
-        try
-        {
-            coord.clear()
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (InvalidCoordinateException e)
-        {
-            assert e.message.toLowerCase().contains('required scope')
-            assert ncube.name == e.cubeName
-            assert !e.coordinateKeys
-            assert e.requiredKeys.contains('Gender')
-        }
-
-        // coordinate / table dimension mismatch
-        try
-        {
-            coord.clear()
-            coord.State = 'OH'
-            ncube.getCell(coord)
-            fail()
-        }
-        catch (InvalidCoordinateException e)
-        {
-            assert e.message.toLowerCase().contains('required scope')
-            assert ncube.name == e.cubeName
-            assert e.coordinateKeys.contains('State')
-            assert e.requiredKeys.contains('Gender')
-        }
-    }
-
-    @Test
     void testNoDefaultColumn()
     {
         NCube<Boolean> ncube = NCubeBuilder.testNCube3D_Boolean
@@ -2892,7 +2764,7 @@ class TestAxis
     void testReferenceAxisWithTransform()
     {
         NCube one = NCubeBuilder.discrete1DLong
-        assert one.getAxis('code').size() == 3
+        assert one.getAxis('code').size() == 4
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
         NCube transform = NCubeBuilder.transformMultiply
@@ -2943,6 +2815,69 @@ class TestAxis
         assert !json.contains('"columns":{')
         json = reload.toFormattedJson([indexFormat:true] as Map)
         assert json.contains('"columns":{')
+    }
+
+    @Test
+    void testReferenceAxisRemoveTransform()
+    {
+        NCube one = NCubeBuilder.discrete1DLong
+        assert one.getAxis('code').size() == 4
+        NCubeManager.addCube(ApplicationID.testAppId, one)
+
+        NCube transform = NCubeBuilder.transformMultiply
+        assert transform.getAxis('method').size() == 2
+        NCubeManager.addCube(ApplicationID.testAppId, transform)
+
+        Map<String, Object> args = [:]
+
+        ApplicationID appId = ApplicationID.testAppId
+        args[REF_TENANT] = appId.tenant
+        args[REF_APP] = appId.app
+        args[REF_VERSION] = appId.version
+        args[REF_STATUS] = appId.status
+        args[REF_BRANCH] = appId.branch
+        args[REF_CUBE_NAME] = 'discreteLong'
+        args[REF_AXIS_NAME] = 'code'
+        args[TRANSFORM_APP] = appId.app
+        args[TRANSFORM_VERSION] = appId.version
+        args[TRANSFORM_STATUS] = appId.status
+        args[TRANSFORM_BRANCH] = appId.branch
+        args[TRANSFORM_CUBE_NAME] = 'multiplier'
+        args[TRANSFORM_METHOD_NAME] = 'double'
+
+        // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
+        Axis axis = new Axis('age', 1, false, refAxisLoader)
+        NCube two = new NCube('TestTransform')
+        two.addAxis(axis)
+        two.setCell('a', [age:2] as Map)
+        assert 'a' == two.getCell([age:2] as Map)
+
+        two.setCell('b', [age:4] as Map)
+        assert 'b' == two.getCell([age:4] as Map)
+
+        two.setCell('c', [age:6] as Map)
+        assert 'c' == two.getCell([age:6] as Map)
+
+        String json = two.toFormattedJson()
+        NCube reload = NCube.fromSimpleJson(json)
+        assert reload.numCells == 3
+
+        // 1, 2, 3 was transformed to 2, 4, 6
+        assert 'a' == reload.getCell([age:2] as Map)
+        assert 'b' == reload.getCell([age:4] as Map)
+        assert 'c' == reload.getCell([age:6] as Map)
+
+        two.removeAxisReferenceTransform('age')
+        json = two.toFormattedJson()
+        reload = NCube.fromSimpleJson(json)
+        assert reload.numCells == 3
+
+        // 1, 2, 3 should not be transformed
+        assert 'a' == reload.getCell([age:1] as Map)
+        assert 'b' == reload.getCell([age:2] as Map)
+        assert 'c' == reload.getCell([age:3] as Map)
+
     }
 
     @Test
@@ -3000,7 +2935,7 @@ class TestAxis
     void testNonExistingTransformCube()
     {
         NCube one = NCubeBuilder.discrete1DLong
-        assert one.getAxis('code').size() == 3
+        assert one.getAxis('code').size() == 4
         NCubeManager.addCube(ApplicationID.testAppId, one)
 
         NCube transform = NCubeBuilder.transformMultiply
@@ -3147,8 +3082,14 @@ class TestAxis
         NCube one = NCubeBuilder.discrete1DLong
         Axis code = one.getAxis('code')
         code.setMetaProperty('a', 'alpha')
-        code.setMetaProperty('b', 'ball')
+        code.setMetaProperty('b', new GroovyExpression('return 7', null, false))
         code.setMetaProperty('c', 'charlie')
+        Column col2 = one.findColumn('code', 2)
+        col2.setMetaProperty('a', '1')
+        col2.setMetaProperty('b', 2)
+        Column colDef = code.defaultColumn
+        colDef.setMetaProperty('foo', 'bar')
+        colDef.setMetaProperty('baz', 'qux')
         NCubeManager.addCube(ApplicationID.testAppId, one)
         NCube two = new NCube('two')
 
@@ -3163,20 +3104,36 @@ class TestAxis
         args[REF_AXIS_NAME] = 'code'
 
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(one.name, 'code', args)
-        code =  new Axis('code', 1L, false, refAxisLoader)
-        code.setMetaProperty('b', 'bravo')
+        code =  new Axis('code', 1L, true, refAxisLoader)
+        code.setMetaProperty('b', new GroovyExpression('return 1.0', null, false))
         code.setMetaProperty('d', 'delta')
         two.addAxis(code)
+        col2 = code.findColumn(2)
+        col2.removeMetaProperty('b')
+        col2.setMetaProperty('c', new GroovyExpression('return true', null, false))
+        colDef = code.defaultColumn
+        colDef.setMetaProperty('foo', 'bart')
+        colDef.removeMetaProperty('baz')
+        colDef.setMetaProperty('monkey', 'socks')
         NCubeManager.addCube(ApplicationID.testAppId, two)
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
+        code = reload.getAxis('code')
 
-        Map meta = reload.getAxis('code').metaProperties
+        Map meta = code.metaProperties
         assert 'alpha' == meta.get('a')
-        assert 'bravo' == meta.get('b')
+        assert new GroovyExpression('return 1.0', null, false) == meta.get('b')
         assert 'charlie' == meta.get('c')
         assert 'delta' == meta.get('d')
+        col2 = code.findColumn(2)
+        assert '1' == col2.getMetaProperty('a')
+        assert 2 == col2.getMetaProperty('b')
+        assert new GroovyExpression('return true', null, false) == col2.getMetaProperty('c')
+
+        colDef = code.defaultColumn
+        assert 'bart' == colDef.getMetaProperty('foo')
+        assert 'socks' == colDef.getMetaProperty('monkey')
     }
 
     @Test

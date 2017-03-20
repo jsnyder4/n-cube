@@ -156,7 +156,7 @@ class TestAllCellsInBigCube
         NCube<Boolean> ncube = new NCube("bigCube")
 
         int size = 10
-        int last = 1400    // 1300 = 13 million cells, 1400 = 14 million cells, ... 17M record on 1.5GB heap
+        int last = 1500    // 1300 = 13 million cells, 1400 = 14 million cells, ... 17M record on 1.5GB heap
 
         for (int i = 0; i < 4; i++)
         {
