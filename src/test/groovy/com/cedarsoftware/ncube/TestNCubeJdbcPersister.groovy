@@ -3,22 +3,18 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.UniqueIdGenerator
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
-import java.sql.Connection
-import java.sql.DatabaseMetaData
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.SQLException
+import java.sql.*
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
+import static org.junit.Assert.*
 import static org.mockito.Matchers.anyInt
 import static org.mockito.Matchers.anyString
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -185,7 +181,7 @@ class TestNCubeJdbcPersister
         assert 0 == new NCubeJdbcPersister().commitCubes(null, defaultSnapshotApp, null, USER_ID, UniqueIdGenerator.uniqueId).size()
     }
 
-    @Test
+    @Ignore
     void testCommitCubeThatDoesntExist()
     {
         Connection c = mock(Connection.class)

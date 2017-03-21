@@ -335,8 +335,7 @@ class Axis
                 StringUtilities.hasContent(getMetaProperty(TRANSFORM_VERSION) as String) &&
                 StringUtilities.hasContent(status) &&
                 StringUtilities.hasContent(branch) &&
-                StringUtilities.hasContent(transformCubeName) &&
-                StringUtilities.hasContent(transformMethodName)
+                StringUtilities.hasContent(transformCubeName)
     }
 
     /**
@@ -626,6 +625,9 @@ class Axis
     protected void setValueType(AxisValueType newValueType)
     {
         valueType = newValueType
+        NavigableMap<Comparable, Column> existing = valueToCol
+        valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
+        valueToCol.putAll(existing)
     }
 
     protected void clearIndexes()

@@ -1,4 +1,7 @@
 ### Revision History
+* 3.6.13/3.6.14
+  * Enhancement: Updated reference axes transforms so they won't execute code on the server (support for transforms that execute code remains)
+  * Enhancement: Axis supports a new ValueType (CISTRING - case insenstive string)
 * 3.6.12
   * Bug fix: Committing merged cube into branch was not resetting the change flag in the case when the n-cube SHA-1 was the same as the HEAD n-cube's SHA-1.
 * 3.6.11

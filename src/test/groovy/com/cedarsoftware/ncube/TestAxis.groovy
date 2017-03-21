@@ -2982,12 +2982,12 @@ class TestAxis
             Axis ignore = new Axis('age', 1, false, refAxisLoader)
             fail()
         }
-        catch (IllegalStateException e)
+        catch (IllegalArgumentException e)
         {
             assert e.message.toLowerCase().contains('unable to load')
             assert e.message.contains('TestTransform')
             assert e.message.toLowerCase().contains('reference axis: age')
-            assert e.message.toLowerCase().contains("no 'method' axis")
+            assert e.message.toLowerCase().contains('must have two discrete')
         }
 
         args[TRANSFORM_CUBE_NAME] = 'multiplier'  // this cube has no 'method' axis

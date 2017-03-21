@@ -1282,14 +1282,6 @@ Cannot point reference axis transformer to non-existing cube: ${transformCubeNam
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${transformMethodName}""")
                         }
-
-                        if (transformCube.getAxis('method') == null)
-                        {
-                            throw new IllegalArgumentException("""\
-Cannot point reference axis transformer to non-existing axis: ${transformMethodName}. \
-Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
-target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}.${transformMethodName}""")
-                        }
                     }
                     else
                     {
