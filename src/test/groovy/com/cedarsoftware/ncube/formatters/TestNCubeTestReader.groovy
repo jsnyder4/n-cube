@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube.formatters
 
 import com.cedarsoftware.ncube.NCubeTest
 import com.cedarsoftware.util.IOUtilities
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -23,6 +24,7 @@ import static org.junit.Assert.assertEquals
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestNCubeTestReader
 {
     @Test

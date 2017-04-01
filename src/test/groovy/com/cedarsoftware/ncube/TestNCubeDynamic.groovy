@@ -60,7 +60,7 @@ class TestNCubeDynamic
         assert axis.name == 'system'
         axis = ncube.'system'
         assert axis.name == 'system'
-        axis = ncube['system']
+        axis = ncube['system'] as Axis
         assert axis.name == 'system'
     }
 }

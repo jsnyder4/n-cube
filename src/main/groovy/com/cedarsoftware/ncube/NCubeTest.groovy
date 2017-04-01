@@ -34,7 +34,7 @@ class NCubeTest
     NCubeTest(String name, Map<String, CellInfo> input, CellInfo[] expected)
     {
         this.name = name
-        coord = input
+        coord = new CaseInsensitiveMap<>(input)
         this.expected = expected
     }
 

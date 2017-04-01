@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import groovy.transform.CompileStatic
 import org.junit.Assert
 import org.junit.Test
 
@@ -23,7 +24,8 @@ import java.lang.reflect.Modifier
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestStringUrlCmd
+@CompileStatic
+class TestStringUrlCmd extends NCubeBaseTest
 {
     @Test
     void testDefaultConstructorIsPrivateForSerialization()

@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube.util
 
-import com.cedarsoftware.ncube.NCubeManager
+import com.cedarsoftware.ncube.NCubeAppContext
+import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
@@ -29,6 +30,7 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
 @CompileStatic
 class CdnClassLoader extends GroovyClassLoader
 {
+    private static NCubeRuntimeClient runtimeClient
     private final boolean _preventRemoteBeanInfo
     private final boolean _preventRemoteCustomizer
     private final Map<String, URL> resourceCache = new ConcurrentHashMap<>()
@@ -44,10 +46,11 @@ class CdnClassLoader extends GroovyClassLoader
         super(loader, null)
         _preventRemoteBeanInfo = preventRemoteBeanInfo
         _preventRemoteCustomizer = preventRemoteCustomizer
+        runtimeClient = NCubeAppContext.runtimeClient
 
         if (acceptedDomains == null)
         {
-            String accepted = NCubeManager.systemParams[(NCUBE_ACCEPTED_DOMAINS)]
+            String accepted = runtimeClient.systemParams[(NCUBE_ACCEPTED_DOMAINS)]
             if (StringUtilities.hasContent(accepted))
             {
                 whiteList = Arrays.asList(accepted.split(";"))
@@ -195,15 +198,14 @@ class CdnClassLoader extends GroovyClassLoader
      * <p>The name of a resource is a <tt>/</tt>-separated path name that
      * identifies the resource.
      *
-     * <p> The search order is described in the documentation for {@link
-     * #getResource(String)}.  </p>
+     * <p> The search order is described in the documentation for
+     * #getResource(String).</p>
      *
      * @apiNote When overriding this method it is recommended that an
-     * implementation ensures that any delegation is consistent with the {@link
-     * #getResource(java.lang.String) getResource(String)} method. This should
-     * ensure that the first element returned by the Enumeration's
-     * {@code nextElement} method is the same resource that the
-     * {@code getResource(String)} method would return.
+     * implementation ensures that any delegation is consistent with the
+     * getResource(String) method. This should ensure that the first element
+     * returned by the Enumeration's {@code nextElement} method is the same
+     * resource that the {@code getResource(String)} method would return.
      *
      * @param  name
      *         The resource name
@@ -296,8 +298,8 @@ class CdnClassLoader extends GroovyClassLoader
         if (isLocalOnlyResource(name))
         {
             Enumeration<URL> nullEnum = new Enumeration() {
-                public boolean hasMoreElements() { return false }
-                public URL nextElement() { throw new NoSuchElementException() }
+                boolean hasMoreElements() { return false }
+                URL nextElement() { throw new NoSuchElementException() }
             }
             resourcesCache[name] = nullEnum
             return nullEnum

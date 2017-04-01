@@ -1,4 +1,5 @@
 package com.cedarsoftware.ncube
+
 import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
@@ -9,31 +10,13 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 import java.security.SecureRandom
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_METHOD_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_VERSION
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static org.junit.Assert.*
+
 /**
  * NCube Axis Tests
  *
@@ -54,20 +37,8 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestAxis
+class TestAxis extends NCubeBaseTest
 {
-    @Before
-    void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     private static boolean isValidPoint(Axis axis, Comparable value)
     {
         try
@@ -844,7 +815,7 @@ class TestAxis
     @Test
     void testDeleteColumnFromRangeSetAxis()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource('testCube4.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube4.json')
         ncube.deleteColumn('code', 'b')
         Axis axis = ncube['code'] as Axis
         assert axis.id != 0
@@ -860,7 +831,7 @@ class TestAxis
     {
         try
         {
-            NCubeManager.getNCubeFromResource('idBasedCubeError2.json')
+            runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idBasedCubeError2.json')
             fail('should not make it here')
         }
         catch (AxisOverlapException e)
@@ -2525,8 +2496,9 @@ class TestAxis
     void testReferenceAxisNoDefaultAndBreakReference()
     {
         NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('state').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2569,8 +2541,9 @@ class TestAxis
     void testReferenceAxisToReferenceAxis()
     {
         NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('state').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2587,11 +2560,12 @@ class TestAxis
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
         Axis axis = new Axis('stateSource', 1, false, refAxisLoader)
         NCube two = new NCube('Mongo')
+        two.applicationID = ApplicationID.testAppId
         two.addAxis(axis)
 
         two.setCell('a', [stateSource:'OH'] as Map)
         two.setCell('b', [stateSource:'TX'] as Map)
-        NCubeManager.addCube(ApplicationID.testAppId, two)
+        runtimeClient.addCube(two)
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)
@@ -2628,8 +2602,9 @@ class TestAxis
     void testReferenceAxisAddedDefault()
     {
         NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('state').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2665,7 +2640,8 @@ class TestAxis
     void testReferenceAxisWithDefault()
     {
         NCube one = NCubeBuilder.discrete1DEmptyWithDefault
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        one.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2701,7 +2677,8 @@ class TestAxis
     void testReferenceAxisDeleteColumn()
     {
         NCube one = NCubeBuilder.discrete1DEmptyWithDefault
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        one.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2764,12 +2741,14 @@ class TestAxis
     void testReferenceAxisWithTransform()
     {
         NCube one = NCubeBuilder.discrete1DLong
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('code').size() == 4
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         NCube transform = NCubeBuilder.transformMultiply
+        transform.applicationID = ApplicationID.testAppId
         assert transform.getAxis('method').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, transform)
+        runtimeClient.addCube(transform)
 
         Map<String, Object> args = [:]
 
@@ -2821,12 +2800,14 @@ class TestAxis
     void testReferenceAxisRemoveTransform()
     {
         NCube one = NCubeBuilder.discrete1DLong
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('code').size() == 4
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         NCube transform = NCubeBuilder.transformMultiply
+        transform.applicationID = ApplicationID.testAppId
         assert transform.getAxis('method').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, transform)
+        runtimeClient.addCube(transform)
 
         Map<String, Object> args = [:]
 
@@ -2884,8 +2865,9 @@ class TestAxis
     void testReferenceAxisCubeNotExists()
     {
         NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('state').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         Map<String, Object> args = [:]
 
@@ -2903,7 +2885,7 @@ class TestAxis
         try
         {
             Axis ignore = new Axis('stateSource', 1, false, refAxisLoader)
-            fail()
+            fail(ignore.name)
         }
         catch (IllegalStateException e)
         {
@@ -2919,7 +2901,7 @@ class TestAxis
         try
         {
             Axis ignore = new Axis('stateSource', 1, false, refAxisLoader)
-            fail()
+            fail(ignore.name)
         }
         catch (IllegalStateException e)
         {
@@ -2935,12 +2917,14 @@ class TestAxis
     void testNonExistingTransformCube()
     {
         NCube one = NCubeBuilder.discrete1DLong
+        one.applicationID = ApplicationID.testAppId
         assert one.getAxis('code').size() == 4
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
 
         NCube transform = NCubeBuilder.transformMultiply
+        transform.applicationID = ApplicationID.testAppId
         assert transform.getAxis('method').size() == 2
-        NCubeManager.addCube(ApplicationID.testAppId, transform)
+        runtimeClient.addCube(transform)
 
         Map<String, Object> args = [:]
 
@@ -2964,14 +2948,11 @@ class TestAxis
         try
         {
             Axis ignore = new Axis('age', 1, false, refAxisLoader)
-            fail()
+            fail(ignore.name)
         }
         catch (IllegalStateException e)
         {
-            assert e.message.toLowerCase().contains('unable to load')
-            assert e.message.contains('TestTransform')
-            assert e.message.toLowerCase().contains('reference axis')
-            assert e.message.toLowerCase().contains('failed to load transform')
+            assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis', 'failed to load transform')
         }
 
         args[TRANSFORM_CUBE_NAME] = 'discreteLong'  // this cube has no 'method' axis
@@ -2980,14 +2961,11 @@ class TestAxis
         try
         {
             Axis ignore = new Axis('age', 1, false, refAxisLoader)
-            fail()
+            fail(ignore.name)
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('unable to load')
-            assert e.message.contains('TestTransform')
-            assert e.message.toLowerCase().contains('reference axis: age')
-            assert e.message.toLowerCase().contains('must have two discrete')
+            assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis: age', 'must have two discrete')
         }
 
         args[TRANSFORM_CUBE_NAME] = 'multiplier'  // this cube has no 'method' axis
@@ -2996,14 +2974,11 @@ class TestAxis
         try
         {
             Axis ignore = new Axis('age', 1, false, refAxisLoader)
-            fail()
+            fail(ignore.name)
         }
         catch (IllegalStateException e)
         {
-            assert e.message.toLowerCase().contains('unable to load')
-            assert e.message.contains('TestTransform')
-            assert e.message.toLowerCase().contains('reference axis: age')
-            assert e.message.contains("doubleNotThere does not exist")
+            assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis: age', 'doubleNotThere does not exist')
         }
     }
 
@@ -3011,9 +2986,11 @@ class TestAxis
     void testReferenceIntoHigherDimensionCube()
     {
         NCube one = NCubeBuilder.discrete1DLong
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        one.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(one)
         NCube two = NCubeBuilder.get5DTestCube()
-        NCubeManager.addCube(ApplicationID.testAppId, two)
+        two.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(two)
 
         Map args = [:] as Map
         ApplicationID appId = ApplicationID.testAppId
@@ -3080,6 +3057,7 @@ class TestAxis
     void testRefAxisWithMetaProps()
     {
         NCube one = NCubeBuilder.discrete1DLong
+        one.applicationID = ApplicationID.testAppId
         Axis code = one.getAxis('code')
         code.setMetaProperty('a', 'alpha')
         code.setMetaProperty('b', new GroovyExpression('return 7', null, false))
@@ -3090,8 +3068,9 @@ class TestAxis
         Column colDef = code.defaultColumn
         colDef.setMetaProperty('foo', 'bar')
         colDef.setMetaProperty('baz', 'qux')
-        NCubeManager.addCube(ApplicationID.testAppId, one)
+        runtimeClient.addCube(one)
         NCube two = new NCube('two')
+        two.applicationID = ApplicationID.testAppId
 
         Map args = [:] as Map
         ApplicationID appId = ApplicationID.testAppId
@@ -3115,7 +3094,7 @@ class TestAxis
         colDef.setMetaProperty('foo', 'bart')
         colDef.removeMetaProperty('baz')
         colDef.setMetaProperty('monkey', 'socks')
-        NCubeManager.addCube(ApplicationID.testAppId, two)
+        runtimeClient.addCube(two)
 
         String json = two.toFormattedJson()
         NCube reload = NCube.fromSimpleJson(json)

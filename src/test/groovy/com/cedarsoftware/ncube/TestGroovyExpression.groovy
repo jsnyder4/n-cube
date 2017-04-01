@@ -2,9 +2,7 @@ package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.junit.After
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
 
 import java.lang.reflect.Constructor
@@ -29,20 +27,8 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestGroovyExpression
+class TestGroovyExpression extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
     {
@@ -56,7 +42,7 @@ class TestGroovyExpression
     @Test
     void testCompilerErrorOutput()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("GroovyExpCompileError.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'GroovyExpCompileError.json')
         Map coord = [state: 'OH'] as Map
         Object x = ncube.getCell(coord)
         assert 'Hello, Ohio' == x
@@ -68,7 +54,7 @@ class TestGroovyExpression
         }
         catch (RuntimeException e)
         {
-            String msg = e.getCause().message
+            String msg = e.cause.message
             assert msg.toLowerCase().contains('no such property')
             assert msg.toLowerCase().contains('hi8')
         }
@@ -78,7 +64,8 @@ class TestGroovyExpression
     void testRegexSubstitutions()
     {
         NCube ncube = new NCube('test')
-        NCubeManager.addCube(ApplicationID.testAppId, ncube)
+        ncube.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(ncube)
         Axis axis = new Axis('day', AxisType.DISCRETE, AxisValueType.STRING, false)
         axis.addColumn('mon')
         axis.addColumn('tue')
@@ -89,7 +76,7 @@ class TestGroovyExpression
         axis.addColumn('sun')
 
         ncube.addAxis(axis)
-        ncube.setApplicationID(ApplicationID.testAppId)
+        ncube.applicationID = ApplicationID.testAppId
 
         ncube.setCell(1, [day: 'mon'] as Map)
         ncube.setCell(2, [day: 'tue'] as Map)
@@ -200,13 +187,14 @@ return ret
     void testCachedExpressionClassIsGarbageCollected()
     {
         NCube ncube = new NCube('test')
-        NCubeManager.addCube(ApplicationID.testAppId, ncube)
+        ncube.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(ncube)
         Axis axis = new Axis('day', AxisType.DISCRETE, AxisValueType.STRING, false)
         axis.addColumn('mon')
         axis.addColumn('tue')
 
         ncube.addAxis(axis)
-        ncube.setApplicationID(ApplicationID.testAppId)
+        ncube.applicationID = ApplicationID.testAppId
 
         ncube.setCell(new GroovyExpression("return 'hello'", null, false), [day:'mon'] as Map)
         assert 'hello' == ncube.getCell([day:'mon'] as Map)
@@ -218,16 +206,16 @@ return ret
 
         GroovyExpression exp = (GroovyExpression) ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'mon'] as Map))
         assert "return 'hello'" == exp.cmd
-        assert exp.cacheable == false
-        assert exp.getRunnableCode() != null
-        assert NCubeGroovyExpression.class.isAssignableFrom(exp.getRunnableCode())
+        assert !exp.cacheable
+        assert exp.runnableCode != null
+        assert NCubeGroovyExpression.class.isAssignableFrom(exp.runnableCode)
 
         GroovyExpression exp1 = (GroovyExpression) ncube.getCellNoExecute([day:'mon'] as Map)
         assert exp1.equals(exp)
 
         exp = (GroovyExpression) ncube.getCellByIdNoExecute(ncube.getCoordinateKey([day:'tue'] as Map))
         assert exp.cmd == "return 'world'"
-        assert exp.cacheable == true
+        assert exp.cacheable
 
         exp1 = (GroovyExpression) ncube.getCellNoExecute([day:'tue'] as Map)
         assert exp1.equals(exp)
@@ -242,7 +230,7 @@ return ret
     @Test
     void testSysProtoErrorHandling2()
     {
-        assert null == GroovyExpression.getSysPrototype(null)
+        assert null == (new GroovyExpression('1', null, false)).getSysPrototype(null)
     }
 
     @Test

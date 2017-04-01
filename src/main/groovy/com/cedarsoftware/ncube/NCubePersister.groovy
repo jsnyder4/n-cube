@@ -26,14 +26,15 @@ import groovy.transform.CompileStatic
 interface NCubePersister extends NCubeReadOnlyPersister
 {
     // Basic CRUD operations
-    void updateCube(ApplicationID appId, NCube cube, String username)
+    void updateCube(NCube cube, String username)
+    void createCube(NCube cube, String username)
     boolean renameCube(ApplicationID appId, String oldName, String newName, String username)
     boolean duplicateCube(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName, String username)
     boolean deleteCubes(ApplicationID appId, Object[] cubeNames, boolean allowDelete, String username)
     boolean restoreCubes(ApplicationID appId, Object[] names, String username)
 
     // Branch Management
-    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, long txId)
+    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, String requestUser, long txId)
     int rollbackCubes(ApplicationID appId, Object[] names, String username)
     List<NCubeInfoDto> pullToBranch(ApplicationID appId, Object[] cubeIds, String username, long txId)
     boolean mergeAcceptTheirs(ApplicationID appId, String cubeName, String sourceBranch, String username)
@@ -44,6 +45,7 @@ interface NCubePersister extends NCubeReadOnlyPersister
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId)
     int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId)
     boolean deleteBranch(ApplicationID appId)
+    boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName)
 
     // Release Management
     int changeVersionValue(ApplicationID appId, String newVersion)
@@ -53,4 +55,5 @@ interface NCubePersister extends NCubeReadOnlyPersister
     // Testing
     boolean updateNotes(ApplicationID appId, String cubeName, String notes)
     boolean updateTestData(ApplicationID appId, String cubeName, String testData)
+    void clearTestDatabase()
 }

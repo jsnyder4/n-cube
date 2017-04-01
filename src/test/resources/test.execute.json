@@ -1,0 +1,47 @@
+{
+  "ncube": "test.execute",
+  "axes": [
+    {
+      "id": 1,
+      "name": "method",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1001384682740,
+          "type": "string",
+          "value": "times"
+        },
+        {
+          "id": 1000774637589,
+          "type": "string",
+          "value": "plus"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [],
+      "type": "exp",
+      "value": "input.value"
+    },
+    {
+      "id": [
+        1000774637589
+      ],
+      "type": "exp",
+      "value": "input.value + input.term"
+    },
+    {
+      "id": [
+        1001384682740
+      ],
+      "type": "exp",
+      "value": "input.value * input.term"
+    }
+  ]
+}

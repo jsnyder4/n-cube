@@ -4,8 +4,8 @@ import com.cedarsoftware.ncube.util.CdnRouter
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap
 abstract class ContentCmdCell extends UrlCommandCell
 {
     private static Map<String, String> extToMimeType = new ConcurrentHashMap<>()
-    private static final Logger LOG = LogManager.getLogger(ContentCmdCell.class)
+    private static final Logger LOG = LoggerFactory.getLogger(ContentCmdCell.class)
 
     static
     {

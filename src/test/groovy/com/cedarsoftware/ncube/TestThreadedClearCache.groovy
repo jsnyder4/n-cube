@@ -1,8 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
@@ -32,45 +30,23 @@ import static org.junit.Assert.assertEquals
  *         limitations under the License.
  */
 @CompileStatic
-class TestThreadedClearCache
+class TestThreadedClearCache extends NCubeCleanupBaseTest
 {
-    public static String USER_ID = TestNCubeManager.USER_ID
     public static ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, "clearCacheTest", ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
     public static ApplicationID usedId = new ApplicationID(ApplicationID.DEFAULT_TENANT, "usedInvalidId", ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
 
-    private TestingDatabaseManager manager;
-
-    @Before
-    void setup()
+    @Test
+    void testQuiet()
     {
-        manager = TestingDatabaseHelper.testingDatabaseManager
-        manager.setUp()
-
-        NCubeManager.NCubePersister = TestingDatabaseHelper.persister
     }
-
-    @After
-    void tearDown()
-    {
-        manager.tearDown()
-        manager = null
-
-        NCubeManager.clearCache()
-    }
-
+    
     // Uncomment when testing threading.  This hits an external website, so use sparingly
     @Ignore
     void testCubesWithThreadedClearCacheWithAppId()
     {
-        NCube[] ncubes = TestingDatabaseHelper.getCubesFromDisk("sys.classpath.2per.app.json", "math.controller.json")
-
-        // add cubes for this test.
-        manager.addCubes(usedId, USER_ID, ncubes)
-
+        createCubeFromResource(usedId, 'sys.classpath.2per.app.json')
+        createCubeFromResource(usedId, 'math.controller.json')
         concurrencyTest()
-
-        // remove cubes
-        manager.removeBranches([usedId] as ApplicationID[])
     }
 
     private void concurrencyTest()
@@ -89,13 +65,13 @@ class TestThreadedClearCache
                     try
                     {
                         startLatch.await()
-                        NCube cube = NCubeManager.getCube(usedId, "MathController")
+                        NCube cube = mutableClient.getCube(usedId, "MathController")
 
                         for (int i = 0; i < 1000; i++)
                         {
                             if (random.nextInt(100) == 42)
                             {   // 1/100th of the time, clear the cache
-                                NCubeManager.clearCache()
+                                runtimeClient.clearCache(usedId)
                             }
                             else
                             {   // 99/100ths of the time, execute cells

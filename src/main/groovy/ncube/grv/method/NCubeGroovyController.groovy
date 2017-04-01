@@ -4,8 +4,8 @@ import com.cedarsoftware.ncube.Advice
 import com.cedarsoftware.ncube.ApplicationID
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap
 @CompileStatic
 class NCubeGroovyController extends NCubeGroovyExpression
 {
-    protected static final Logger LOG = LogManager.getLogger(NCubeGroovyController.class)
+    protected static final Logger LOG = LoggerFactory.getLogger(NCubeGroovyController.class)
 
     // Cache reflective method look ups
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Method>> methodCache = new ConcurrentHashMap<>()

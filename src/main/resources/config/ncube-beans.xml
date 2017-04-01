@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+   http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+
+    <context:annotation-config />
+    <aop:aspectj-autoproxy/>
+
+    <bean id="appContext" class="com.cedarsoftware.ncube.NCubeAppContext"/>
+
+    <bean id="ncubeCacheManager" class="com.cedarsoftware.ncube.util.GCacheManager">
+        <constructor-arg ref="ncubeRemoval"/>
+        <constructor-arg value="${ncube.cache.max.size}"/>
+        <constructor-arg value="${ncube.cache.evict.type}"/>
+        <constructor-arg value="${ncube.cache.evict.duration}"/>
+        <constructor-arg value="${ncube.cache.evict.units}"/>
+        <constructor-arg value="${ncube.cache.concurrency}"/>
+    </bean>
+
+    <bean id="permCacheManager" class="com.cedarsoftware.ncube.util.GCacheManager">
+        <constructor-arg><null/></constructor-arg>
+        <constructor-arg value="${perm.cache.max.size}"/>
+        <constructor-arg value="${perm.cache.evict.type}"/>
+        <constructor-arg value="${perm.cache.evict.duration}"/>
+        <constructor-arg value="${perm.cache.evict.units}"/>
+        <constructor-arg value="${perm.cache.concurrency}"/>
+    </bean>
+
+    <bean id="ncubeRemoval" class="com.cedarsoftware.ncube.util.NCubeRemoval"/>
+
+    <beans profile="client">
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="jsonHttpProxy"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="${ncube.allow.mutable.methods}"/>
+        </bean>
+
+        <bean id="jsonHttpProxy" class="com.cedarsoftware.util.JsonHttpProxy">
+            <constructor-arg value="${server.scheme}"/>
+            <constructor-arg value="${server.host}"/>
+            <constructor-arg value="${server.port}"/>
+            <constructor-arg value="${server.context}"/>
+            <constructor-arg value="${server.username}"/>
+            <constructor-arg value="${server.password}"/>
+        </bean>
+
+    </beans>
+
+    <beans profile="runtime-server">
+
+        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
+            <constructor-arg ref="ncubeController"/>
+        </bean>
+
+        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
+            <constructor-arg ref="ncubeRuntime"/>
+            <constructor-arg value="true"/>
+        </bean>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="jsonHttpProxy"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="${ncube.allow.mutable.methods}"/>
+        </bean>
+        
+        <bean id="jsonHttpProxy" class="com.cedarsoftware.util.JsonHttpProxy">
+            <constructor-arg value="${server.scheme}"/>
+            <constructor-arg value="${server.host}"/>
+            <constructor-arg value="${server.port}"/>
+            <constructor-arg value="${server.context}"/>
+            <constructor-arg value="${server.username}"/>
+            <constructor-arg value="${server.password}"/>
+        </bean>
+
+    </beans>
+
+    <beans profile="storage-server">
+
+        <import resource="ncube-beans-persister.xml"/>
+
+        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
+            <constructor-arg ref="ncubeController"/>
+        </bean>
+
+        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
+            <constructor-arg ref="ncubeManager"/>
+            <constructor-arg value="false"/>
+        </bean>
+
+        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+            <constructor-arg ref="persister"/>
+            <constructor-arg ref="permCacheManager"/>
+        </bean>
+
+    </beans>
+
+    <beans profile="combined-server">
+
+        <import resource="ncube-beans-persister.xml"/>
+
+        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
+            <constructor-arg ref="ncubeController"/>
+        </bean>
+
+        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
+            <constructor-arg ref="ncubeRuntime"/>
+            <constructor-arg value="true"/>
+        </bean>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="reflectiveProxy"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="true"/>
+        </bean>
+
+        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+            <constructor-arg ref="persister"/>
+            <constructor-arg ref="permCacheManager"/>
+        </bean>
+
+        <bean id="reflectiveProxy" class="com.cedarsoftware.util.ReflectiveProxy"/>
+
+    </beans>
+
+    <beans profile="test-database">
+
+        <bean id="hsqlSetup" class="com.cedarsoftware.util.HsqlSchemaCreator">
+            <constructor-arg value="org.hsqldb.jdbcDriver"/>
+            <constructor-arg value="jdbc:hsqldb:mem:testdb"/>
+            <constructor-arg value="sa"/>
+            <constructor-arg value=""/>
+            <constructor-arg value="/config/hsqldb-schema.sql"/>
+        </bean>
+
+    </beans>
+
+</beans>

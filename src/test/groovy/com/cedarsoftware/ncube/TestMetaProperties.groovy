@@ -22,12 +22,12 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestMetaProperties
+class TestMetaProperties extends NCubeBaseTest
 {
     @Test
     void testComplexMetaProperties()
     {
-        NCube small = getSmall()
+        NCube small = small
 
         small.setMetaProperty('jersey-number', (byte)16)
         small.setMetaProperty('jersey-number2', new CellInfo((byte)16))
@@ -103,17 +103,17 @@ class TestMetaProperties
         assert x instanceof GroovyExpression
         exp = (GroovyExpression) x
         assert exp.url == 'http://ncube.io'
-        assert exp.isCacheable()
+        assert exp.cacheable
         x = copy.getMetaProperty('command2')
         assert x instanceof GroovyExpression
         assert exp.url == 'http://ncube.io'
-        assert exp.isCacheable()
+        assert exp.cacheable
     }
 
     @Test
     void testAxisMetaProps()
     {
-        NCube small = getSmall()
+        NCube small = small
         Axis axis = small.getAxis('state')
 
         // Only do simple and complex here (all other combinations already tested)
@@ -148,7 +148,7 @@ class TestMetaProperties
     @Test
     void testColumnMetaProps()
     {
-        NCube small = getSmall()
+        NCube small = small
         Axis axis = small.getAxis('state')
         Column column = axis.findColumn('OH')
 

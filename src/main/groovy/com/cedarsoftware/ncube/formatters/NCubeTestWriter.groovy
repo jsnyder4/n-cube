@@ -26,9 +26,9 @@ class NCubeTestWriter extends BaseJsonFormatter
 {
     String format(Object[] tests)
     {
-        startArray()
         if (tests != null && tests.length > 0)
         {
+            startArray()
             boolean firstPass = true
             for (Object test : tests)
             {
@@ -39,8 +39,8 @@ class NCubeTestWriter extends BaseJsonFormatter
                 writeTest((NCubeTest) test)
                 firstPass = false
             }
+            endArray()
         }
-        endArray()
         return builder.toString()
     }
 
@@ -49,10 +49,10 @@ class NCubeTestWriter extends BaseJsonFormatter
         startObject()
         writeObjectKeyValue("name", test.name, true)
         writeObjectKey("coord")
-        writeCoord(test.getCoord())
+        writeCoord(test.coord)
         comma()
         writeObjectKey("assertions")
-        writeAssertions(test.getAssertions())
+        writeAssertions(test.assertions)
         endObject()
     }
 

@@ -35,7 +35,7 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestCellTypes
+class TestCellTypes extends NCubeBaseTest
 {
     @Test
     void testInvalidCellType()
@@ -55,7 +55,7 @@ class TestCellTypes
     void testGetTypeOnClassLoader()
     {
         try {
-            assertEquals("exp", CellInfo.getType(TestCellTypes.getClassLoader(), 'cells'))
+            assertEquals("exp", CellInfo.getType(TestCellTypes.classLoader, 'cells'))
             fail();
         } catch (IllegalArgumentException e) {
             assertTrue(e.message.toLowerCase().contains("unsupported type"));

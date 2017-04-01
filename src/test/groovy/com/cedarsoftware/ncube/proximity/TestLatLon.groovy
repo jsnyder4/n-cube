@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube.proximity
 
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 /**
@@ -19,13 +20,14 @@ import org.junit.Test
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestLatLon
 {
     @Test
     void testEquals()
     {
         LatLon l = new LatLon(1.0, 2.0)
-        assert !l.equals(new Long(5))
+        assert l != (new Long(5))
         assert l == new LatLon(1, 2)
     }
 
@@ -33,11 +35,11 @@ class TestLatLon
     void testCompareTo()
     {
         LatLon l = new LatLon(10.0, 10.0)
-        assert l.compareTo(new LatLon(1, 10)) > 0
-        assert l.compareTo(new LatLon(10, 0)) > 0
-        assert l.compareTo(new LatLon(20, 10)) < 0
-        assert l.compareTo(new LatLon(10, 20)) < 0
-        assert l.compareTo(new LatLon(10, 10)) == 0
+        assert l > (new LatLon(1, 10))
+        assert l > (new LatLon(10, 0))
+        assert l < (new LatLon(20, 10))
+        assert l < (new LatLon(10, 20))
+        assert l == (new LatLon(10, 10))
 
         assert '10.0, 10.0' == l.toString()
     }

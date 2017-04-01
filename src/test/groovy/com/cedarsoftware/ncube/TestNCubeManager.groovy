@@ -3,23 +3,18 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
-import com.cedarsoftware.ncube.formatters.NCubeTestReader
-import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.DeepEquals
-import com.cedarsoftware.util.io.JsonWriter
-import org.junit.After
-import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.TestUrlClassLoader.getCacheSize
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
+
 /**
  * NCubeManager Tests
  *
@@ -39,42 +34,32 @@ import static org.junit.Assert.fail
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestNCubeManager
+
+class TestNCubeManager extends NCubeCleanupBaseTest
 {
     public static final String APP_ID = 'ncube.test'
-    public static final String USER_ID = NCubeManager.userId
+    public static final String USER_ID = 'cubeUser'
     public static ApplicationID defaultSnapshotApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultReleaseApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.RELEASE.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultBootApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
-    private static NCubeTest[] createTests()
+    private static Object[] createTests()
     {
         CellInfo foo = new CellInfo('int', '5', false, false)
         CellInfo bar = new CellInfo('string', 'none', false, false)
         Map<String, CellInfo> pairs = ['foo': foo, 'bar': bar]
         CellInfo[] cellInfos = [foo, bar] as CellInfo[]
 
-        return [new NCubeTest('foo', pairs, cellInfos)] as NCubeTest[]
+        return [new NCubeTest('foo', pairs, cellInfos)] as Object[]
     }
 
     private static NCube createCube()
     {
         NCube<Double> ncube = NCubeBuilder.getTestNCube2D(true)
+        ncube.applicationID = defaultSnapshotApp
 
-        def coord = [gender:'male', age:47]
-        ncube.setCell(1.0, coord)
+        Map coord = [gender:'male', age:47]
+        ncube.setCell(1.0d, coord)
 
         coord.gender = 'female'
         ncube.setCell(1.1d, coord)
@@ -85,9 +70,9 @@ class TestNCubeManager
         coord.gender = 'male'
         ncube.setCell(1.8d, coord)
 
-        NCubeManager.updateCube(defaultSnapshotApp, ncube, true)
-        NCubeManager.updateTestData(defaultSnapshotApp, ncube.name, new NCubeTestWriter().format(createTests()))
-        NCubeManager.updateNotes(defaultSnapshotApp, ncube.name, 'notes follow')
+        mutableClient.createCube(ncube)
+        mutableClient.saveTests(defaultSnapshotApp, ncube.name, createTests())
+        mutableClient.updateNotes(defaultSnapshotApp, ncube.name, 'notes follow')
         return ncube
     }
 
@@ -96,7 +81,7 @@ class TestNCubeManager
     {
         NCube ncube = NCubeBuilder.getTestNCube2D(true)
 
-        def coord = [gender:'male', age:47]
+        Map coord = [gender:'male', age:47] as Map
         ncube.setCell(1.0d, coord)
 
         coord.gender = 'female'
@@ -112,49 +97,50 @@ class TestNCubeManager
         String name1 = ncube.name
 
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, version, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        NCubeManager.updateCube(appId, ncube, true)
-        NCubeManager.updateTestData(appId, ncube.name, JsonWriter.objectToJson(coord))
-        NCubeManager.updateNotes(appId, ncube.name, 'notes follow')
+        ncube.applicationID = appId
+        mutableClient.createCube(ncube)
+        mutableClient.saveTests(appId, ncube.name, createTests())
+        mutableClient.updateNotes(appId, ncube.name, 'notes follow')
 
-        NCubeManager.search(appId, name1, null, [(SEARCH_EXACT_MATCH_NAME) : true]);
+        mutableClient.search(appId, name1, null, [(SEARCH_EXACT_MATCH_NAME) : true])
 
         ncube = NCubeBuilder.testNCube3D_Boolean
+        ncube.applicationID = appId
         String name2 = ncube.name
-        NCubeManager.updateCube(appId, ncube, true)
+        mutableClient.createCube(ncube)
 
-        NCubeManager.clearCache(appId)
-        NCubeManager.search(appId, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        runtimeClient.clearCache(appId)
+        mutableClient.search(appId, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
-        NCube ncube1 = NCubeManager.getCube(appId, name1)
-        NCube ncube2 = NCubeManager.getCube(appId, name2)
+        NCube ncube1 = mutableClient.getCube(appId, name1)
+        NCube ncube2 = mutableClient.getCube(appId, name2)
         assertNotNull(ncube1)
         assertNotNull(ncube2)
         assertEquals(name1, ncube1.name)
         assertEquals(name2, ncube2.name)
-        assertTrue(NCubeManager.isCubeCached(appId, name1))
-        assertTrue(NCubeManager.isCubeCached(appId, name2))
-        NCubeManager.clearCache(appId)
-        assertFalse(NCubeManager.isCubeCached(appId, name1))
-        assertFalse(NCubeManager.isCubeCached(appId, name2))
+        runtimeClient.clearCache(appId)
 
-        NCubeManager.deleteCubes(appId, [name1].toArray(), true)
-        NCubeManager.deleteCubes(appId, [name2].toArray(), true)
+        mutableClient.deleteCubes(appId, [name1].toArray())
+        mutableClient.deleteCubes(appId, [name2].toArray())
 
-        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY) : true, (SEARCH_EXACT_MATCH_NAME) : true];
-        Object[] cubeInfo = NCubeManager.search(appId, name1, null, options)
+        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY) : true, (SEARCH_EXACT_MATCH_NAME) : true]
+        Object[] cubeInfo = mutableClient.search(appId, name1, null, options)
         assertEquals(0, cubeInfo.length)
-        cubeInfo = NCubeManager.search(appId, name2, null, options)
+        cubeInfo = mutableClient.search(appId, name2, null, options)
         assertEquals(0, cubeInfo.length)
     }
 
     @Test
     void testDuplicateWhereNameAndAppIdAreIdentical()
     {
-        try {
-            NCubeManager.duplicate(defaultSnapshotApp, defaultSnapshotApp, 'test', 'test');
-            fail();
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.message.contains('Could not duplicate'))
+        try
+        {
+            mutableClient.duplicate(defaultSnapshotApp, defaultSnapshotApp, 'test', 'test')
+            fail()
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'could not duplicate')
         }
     }
 
@@ -167,20 +153,18 @@ class TestNCubeManager
         Object[] expectedTests = createTests()
 
         // reading from cache.
-        String data = NCubeManager.getTestData(defaultSnapshotApp, 'test.Age-Gender')
-        assertTrue(DeepEquals.deepEquals(expectedTests, new NCubeTestReader().convert(data).toArray(new NCubeTest[0])))
+        Object[] data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        assertTrue(DeepEquals.deepEquals(expectedTests, data))
 
         // reload from db
-        NCubeManager.clearCache()
-        data = NCubeManager.getTestData(defaultSnapshotApp, 'test.Age-Gender')
-        assertTrue(DeepEquals.deepEquals(expectedTests, new NCubeTestReader().convert(data).toArray(new NCubeTest[0])))
+        runtimeClient.clearCache(defaultSnapshotApp)
+        data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        assertTrue(DeepEquals.deepEquals(expectedTests, data))
 
         //  update cube
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        data = NCubeManager.getTestData(defaultSnapshotApp, 'test.Age-Gender')
-        assertTrue(DeepEquals.deepEquals(expectedTests, new NCubeTestReader().convert(data).toArray(new NCubeTest[0])))
-
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray(), true))
+        mutableClient.updateCube(cube)
+        data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        assertTrue(DeepEquals.deepEquals(expectedTests, data))
     }
 
     @Test
@@ -188,12 +172,12 @@ class TestNCubeManager
     {
         try
         {
-            Set<String> set = new HashSet<>()
-            NCubeManager.getReferencedCubeNames(defaultSnapshotApp, 'AnyCube', set)
+            mutableClient.getReferencesFrom(defaultSnapshotApp, 'AnyCube')
             fail()
         }
         catch (IllegalArgumentException e)
         {
+            assertContainsIgnoreCase(e.message, 'not', 'referenced', 'does not exist')
             assertNull(e.cause)
         }
     }
@@ -203,12 +187,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.renameCube(defaultSnapshotApp, 'foo', 'foo')
+            mutableClient.renameCube(defaultSnapshotApp, 'foo', 'foo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertNull(e.cause)
+            assertContainsIgnoreCase(e.message, 'could not rename')
         }
     }
 
@@ -217,7 +201,7 @@ class TestNCubeManager
     {
         NCube<Object> continentCounty = new NCube<>('test.ContinentCountries')
         continentCounty.applicationID = defaultSnapshotApp
-        NCubeManager.addCube(defaultSnapshotApp, continentCounty)
+        runtimeClient.addCube(continentCounty)
         continentCounty.addAxis(NCubeBuilder.continentAxis)
         Axis countries = new Axis('Country', AxisType.DISCRETE, AxisValueType.STRING, true)
         countries.addColumn('Canada')
@@ -227,12 +211,12 @@ class TestNCubeManager
 
         NCube<Object> canada = new NCube<>('test.Provinces')
         canada.applicationID = defaultSnapshotApp
-        NCubeManager.addCube(defaultSnapshotApp, canada)
+        runtimeClient.addCube(canada)
         canada.addAxis(NCubeBuilder.provincesAxis)
 
         NCube<Object> usa = new NCube<>('test.States')
         usa.applicationID = defaultSnapshotApp
-        NCubeManager.addCube(defaultSnapshotApp, usa)
+        runtimeClient.addCube(usa)
         usa.addAxis(NCubeBuilder.statesAxis)
 
         Map coord1 = new HashMap()
@@ -263,91 +247,85 @@ class TestNCubeManager
             assert e.message.toLowerCase().contains('error occurred')
         }
 
-        NCubeManager.updateCube(defaultSnapshotApp, continentCounty, true)
-        NCubeManager.updateCube(defaultSnapshotApp, usa, true)
-        NCubeManager.updateCube(defaultSnapshotApp, canada, true)
+        mutableClient.createCube(continentCounty)
+        mutableClient.createCube(usa)
+        mutableClient.createCube(canada)
 
-        assertEquals(4, NCubeManager.search(defaultSnapshotApp, null, null, null).size())
+        assertEquals(4, mutableClient.search(defaultSnapshotApp, null, null, null).size())
 
         // make sure items aren't in cache for next load from db for next getCubeNames call
         // during create they got added to database.
-        NCubeManager.clearCache()
+        runtimeClient.clearCache(defaultSnapshotApp)
 
-        assertEquals(4, NCubeManager.search(defaultSnapshotApp, null, null, null).size())
+        assertEquals(4, mutableClient.search(defaultSnapshotApp, null, null, null).size())
 
-        NCubeManager.clearCache()
+        runtimeClient.clearCache(defaultSnapshotApp)
 
-        NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        NCube test = NCubeManager.getCube(defaultSnapshotApp, 'test.ContinentCountries')
+        mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        NCube test = mutableClient.getCube(defaultSnapshotApp, 'test.ContinentCountries')
         assertEquals((Double) test.getCell(coord1), 1.0d, 0.00001d)
 
-        NCubeManager.deleteCubes(defaultSnapshotApp, ['test.ContinentCountries'].toArray(), false)
-        NCubeManager.deleteCubes(defaultSnapshotApp, ['test.States'].toArray(), false)
-        NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Provinces'].toArray(), false)
-        assertEquals(1, NCubeManager.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        mutableClient.deleteCubes(defaultSnapshotApp, ['test.ContinentCountries'].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, ['test.States'].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, ['test.Provinces'].toArray())
+        assertEquals(1, mutableClient.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
 
-        HtmlFormatter formatter = new HtmlFormatter();
-        String s = formatter.format(continentCounty);
-        assertTrue(s.contains("column-code"));
+        HtmlFormatter formatter = new HtmlFormatter()
+        String s = formatter.format(continentCounty)
+        assertTrue(s.contains("column-code"))
     }
 
     @Test
     void testGetReferencedCubeNames()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('template1.json')
-        NCube n2 = NCubeManager.getNCubeFromResource('template2.json')
+        NCube n1 = createCubeFromResource(defaultSnapshotApp, 'template1.json')
+        NCube n2 = createCubeFromResource(defaultSnapshotApp, 'template2.json')
 
-        NCubeManager.updateCube(defaultSnapshotApp, n1, true)
-        NCubeManager.updateCube(defaultSnapshotApp, n2, true)
-
-        Set refs = new TreeSet()
-        NCubeManager.getReferencedCubeNames(defaultSnapshotApp, n1.name, refs)
+        Set refs = mutableClient.getReferencesFrom(defaultSnapshotApp, n1.name)
 
         assertEquals(2, refs.size())
         assertTrue(refs.contains('Template2Cube'))
 
         refs.clear()
-        NCubeManager.getReferencedCubeNames(defaultSnapshotApp, n2.name, refs)
+        refs = mutableClient.getReferencesFrom(defaultSnapshotApp, n2.name)
         assertEquals(2, refs.size())
         assertTrue(refs.contains('Template1Cube'))
 
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [n1.name].toArray(), true))
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [n2.name].toArray(), true))
+        assertTrue(mutableClient.deleteCubes(defaultSnapshotApp, [n1.name].toArray()))
+        assertTrue(mutableClient.deleteCubes(defaultSnapshotApp, [n2.name].toArray()))
 
         try
         {
-            NCubeManager.getReferencedCubeNames(defaultSnapshotApp, n2.name, null)
+            mutableClient.getReferencesFrom(defaultSnapshotApp, n2.name)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('not get referenced')
-            assert e.message.toLowerCase().contains('null passed in for set')
+            assertContainsIgnoreCase(e.message, 'not get referenced', 'not exist')
         }
     }
 
     @Test
     void testGetReferencedCubeNamesSimple()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'aa.json')
-        NCube n2 = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'bb.json')
+        createCubeFromResource(defaultSnapshotApp, 'aa.json')
+        createCubeFromResource(defaultSnapshotApp, 'bb.json')
 
-        Set refs = new TreeSet()
-        NCubeManager.getReferencedCubeNames(defaultSnapshotApp, n1.name, refs)
+        Set refs = mutableClient.getReferencesFrom(defaultSnapshotApp, 'aa')
 
         assertEquals(1, refs.size())
         assertTrue(refs.contains('bb'))
 
         refs.clear()
-        NCubeManager.getReferencedCubeNames(defaultSnapshotApp, n2.name, refs)
+        refs = mutableClient.getReferencesFrom(defaultSnapshotApp, 'bb')
         assertEquals(0, refs.size())
     }
 
     @Test
     void testReferencedCubeCoordinateNotFound()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'aa.json')
-        NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'bb.json')
+        NCube n1 = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'aa.json')
+        runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'bb.json')
 
         try
         {
@@ -369,67 +347,66 @@ class TestNCubeManager
     @Test
     void testDuplicateNCubeWithinSameApp()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('stringIds.json')
-        NCubeManager.updateCube(defaultSnapshotApp, n1, true)
+        NCube n1 = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'stringIds.json')
+        mutableClient.createCube(n1)
         ApplicationID newId = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.1.2', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
 
-        NCubeManager.duplicate(defaultSnapshotApp, newId, n1.name, n1.name)
-        NCube n2 = NCubeManager.getCube(defaultSnapshotApp, n1.name)
+        mutableClient.duplicate(defaultSnapshotApp, newId, n1.name, n1.name)
+        NCube n2 = mutableClient.getCube(defaultSnapshotApp, n1.name)
 
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [n1.name].toArray(), true))
-        assertTrue(NCubeManager.deleteCubes(newId, [n2.name].toArray(), true))
-        assertTrue(n1.equals(n2))
+        assertTrue(mutableClient.deleteCubes(defaultSnapshotApp, [n1.name].toArray()))
+        assertTrue(mutableClient.deleteCubes(newId, [n2.name].toArray()))
+        assertTrue(n1 == n2)
     }
 
     @Test
     void testDuplicateNCubeToNewApp()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('stringIds.json')
-        NCubeManager.updateCube(defaultSnapshotApp, n1, true)
+        NCube n1 = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'stringIds.json')
+        mutableClient.createCube(n1)
         ApplicationID newId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'some.new.app', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
 
-        NCubeManager.duplicate(defaultSnapshotApp, newId, n1.name, n1.name)
-        NCube n2 = NCubeManager.getCube(newId, n1.name)
+        mutableClient.duplicate(defaultSnapshotApp, newId, n1.name, n1.name)
+        NCube n2 = mutableClient.getCube(newId, n1.name)
         assertNotNull(n2)
 
         //check for permissions cubes in new app
         ApplicationID newBootId = newId.asVersion('0.0.0')
-        assertNotNull(NCubeManager.loadCube(newBootId, SYS_BRANCH_PERMISSIONS))
-        assertNotNull(NCubeManager.loadCube(newBootId, SYS_PERMISSIONS))
-        assertNotNull(NCubeManager.loadCube(newBootId, SYS_USERGROUPS))
-        assertNotNull(NCubeManager.loadCube(newBootId, SYS_LOCK))
+        assertNotNull(mutableClient.getCube(newBootId, SYS_BRANCH_PERMISSIONS))
+        assertNotNull(mutableClient.getCube(newBootId, SYS_PERMISSIONS))
+        assertNotNull(mutableClient.getCube(newBootId, SYS_USERGROUPS))
+        assertNotNull(mutableClient.getCube(newBootId, SYS_LOCK))
     }
 
     @Test
     void testGetAppNames()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('stringIds.json')
-        NCubeManager.updateCube(defaultSnapshotApp, n1, true)
+        NCube n1 = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'stringIds.json')
+        mutableClient.createCube(n1)
 
-        List<String> names = NCubeManager.getAppNames(defaultSnapshotApp.DEFAULT_TENANT)
+        List<String> names = mutableClient.appNames
         boolean foundName = false
         for (String name : names)
         {
-            if ('ncube.test'.equals(name))
+            if ('ncube.test' == name)
             {
                 foundName = true
                 break
             }
         }
 
-        Map<String, List<String>> vers = NCubeManager.getVersions(defaultSnapshotApp.DEFAULT_TENANT, APP_ID)
+        Object[] vers = mutableClient.getVersions(APP_ID)
         boolean foundVer = false
         String version = '1.0.0'
-        for (String ver : vers['SNAPSHOT'])
+        for (String ver : vers)
         {
-            if (version.equals(ver))
+            foundVer = checkContainsIgnoreCase(ver, version, 'SNAPSHOT')
+            if (foundVer)
             {
-                foundVer = true
                 break
             }
         }
 
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [n1.name].toArray(), true))
         assertTrue(foundName)
         assertTrue(foundVer)
     }
@@ -437,37 +414,31 @@ class TestNCubeManager
     @Test
     void testChangeVersionValue()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('stringIds.json')
         ApplicationID newId = defaultSnapshotApp.createNewSnapshotId('1.1.20')
+        NCube n1 = createCubeFromResource(defaultSnapshotApp, 'stringIds.json')
 
-        assertNull(NCubeManager.getCube(defaultSnapshotApp, 'idTest'))
-        assertNull(NCubeManager.getCube(newId, 'idTest'))
-        NCubeManager.updateCube(defaultSnapshotApp, n1, true)
+        assertNotNull(mutableClient.getCube(defaultSnapshotApp, 'idTest'))
+        assertNull(mutableClient.getCube(newId, 'idTest'))
+        mutableClient.changeVersionValue(defaultSnapshotApp, '1.1.20')
 
-        assertNotNull(NCubeManager.getCube(defaultSnapshotApp, 'idTest'))
-        assertNull(NCubeManager.getCube(newId, 'idTest'))
-        NCubeManager.changeVersionValue(defaultSnapshotApp, '1.1.20')
-
-        assertNotNull(NCubeManager.getCube(newId, 'idTest'))
-
-        NCube n2 = NCubeManager.getCube(newId, 'idTest')
+        NCube n2 = mutableClient.getCube(newId, 'idTest')
+        assertNotNull(n2)
         assertEquals(n1, n2)
-
-        assertTrue(NCubeManager.deleteCubes(newId, [n1.name].toArray(), true))
     }
 
     @Test
     void testUpdateOnDeletedCube()
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
+        ncube1.applicationID = defaultSnapshotApp
 
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
+        mutableClient.createCube(ncube1)
 
         assertTrue(ncube1.numDimensions == 3)
 
-        NCubeManager.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
 
-        assertTrue(NCubeManager.updateCube(defaultSnapshotApp, ncube1, true))
+        assertTrue(mutableClient.updateCube(ncube1))
     }
 
     @Test
@@ -475,59 +446,40 @@ class TestNCubeManager
     {
         try
         {
-            VersionControl.getBranchChangesForHead(defaultSnapshotApp.asHead())
+            mutableClient.getBranchChangesForHead(defaultSnapshotApp.asHead())
             fail 'should not make it here'
         }
         catch (IllegalArgumentException e)
         {
-            assertEquals(e.message, "Branch cannot be 'HEAD'")
+            assertContainsIgnoreCase(e.message, "branch cannot be 'head'")
         }
-    }
-
-    @Test
-    void testUpdateTestDataOnDeletedCube()
-    {
-        NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
-        assertTrue(ncube1.numDimensions == 3)
-        NCubeManager.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
-        NCubeManager.updateTestData(defaultSnapshotApp, ncube1.name, 'test data')
-        String testData = NCubeManager.getTestData(defaultSnapshotApp, ncube1.name)
-        assert 'test data' == testData
-    }
-
-    @Test
-    void testConstruction()
-    {
-        assertNotNull(new NCubeManager())
     }
 
     @Test
     void testUpdateNotesOnDeletedCube()
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
+        ncube1.applicationID = defaultSnapshotApp
+        mutableClient.createCube(ncube1)
         assertTrue(ncube1.numDimensions == 3)
-        NCubeManager.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
-        NCubeManager.updateNotes(defaultSnapshotApp, ncube1.name, 'new notes')
-        String notes = NCubeManager.getNotes(defaultSnapshotApp, ncube1.name)
+        mutableClient.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
+        mutableClient.updateNotes(defaultSnapshotApp, ncube1.name, 'new notes')
+        String notes = mutableClient.getNotes(defaultSnapshotApp, ncube1.name)
         assert 'new notes' == notes
     }
 
     @Test
-    void testGetNullPersister()
+    void testUpdateTestDataOnDeletedCube()
     {
-        NCubeManager.setNCubePersister(null)
-
-        try
-        {
-            NCubeManager.persister
-            fail()
-        }
-        catch (IllegalStateException e)
-        {
-            assertTrue(e.message.toLowerCase().contains('persister not set'))
-        }
+        NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
+        ncube1.applicationID = defaultSnapshotApp
+        mutableClient.createCube(ncube1)
+        assertTrue(ncube1.numDimensions == 3)
+        mutableClient.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
+        mutableClient.saveTests(defaultSnapshotApp, ncube1.name, createTests())
+        Object[] testData = mutableClient.getTests(defaultSnapshotApp, ncube1.name)
+        Object[] expectedTests = createTests()
+        assertTrue(DeepEquals.deepEquals(expectedTests, testData))
     }
 
     @Test
@@ -535,10 +487,10 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.releaseCubes(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), "1.0.1")
+            mutableClient.releaseCubes(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), "1.0.1")
             // No exception should be thrown, just nothing to promote.
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
             fail()
         }
@@ -549,12 +501,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.changeVersionValue(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), "1.0.1")
+            mutableClient.changeVersionValue(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), "1.0.1")
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('no snapshot n-cubes found with version 1.0.0')
+            assertContainsIgnoreCase(e.message, 'no snapshot n-cubes found with version 1.0.0')
         }
     }
 
@@ -563,13 +515,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.updateNotes(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), 'a', "notes")
+            mutableClient.updateNotes(new ApplicationID('foo', 'bar', '1.0.0', 'SNAPSHOT', 'john'), 'a', "notes")
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('cannot update notes')
-            assert e.message.toLowerCase().contains('cube: a does not exist')
+            assertContainsIgnoreCase(e.message, 'cannot update notes', 'cube: a does not exist')
         }
     }
 
@@ -578,11 +529,13 @@ class TestNCubeManager
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
         NCube ncube2 = NCubeBuilder.getTestNCube2D(true)
+        ncube1.applicationID = defaultSnapshotApp
+        ncube2.applicationID = defaultSnapshotApp
 
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
-        NCubeManager.updateCube(defaultSnapshotApp, ncube2, true)
+        mutableClient.createCube(ncube1)
+        mutableClient.createCube(ncube2)
 
-        Object[] cubeList = NCubeManager.search(defaultSnapshotApp, 'test.%', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        Object[] cubeList = mutableClient.search(defaultSnapshotApp, 'test.%', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
         assertTrue(cubeList != null)
         assertTrue(cubeList.length == 2)
@@ -591,82 +544,70 @@ class TestNCubeManager
         assertTrue(ncube2.numDimensions == 2)
 
         ncube1.deleteAxis('bu')
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
-        NCube cube1 = NCubeManager.getCube(defaultSnapshotApp, 'test.ValidTrailorConfigs')
+        mutableClient.updateCube(ncube1)
+        NCube cube1 = mutableClient.getCube(defaultSnapshotApp, 'test.ValidTrailorConfigs')
         assertTrue(cube1.numDimensions == 2)    // used to be 3
 
         // 0 below, because there were no HEAD cubes, so release here, just MOVEs the existing cubes to the next snapshot version
-        assertEquals(0, NCubeManager.releaseCubes(defaultSnapshotApp, "1.2.3"))
-        ApplicationID next = defaultSnapshotApp.createNewSnapshotId("1.2.3");
-        cubeList = NCubeManager.search(next, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assertEquals(0, mutableClient.releaseCubes(defaultSnapshotApp, '1.2.3'))
+        ApplicationID next = defaultSnapshotApp.createNewSnapshotId('1.2.3')
+        cubeList = mutableClient.search(next, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         // Two cubes at the new 1.2.3 SNAPSHOT version.
         assert cubeList.length == 2
 
-        String notes1 = NCubeManager.getNotes(next, 'test.ValidTrailorConfigs')
-        NCubeManager.getNotes(next, 'test.ValidTrailorConfigs')
+        String notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        assertContainsIgnoreCase(notes1, 'updated')
 
-        NCubeManager.updateNotes(next, 'test.ValidTrailorConfigs', null)
-        notes1 = NCubeManager.getNotes(next, 'test.ValidTrailorConfigs')
-        assertTrue(''.equals(notes1))
+        mutableClient.updateNotes(next, 'test.ValidTrailorConfigs', null)
+        notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        assertTrue('' == notes1)
 
-        NCubeManager.updateNotes(next, 'test.ValidTrailorConfigs', 'Trailer Config Notes')
-        notes1 = NCubeManager.getNotes(next, 'test.ValidTrailorConfigs')
-        assertTrue('Trailer Config Notes'.equals(notes1))
+        mutableClient.updateNotes(next, 'test.ValidTrailorConfigs', 'Trailer Config Notes')
+        notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        assertTrue('Trailer Config Notes' == notes1)
 
-        NCubeManager.updateTestData(next, 'test.ValidTrailorConfigs', null)
-        String testData = NCubeManager.getTestData(next, 'test.ValidTrailorConfigs')
-        assertTrue(''.equals(testData))
-
-        NCubeManager.updateTestData(next, 'test.ValidTrailorConfigs', 'This is JSON data')
-        testData = NCubeManager.getTestData(next, 'test.ValidTrailorConfigs')
-        assertTrue('This is JSON data'.equals(testData))
-
-        // Delete new SNAPSHOT cubes
-        assertTrue(NCubeManager.deleteCubes(next, [ncube1.name].toArray(), false))
-        assertTrue(NCubeManager.deleteCubes(next, [ncube2.name].toArray(), false))
-
-        // Ensure that all test ncubes are deleted
-        cubeList = NCubeManager.search(defaultSnapshotApp, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        assertTrue(cubeList.length == 0)
+        mutableClient.saveTests(next, 'test.ValidTrailorConfigs', null)
+        String testData = mutableClient.getTests(next, 'test.ValidTrailorConfigs')
+        assertNull(testData)
     }
 
     @Test
     void testNotAllowedToDeleteReleaseCubesOrRerelease()
     {
-        NCube cube = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'latlon.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        Object[] cubeInfos = NCubeManager.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        NCube cube = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'latlon.json')
+        mutableClient.createCube(cube)
+        Object[] cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertNotNull(cubeInfos)
         assertEquals(2, cubeInfos.length)
-        VersionControl.commitBranch(defaultSnapshotApp, cubeInfos)
+        mutableClient.commitBranch(defaultSnapshotApp, cubeInfos)
 
         try
         {
-            NCubeManager.releaseCubes(defaultSnapshotApp, '1.0.0')
+            mutableClient.releaseCubes(defaultSnapshotApp, '1.0.0')
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('1.0.0 already exists')
+            assertContainsIgnoreCase(e.message, '1.0.0 already exists')
         }
 
-        assert 2 == NCubeManager.releaseCubes(defaultSnapshotApp, '1.2.3')
-
-        try
-        {
-            NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
-        }
-        catch (IllegalArgumentException e)
-        {
-            e.message.contains('does not exist')
-        }
+        assert 2 == mutableClient.releaseCubes(defaultSnapshotApp, '1.2.3')
 
         try
         {
-            NCubeManager.releaseCubes(defaultSnapshotApp, '1.2.3')
+            mutableClient.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('1.0.0 already exists')
+            assertContainsIgnoreCase(e.message, 'does not exist')
+        }
+
+        try
+        {
+            mutableClient.releaseCubes(defaultSnapshotApp, '1.2.3')
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, '1.0.0 already exists')
         }
     }
 
@@ -675,24 +616,25 @@ class TestNCubeManager
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
         NCube ncube2 = NCubeBuilder.getTestNCube2D(true)
+        ncube1.applicationID = defaultSnapshotApp
+        ncube2.applicationID = defaultSnapshotApp
 
         try
         {
-            NCubeManager.renameCube(defaultSnapshotApp, ncube1.name, 'foo')
+            mutableClient.renameCube(defaultSnapshotApp, ncube1.name, 'foo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('Could not rename'))
-            assertTrue(e.message.contains('does not exist'))
+            assertContainsIgnoreCase(e.message, 'could not rename', 'does not exist')
         }
 
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
-        NCubeManager.updateCube(defaultSnapshotApp, ncube2, true)
+        mutableClient.createCube(ncube1)
+        mutableClient.createCube(ncube2)
 
-        NCubeManager.renameCube(defaultSnapshotApp, ncube1.name, 'test.Floppy')
+        mutableClient.renameCube(defaultSnapshotApp, ncube1.name, 'test.Floppy')
 
-        Object[] cubeList = NCubeManager.search(defaultSnapshotApp, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        Object[] cubeList = mutableClient.search(defaultSnapshotApp, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
         assertTrue(cubeList.length == 2)
 
@@ -702,13 +644,8 @@ class TestNCubeManager
         assertTrue(nc1.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Age-Gender') || nc2.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Age-Gender'))
         assertTrue(nc1.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Floppy') || nc2.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Floppy'))
 
-        assertTrue(nc1.name.equals('test.Floppy') || nc2.name.equals('test.Floppy'))
-        assertFalse(nc1.name.equals('test.Floppy') && nc2.name.equals('test.Floppy'))
-
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Floppy'].toArray(), true))
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [ncube2.name].toArray(), true))
-
-        assertFalse(NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Floppy'].toArray(), true))
+        assertTrue(nc1.name == 'test.Floppy' || nc2.name == 'test.Floppy')
+        assertFalse(nc1.name == 'test.Floppy' && nc2.name == 'test.Floppy')
     }
 
     @Test
@@ -716,131 +653,120 @@ class TestNCubeManager
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
         NCube ncube2 = NCubeBuilder.getTestNCube2D(true)
+        ncube1.applicationID = defaultSnapshotApp
+        ncube2.applicationID = defaultSnapshotApp
 
-        NCubeManager.updateCube(defaultSnapshotApp, ncube1, true)
-        NCubeManager.updateCube(defaultSnapshotApp, ncube2, true)
+        mutableClient.createCube(ncube1)
+        mutableClient.createCube(ncube2)
 
         // This proves that null is turned into '%' (no exception thrown)
-        Object[] cubeList = NCubeManager.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        Object[] cubeList = mutableClient.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
         assertEquals(3, cubeList.length)
-
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray(), true))
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, [ncube2.name].toArray(), true))
     }
 
     @Test
     void testUpdateCubeWithSysClassPath()
     {
-        String name = 'Fire'
         //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'updateCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        assertNotNull(NCubeManager.getUrlClassLoader(customId, [:]))
-        assertEquals(1, NCubeManager.getCacheForApp(customId).size())
+        assertNotNull(runtimeClient.getUrlClassLoader(customId, [:]))
+        assertEquals(1, getCacheSize(customId))
 
-        NCube testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')
+        NCube testCube = createCubeFromResource(customId, 'sys.classpath.tests.json')
 
-        assertEquals(1, NCubeManager.getUrlClassLoader(customId, [:]).URLs.length)
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
+        assertEquals(1, runtimeClient.getUrlClassLoader(customId, [:]).URLs.length)
+        assertEquals(2, getCacheSize(customId))
 
-        testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')   // reload to clear classLoader inside the cell
-        NCubeManager.updateCube(customId, testCube, true)
+        mutableClient.updateCube(testCube) // reload to clear classLoader inside the cell
 
-        Map<String, Object> cache = NCubeManager.getCacheForApp(customId)
-        assertEquals(1, cache.size())
-        assertEquals(testCube, cache.get('sys.classpath'))
+        assertEquals(0, getCacheSize(customId)) // 0 cubes in caches because updateCube() above clears cube from cache
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.classpath'))
 
-        assertTrue(NCubeManager.updateCube(customId, testCube, true))
-        assertNotNull(NCubeManager.getUrlClassLoader(customId, [:]))
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
+        assertTrue(mutableClient.updateCube(testCube))
+        assertNotNull(runtimeClient.getUrlClassLoader(customId, [:]))
+        assertEquals(2, getCacheSize(customId))
 
-        testCube = NCubeManager.getCube(customId, 'sys.classpath')
-        cache = NCubeManager.getCacheForApp(customId)
-        assertEquals(2, cache.size())
-        assertEquals(1, NCubeManager.getUrlClassLoader(customId, [:]).URLs.length)
+        testCube = mutableClient.getCube(customId, 'sys.classpath')
+        assertEquals(2, getCacheSize(customId))
+        assertEquals(1, runtimeClient.getUrlClassLoader(customId, [:]).URLs.length)
 
         //  validate item got added to cache.
-        assertEquals(testCube, cache.get('sys.classpath'))
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.classpath'))
     }
 
     @Test
     void testRenameCubeWithSysClassPath()
     {
-        String name = 'Dude'
         //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'renameCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        final URLClassLoader urlClassLoader1 = NCubeManager.getUrlClassLoader(customId, [:])
+        final URLClassLoader urlClassLoader1 = runtimeClient.getUrlClassLoader(customId, [:])
         assertNotNull(urlClassLoader1)
-        assertEquals(1, NCubeManager.getCacheForApp(customId).size())
+        assertEquals(1, getCacheSize(customId))
 
-        NCube testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')
+        createCubeFromResource(customId, 'sys.classpath.tests.json')
 
-        final URLClassLoader urlClassLoader = NCubeManager.getUrlClassLoader(customId, [:])
+        final URLClassLoader urlClassLoader = runtimeClient.getUrlClassLoader(customId, [:])
         assertEquals(1, urlClassLoader.URLs.length)
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
+        assertEquals(2, getCacheSize(customId))
 
-        NCubeManager.clearCache()
-        testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
+        runtimeClient.clearCache(customId)
+        NCube testCube = runtimeClient.getNCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
         testCube.name = 'sys.mistake'
-        NCubeManager.updateCube(customId, testCube, true)
+        mutableClient.createCube(testCube)
 
-        Map<String, Object> cache = NCubeManager.getCacheForApp(customId)
-        assertEquals(2, cache.size())     // both sys.mistake and sys.classpath are in the cache
-
-        //  validate item got added to cache.
-        assertEquals(testCube, cache.get('sys.mistake'))
-
-
-        assertTrue(NCubeManager.renameCube(customId, 'sys.mistake', 'sys.classpath'))
-        assertNotNull(NCubeManager.getUrlClassLoader(customId, [:]))
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
-
-        testCube = NCubeManager.getCube(customId, 'sys.classpath')
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
-        assertEquals(1, NCubeManager.getUrlClassLoader(customId, [:]).URLs.length)
+        assertEquals(2, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
 
         //  validate item got added to cache.
-        assertEquals(testCube, cache.get('sys.classpath'))
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.mistake'))
+
+        assertTrue(mutableClient.renameCube(customId, 'sys.mistake', 'sys.classpath'))
+        assertNotNull(runtimeClient.getUrlClassLoader(customId, [:]))
+        assertEquals(2, getCacheSize(customId))
+
+        testCube = mutableClient.getCube(customId, 'sys.classpath')
+        assertEquals(2, getCacheSize(customId))
+        assertEquals(1, runtimeClient.getUrlClassLoader(customId, [:]).URLs.length)
+
+        //  validate item got added to cache.
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.classpath'))
     }
 
     @Test
     void testDuplicateCubeWithSysClassPath()
     {
-        String name = 'Dude'
         //  from setup, assert initial classloader condition (files.cedarsoftware.com)
         ApplicationID customId = new ApplicationID('NONE', 'renameCubeSys', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        final URLClassLoader urlClassLoader1 = NCubeManager.getUrlClassLoader(customId, [:])
+        final URLClassLoader urlClassLoader1 = runtimeClient.getUrlClassLoader(customId, [:])
         assertNotNull(urlClassLoader1)
-        assertEquals(1, NCubeManager.getCacheForApp(customId).size())
+        assertEquals(1, getCacheSize(customId))
 
-        NCube testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')
+        runtimeClient.getNCubeFromResource(customId, 'sys.classpath.tests.json')
 
-        final URLClassLoader urlClassLoader = NCubeManager.getUrlClassLoader(customId, [:])
+        final URLClassLoader urlClassLoader = runtimeClient.getUrlClassLoader(customId, [:])
         assertEquals(1, urlClassLoader.URLs.length)
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
+        assertEquals(2, getCacheSize(customId))
 
-        NCubeManager.clearCache()
-        testCube = NCubeManager.getNCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
+        runtimeClient.clearCache(customId)
+        NCube testCube = runtimeClient.getNCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
         testCube.name = 'sys.mistake'
-        NCubeManager.updateCube(customId, testCube, true)
+        mutableClient.createCube(testCube)
 
-        Map<String, Object> cache = NCubeManager.getCacheForApp(customId)
-        assertEquals(2, cache.size())     // both sys.mistake and sys.classpath are in the cache
-
-        //  validate item got added to cache.
-        assertEquals(testCube, cache.get('sys.mistake'))
-
-
-        NCubeManager.duplicate(customId, customId, 'sys.mistake', 'sys.classpath')
-        assertNotNull(NCubeManager.getUrlClassLoader(customId, [:]))
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
-
-        testCube = NCubeManager.getCube(customId, 'sys.classpath')
-        assertEquals(2, NCubeManager.getCacheForApp(customId).size())
-        assertEquals(1, NCubeManager.getUrlClassLoader(customId, [:]).URLs.length)
+        assertEquals(2, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
 
         //  validate item got added to cache.
-        assertEquals(testCube, cache.get('sys.classpath'))
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.mistake'))
+
+        mutableClient.duplicate(customId, customId, 'sys.mistake', 'sys.classpath')
+        assertNotNull(runtimeClient.getUrlClassLoader(customId, [:]))
+        assertEquals(3, getCacheSize(customId))
+
+        testCube = mutableClient.getCube(customId, 'sys.classpath')
+        assertEquals(3, getCacheSize(customId))
+        assertEquals(1, runtimeClient.getUrlClassLoader(customId, [:]).URLs.length)
+
+        //  validate item got added to cache.
+        assertEquals(testCube, mutableClient.getCube(customId, 'sys.classpath'))
     }
 
     @Test
@@ -848,13 +774,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getApplicationID('foo', 'bar', new HashMap())
+            runtimeClient.getApplicationID('foo', 'bar', new HashMap())
             fail()
         }
         catch (IllegalStateException e)
         {
-            assertTrue(e.message.contains('Missing sys.bootstrap cube'))
-            assertTrue(e.message.contains('0.0.0 version'))
+            assertContainsIgnoreCase(e.message, 'Missing', 'bootstrap', '0.0.0')
         }
     }
 
@@ -863,45 +788,47 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.updateCube(defaultSnapshotApp, null, true)
+            mutableClient.updateCube(null)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('cannot be null'))
+            assertContainsIgnoreCase(e.message, 'cannot be null')
         }
     }
 
     @Test
     void testNCubeManagerCreateCubes()
     {
-        ApplicationID id = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'DASHBOARD', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
+        NCube ncube1 = createCube()
+        List<NCubeInfoDto> dtos = mutableClient.getRevisionHistory(defaultSnapshotApp, ncube1.name)
+        assertEquals(1, dtos.size())
+
         try
         {
-            NCubeManager.updateCube(id, null, true)
-            fail('should not make it here')
+            mutableClient.createCube(ncube1)
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('cannot be null'))
+            assertContainsIgnoreCase(e.message, 'unable to create', 'already exists')
         }
-
-        NCube ncube1 = createCube()
-        List<NCubeInfoDto> dtos = NCubeManager.getRevisionHistory(defaultSnapshotApp, ncube1.name);
-        assertEquals(1, dtos.size());
-
-        createCube()
-        dtos = NCubeManager.getRevisionHistory(defaultSnapshotApp, ncube1.name);
-        assertEquals(1, dtos.size());
-
-        NCubeManager.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray(), true)
+        dtos = mutableClient.getRevisionHistory(defaultSnapshotApp, ncube1.name)
+        assertEquals(1, dtos.size())
     }
 
     @Test
     void testNCubeManagerDeleteNotExistingCube()
     {
         ApplicationID id = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'DASHBOARD', '0.1.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        assertFalse(NCubeManager.deleteCubes(id, ['DashboardRoles'].toArray(), true))
+        try
+        {
+            assertFalse(mutableClient.deleteCubes(id, ['DashboardRoles'].toArray()))
+            fail()
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'cannot delete cube')
+        }
     }
 
     @Test
@@ -909,45 +836,39 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getNotes(defaultSnapshotApp, 'DashboardRoles')
+            mutableClient.getNotes(defaultSnapshotApp, 'DashboardRoles')
             fail('should not make it here')
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('Could not fetch'))
-            assertTrue(e.message.contains('notes'))
+            assertContainsIgnoreCase(e.message, 'Could not fetch', 'notes')
         }
 
         createCube()
-        String notes = NCubeManager.getNotes(defaultSnapshotApp, 'test.Age-Gender')
+        String notes = mutableClient.getNotes(defaultSnapshotApp, 'test.Age-Gender')
         assertNotNull(notes)
         assertTrue(notes.length() > 0)
 
         try
         {
-            NCubeManager.updateNotes(defaultSnapshotApp, 'test.funky', null)
+            mutableClient.updateNotes(defaultSnapshotApp, 'test.funky', null)
             fail('should not make it here')
         }
-        catch (Exception e)
+        catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('not'))
-            assertTrue(e.message.contains('update'))
-            assertTrue(e.message.contains('exist'))
+            assertContainsIgnoreCase(e.message, 'not', 'update', 'does not exist')
         }
 
         try
         {
             ApplicationID newId = defaultSnapshotApp.createNewSnapshotId('0.1.1')
-            NCubeManager.getNotes(newId, 'test.Age-Gender')
+            mutableClient.getNotes(newId, 'test.Age-Gender')
             fail('Should not make it here')
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('Could not fetch'))
-            assertTrue(e.message.contains('notes'))
+            assertContainsIgnoreCase(e.message, 'Could not fetch', 'notes')
         }
-
-        NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Age-Gender'].toArray(), true)
     }
 
     @Test
@@ -955,45 +876,39 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getTestData(defaultSnapshotApp, 'DashboardRoles')
+            mutableClient.getTests(defaultSnapshotApp, 'DashboardRoles')
             fail('should not make it here')
         }
-        catch (Exception e)
+        catch (IllegalArgumentException e)
         {
-            assertTrue(e instanceof IllegalArgumentException)
+            assertContainsIgnoreCase(e.message, 'could not fetch', 'test data')
         }
 
         createCube()
-        String testData = NCubeManager.getTestData(defaultSnapshotApp, 'test.Age-Gender')
+        Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
         assertNotNull(testData)
-        assertTrue(testData.length() > 0)
+        assertTrue(testData.size() > 0)
 
         try
         {
-            NCubeManager.updateTestData(defaultSnapshotApp, 'test.funky', null)
+            mutableClient.saveTests(defaultSnapshotApp, 'test.funky', null)
             fail('should not make it here')
         }
-        catch (Exception e)
+        catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('no'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('exist'))
+            assertContainsIgnoreCase(e.message, 'cannot update', 'test data', 'does not exist')
         }
 
         ApplicationID newId = defaultSnapshotApp.createNewSnapshotId('0.1.1')
         try
         {
-            NCubeManager.getTestData(newId, 'test.Age-Gender')
+            mutableClient.getTests(newId, 'test.Age-Gender')
             fail('Should not make it here')
         }
-        catch (Exception e)
+        catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('no'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('exist'))
+            assertContainsIgnoreCase(e.message, 'not fetch', 'test data', 'does not exist')
         }
-
-        assertTrue(NCubeManager.deleteCubes(defaultSnapshotApp, ['test.Age-Gender'].toArray()))
     }
 
 
@@ -1015,7 +930,6 @@ class TestNCubeManager
                 assertTrue(column.metaProperties.size() == 0)
             }
         }
-        NCubeManager.deleteCubes(defaultSnapshotApp, [ncube.name].toArray(), true)
     }
 
     @Test
@@ -1024,19 +938,19 @@ class TestNCubeManager
         try
         {
             // This API is now package friendly and only to be used by tests or NCubeManager implementation work.
-            NCubeManager.search(null, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+            mutableClient.search(null, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.toLowerCase().contains('cannot be null')
+            assertContainsIgnoreCase(e.message, 'ApplicationID', 'null')
         }
     }
 
     @Test(expected = RuntimeException.class)
     void testGetNCubesFromResourceException()
     {
-        NCubeManager.getNCubesFromResource(null)
+        runtimeClient.getNCubesFromResource(null, null)
     }
 
     @Test
@@ -1044,13 +958,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp)
+            mutableClient.restoreCubes(defaultSnapshotApp)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('empty array'))
-            assertTrue(e.message.contains('to be restored'))
+            assertContainsIgnoreCase(e.message, 'empty array', 'to be restored')
         }
     }
 
@@ -1060,7 +973,7 @@ class TestNCubeManager
         Object[] names = new Object[2]
         names[0] = "TestCube"
 
-        int x = VersionControl.rollbackCubes(defaultSnapshotApp, names)
+        int x = mutableClient.rollbackBranch(defaultSnapshotApp, names)
         assert 0 == x
     }
 
@@ -1069,43 +982,39 @@ class TestNCubeManager
     {
         ApplicationID appId = new ApplicationID('NONE', 'none', '1.0.0', 'SNAPSHOT', 'jdereg')
 
-        NCube cube1 = NCubeManager.getNCubeFromResource(appId, 'testCube1.json')
-        NCubeManager.updateCube(appId, cube1, true)
+        NCube cube1 = createCubeFromResource(appId, 'testCube1.json')
         String sha1 = cube1.sha1()
 
-        NCube cube2 = NCubeManager.getNCubeFromResource(appId, 'template1.json')
-        NCubeManager.updateCube(appId, cube2, true)
+        NCube cube2 = createCubeFromResource(appId, 'template1.json')
         String sha2 = cube2.sha1()
 
-        NCube cube3 = NCubeManager.getNCubeFromResource(appId, 'urlPieces.json')
-        NCubeManager.updateCube(appId, cube3, true)
+        NCube cube3 = createCubeFromResource(appId, 'urlPieces.json')
         String sha3 = cube3.sha1()
 
-        NCube cube4 = NCubeManager.getNCubeFromResource(appId, 'months.json')
-        NCubeManager.updateCube(appId, cube4, true)
+        NCube cube4 = createCubeFromResource(appId, 'months.json')
         String sha4 = cube4.sha1()
 
-        List<NCubeInfoDto> changes = VersionControl.getBranchChangesForHead(appId)
+        List<NCubeInfoDto> changes = mutableClient.getBranchChangesForHead(appId)
         assert 4 == changes.size()
 
         Object[] cubes = [cube1.name, cube2.name, cube3.name, cube4.name].toArray()
-        assert 4 == VersionControl.rollbackCubes(appId, cubes)
-        changes = VersionControl.getBranchChangesForHead(appId)
+        assert 4 == mutableClient.rollbackBranch(appId, cubes)
+        changes = mutableClient.getBranchChangesForHead(appId)
         assert 0 == changes.size()  // Looks like we've got no cubes (4 deleted ones but 0 active)
 
-        List<NCubeInfoDto> deleted = NCubeManager.search(appId, null, null, [(SEARCH_DELETED_RECORDS_ONLY): true])
+        List<NCubeInfoDto> deleted = mutableClient.search(appId, null, null, [(SEARCH_DELETED_RECORDS_ONLY): true])
         assert 4 == deleted.size()  // Rollback of a create is a DELETE
 
-        NCubeManager.restoreCubes(appId, cubes)
-        assert 4 == NCubeManager.search(appId, null, null, null).size()
+        mutableClient.restoreCubes(appId, cubes)
+        assert 4 == mutableClient.search(appId, null, null, null).size()
 
-        changes = VersionControl.getBranchChangesForHead(appId)
+        changes = mutableClient.getBranchChangesForHead(appId)
         assert 4 == changes.size()
 
-        NCubeManager.loadCube(appId, cubes[0]).sha1() == sha1
-        NCubeManager.loadCube(appId, cubes[1]).sha1() == sha2
-        NCubeManager.loadCube(appId, cubes[2]).sha1() == sha3
-        NCubeManager.loadCube(appId, cubes[3]).sha1() == sha4
+        mutableClient.getCube(appId, cubes[0] as String).sha1() == sha1
+        mutableClient.getCube(appId, cubes[1] as String).sha1() == sha2
+        mutableClient.getCube(appId, cubes[2] as String).sha1() == sha3
+        mutableClient.getCube(appId, cubes[3] as String).sha1() == sha4
     }
 
     @Test
@@ -1113,13 +1022,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, null)
+            mutableClient.restoreCubes(defaultSnapshotApp, null)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('empty array'))
-            assertTrue(e.message.contains('to be restored'))
+            assertContainsIgnoreCase(e.message, 'empty array', 'to be restored')
         }
     }
 
@@ -1129,53 +1037,49 @@ class TestNCubeManager
         NCube cube = createCube()
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
+            mutableClient.restoreCubes(defaultSnapshotApp, cube.name)
             fail('should not make it here')
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.toLowerCase().contains('cannot restore'))
-            assertTrue(e.message.contains('not deleted in app'))
+            assertContainsIgnoreCase(e.message, 'cannot restore', 'not deleted in app')
         }
-        NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
     }
 
     @Test
     void testRestoreDeletedCube()
     {
         NCube cube = createCube()
-        Object[] records = NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        Object[] records = mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(2, records.length) // 2 (because of sys.classpath)
 
-        records = NCubeManager.search(defaultSnapshotApp, cube.name, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        records = mutableClient.search(defaultSnapshotApp, cube.name, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(1, records.length)
-        String sha1 = records[0].sha1
+        String sha1 = (records[0] as NCubeInfoDto).sha1
 
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
 
-        NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
 
         assertEquals(1, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
 
-        records = NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        records = mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(1, records.length)
 
-        NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
-        records = NCubeManager.search(defaultSnapshotApp, 'test*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        mutableClient.restoreCubes(defaultSnapshotApp, cube.name)
+        records = mutableClient.search(defaultSnapshotApp, 'test*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(1, records.length)
 
-        NCube ncube = NCubeManager.loadCube(defaultSnapshotApp, cube.name);
+        NCube ncube = mutableClient.getCube(defaultSnapshotApp, cube.name)
         assertNotNull ncube
         assert ncube.sha1() == cube.sha1()
         assert ncube.sha1() == sha1
-
-        NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
     }
 
     @Test
     void testLoadCubeWithNonExistingName()
     {
-        NCube ncube = NCubeManager.loadCube(defaultSnapshotApp, 'sdflsdlfk');
+        NCube ncube = mutableClient.getCube(defaultSnapshotApp, 'sdflsdlfk')
         assertNull ncube
     }
 
@@ -1184,13 +1088,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.restoreCubes(defaultSnapshotApp, 'foo')
+            mutableClient.restoreCubes(defaultSnapshotApp, 'foo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.toLowerCase().contains('cannot restore'))
-            assertTrue(e.message.contains('not deleted in app'))
+            assertContainsIgnoreCase(e.message, 'cannot restore', 'not deleted in app')
         }
     }
 
@@ -1199,13 +1102,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getRevisionHistory(defaultSnapshotApp, 'foo')
+            mutableClient.getRevisionHistory(defaultSnapshotApp, 'foo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('Cannot fetch'))
-            assertTrue(e.message.contains('does not exist'))
+            assertContainsIgnoreCase(e.message, 'cannot fetch', 'does not exist')
         }
     }
 
@@ -1213,54 +1115,54 @@ class TestNCubeManager
     void testDeleteWithRevisions()
     {
         NCube cube = createCube()
-        assertEquals(2, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(2, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, null).size())
-        assertEquals(1, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(1, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
 
         Axis oddAxis = NCubeBuilder.getOddAxis(true)
         cube.addAxis(oddAxis)
 
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        assertEquals(2, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
-        assertEquals(2, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        mutableClient.updateCube(cube)
+        assertEquals(2, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(2, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
 
         Axis conAxis = NCubeBuilder.continentAxis
         cube.addAxis(conAxis)
 
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
+        mutableClient.updateCube(cube)
 
-        assertEquals(3, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
-        assertEquals(2, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(3, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(2, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
 
-        NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
 
-        assertEquals(1, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(1, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
-        assertEquals(4, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(4, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
 
-        NCubeManager.restoreCubes(defaultSnapshotApp, cube.name)
-        NCube restored = NCubeManager.loadCube(defaultSnapshotApp, cube.name)
+        mutableClient.restoreCubes(defaultSnapshotApp, cube.name)
+        NCube restored = mutableClient.getCube(defaultSnapshotApp, cube.name)
         assert cube.sha1() == restored.sha1()
 
-        assertEquals(2, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(2, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
-        assertEquals(5, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(5, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
 
-        NCubeManager.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
+        mutableClient.deleteCubes(defaultSnapshotApp, [cube.name].toArray())
 
-        assertEquals(1, NCubeManager.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
+        assertEquals(1, mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size())
         assertEquals(1, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
-        assertEquals(6, NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size())
+        assertEquals(6, mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size())
     }
 
     @Test
     void testRevisionHistory()
     {
         NCube cube = createCube()
-        Object[] his = NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[]) his;
+        Object[] his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
+        NCubeInfoDto[] history = (NCubeInfoDto[]) his
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
@@ -1271,9 +1173,9 @@ class TestNCubeManager
         Axis oddAxis = NCubeBuilder.getOddAxis(true)
         cube.addAxis(oddAxis)
 
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        his = NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name)
-        history = (NCubeInfoDto[]) his;
+        mutableClient.updateCube(cube)
+        his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
+        history = (NCubeInfoDto[]) his
         assertEquals(2, history.length)
         assert history[1].name == 'test.Age-Gender'
         assert history[0].revision == '1'
@@ -1283,8 +1185,8 @@ class TestNCubeManager
 
         long rev0Id = Converter.convert(history[1].id, long.class) as long
         long rev1Id = Converter.convert(history[0].id, long.class) as long
-        NCube rev0 = NCubeManager.loadCubeById(rev0Id)
-        NCube rev1 = NCubeManager.loadCubeById(rev1Id)
+        NCube rev0 = mutableClient.loadCubeById(rev0Id)
+        NCube rev1 = mutableClient.loadCubeById(rev1Id)
 
         assert rev0.numDimensions == 2
         assert rev1.numDimensions == 3
@@ -1294,8 +1196,8 @@ class TestNCubeManager
     void testRevisionHistoryIgnoreVersion()
     {
         NCube cube = createCube()
-        Object[] his = NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[]) his;
+        Object[] his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
+        NCubeInfoDto[] history = (NCubeInfoDto[]) his
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
@@ -1306,15 +1208,17 @@ class TestNCubeManager
         Axis oddAxis = NCubeBuilder.getOddAxis(true)
         cube.addAxis(oddAxis)
 
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        Map<String, Object> result = VersionControl.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, cube.name, null, null))
-        assert result[VersionControl.BRANCH_ADDS].size() == 1
-        assert result[VersionControl.BRANCH_DELETES].size() == 0
-        assert result[VersionControl.BRANCH_UPDATES].size() == 0
-        assert result[VersionControl.BRANCH_RESTORES].size() == 0
-        assert result[VersionControl.BRANCH_REJECTS].size() == 0
-        NCubeManager.releaseVersion(defaultSnapshotApp, '2.0.0')
-        List<NCubeInfoDto> fullHistory = NCubeManager.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
+        mutableClient.updateCube(cube)
+        Map<String, Object> result = mutableClient.commitBranch(defaultSnapshotApp, mutableClient.search(defaultSnapshotApp, cube.name, null, null).toArray())
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+        mutableClient.lockApp(defaultSnapshotApp, true)
+        mutableClient.releaseVersion(defaultSnapshotApp, '2.0.0')
+        mutableClient.lockApp(defaultSnapshotApp, false)
+        List<NCubeInfoDto> fullHistory = mutableClient.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
         assert fullHistory.size() == 1
     }
 
@@ -1322,7 +1226,7 @@ class TestNCubeManager
     void testNCubeInfoDto()
     {
         NCube cube = createCube()
-        def history = NCubeManager.search(cube.applicationID, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        def history = mutableClient.search(cube.applicationID, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(2, history.size())     // sys.classpath too
         assertTrue history[0] instanceof NCubeInfoDto
         assertTrue history[1] instanceof NCubeInfoDto
@@ -1330,8 +1234,8 @@ class TestNCubeManager
         Axis oddAxis = NCubeBuilder.getOddAxis(true)
         cube.addAxis(oddAxis)
 
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        history = NCubeManager.search(cube.applicationID, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        mutableClient.updateCube(cube)
+        history = mutableClient.search(cube.applicationID, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertEquals(2, history.size())
         assertTrue history[0] instanceof NCubeInfoDto
         assertTrue history[1] instanceof NCubeInfoDto
@@ -1340,19 +1244,18 @@ class TestNCubeManager
     @Test
     void testResolveClasspathWithInvalidUrl()
     {
-        NCubeManager.clearCache()
-        NCube cube = NCubeManager.getNCubeFromResource('sys.classpath.invalid.url.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
+        NCube cube = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'sys.classpath.invalid.url.json')
+        mutableClient.updateCube(cube)
         createCube()
 
         // force reload from hsql and reget classpath
-        assertNotNull(NCubeManager.getUrlClassLoader(defaultSnapshotApp, [:]))
+        assertNotNull(runtimeClient.getUrlClassLoader(defaultSnapshotApp, [:]))
 
-        NCubeManager.clearCache(defaultSnapshotApp)
-        assertNotNull(NCubeManager.getUrlClassLoader(defaultSnapshotApp, [:]))
+        runtimeClient.clearCache(defaultSnapshotApp)
+        assertNotNull(runtimeClient.getUrlClassLoader(defaultSnapshotApp, [:]))
 
-        NCubeManager.getCube(defaultSnapshotApp, 'test.AgeGender')
-        GroovyClassLoader loader = (GroovyClassLoader) NCubeManager.getUrlClassLoader(defaultSnapshotApp, [:])
+        mutableClient.getCube(defaultSnapshotApp, 'test.AgeGender')
+        GroovyClassLoader loader = (GroovyClassLoader) runtimeClient.getUrlClassLoader(defaultSnapshotApp, [:])
         assertEquals(0, loader.URLs.length)
     }
 
@@ -1362,26 +1265,26 @@ class TestNCubeManager
         loadTestClassPathCubes()
 
         Map map = [env:'DEV']
-        NCube baseCube = NCubeManager.getCube(defaultSnapshotApp, 'sys.classpath.base')
+        NCube baseCube = mutableClient.getCube(defaultSnapshotApp, 'sys.classpath.base')
 
         assertEquals('http://files.cedarsoftware.com/tests/ncube/cp1/', baseCube.getCell(map))
         map.env = 'CERT'
         assertEquals('http://files.cedarsoftware.com/tests/ncube/cp2/', baseCube.getCell(map))
 
-        NCube classPathCube = NCubeManager.getCube(defaultSnapshotApp, 'sys.classpath')
+        NCube classPathCube = mutableClient.getCube(defaultSnapshotApp, 'sys.classpath')
         URLClassLoader loader = (URLClassLoader) classPathCube.getCell(map)
-        assertEquals(1, loader.URLs.length);
-        assertEquals('http://files.cedarsoftware.com/tests/ncube/cp2/', loader.URLs[0].toString());
+        assertEquals(1, loader.URLs.length)
+        assertEquals('http://files.cedarsoftware.com/tests/ncube/cp2/', loader.URLs[0].toString())
     }
 
     @Test
     void testResolveRelativeUrl()
     {
         // Sets App classpath to http://files.cedarsoftware.com
-        NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
 
         // Rule cube that expects tests/ncube/hello.groovy to be relative to http://files.cedarsoftware.com
-        NCube hello = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'resolveRelativeHelloGroovy.json')
+        NCube hello = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'resolveRelativeHelloGroovy.json')
 
         // When run, it will set up the classpath (first cube loaded for App), and then
         // it will run the rule cube.  This cube has a relative URL (relative to the classpath above).
@@ -1390,7 +1293,7 @@ class TestNCubeManager
         String s = (String) hello.getCell([:])
         assertEquals('Hello, world.', s)
 
-        URL absUrl = NCubeManager.getActualUrl(ApplicationID.testAppId, 'tests/ncube/hello.groovy', [:])
+        URL absUrl = runtimeClient.getActualUrl(ApplicationID.testAppId, 'tests/ncube/hello.groovy', [:])
         assertEquals('http://files.cedarsoftware.com/tests/ncube/hello.groovy', absUrl.toString())
     }
 
@@ -1399,15 +1302,12 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getActualUrl(ApplicationID.testAppId, null, [:])
+            runtimeClient.getActualUrl(ApplicationID.testAppId, null, [:])
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('resolve'))
-            assertTrue(e.message.contains('null'))
-            assertTrue(e.message.contains('empty'))
+            assertContainsIgnoreCase(e.message, 'annot', 'null', 'empty', 'resolve')
         }
     }
 
@@ -1415,15 +1315,15 @@ class TestNCubeManager
     void testResolveUrlFullyQualified()
     {
         String url = 'http://files.cedarsoftware.com'
-        URL ret = NCubeManager.getActualUrl(ApplicationID.testAppId, url, [:])
+        URL ret = runtimeClient.getActualUrl(ApplicationID.testAppId, url, [:])
         assertEquals(url, ret.toString())
 
         url = 'https://files.cedarsoftware.com'
-        ret = NCubeManager.getActualUrl(ApplicationID.testAppId, url, [:])
+        ret = runtimeClient.getActualUrl(ApplicationID.testAppId, url, [:])
         assertEquals(url, ret.toString())
 
         url = 'file://Users/joe/Development'
-        ret = NCubeManager.getActualUrl(ApplicationID.testAppId, url, [:])
+        ret = runtimeClient.getActualUrl(ApplicationID.testAppId, url, [:])
         assertEquals(url, ret.toString())
     }
 
@@ -1432,7 +1332,7 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.getActualUrl(new ApplicationID('foo', 'bar', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH), 'tests/ncube/hello.groovy', [:])
+            runtimeClient.getActualUrl(new ApplicationID('foo', 'bar', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH), 'tests/ncube/hello.groovy', [:])
             fail()
         }
         catch (IllegalArgumentException ignored)
@@ -1442,7 +1342,7 @@ class TestNCubeManager
     @Test
     void testMalformedUrl()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("urlContent.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         try
         {
             cube.getCell([Sites:'BadUrl'])
@@ -1471,116 +1371,116 @@ class TestNCubeManager
         // even though the cube in the branch has an out-of-date HEAD SHA-1 (the HEAD changed since the
         // branch was changed).  But, because the branch owner made the same change as someone else, when they
         // go to update, it is recognized, and then their branch cube just has it's HEAD SHA1 updated.
-        ApplicationID johnAppId = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'jdereg')
-        NCube cube = NCubeManager.getNCubeFromResource(johnAppId, 'testCube6.json')
-        NCubeManager.updateCube(johnAppId, cube, true)
-        List<NCubeInfoDto> cubes = VersionControl.getBranchChangesForHead(johnAppId)
-        VersionControl.commitBranch(johnAppId, cubes.toArray())
-        ApplicationID kenAppId  = new ApplicationID('ibm', 'deep.blue', '1.0.0', 'SNAPSHOT', 'ken')
-        NCubeManager.copyBranch(kenAppId.asHead(), kenAppId)
+        ApplicationID johnAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'deep.blue', '1.0.0', 'SNAPSHOT', 'jdereg')
+        createCubeFromResource(johnAppId, 'testCube6.json')
+        List<NCubeInfoDto> cubes = mutableClient.getBranchChangesForHead(johnAppId)
+        mutableClient.commitBranch(johnAppId, cubes.toArray())
+        ApplicationID kenAppId  = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'deep.blue', '1.0.0', 'SNAPSHOT', 'ken')
+        mutableClient.copyBranch(kenAppId.asHead(), kenAppId)
 
         // At this point, there are three branches, john, ken, HEAD.  1 cube in all, same state
-        cubes = NCubeManager.search(johnAppId, null, null, null)
+        cubes = mutableClient.search(johnAppId, null, null, null)
         assert cubes.size() == 1
         assert cubes[0].revision == '0'
-        cubes = NCubeManager.search(kenAppId, null, null, null)
+        cubes = mutableClient.search(kenAppId, null, null, null)
         assert cubes.size() == 1
         assert cubes[0].revision == '0'
-        cubes = NCubeManager.search(johnAppId.asHead(), null, null, null)
+        cubes = mutableClient.search(johnAppId.asHead(), null, null, null)
         assert cubes.size() == 1
         assert cubes[0].revision == '0'
 
         // Ken's branch is going to modify cube and commit it to HEAD
-        cube = NCubeManager.loadCube(kenAppId, 'TestCube')
+        NCube cube = mutableClient.getCube(kenAppId, 'TestCube')
         cube.setCell('foo', [gender:'male'])
         String kenSha1 = cube.sha1()
-        NCubeManager.updateCube(kenAppId, cube, true)
-        cubes = VersionControl.getBranchChangesForHead(kenAppId)
+        mutableClient.updateCube(cube)
+        cubes = mutableClient.getBranchChangesForHead(kenAppId)
         assert cubes.size() == 1
-        Map <String, Object> result = VersionControl.commitBranch(kenAppId, cubes)
-        assert result[VersionControl.BRANCH_ADDS].size() == 0
-        assert result[VersionControl.BRANCH_DELETES].size() == 0
-        assert result[VersionControl.BRANCH_UPDATES].size() == 1
-        assert result[VersionControl.BRANCH_RESTORES].size() == 0
-        assert result[VersionControl.BRANCH_REJECTS].size() == 0
-        NCube cubeHead = NCubeManager.loadCube(kenAppId.asHead(), 'TestCube')
+        Map <String, Object> result = mutableClient.commitBranch(kenAppId, cubes.toArray())
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+        NCube cubeHead = mutableClient.getCube(kenAppId.asHead(), 'TestCube')
         assert cubeHead.sha1() == cube.sha1()
 
         // At this point, HEAD and Ken are same, John's branch is behind.
-        NCube johnCube = NCubeManager.loadCube(johnAppId, 'TestCube')
+        NCube johnCube = mutableClient.getCube(johnAppId, 'TestCube')
         assert johnCube.sha1() != kenSha1
         johnCube.setCell('foo', [gender:'male'])
         assert kenSha1 == cube.sha1()
 
         // I made the same changes on my branch to my cube.
-        NCubeManager.updateCube(johnAppId, johnCube, true)
-        johnCube = NCubeManager.loadCube(johnAppId, 'TestCube')
+        mutableClient.updateCube(johnCube)
+        johnCube = mutableClient.getCube(johnAppId, 'TestCube')
         assert kenSha1 == johnCube.sha1()
 
         // Verify that before the Update Branch, we show one (1) branch change
-        cubes = VersionControl.getBranchChangesForHead(johnAppId)
+        cubes = mutableClient.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 0
 
-        List dtos2 = VersionControl.getHeadChangesForBranch(johnAppId)
+        List dtos2 = mutableClient.getHeadChangesForBranch(johnAppId)
         assert dtos2.size() == 1
-        assert dtos2[0].name == 'TestCube'
-        assert dtos2[0].changeType == ChangeType.FASTFORWARD.code
+        NCubeInfoDto dto = dtos2[0]
+        assert dto.name == 'TestCube'
+        assert dto.changeType == ChangeType.FASTFORWARD.code
 
         // Update john branch (no changes are shown - it auto-merged)
-        Map map = VersionControl.updateBranch(johnAppId)
-        assert map.adds.size() == 0
-        assert map.deletes.size() == 0
-        assert map.updates.size() == 0
-        assert map.restores.size() == 0
-        assert map.fastforwards.size() == 1
-        assert map.rejects.size() == 0
+        Map map = mutableClient.updateBranch(johnAppId)
+        assert (map[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (map[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (map[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (map[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (map[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (map[mutableClient.BRANCH_REJECTS] as Map).size() == 0
 
-        cubes = VersionControl.getBranchChangesForHead(johnAppId)
+        cubes = mutableClient.getBranchChangesForHead(johnAppId)
         assert cubes.size() == 0    // No changes being returned
 
-        cubes = NCubeManager.search(johnAppId, null, null, null)
+        cubes = mutableClient.search(johnAppId, null, null, null)
         assert cubes.size() == 1
         assert cubes[0].revision == '1'
 
         // Stuck this code on the end, to test multiple answers for getVersions()
-        johnAppId = new ApplicationID('ibm', 'deep.blue', '1.1.0', 'SNAPSHOT', 'jdereg')
-        cube = NCubeManager.getNCubeFromResource(johnAppId, 'testCube4.json')
-        NCubeManager.updateCube(johnAppId, cube, true)
+        johnAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'deep.blue', '1.1.0', 'SNAPSHOT', 'jdereg')
+        cube = runtimeClient.getNCubeFromResource(johnAppId, 'testCube4.json')
+        mutableClient.createCube(cube)
 
-        Map<String, List<String>> versions = NCubeManager.getVersions('ibm', 'deep.blue')
-        assert versions.size() == 2
-        assert versions['SNAPSHOT'].size() == 3
-        assert versions['SNAPSHOT'].contains('1.0.0')
-        assert versions['SNAPSHOT'].contains('1.1.0')
-        assert versions['RELEASE'].size() == 0
+        Object[] versions = mutableClient.getVersions('deep.blue')
+        assert versions.length == 3
+        assert checkVersions(versions, '1.1.0')
+        assert checkVersions(versions, '1.0.0')
+        assert checkVersions(versions, '0.0.0')
 
-        assert 1 == NCubeManager.getBranchCount(johnAppId)
+        assert 2 == mutableClient.getBranchCount(johnAppId) //HEAD is always added
     }
 
     @Test
     void testCopyBranch()
     {
         ApplicationID copyAppId = defaultSnapshotApp.asBranch('copy')
-        NCube cube = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'latlon.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
+        NCube cube = createCubeFromResource(defaultSnapshotApp, 'latlon.json')
 
-        NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
-        NCube copiedCube = NCubeManager.loadCube(copyAppId, cube.name)
-        assertNotNull(copiedCube);
+        mutableClient.copyBranch(defaultSnapshotApp, copyAppId)
+        NCube copiedCube = mutableClient.getCube(copyAppId, cube.name)
+        assertNotNull(copiedCube)
     }
 
     @Test
     void testCopyBranchWhenReleaseVersionAlreadyExists()
     {
-        VersionControl.commitBranch(defaultSnapshotApp, NCubeManager.search(defaultSnapshotApp, null, null, null).toArray())
-        NCubeManager.releaseCubes(defaultSnapshotApp, '2.0.0')
+        mutableClient.commitBranch(defaultSnapshotApp, mutableClient.search(defaultSnapshotApp, null, null, null).toArray())
+        mutableClient.releaseCubes(defaultSnapshotApp, '2.0.0')
         ApplicationID copyAppId = defaultSnapshotApp.asBranch('copy')
         try
         {
-            NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
+            mutableClient.copyBranch(defaultSnapshotApp, copyAppId)
             fail()
-        } catch(IllegalArgumentException e) {
-            assertTrue(e.message.contains('exists'))
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'exists')
         }
     }
 
@@ -1588,70 +1488,25 @@ class TestNCubeManager
     void testThinCopyBranch()
     {
         ApplicationID copyAppId = defaultSnapshotApp.asBranch('copy')
-        NCube cube = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'test.branch.1.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube)
-        VersionControl.commitBranch(defaultSnapshotApp)
+        NCube cube = createCubeFromResource(defaultSnapshotApp, 'test.branch.1.json')
+        mutableClient.commitBranch(defaultSnapshotApp)
 
-        NCubeManager.copyBranch(defaultSnapshotApp.asHead(), copyAppId)
-        assert 1 == NCubeManager.getRevisionHistory(copyAppId, cube.name).size()
-        NCubeManager.deleteBranch(copyAppId)
+        mutableClient.copyBranch(defaultSnapshotApp.asHead(), copyAppId)
+        assert 1 == mutableClient.getRevisionHistory(copyAppId, cube.name).size()
+        mutableClient.deleteBranch(copyAppId)
 
-        NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
-        assert 1 == NCubeManager.getRevisionHistory(copyAppId, cube.name).size()
-        NCubeManager.deleteBranch(copyAppId)
+        mutableClient.copyBranch(defaultSnapshotApp, copyAppId)
+        assert 1 == mutableClient.getRevisionHistory(copyAppId, cube.name).size()
+        mutableClient.deleteBranch(copyAppId)
 
         cube.setCell('AAA', [Code : -15])
-        NCubeManager.updateCube(defaultSnapshotApp, cube)
+        mutableClient.updateCube(cube)
         cube.setCell('BBB', [Code : -15])
-        NCubeManager.updateCube(defaultSnapshotApp, cube)
-        assert 3 == NCubeManager.getRevisionHistory(defaultSnapshotApp, cube.name).size()
+        mutableClient.updateCube(cube)
+        assert 3 == mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name).size()
 
-        NCubeManager.copyBranch(defaultSnapshotApp, copyAppId)
-        assert 2 == NCubeManager.getRevisionHistory(copyAppId, cube.name).size()
-    }
-
-    @Test
-    void testLoadCubeByUsingNonExistingSha1()
-    {
-        NCube cube = createCube()
-        try
-        {
-            NCubeManager.persister.loadCubeBySha1(cube.applicationID, cube.name, "phonySha1")
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('unable to find')
-        }
-    }
-
-    @Test
-    void testUpdateBranchCubeHeadSha1BadArgs()
-    {
-        try
-        {
-            NCubeManager.persister.updateBranchCubeHeadSha1(null, 'badSha1')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('id cannot be empty')
-        }
-        try
-        {
-            NCubeManager.persister.updateBranchCubeHeadSha1(75, '')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('sha-1 cannot be empty')
-        }
-
-        try
-        {
-            NCubeManager.persister.updateBranchCubeHeadSha1(75, 'phony')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assert e.message.toLowerCase().contains('no record found')
-        }
+        mutableClient.copyBranch(defaultSnapshotApp, copyAppId)
+        assert 2 == mutableClient.getRevisionHistory(copyAppId, cube.name).size()
     }
 
     @Test
@@ -1661,130 +1516,82 @@ class TestNCubeManager
                        (SEARCH_DELETED_RECORDS_ONLY): true]
         try
         {
-            NCubeManager.search(defaultSnapshotApp, null, null, options)
+            mutableClient.search(defaultSnapshotApp, null, null, options)
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.contains('activeRecordsOnly and deletedRecordsOnly are mutually exclusive')
+            assertContainsIgnoreCase(e.message, 'activeRecordsOnly', 'deletedRecordsOnly', 'mutually exclusive')
         }
     }
-
-//    @Test
-//    void testGetApplicationId()
-//    {
-//        // TODO: Cannot get the Mock to work
-//        loadTestClassPathCubes()
-//        loadTestBootstrapCubes()
-//
-//        String tenant = defaultSnapshotApp.tenant
-//        String app = defaultSnapshotApp.app
-//
-//        ApplicationID bootTestAppId = new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
-//
-//        MockFor META_MOCK = new MockFor(ApplicationID)
-//        META_MOCK.demand.getBootVersion() { return bootTestAppId }
-//
-//        ApplicationID bootAppId = NCubeManager.getApplicationID(bootTestAppId.tenant, bootTestAppId.app, null)
-//        assertEquals(new ApplicationID(tenant, app, "1.0.0", ApplicationID.DEFAULT_STATUS, "TEST"), bootAppId)
-//
-//        Map map = new HashMap()
-//        map.put('env', 'DEV')
-//
-//        bootAppId = NCubeManager.getApplicationID(defaultSnapshotApp.tenant, defaultSnapshotApp.app, map)
-//        assertEquals(defaultSnapshotApp.tenant, bootAppId.tenant)
-//        assertEquals(defaultSnapshotApp.app, bootAppId.app)
-//        assertEquals(defaultSnapshotApp.version, '1.0.0')
-//        assertEquals(defaultSnapshotApp.status, bootAppId.status)
-//    }
 
     @Test
     void testMutateReleaseCube()
     {
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_LOCK))
-        NCube cube = NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'latlon.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        Object[] cubeInfos = NCubeManager.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_LOCK))
+        NCube cube = createCubeFromResource(defaultSnapshotApp, 'latlon.json')
+        Object[] cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertNotNull(cubeInfos)
         assertEquals(2, cubeInfos.length)
-        NCubeManager.releaseCubes(defaultSnapshotApp, "1.2.3")
+        mutableClient.releaseCubes(defaultSnapshotApp, "1.2.3")
         try
         {
-            NCubeManager.deleteCubes(defaultReleaseApp, [cube.name].toArray())
+            mutableClient.deleteCubes(defaultReleaseApp, [cube.name].toArray())
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('cannot'))
-            assertTrue(e.message.contains('deleted'))
+            assertContainsIgnoreCase(e.message, 'RELEASE', 'cube', 'cannot', 'deleted')
         }
 
         try
         {
-            NCubeManager.renameCube(defaultReleaseApp, cube.name, 'jumbo')
+            mutableClient.renameCube(defaultReleaseApp, cube.name, 'jumbo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('rename'))
+            assertContainsIgnoreCase(e.message, 'cannot', 'rename', 'RELEASE', 'cube')
         }
 
         try
         {
-            NCubeManager.restoreCubes(defaultReleaseApp, cube.name)
+            mutableClient.restoreCubes(defaultReleaseApp, cube.name)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('restore'))
+            assertContainsIgnoreCase(e.message, 'RELEASE', 'cube', 'cannot', 'restore')
         }
 
         try
         {
-            NCubeManager.updateCube(defaultReleaseApp, cube, true)
+            cube.applicationID = defaultReleaseApp
+            mutableClient.updateCube(cube)
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('update'))
+            assertContainsIgnoreCase(e.message, 'RELEASE', 'cube', 'cannot', 'update')
         }
 
         try
         {
-            NCubeManager.changeVersionValue(defaultReleaseApp, '1.2.3')
+            mutableClient.changeVersionValue(defaultReleaseApp, '1.2.3')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('change'))
-            assertTrue(e.message.contains('version'))
+            assertContainsIgnoreCase(e.message, 'cannot', 'change', 'version', 'RELEASE')
         }
 
         try
         {
-            NCubeManager.duplicate(defaultSnapshotApp, defaultReleaseApp, cube.name, 'jumbo')
+            mutableClient.duplicate(defaultSnapshotApp, defaultReleaseApp, cube.name, 'jumbo')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains('RELEASE'))
-            assertTrue(e.message.contains('cube'))
-            assertTrue(e.message.contains('annot'))
-            assertTrue(e.message.contains('duplicate'))
-            assertTrue(e.message.contains('version'))
+            assertContainsIgnoreCase(e.message, 'cannot', 'duplicate', 'RELEASE', 'version', 'cube')
         }
     }
 
@@ -1792,25 +1599,23 @@ class TestNCubeManager
     void testRenameCubeThatDoesNotExist()
     {
         try {
-            NCubeManager.renameCube(defaultSnapshotApp, 'foo', 'bar')
-            fail();
+            mutableClient.renameCube(defaultSnapshotApp, 'foo', 'bar')
+            fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains("Could not rename"));
-            assertTrue(e.message.contains("does not exist"))
+            assertContainsIgnoreCase(e.message, 'could not rename', 'does not exist')
         }
     }
 
     @Test
     void testCircularCubeReference()
     {
-        NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'a.json')
-        NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'b.json')
-        NCubeManager.getNCubeFromResource(defaultSnapshotApp, 'c.json')
+        createCubeFromResource(defaultSnapshotApp, 'a.json')
+        createCubeFromResource(defaultSnapshotApp, 'b.json')
+        createCubeFromResource(defaultSnapshotApp, 'c.json')
 
-        Set<String> names = new TreeSet<>()
-        NCubeManager.getReferencedCubeNames(defaultSnapshotApp, 'a', names)
+        Set<String> names = mutableClient.getReferencesFrom(defaultSnapshotApp, 'a')
         assertEquals(3, names.size())
         assertTrue(names.contains('a'))
         assertTrue(names.contains('b'))
@@ -1820,64 +1625,64 @@ class TestNCubeManager
     @Test
     void testGetSystemParamsHappyPath()
     {
-        NCubeManager.systemParams = null;
-        System.setProperty("NCUBE_PARAMS", '{"branch":"foo"}')
-        assertEquals('foo', NCubeManager.getSystemParams().branch);
-        assertNull(NCubeManager.getSystemParams().status);
-        assertNull(NCubeManager.getSystemParams().app);
-        assertNull(NCubeManager.getSystemParams().tenant);
+        runtimeClient.clearSysParams()
+        System.setProperty('NCUBE_PARAMS', '{"branch":"foo"}')
+        assertEquals('foo', runtimeClient.systemParams.branch)
+        assertNull(runtimeClient.systemParams.status)
+        assertNull(runtimeClient.systemParams.app)
+        assertNull(runtimeClient.systemParams.tenant)
 
         // ensure doesn't reparse second time.
         System.setProperty('NCUBE_PARAMS', '{}')
-        assertEquals('foo', NCubeManager.getSystemParams().branch);
-        assertNull(NCubeManager.getSystemParams().status);
-        assertNull(NCubeManager.getSystemParams().app);
-        assertNull(NCubeManager.getSystemParams().tenant);
+        assertEquals('foo', runtimeClient.systemParams.branch)
+        assertNull(runtimeClient.systemParams.status)
+        assertNull(runtimeClient.systemParams.app)
+        assertNull(runtimeClient.systemParams.tenant)
 
 
-        NCubeManager.systemParams = null;
+        runtimeClient.clearSysParams()
         System.setProperty("NCUBE_PARAMS", '{"status":"RELEASE", "app":"UD", "tenant":"foo", "branch":"bar"}')
-        assertEquals('bar', NCubeManager.getSystemParams().branch);
-        assertEquals('RELEASE', NCubeManager.getSystemParams().status);
-        assertEquals('UD', NCubeManager.getSystemParams().app);
-        assertEquals('foo', NCubeManager.getSystemParams().tenant);
+        assertEquals('bar', runtimeClient.systemParams.branch)
+        assertEquals('RELEASE', runtimeClient.systemParams.status)
+        assertEquals('UD', runtimeClient.systemParams.app)
+        assertEquals('foo', runtimeClient.systemParams.tenant)
 
         // ensure doesn't reparse second time.
         System.setProperty('NCUBE_PARAMS', '{}')
-        assertEquals('bar', NCubeManager.getSystemParams().branch);
-        assertEquals('RELEASE', NCubeManager.getSystemParams().status);
-        assertEquals('UD', NCubeManager.getSystemParams().app);
-        assertEquals('foo', NCubeManager.getSystemParams().tenant);
+        assertEquals('bar', runtimeClient.systemParams.branch)
+        assertEquals('RELEASE', runtimeClient.systemParams.status)
+        assertEquals('UD', runtimeClient.systemParams.app)
+        assertEquals('foo', runtimeClient.systemParams.tenant)
 
         // test invalid json, hands back nice empty map.
-        NCubeManager.systemParams = null;
+        runtimeClient.clearSysParams()
         System.setProperty("NCUBE_PARAMS", '{"status":}')
-        assertNull(NCubeManager.getSystemParams().branch);
-        assertNull(NCubeManager.getSystemParams().status);
-        assertNull(NCubeManager.getSystemParams().app);
-        assertNull(NCubeManager.getSystemParams().tenant);
+        assertNull(runtimeClient.systemParams.branch)
+        assertNull(runtimeClient.systemParams.status)
+        assertNull(runtimeClient.systemParams.app)
+        assertNull(runtimeClient.systemParams.tenant)
     }
 
     @Test
     void testGetBranches()
     {
-        Set<String> branches = NCubeManager.getBranches(ApplicationID.testAppId)
-        assertEquals(1, branches.size())
-        assertEquals(ApplicationID.TEST_BRANCH, branches.getAt(0))
+        Set<String> branches = runtimeClient.getBranches(ApplicationID.testAppId)
+        assert 2 == branches.size()
+        assert branches.contains(ApplicationID.TEST_BRANCH)
     }
 
     @Test
     void testSysLockCubeCreatedWithApp()
     {
-        NCube sysLockCube = NCubeManager.loadCube(defaultBootApp, SYS_LOCK)
-        assertEquals(1, sysLockCube.getAxis(AXIS_SYSTEM).getColumns().size())
+        NCube sysLockCube = mutableClient.getCube(defaultBootApp, SYS_LOCK)
+        assertEquals(1, sysLockCube.getAxis(AXIS_SYSTEM).columns.size())
         assertNull(sysLockCube.getCell([(AXIS_SYSTEM):null]))
     }
 
     @Test
     void testSysPermissionsCreatedWithApp()
     {
-        NCube sysPermCube = NCubeManager.loadCube(defaultBootApp, SYS_PERMISSIONS)
+        NCube sysPermCube = mutableClient.getCube(defaultBootApp, SYS_PERMISSIONS)
         assertEquals(3, sysPermCube.axes.size())
         assertEquals(5, sysPermCube.getAxis(AXIS_RESOURCE).columns.size())
         assertEquals(3, sysPermCube.getAxis(AXIS_ROLE).columns.size())
@@ -1887,194 +1692,118 @@ class TestNCubeManager
     @Test
     void testSysUsergroupsCreatedWithApp()
     {
-        NCube sysUsergroupsCube = NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS)
+        NCube sysUsergroupsCube = mutableClient.getCube(defaultBootApp, SYS_USERGROUPS)
         List<Column> userColumns = sysUsergroupsCube.getAxis(AXIS_USER).columns
         assertEquals(2, sysUsergroupsCube.axes.size())
         assertEquals(2, userColumns.size())
-        assertEquals(NCubeManager.userId, userColumns.get(0).value)
+        assertEquals(System.getProperty('user.name'), userColumns.get(0).value)
         assertEquals(3, sysUsergroupsCube.getAxis(AXIS_ROLE).columns.size())
     }
 
     @Test
     void testSysLockSecurity()
     {
-        String userId = NCubeManager.userId
-        ApplicationID branchBootAppId = defaultBootApp.asBranch(userId)
-        Map lockCoord = [(AXIS_SYSTEM):null]
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
+        String origUser = mutableClient.userId
+        ApplicationID branchBootAppId = defaultBootApp.asBranch(origUser)
+        Map lockCoord = [(AXIS_SYSTEM): null]
 
         // create branch
-        NCubeManager.copyBranch(branchBootAppId.asHead(), branchBootAppId)
+        mutableClient.copyBranch(branchBootAppId.asHead(), branchBootAppId)
 
         // update sys lock in branch
-        NCube sysLockCube = NCubeManager.loadCube(branchBootAppId, SYS_LOCK)
-        sysLockCube.setCell(userId, lockCoord)
-        NCubeManager.updateCube(branchBootAppId, sysLockCube, true)
+        NCube sysLockCube = mutableClient.getCube(branchBootAppId, SYS_LOCK)
+        sysLockCube.setCell(origUser, lockCoord)
+        mutableClient.updateCube(sysLockCube)
 
         // commit sys lock to HEAD
-        Object[] cubeInfos = NCubeManager.search(branchBootAppId, SYS_LOCK, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        Map<String, Object> commitResult = VersionControl.commitBranch(branchBootAppId, cubeInfos)
-        assertEquals(1, commitResult[VersionControl.BRANCH_UPDATES].size())
+        Object[] cubeInfos = mutableClient.search(branchBootAppId, SYS_LOCK, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true])
+        Map<String, Object> commitResult = mutableClient.commitBranch(branchBootAppId, cubeInfos)
+        assertEquals(1, (commitResult[mutableClient.BRANCH_UPDATES] as Map).size())
 
         // make sure HEAD took the lock
-        sysLockCube = NCubeManager.loadCube(branchBootAppId, SYS_LOCK)
-        NCube headSysLockCube = NCubeManager.loadCube(defaultBootApp, SYS_LOCK)
+        sysLockCube = mutableClient.getCube(branchBootAppId, SYS_LOCK)
+        NCube headSysLockCube = mutableClient.getCube(defaultBootApp, SYS_LOCK)
         assertEquals(sysLockCube.getCell(lockCoord), headSysLockCube.getCell(lockCoord))
 
         // try creating a new cube in branch, should get exception
         NCube testCube = new NCube('test')
-        testCube.setApplicationID(branchBootAppId)
-        NCubeManager.updateCube(branchBootAppId, testCube, true)  // works without error because current user has the lock
-        String currUser = NCubeManager.userId
-        NCubeManager.setUserId('garpley')                   // change user
+        testCube.applicationID = branchBootAppId
+        mutableClient.createCube(testCube)  // works without error because current user has the lock
+
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        manager.userId = 'garpley'                   // change user
         try
         {
-            NCubeManager.updateCube(branchBootAppId, testCube, true)
+            mutableClient.updateCube(testCube)
             fail()
         }
         catch (SecurityException e)
         {
             assertTrue(e.message.contains('Application is not locked by you'))
         }
-        NCubeManager.setUserId(currUser)
+        manager.userId = origUser
     }
 
     @Test
     void testBranchPermissionsCubeCreatedOnNewBranch()
     {
+        String userId = System.getProperty('user.name')
         ApplicationID branchAppId = defaultSnapshotApp.asBranch('newBranch')
-        NCubeManager.copyBranch(branchAppId.asHead(), branchAppId)
-        NCube branchPermCube = NCubeManager.loadCube(branchAppId.asVersion('0.0.0'), SYS_BRANCH_PERMISSIONS)
+        mutableClient.copyBranch(branchAppId.asHead(), branchAppId)
+        NCube branchPermCube = mutableClient.getCube(branchAppId.asVersion('0.0.0'), SYS_BRANCH_PERMISSIONS)
         Axis userAxis = branchPermCube.getAxis(AXIS_USER)
         Axis resourceAxis = branchPermCube.getAxis(AXIS_RESOURCE)
 
-        assertFalse(branchPermCube.getDefaultCellValue())
-        assertEquals(2, userAxis.columns.size())
-        assertEquals(2, resourceAxis.columns.size())
-        assertTrue(branchPermCube.getCell([(AXIS_USER):NCubeManager.userId, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS]))
-        assertTrue(branchPermCube.getCell([(AXIS_USER):NCubeManager.userId, (AXIS_RESOURCE):null]))
-        assertFalse(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS]))
-        assertFalse(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):null]))
+        assert !branchPermCube.defaultCellValue
+        assert 2 == userAxis.columns.size()
+        assert 2 == resourceAxis.columns.size()
+        assert branchPermCube.getCell([(AXIS_USER):userId, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS]) as Boolean
+        assert branchPermCube.getCell([(AXIS_USER):userId, (AXIS_RESOURCE):null]) as Boolean
+        assert !(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS]) as Boolean)
+        assert !(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):null]) as Boolean)
     }
 
     @Test
     void testBranchPermissionsFail()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
+        String origUser = mutableClient.userId
         String testAxisName = 'testAxis'
-        String origUser = NCubeManager.userId
         ApplicationID appId = defaultSnapshotApp.asBranch(origUser)
 
         //create new branch and make sure of permissions
-        NCubeManager.copyBranch(appId.asHead(), appId)
-        NCube branchPermCube = NCubeManager.loadCube(defaultBootApp.asBranch(origUser), SYS_BRANCH_PERMISSIONS)
+        mutableClient.copyBranch(appId.asHead(), appId)
+        NCube branchPermCube = mutableClient.getCube(defaultBootApp.asBranch(origUser), SYS_BRANCH_PERMISSIONS)
         Axis userAxis = branchPermCube.getAxis(AXIS_USER)
-        List<Column> columnList = userAxis.getColumnsWithoutDefault()
+        List<Column> columnList = userAxis.columnsWithoutDefault
         assertEquals(1, columnList.size())
         assertEquals(origUser, columnList.get(0).value)
 
         //check app permissions cubes
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_PERMISSIONS))
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS))
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_LOCK))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_PERMISSIONS))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_LOCK))
 
         //new cube on branch from good user
         NCube testCube = new NCube('test')
-        testCube.setApplicationID(appId)
+        testCube.applicationID = appId
         testCube.addAxis(new Axis(testAxisName, AxisType.DISCRETE, AxisValueType.STRING, true))
-        NCubeManager.updateCube(appId, testCube, true)
+        mutableClient.createCube(testCube)
 
         //try to create a cube as a different user in that branch
-        try {
-            NCubeManager.setUserId('otherUser')
-            testCube.setCell('testval', [(testAxisName):null])
-            NCubeManager.updateCube(appId, testCube, true)
-            fail()
-        } catch (SecurityException e) {
-            assertTrue(e.message.contains('not performed'))
-            assertTrue(e.message.contains(Action.UPDATE.name()))
-            assertTrue(e.message.contains(testCube.name))
-        } finally {
-            NCubeManager.setUserId(origUser)
-        }
-    }
-
-    @Test
-    void testIsAdminPass()
-    {
-        //without user cube present
-        assertTrue(NCubeManager.isAdmin(defaultSnapshotApp))
-
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS))
-        assertTrue(NCubeManager.isAdmin(defaultSnapshotApp))
-    }
-
-    @Test
-    void testIsAdminFail()
-    {
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS))
-        NCubeManager.setUserId('bad')
-        assert !NCubeManager.isAdmin(defaultSnapshotApp)
-    }
-
-    @Test
-    void testImpersonation()
-    {
-        String fake = 'fakeUserId'
-        String cubeName = 'test.cube'
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS))
-        assert NCubeManager.isAdmin(defaultSnapshotApp)
-        NCubeManager.fakeId = fake
-        assert NCubeManager.userId != fake
-        assert NCubeManager.fakeId == fake
-        assert NCubeManager.impliedId == fake
-        assert !NCubeManager.isAdmin(defaultSnapshotApp)
-
-        NCube cube = new NCube(cubeName)
-        cube.addAxis(new Axis('axis', AxisType.DISCRETE, AxisValueType.STRING, true))
-        cube.setCell('test', [axis: null])
-        NCubeManager.updateCube(defaultSnapshotApp, cube)
-        List<NCubeInfoDto> revs = NCubeManager.getRevisionHistory(defaultSnapshotApp, cubeName)
-        assert NCubeManager.userId == revs.first().createHid
-        NCubeManager.fakeId = ''
-    }
-
-    @Test
-    void testAppPermissionsFail()
-    {
-        String origUser = NCubeManager.userId
-        String otherUser = 'otherUser'
-        String testAxisName = 'testAxis'
-        ApplicationID branchBootApp = defaultBootApp.asBranch(ApplicationID.TEST_BRANCH)
-
-        //check app permissions cubes
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_PERMISSIONS))
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS))
-        assertNotNull(NCubeManager.loadCube(defaultBootApp, SYS_LOCK))
-
-        //set otheruser as having branch permissions
-        NCube branchPermCube = NCubeManager.loadCube(branchBootApp, SYS_BRANCH_PERMISSIONS)
-        branchPermCube.getAxis(AXIS_USER).addColumn(otherUser)
-        branchPermCube.setCell(true, [(AXIS_USER):otherUser, (AXIS_RESOURCE):null])
-        NCubeManager.updateCube(branchBootApp, branchPermCube)
-
-        //set otheruser as no app permissions
-        NCube userCube = NCubeManager.loadCube(defaultBootApp, SYS_USERGROUPS)
-        userCube.getAxis(AXIS_USER).addColumn(otherUser)
-        userCube.setCell(true, [(AXIS_USER):otherUser, (AXIS_ROLE):ROLE_READONLY])
-        NCubeManager.persister.updateCube(defaultBootApp, userCube, NCubeManager.userId)
-        assertFalse(userCube.getCell([(AXIS_USER):otherUser, (AXIS_ROLE):ROLE_USER]))
-        assertTrue(userCube.getCell([(AXIS_USER):otherUser, (AXIS_ROLE):ROLE_READONLY]))
-
-        NCube testCube = new NCube('test')
-        testCube.setApplicationID(defaultSnapshotApp)
-        testCube.addAxis(new Axis(testAxisName, AxisType.DISCRETE, AxisValueType.STRING, true))
-        NCubeManager.updateCube(defaultSnapshotApp, testCube)
-
-        //try to update a cube from bad user
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         try
         {
-            NCubeManager.setUserId(otherUser)
-            testCube.setCell('testval', [(testAxisName):null])
-            NCubeManager.updateCube(defaultSnapshotApp, testCube)
+            manager.userId = 'otherUser'
+            testCube.setCell('testval', [(testAxisName): null])
+            mutableClient.updateCube(testCube)
             fail()
         }
         catch (SecurityException e)
@@ -2083,10 +1812,88 @@ class TestNCubeManager
             assertTrue(e.message.contains(Action.UPDATE.name()))
             assertTrue(e.message.contains(testCube.name))
         }
-        finally
+        manager.userId = origUser
+    }
+
+    @Test
+    void testIsAdminPass()
+    {
+        //without user cube present
+        assertTrue(mutableClient.isAppAdmin(defaultSnapshotApp))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
+        assertTrue(mutableClient.isAppAdmin(defaultSnapshotApp))
+    }
+
+    @Test
+    void testIsAdminFail()
+    {
+        if (NCubeAppContext.clientTest)
         {
-            NCubeManager.setUserId(origUser)
+            return
         }
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        String origUser = manager.userId
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
+        manager.userId = 'bad'
+        assert !mutableClient.isAppAdmin(defaultSnapshotApp)
+        manager.userId = origUser
+    }
+
+    @Test
+    void testAppPermissionsFail()
+    {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
+        String origUser = mutableClient.userId
+        String otherUser = 'otherUser'
+        String testAxisName = 'testAxis'
+        ApplicationID branchBootApp = defaultBootApp.asBranch(ApplicationID.TEST_BRANCH)
+
+        //check app permissions cubes
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_PERMISSIONS))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
+        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_LOCK))
+
+        //set otheruser as having branch permissions
+        NCube branchPermCube = mutableClient.getCube(branchBootApp, SYS_BRANCH_PERMISSIONS)
+        branchPermCube.getAxis(AXIS_USER).addColumn(otherUser)
+        branchPermCube.setCell(true, [(AXIS_USER): otherUser, (AXIS_RESOURCE): null])
+        mutableClient.updateCube(branchPermCube)
+
+        //set otheruser as no app permissions
+        NCube userCube = mutableClient.getCube(branchBootApp, SYS_USERGROUPS)
+        userCube.getAxis(AXIS_USER).addColumn(otherUser)
+        userCube.setCell(true, [(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_READONLY])
+        mutableClient.updateCube(userCube)
+        List<NCubeInfoDto> dtos = mutableClient.search(branchBootApp, userCube.name, null, null)
+        mutableClient.commitBranch(branchBootApp, dtos)
+        NCube headUserCube = mutableClient.getCube(defaultBootApp, SYS_USERGROUPS)
+        assertFalse(headUserCube.getCell([(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_USER]) as Boolean)
+        assertTrue(headUserCube.getCell([(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_READONLY]) as Boolean)
+
+        NCube testCube = new NCube('test')
+        testCube.applicationID = defaultSnapshotApp
+        testCube.addAxis(new Axis(testAxisName, AxisType.DISCRETE, AxisValueType.STRING, true))
+        mutableClient.createCube(testCube)
+
+        //try to update a cube from bad user
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        try
+        {
+            manager.userId = otherUser
+            testCube.setCell('testval', [(testAxisName): null])
+            mutableClient.updateCube(testCube)
+            fail()
+        }
+        catch (SecurityException e)
+        {
+            assertTrue(e.message.contains('not performed'))
+            assertTrue(e.message.contains(Action.UPDATE.name()))
+            assertTrue(e.message.contains(testCube.name))
+        }
+        manager.userId = origUser
     }
 
     @Test
@@ -2094,47 +1901,33 @@ class TestNCubeManager
     {
         try
         {
-            NCubeManager.releaseCubes(defaultBootApp, '0.0.1')
+            mutableClient.releaseCubes(defaultBootApp, '0.0.1')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains(ERROR_CANNOT_RELEASE_000))
+            assertContainsIgnoreCase(e.message, ERROR_CANNOT_RELEASE_000)
         }
 
         try
         {
-            NCubeManager.releaseCubes(defaultSnapshotApp, '0.0.0')
+            mutableClient.releaseCubes(defaultSnapshotApp, '0.0.0')
             fail()
         }
         catch (IllegalArgumentException e)
         {
-            assertTrue(e.message.contains(ERROR_CANNOT_RELEASE_TO_000))
+            assertContainsIgnoreCase(e.message, ERROR_CANNOT_RELEASE_TO_000)
         }
     }
 
-    private static void loadTestClassPathCubes()
+    private void loadTestClassPathCubes()
     {
-        NCube cube = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.versions.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        cube = NCubeManager.getNCubeFromResource('sys.classpath.local.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        cube = NCubeManager.getNCubeFromResource('sys.classpath.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-        cube = NCubeManager.getNCubeFromResource('sys.classpath.base.json')
-        NCubeManager.updateCube(defaultSnapshotApp, cube, true)
-    }
-
-    private static void loadTestBootstrapCubes()
-    {
-        ApplicationID appId = defaultSnapshotApp.createNewSnapshotId('0.0.0')
-
-        NCube cube = NCubeManager.getNCubeFromResource(appId, 'sys.bootstrap.json')
-        NCubeManager.updateCube(appId, cube, true)
-        cube = NCubeManager.getNCubeFromResource('sys.version.json')
-        NCubeManager.updateCube(appId, cube, true)
-        cube = NCubeManager.getNCubeFromResource('sys.status.json')
-        NCubeManager.updateCube(appId, cube, true)
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.versions.json')
+        createCubeFromResource(defaultSnapshotApp, 'sys.versions.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(defaultSnapshotApp, 'sys.classpath.json')
+        mutableClient.updateCube(ncube)
+        createCubeFromResource(defaultSnapshotApp, 'sys.classpath.local.json')
+        createCubeFromResource(defaultSnapshotApp, 'sys.classpath.base.json')
     }
 
     /**
@@ -2146,9 +1939,24 @@ class TestNCubeManager
      */
     private static List<NCubeInfoDto> getDeletedCubesFromDatabase(ApplicationID appId, String pattern)
     {
-        Map options = new HashMap();
-        options.put(SEARCH_DELETED_RECORDS_ONLY, true);
+        Map options = new HashMap()
+        options.put(SEARCH_DELETED_RECORDS_ONLY, true)
 
-        return NCubeManager.search(appId, pattern, null, options);
+        return mutableClient.search(appId, pattern, null, options)
+    }
+
+    private static boolean checkVersions(Object[] vers, String version)
+    {
+        boolean foundVer
+        for (String ver : vers)
+        {
+            foundVer = checkContainsIgnoreCase(ver, version, 'SNAPSHOT')
+            if (foundVer)
+            {
+                break
+
+            }
+        }
+        return boolean
     }
 }

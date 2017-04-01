@@ -1,9 +1,6 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.TrackingMap
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 /**
@@ -24,24 +21,12 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestInputKeysUsed
+class TestInputKeysUsed extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testKeyTracking()
     {
-        NCube ncube = NCubeBuilder.getTrackingTestCube()
+        NCube ncube = NCubeBuilder.trackingTestCube
         Map input = [column: 'A', Age: 7]
         Map output = [:]
         def x = ncube.getCell(input, output)
@@ -55,7 +40,7 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingWithContainsKeyAccess()
     {
-        NCube ncube = NCubeBuilder.getTrackingTestCube()
+        NCube ncube = NCubeBuilder.trackingTestCube
         Map input = [column: 'B']
         Map output = [:]
         ncube.getCell(input, output)
@@ -87,7 +72,7 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingInputAccessedInCode()
     {
-        NCube ncube = NCubeBuilder.getTrackingTestCube()
+        NCube ncube = NCubeBuilder.trackingTestCube
         Map input = [column: 'A', Row: 1, Age: 7]
         Map output = [:]
         ncube.getCell(input, output)
@@ -102,7 +87,7 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingAllInputProvided()
     {
-        NCube ncube = NCubeBuilder.getTrackingTestCube()
+        NCube ncube = NCubeBuilder.trackingTestCube
         Map input = [column: 'A', Row: 1, Age: 7, weight: 210]
         Map output = [:]
         ncube.getCell(input, output)
@@ -117,10 +102,12 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingNested()
     {
-        NCube ncube = NCubeBuilder.getTrackingTestCube()
-        NCube ncube2 = NCubeBuilder.getTrackingTestCubeSecondary()
-        NCubeManager.addCube(ApplicationID.testAppId, ncube)
-        NCubeManager.addCube(ApplicationID.testAppId, ncube2)
+        NCube ncube = NCubeBuilder.trackingTestCube
+        NCube ncube2 = NCubeBuilder.trackingTestCubeSecondary
+        ncube.applicationID = ApplicationID.testAppId
+        ncube2.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(ncube)
+        runtimeClient.addCube(ncube2)
 
         Map input = [Column: 'B', Row:1, state:'OH']
         Map output = [:]
@@ -139,7 +126,7 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingInRuleConditions()
     {
-        NCube ncube = NCubeBuilder.getSimpleAutoRule()
+        NCube ncube = NCubeBuilder.simpleAutoRule
         Map output = [:]
         ncube.getCell([rate:0], output)
         Set keys = NCube.getRuleInfo(output).getInputKeysUsed()
@@ -162,7 +149,7 @@ class TestInputKeysUsed
     @Test
     void testKeyTrackingMetaPropertyWithExp()
     {
-        NCube ncube = NCubeBuilder.getMetaPropWithFormula()
+        NCube ncube = NCubeBuilder.metaPropWithFormula
         Map output = [:]
         def formula = ncube.getMetaProperty("formula")
         ncube.extractMetaPropertyValue(formula, [:], output)

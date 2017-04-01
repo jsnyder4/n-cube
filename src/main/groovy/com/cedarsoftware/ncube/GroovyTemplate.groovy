@@ -34,7 +34,7 @@ import java.util.regex.Pattern
 @CompileStatic
 class GroovyTemplate extends ContentCmdCell
 {
-    private Template resolvedTemplate
+    private transient Template resolvedTemplate
 
     //  Private constructor only for serialization.
     private GroovyTemplate() { }
@@ -110,7 +110,7 @@ class GroovyTemplate extends ContentCmdCell
             cmd = replaceScriptletNCubeRefs(cmd, Regexes.velocityPattern, '${', '}')
 
             NCube ncube = getNCube(ctx)
-            URLClassLoader urlLoader = NCubeManager.getUrlClassLoader(ncube.applicationID, getInput(ctx))
+            URLClassLoader urlLoader = runtimeClient.getUrlClassLoader(ncube.applicationID, getInput(ctx))
             InputStream inStream = urlLoader.getResourceAsStream("ncube/grv/closure/NCubeTemplateClosures.groovy")
             String groovyClosures = new String(IOUtilities.inputStreamToBytes(inStream))
             IOUtilities.close(inStream)

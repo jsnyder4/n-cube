@@ -1,8 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 /**
@@ -23,20 +21,8 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestDynamicProperties
+class TestDynamicProperties extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     public static Map getCprMap(String prop, String bu, String env)
     {
         return [cprName:prop, env:env, bu:bu]
@@ -50,7 +36,7 @@ class TestDynamicProperties
     @Test
     void testCprStyleProperties()
     {
-        NCube cpr = NCubeManager.getNCubeFromResource 'cpr.json'
+        NCube cpr = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cpr.json')
 
         assert 'CPR' == cpr.name
 

@@ -1,9 +1,11 @@
 package com.cedarsoftware.ncube
+
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.atomic.AtomicBoolean
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  * @author Ken Partlow (kpartlow@gmail.com)
@@ -25,7 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 @CompileStatic
 abstract class UrlCommandCell implements CommandCell
 {
-    private static final Logger LOG = LogManager.getLogger(UrlCommandCell.class)
+    protected static NCubeRuntimeClient ncubeRuntimeClient
+    private static final Logger LOG = LoggerFactory.getLogger(UrlCommandCell.class)
     private String cmd
     private volatile transient String errorMsg = null
     private final String url
@@ -37,7 +40,10 @@ abstract class UrlCommandCell implements CommandCell
     private boolean cacheable
 
     //  Private constructor only for serialization.
-    protected UrlCommandCell() { this.url = null }
+    protected UrlCommandCell()
+    {
+        this.url = null
+    }
 
     UrlCommandCell(String cmd, String url, boolean cacheable)
     {
@@ -55,6 +61,15 @@ abstract class UrlCommandCell implements CommandCell
         this.cmd = cmd
         this.cacheable = cacheable
         this.hash = cmd == null ? url.hashCode() : cmd.hashCode()
+    }
+
+    NCubeRuntimeClient getRuntimeClient()
+    {
+        if (ncubeRuntimeClient == null)
+        {
+            ncubeRuntimeClient = NCubeAppContext.runtimeClient
+        }
+        return ncubeRuntimeClient
     }
 
     String getUrl()
@@ -81,6 +96,7 @@ abstract class UrlCommandCell implements CommandCell
     // When no L3, use this (also see GroovyBase)
     void clearClassLoaderCache()
     {
+        hasBeenCached.set(false)
         if (cache == null)
         {
             return
@@ -110,7 +126,7 @@ abstract class UrlCommandCell implements CommandCell
         {   // Try URL resolution twice (HTTP HEAD called for connecting relative URLs to sys.classpath)
             try
             {
-                return NCubeManager.getActualUrl(getNCube(ctx).applicationID, url, getInput(ctx))
+                return runtimeClient.getActualUrl(getNCube(ctx).applicationID, url, getInput(ctx))
             }
             catch(Exception e)
             {

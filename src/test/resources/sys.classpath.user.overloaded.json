@@ -72,7 +72,7 @@
     {
       "id": [],
       "type": "exp",
-      "value": "Map map = NCubeManager.getSystemParams(); String version = map?.containsKey('version') ? map.version : input.version; String urlBase = map?.containsKey('cpBase') ? map.cpBase : ('https://www.foo.com/' + version + '/'); new CdnClassLoader([urlBase + 'public/',urlBase + 'private/',urlBase + 'private/groovy/']);"
+      "value": "Map map = getSystemParams(); String version = map?.containsKey('version') ? map.version : input.version; String urlBase = map?.containsKey('cpBase') ? map.cpBase : ('https://www.foo.com/' + version + '/'); new CdnClassLoader([urlBase + 'public/',urlBase + 'private/',urlBase + 'private/groovy/']);"
     }
   ]
 }

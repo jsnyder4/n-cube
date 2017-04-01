@@ -2,8 +2,8 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 /**
  * Process a binary type (byte[]) that is specified at a URL.
@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger
 @CompileStatic
 class BinaryUrlCmd extends ContentCmdCell
 {
-    private static final Logger LOG = LogManager.getLogger(BinaryUrlCmd.class)
+    private static final Logger LOG = LoggerFactory.getLogger(BinaryUrlCmd.class)
     //  Private constructor only for serialization.
     private BinaryUrlCmd() {}
 

@@ -31,7 +31,7 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public interface CdnRoutingProvider
+interface CdnRoutingProvider
 {
     void setupCoordinate(Map coord)
     boolean isAuthorized(String type)

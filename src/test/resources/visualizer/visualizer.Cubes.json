@@ -1,0 +1,54 @@
+{
+  "ncube":"visualizer.Cubes",
+  "axes":[
+    {
+      "id":2,
+      "name":"cubeType",
+      "hasDefault":false,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":0,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":2000262993033,
+          "type":"string",
+          "value":"config"
+        },
+        {
+          "id":2001773512065,
+          "type":"string",
+          "value":"nonRpm"
+        },
+        {
+          "id":2000255601400,
+          "type":"string",
+          "value":"rpm"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        2001773512065
+      ],
+      "type":"exp",
+      "value":"output.nonRpmNames=  [\n\n\t//Util cubes\n\t'visualizer.Cubes',\n\t'visualizer.readJsonOnLocalToCubes',\n\t'visualizer.writeCubesToJsonOnLocal',\n\n\t//Used in unit tests of non-rpm visualizer logic\n\t'CubeHasCircularRef1',\n\t'CubeHasCircularRef2',\n\t'CubeHasRefsToTwoCubesInSameCell',\n\t'CubeHasRefToNotExistsCube',\n\t'CubeHasTwoRefsToSameCube',\n\t'CubeWithCoordinateNotFoundCell',\n\t'CubeWithCoordinateNotFoundCellDueToTwoNotFoundValues',\n\t'CubeWithDefaultsAndNoValues',\n\t'CubeWithExceptionCell',\n\t'CubeWithExecutedCell',\n\t'CubeWithExecutedCellAndThreeTypesExceptionCells',\n\t'CubeWithExecutedCellsWithURLs',\n\t'CubeWithInvalidCoordinateCell',\n\t'CubeWithInvalidCoordinateCellDueToTwoInvalidKeys',\n\t'CubeWithNoDefaultsAndNoValues',\n\t'CubeWithRefs',\n\t'CubeWithSingleValue',\n        'CubeCallingCubeWithDefaultColumn',\n        'CubeWithDefaultColumn',\n\t'RuleCubeWithAllDefaults',\n\t'RuleCubeWithAllDefaultsAndOnlyDefaultValues'\n]"
+    },
+    {
+      "id":[
+        2000255601400
+      ],
+      "type":"exp",
+      "value":"output.rpmNames=  [\n\n\t//Used in unit tests of rpm visualizer logic for EPM (from UD.REF.APP)\n\t'rpm.class.Coverage',\n\t'rpm.class.Product',\n\t'rpm.class.Risk',\n\t'rpm.enum.Coverage.Coverages',\n\t'rpm.enum.Product.Risks',\n\t'rpm.enum.Risk.Coverages',\n\t'rpm.enum.Risk.Risks',\n\t'rpm.scope.class.Coverage.classTraits',\n\t'rpm.scope.class.Coverage.traits',\n\t'rpm.scope.class.Coverage.traits.field1And2',\n\t'rpm.scope.class.Coverage.traits.field3CovC',\n\t'rpm.scope.class.Coverage.traits.field3CovI',\n\t'rpm.scope.class.Coverage.traits.fieldACoverage',\n\t'rpm.scope.class.Coverage.traits.fieldBCoverage',\n\t'rpm.scope.class.Coverage.traits.fieldCCoverage',\n        'rpm.scope.class.Coverage.traits.fieldTCoverage',\n\t'rpm.scope.class.Coverage.traits.field4',\n\t'rpm.scope.class.Coverage.traits.StatCode',\n\t'rpm.scope.class.Product.classTraits',\n\t'rpm.scope.class.Product.traits',\n\t'rpm.scope.class.Risk.classTraits',\n\t'rpm.scope.class.Risk.traits',\n\t'rpm.scope.class.Risk.traits.Coverages',\n\t'rpm.scope.class.Risk.traits.Risks',\n\t'rpm.scope.class.Risk.traits.fieldARisk',\n\t'rpm.scope.class.Risk.traits.fieldBRisk',\n\t'rpm.scope.class.Risk.traits.fieldDRisk',\n\t'rpm.scope.enum.Coverage.Coverages.traits',\n\t'rpm.scope.enum.Product.Risks.traits',\n        'rpm.scope.enum.Product.Risks.traits.exists',\n        'rpm.scope.enum.Product.Risks.traits.exists.category',\n\t'rpm.scope.enum.Risk.Coverages.traits',\n        'rpm.scope.enum.Risk.Coverages.traits.exists',\n\t'rpm.scope.enum.Risk.Risks.traits',\n\t'rpm.class.DataElementInventory',\n\t'rpm.enum.dataelement.PrintWaiverIndicator',\n\n\t//Used in unit tests of rpm visualizer logic for EPM (from Library)\n\t'Product',\n\t'Risk',\n\t'Coverage',\n\n\t//Used in unit tests of rpm visualizer logic for EPM (from Transforms)\n\t'rpm',\n\n\t//Used in unit tests of rpm visualizer logic for EPM (from ENT.APP)\n\t'ent.manual.BusinessDivision',\n\t'ent.manual.State',\n\n\t//Used in unit tests of rpm visualizer logic for non-EPM (from UD.REF.APP)\n\t'rpm.class.party.BaseParty',\n\t'rpm.class.party.MoreNamedInsured',\n\t'rpm.class.party.ProfitCenter',\n\t'rpm.class.partyrole.BasePartyRole',\n\t'rpm.class.partyrole.LossPrevention',\n\t'rpm.enum.partyrole.BasePartyRole.Parties',\n]"
+    },
+    {
+      "id":[
+        2000262993033
+      ],
+      "type":"exp",
+      "value":"output.configNames = [\n\n//Configuration cubes\n'VisualizerConfig',\n'VisualizerConfig.NetworkOverrides',\n'VisualizerTypesToAdd'\n\n]"
+    }
+  ]
+}

@@ -2,8 +2,6 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnRouter
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 import javax.servlet.http.HttpServletRequest
@@ -39,7 +37,7 @@ import static org.mockito.Mockito.when
  *         limitations under the License.
  */
 @CompileStatic
-class TestUrlCommandCell
+class TestUrlCommandCell extends NCubeBaseTest
 {
     @Test
     void testDefaultConstructorIsProtected()
@@ -50,22 +48,10 @@ class TestUrlCommandCell
         assert Modifier.ABSTRACT == (c.modifiers & Modifier.ABSTRACT)
     }
 
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testCachingInputStreamRead()
     {
-        String s = 'foo-bar';
+        String s = 'foo-bar'
         ByteArrayInputStream stream = new ByteArrayInputStream(s.getBytes('UTF-8'))
         ContentCmdCell.CachingInputStream input = new ContentCmdCell.CachingInputStream(stream)
 
@@ -82,41 +68,41 @@ class TestUrlCommandCell
     @Test
     void testUrlCommandCellCompareTo()
     {
-        GroovyExpression exp1 = new GroovyExpression("true", null, false);
-        GroovyExpression exp2 = new GroovyExpression("false", null, false);
-        GroovyExpression exp3 = new GroovyExpression(null, "http://www.foo.com", false);
-        GroovyExpression exp4 = new GroovyExpression(null, "http://www.bar.com", false);
+        GroovyExpression exp1 = new GroovyExpression("true", null, false)
+        GroovyExpression exp2 = new GroovyExpression("false", null, false)
+        GroovyExpression exp3 = new GroovyExpression(null, "http://www.foo.com", false)
+        GroovyExpression exp4 = new GroovyExpression(null, "http://www.bar.com", false)
 
-        GroovyExpression expDup = new GroovyExpression("true", null, false);
+        GroovyExpression expDup = new GroovyExpression("true", null, false)
 
-        assertTrue(exp1.compareTo(exp2) > 1);
-        assertTrue(exp1.compareTo(exp3) > 1);
-        assertTrue(exp1.compareTo(exp4) > 1);
-        assertTrue(exp1.compareTo(expDup) == 0);
+        assertTrue(exp1.compareTo(exp2) > 1)
+        assertTrue(exp1.compareTo(exp3) > 1)
+        assertTrue(exp1.compareTo(exp4) > 1)
+        assertTrue(exp1.compareTo(expDup) == 0)
 
-        assertTrue(exp3.compareTo(exp1) < 1);
-        assertTrue(exp3.compareTo(exp2) < 1);
-        assertTrue(exp3.compareTo(exp4) > 1);
+        assertTrue(exp3.compareTo(exp1) < 1)
+        assertTrue(exp3.compareTo(exp2) < 1)
+        assertTrue(exp3.compareTo(exp4) > 1)
 
-        assertTrue(exp2.compareTo(exp1) < 1);
-        assertTrue(exp2.compareTo(exp3) > 1);
-        assertTrue(exp2.compareTo(exp4) > 1);
+        assertTrue(exp2.compareTo(exp1) < 1)
+        assertTrue(exp2.compareTo(exp3) > 1)
+        assertTrue(exp2.compareTo(exp4) > 1)
 
 
-        assertTrue(exp4.compareTo(exp1) < 1);
-        assertTrue(exp4.compareTo(exp2) < 1);
-        assertTrue(exp4.compareTo(exp3) < 1);
+        assertTrue(exp4.compareTo(exp1) < 1)
+        assertTrue(exp4.compareTo(exp2) < 1)
+        assertTrue(exp4.compareTo(exp3) < 1)
     }
 
 
     @Test
     void testCachingInputStreamReadBytes()
     {
-        String s = 'foo-bar';
+        String s = 'foo-bar'
         ByteArrayInputStream stream = new ByteArrayInputStream(s.getBytes('UTF-8'))
         ContentCmdCell.CachingInputStream input = new ContentCmdCell.CachingInputStream(stream)
 
-        byte[] bytes = new byte[7];
+        byte[] bytes = new byte[7]
         assert 7 == input.read(bytes, 0, 7)
         assert 'foo-bar' == new String(bytes, 'UTF-8')
         assert -1 == input.read(bytes, 0, 7)
@@ -131,7 +117,7 @@ class TestUrlCommandCell
 
         protected def executeInternal(Object data, Map<String, Object> ctx)
         {
-            return null;
+            return null
         }
     }
 
@@ -158,7 +144,7 @@ class TestUrlCommandCell
         assert !cell.equals('String')
 
         Map coord = ['content.type':'view','content.name':'badProtocol'] as Map
-        NCube cube = NCubeManager.getNCubeFromResource('cdnRouterTest.json')
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         try
         {
             cube.getCell(coord)
@@ -166,7 +152,7 @@ class TestUrlCommandCell
         }
         catch (Throwable e)
         {
-            e = e.getCause()
+            e = e.cause
             assert e.message.toLowerCase().contains('invalid url in cell')
             assert e.message.toLowerCase().contains('malformed')
         }

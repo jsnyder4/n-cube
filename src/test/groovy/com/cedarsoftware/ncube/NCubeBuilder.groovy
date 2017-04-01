@@ -317,11 +317,6 @@ class NCubeBuilder
         return ncube
     }
 
-    static NCube getSysClassPathCube()
-    {
-        return NCubeManager.getNCubeFromResource("sys.classpath.tests.json")
-    }
-
     static NCube getMetaPropWithFormula()
     {
         return NCube.fromSimpleJson('''\
@@ -1029,8 +1024,7 @@ class NCubeBuilder
       "transformVersion": null,
       "transformStatus": null,
       "transformBranch": null,
-      "transformCubeName": null,
-      "transformMethodName": null
+      "transformCubeName": null
     }
   ],
   "cells": [

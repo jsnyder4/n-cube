@@ -1,8 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 /**
@@ -23,24 +21,12 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestCubeLevelDefault
+class TestCubeLevelDefault extends NCubeBaseTest
 {
-    @Before
-    void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testDefaultExpression()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource('TestCubeLevelDefault.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'TestCubeLevelDefault.json')
         assert 1 == ncube.getCell([age:10, 'state':'OH'] as Map)
         assert 2 == ncube.getCell([age:10, 'state':'NJ'] as Map)
         assert 3 == ncube.getCell([age:10, 'state':'TX'] as Map)
@@ -51,7 +37,7 @@ class TestCubeLevelDefault
     @Test
     void testDefaultExpressionWithCaching()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource('TestCubeLevelDefaultCache.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'TestCubeLevelDefaultCache.json')
         assert 1 == ncube.getCell([age:10, 'state':'OH'] as Map)
         assert 2 == ncube.getCell([age:10, 'state':'NJ'] as Map)
         assert 3 == ncube.getCell([age:10, 'state':'TX'] as Map)
@@ -69,12 +55,12 @@ class TestCubeLevelDefault
     @Test
     void testGetCellDefault()
     {
-        NCube cube = NCubeBuilder.getDiscrete1DEmpty()
+        NCube cube = NCubeBuilder.discrete1DEmpty
         assert null == cube.getCell([state: 'OH'] as Map)
         assert null == cube.getCell([state: 'TX'] as Map)
 
         String m = 'money'
-        cube.setDefaultCellValue(m)
+        cube.defaultCellValue = m
         assert m == cube.getCell([state: 'OH'] as Map)
         assert m == cube.getCell([state: 'TX'] as Map)
         assert m.is(cube.getCell([state: 'OH'] as Map))
@@ -86,7 +72,7 @@ class TestCubeLevelDefault
         assert m.is(cube.getCell([state: 'OH'] as Map, [:], c))
         assert m.is(cube.getCell([state: 'TX'] as Map, [:], c))
 
-        cube.setDefaultCellValue(null)
+        cube.defaultCellValue = null
         assert c == cube.getCell([state: 'OH'] as Map, [:], c)
         assert c == cube.getCell([state: 'TX'] as Map, [:], c)
         assert c.is(cube.getCell([state: 'OH'] as Map, [:], c))
@@ -95,7 +81,7 @@ class TestCubeLevelDefault
 
     private void assertSha1Calculation(String jsonFile)
     {
-        String json = NCubeManager.getResourceAsString(jsonFile)
+        String json = NCubeRuntime.getResourceAsString(jsonFile)
 
         NCube x = NCube.fromSimpleJson(json)
         String json2 = x.toFormattedJson()

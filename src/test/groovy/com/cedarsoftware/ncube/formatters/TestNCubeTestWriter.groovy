@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube.formatters
 import com.cedarsoftware.ncube.CellInfo
 import com.cedarsoftware.ncube.NCubeTest
 import com.cedarsoftware.util.CaseInsensitiveMap
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertEquals
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestNCubeTestWriter
 {
     private NCubeTest verySimpleTest = new NCubeTest("foo", new CaseInsensitiveMap<String, CellInfo>(), [] as CellInfo[])
@@ -33,20 +35,13 @@ class TestNCubeTestWriter
     {
         NCubeTest[] tests = [verySimpleTest] as NCubeTest[]
         String s = new NCubeTestWriter().format tests
-        assertEquals '[{"name":"foo","coord":[],"assertions":[]}]', s
-    }
-
-    @Test
-    void testNullCase()
-    {
-        String s = new NCubeTestWriter().format null
-        assertEquals '[]', s
+        assertEquals('[{"name":"foo","coord":[],"assertions":[]}]', s)
     }
 
     @Test
     void testEmptyCase()
     {
         String s = new NCubeTestWriter().format new NCubeTest[0]
-        assertEquals '[]', s
+        assertEquals('', s)
     }
 }

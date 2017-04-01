@@ -1,9 +1,7 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.After
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
 
 import java.lang.reflect.Constructor
@@ -30,20 +28,8 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestBinaryUrlCmd
+class TestBinaryUrlCmd extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
     {

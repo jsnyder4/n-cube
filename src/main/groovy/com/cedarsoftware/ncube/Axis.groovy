@@ -5,11 +5,7 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.ncube.util.LongHashSet
-import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.MapUtilities
-import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
 import com.google.common.collect.TreeRangeMap
@@ -17,22 +13,9 @@ import gnu.trove.map.hash.TLongObjectHashMap
 import groovy.transform.CompileStatic
 
 import java.security.SecureRandom
-import java.util.concurrent.atomic.AtomicLong
 import java.util.regex.Matcher
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_METHOD_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.TRANSFORM_VERSION
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static java.lang.Math.abs
 
 /**
@@ -71,7 +54,6 @@ class Axis
     public static final String DONT_CARE = '_︿_ψ_☼'
     public static final int SORTED = 0
     public static final int DISPLAY = 1
-    private static final AtomicLong BASE_AXIS_ID_FOR_TESTING = new AtomicLong(1)
     protected static final long BASE_AXIS_ID = 1000000000000L
     protected static final long MAX_COLUMN_ID = 2000000000L
 
@@ -80,7 +62,7 @@ class Axis
     private AxisValueType valueType
     protected Map<String, Object> metaProps = null
     private Column defaultCol
-    protected final long id
+    protected long id
     private int preferredOrder = SORTED
     protected boolean fireAll = true
     private boolean isRef
@@ -112,12 +94,6 @@ class Axis
     // for construction during serialization
     private Axis() { id=0 }
 
-    // for testing
-    protected Axis(String name, AxisType type, AxisValueType valueType, boolean hasDefault, int order = SORTED)
-    {
-        this(name, type, valueType, hasDefault, order, BASE_AXIS_ID_FOR_TESTING.getAndIncrement())
-    }
-
     /**
      * Use this constructor for non-rule Axes.
      * @param name String Axis name
@@ -130,7 +106,7 @@ class Axis
      * statements executed.  If set to false, the first condition that evaluates to true will be executed, but
      * then no conditions on the RULE axis will be evaluated.
      */
-    Axis(String name, AxisType type, AxisValueType valueType, boolean hasDefault, int order, long id, boolean fireAll = true)
+    Axis(String name, AxisType type, AxisValueType valueType, boolean hasDefault, int order = SORTED, long id = 1, boolean fireAll = true)
     {
         isRef = false
         this.id = id
@@ -199,6 +175,23 @@ class Axis
         if (preferredOrder != DISPLAY && preferredOrder != SORTED)
         {
             throw new IllegalStateException("preferred order not set, axis: ${name}")
+        }
+    }
+
+    /**
+     * Re-index the axis (optionally assign new ID to the axis).
+     * @param newId long optional new axis id
+     */
+    protected void reindex(long newId = getId())
+    {
+        id = newId
+        List<Column> columns = columns
+        clearIndexes()
+        long axisIdPart = BASE_AXIS_ID * id
+        for (Column column : columns)
+        {
+            column.id = axisIdPart + column.id % BASE_AXIS_ID
+            indexColumn(column)
         }
     }
 
@@ -555,6 +548,14 @@ class Axis
     long getId()
     {
         return id
+    }
+
+    /**
+     * Set long id of this Axis
+     */
+    void setId(long id)
+    {
+        this.id = id
     }
 
     /**
@@ -1220,7 +1221,7 @@ class Axis
         {
             if (value instanceof String)
             {
-                return parseSet(value)
+                return parseSet(value as String)
             }
             else if (value instanceof Range)
             {

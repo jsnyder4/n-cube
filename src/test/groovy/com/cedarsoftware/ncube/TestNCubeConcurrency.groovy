@@ -1,9 +1,6 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.Executor
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
@@ -30,20 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  *         limitations under the License.
  */
 @CompileStatic
-class TestNCubeConcurrency
+class TestNCubeConcurrency extends NCubeBaseTest
 {
-    @Before
-    void initialize()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     // Breaks travis-ci build
     @Ignore
     void testConcurrencyWithDifferentFiles()
@@ -92,7 +77,7 @@ class TestNCubeConcurrency
         int numThreads = 8
         long timeToRun = 3000L
         final AtomicBoolean failed = new AtomicBoolean(false)
-        NCube n1 = NCubeManager.getNCubeFromResource('urlContent.json')
+        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
 
         final CountDownLatch startLatch = new CountDownLatch(1)
         final CountDownLatch finishedLatch = new CountDownLatch(numThreads)
@@ -143,7 +128,7 @@ class TestNCubeConcurrency
     @Test
     void testCacheFlag() throws IOException
     {
-        NCube n1 = NCubeManager.getNCubeFromResource('urlContent.json')
+        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def items = new IdentityHashMap()
         def set = new LinkedHashSet()
 

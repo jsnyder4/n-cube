@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
-import org.junit.After
-import org.junit.Before
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import java.awt.*
@@ -23,25 +22,14 @@ import java.awt.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-public class TestSysPrototype
+@CompileStatic
+class TestSysPrototype extends NCubeBaseTest
 {
-    @Before
-    void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testInheritedImports()
     {
-        NCube prototype = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
-        NCube protoTests = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
+        NCube prototype = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
+        NCube protoTests = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
         Map coord = [state:'OH']
         assert protoTests.getCell(coord) == 2
 
@@ -54,8 +42,8 @@ public class TestSysPrototype
     @Test
     void testCustomBaseExpressionClass()
     {
-        NCube prototype = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
-        NCube protoTests = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
+        NCube prototype = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
+        NCube protoTests = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
         Map coord = [state:'TX']
         assert protoTests.getCell(coord) == 70
     }

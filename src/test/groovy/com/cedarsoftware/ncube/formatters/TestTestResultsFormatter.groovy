@@ -1,16 +1,8 @@
 package com.cedarsoftware.ncube.formatters
 
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.CellInfo
-import com.cedarsoftware.ncube.GroovyExpression
-import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeManager
-import com.cedarsoftware.ncube.NCubeTest
-import com.cedarsoftware.ncube.RuleInfo
-import com.cedarsoftware.ncube.TestingDatabaseHelper
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.util.CaseInsensitiveMap
-import org.junit.After
-import org.junit.Before
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 /**
@@ -30,24 +22,13 @@ import org.junit.Test
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestTestResultsFormatter
+@CompileStatic
+class TestTestResultsFormatter extends NCubeBaseTest
 {
-    @Before
-    public void init()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testResultsFromNCube()
     {
-        NCube<String> ncube = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
         def coord = [age:18, state:'OH']
         def output = [:]
         ncube.getCell(coord, output)
@@ -60,7 +41,7 @@ class TestTestResultsFormatter
     @Test
     void testResultsWithOutputAndError()
     {
-        NCube<String> ncube = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
         def coord = [age:18, state:'OH']
         def output = ['foo.age':'56', 'foo.name':'John']
         ncube.getCell coord, output
@@ -68,7 +49,7 @@ class TestTestResultsFormatter
         Set<String> assertionFailures = new HashSet<>()
         assertionFailures.add '[some assertion happened]'
 
-        RuleInfo ruleInfo = (RuleInfo) output.get(NCube.RULE_EXEC_INFO)
+        RuleInfo ruleInfo = output.get(NCube.RULE_EXEC_INFO) as RuleInfo
         ruleInfo.setAssertionFailures(assertionFailures)
 
         String s = new TestResultsFormatter(output).format()

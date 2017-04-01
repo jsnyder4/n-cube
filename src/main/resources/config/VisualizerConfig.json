@@ -1,0 +1,123 @@
+{
+  "ncube": "VisualizerConfig",
+  "axes": [
+    {
+      "id": 2,
+      "name": "cubeType",
+      "hasDefault": true,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 2001950513622,
+          "type": "string",
+          "value": "rpm"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "configItem",
+      "hasDefault": false,
+      "default_value": {
+        "type": "exp",
+        "value": "[:]"
+      },
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 0,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 1001273450632,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "[:]"
+          },
+          "value": "allGroups"
+        },
+        {
+          "id": 1000052809612,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "value": "[] as Set"
+          },
+          "value": "allTypes"
+        },
+        {
+          "id": 1000017855263,
+          "type": "string",
+          "value": "groupSuffix"
+        },
+        {
+          "id": 1001504517186,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "cache": true,
+            "value": "@VisualizerConfig.NetworkOverrides[:]"
+          },
+          "value": "networkOverridesBasic"
+        },
+        {
+          "id": 1001110976360,
+          "type": "string",
+          "default_value": {
+            "type": "exp",
+            "cache": true,
+            "value": "@VisualizerConfig.NetworkOverrides[:]"
+          },
+          "value": "networkOverridesFull"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        1000017855263,
+        2001950513622
+      ],
+      "type": "string",
+      "value": "_ENUM"
+    },
+    {
+      "id": [
+        1000052809612
+      ],
+      "type": "exp",
+      "cache": true,
+      "value": "['n-cube', 'rule cube']"
+    },
+    {
+      "id": [
+        1001273450632,
+        2001950513622
+      ],
+      "type": "exp",
+      "cache": true,
+      "value": "[PRODUCT: 'Product', FORM: 'Form', RISK: 'Risk', COVERAGE: 'Coverage', CONTAINER: 'Container', DEDUCTIBLE: 'Deductible', LIMIT: 'Limit', RATE: 'Rate', RATEFACTOR: 'Rate Factor', PREMIUM: 'Premium', PARTY: 'Party', PLACE: 'Place', ROLE: 'Role', ROLEPLAYER: 'Role Player', UNSPECIFIED: 'Unspecified']"
+    },
+    {
+      "id": [
+        1000052809612,
+        2001950513622
+      ],
+      "type": "exp",
+      "cache": true,
+      "value": "['Product', 'Risk', 'Coverage', 'Container', 'Deductible', 'Limit', 'Rate', 'Ratefactor', 'Premium', 'Party', 'Place', 'Role', 'Roleplayer'] as Set"
+    },
+    {
+      "id": [
+        1001273450632
+      ],
+      "type": "exp",
+      "cache": true,
+      "value": "[NCUBE: 'n-cube', RULE_NCUBE: 'rule cube', UNSPECIFIED: 'Unspecified']"
+    }
+  ]
+}

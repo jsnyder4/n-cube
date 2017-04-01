@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
@@ -16,11 +17,6 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
-import static org.mockito.Matchers.any
-import static org.mockito.Matchers.anyMap
-import static org.mockito.Matchers.eq
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.when
 
 @CompileStatic
 class TestStringReferenceAxis extends CommonStringAxisTests {
@@ -49,25 +45,19 @@ class TestStringReferenceAxis extends CommonStringAxisTests {
         assert null == column
     }
 
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Before
     void setUp() {
-        TestingDatabaseHelper.setupDatabase()
+        ApplicationID appId = ApplicationID.testAppId
         def referenceCube = new NCube<Integer>("SingleStringAxis")
+        referenceCube.applicationID = appId
         def referenceAxis = NCubeBuilder.getGenderAxis(false)
         referenceCube.addAxis(referenceAxis)
         referenceCube.setCell(10, [Gender: 'Male'])
         referenceCube.setCell(11, [Gender: 'Female'])
-        NCubeManager.addCube(ApplicationID.testAppId, referenceCube)
+        runtimeClient.addCube(referenceCube)
         ncube = new NCube<Integer>("SingleStringAxis")
         Map<String, Object> args = [:]
 
-        ApplicationID appId = ApplicationID.testAppId
         args[REF_TENANT] = appId.tenant
         args[REF_APP] = appId.app
         args[REF_VERSION] = appId.version

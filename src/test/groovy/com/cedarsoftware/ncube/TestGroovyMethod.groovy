@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestGroovyMethod
+class TestGroovyMethod extends NCubeBaseTest
 {
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
@@ -67,115 +67,33 @@ class TestGroovyMethod
     }
 
     @Test
-    void testGroovyMethodClearCache()
-    {
-        TestingDatabaseHelper.setupDatabase()
-        ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'GroovyMethodCP', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-
-        NCube cpCube = NCubeManager.getNCubeFromResource appId, 'sys.classpath.cp1.json'
-        NCubeManager.updateCube appId, cpCube, true
-
-        NCube cube = NCubeManager.getNCubeFromResource appId, 'GroovyMethodClassPath1.json'
-        NCubeManager.updateCube appId, cube, true
-
-        NCubeManager.clearCache()
-        cube = NCubeManager.getCube(appId, 'GroovyMethodClassPath1')
-
-        Object x = cube.getCell([method:'foo'])
-        assertEquals 'foo', x
-
-        x = cube.getCell([method:'foo2'])
-        assertEquals 'foo2', x
-
-        x = cube.getCell([method:'bar'])
-        assertEquals 'Bar', x
-
-        cpCube = NCubeManager.getNCubeFromResource appId, 'sys.classpath.cp2.json'
-        NCubeManager.updateCube appId, cpCube, true
-
-        NCubeManager.clearCache()
-        cube = NCubeManager.getCube appId, 'GroovyMethodClassPath1'
-
-        x = cube.getCell([method:'foo'])
-        assertEquals 'boo', x
-
-        x = cube.getCell([method:'foo2'])
-        assertEquals 'boo2', x
-
-        x = cube.getCell([method:'bar'])
-        assertEquals 'far', x
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
-    @Test
-    void testGroovyMethodClearCacheExplicitly()
-    {
-        TestingDatabaseHelper.setupDatabase()
-        ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'GroovyMethodCP', ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
-
-        NCube cpCube = NCubeManager.getNCubeFromResource(appId, 'sys.classpath.cp1.json')
-        NCubeManager.updateCube(appId, cpCube, true)
-
-        NCube cube = NCubeManager.getNCubeFromResource(appId, 'GroovyMethodClassPath1.json')
-        NCubeManager.updateCube(appId, cube, true)
-
-        NCubeManager.clearCache(appId)
-        cube = NCubeManager.getCube(appId, 'GroovyMethodClassPath1')
-
-        Object x = cube.getCell([method:'foo'])
-        assertEquals 'foo', x
-
-        x = cube.getCell([method:'foo2'])
-        assertEquals('foo2', x)
-
-        x = cube.getCell([method:'bar'])
-        assertEquals('Bar', x)
-
-        cpCube = NCubeManager.getNCubeFromResource(appId, 'sys.classpath.cp2.json')
-        NCubeManager.updateCube(appId, cpCube, true)
-
-        NCubeManager.clearCache(appId)
-        cube = NCubeManager.getCube(appId, 'GroovyMethodClassPath1')
-
-        x = cube.getCell([method:'foo'])
-        assertEquals 'boo', x
-
-        x = cube.getCell([method:'foo2'])
-        assertEquals 'boo2', x
-
-        x = cube.getCell([method:'bar'])
-        assertEquals('far', x)
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
-    @Test
     void testGroovyMethodAsCellInfo()
     {
         GroovyMethod gm = new GroovyMethod(null, "http://whatever.com", false)
         CellInfo cellInfo = new CellInfo(gm)
-        assert cellInfo.isUrl == true
-        assert cellInfo.isCached == false
+        assert cellInfo.isUrl
+        assert !cellInfo.isCached
         assert cellInfo.value == 'http://whatever.com'
         assert cellInfo.dataType == 'method'
 
         gm = new GroovyMethod(null, "http://whatever.com", true)
         cellInfo = new CellInfo(gm)
-        assert cellInfo.isUrl == true
-        assert cellInfo.isCached == true
+        assert cellInfo.isUrl
+        assert cellInfo.isCached
         assert cellInfo.value == 'http://whatever.com'
         assert cellInfo.dataType == 'method'
 
         gm = new GroovyMethod('return "groovy code"', null, false)
         cellInfo = new CellInfo(gm)
-        assert cellInfo.isUrl == false
-        assert cellInfo.isCached == false
+        assert !cellInfo.isUrl
+        assert !cellInfo.isCached
         assert cellInfo.value == 'return "groovy code"'
         assert cellInfo.dataType == 'method'
 
         gm = new GroovyMethod('return "groovy code"', null, true)
         cellInfo = new CellInfo(gm)
-        assert cellInfo.isUrl == false
-        assert cellInfo.isCached == true
+        assert !cellInfo.isUrl
+        assert cellInfo.isCached
         assert cellInfo.value == 'return "groovy code"'
         assert cellInfo.dataType == 'method'
     }

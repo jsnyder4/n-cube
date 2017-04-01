@@ -412,7 +412,6 @@ class DeltaProcessor
                     ref.tx_status = changeTxApp.status
                     ref.tx_branch = changeTxApp.branch
                     ref.tx_cube = changeAxis.transformCubeName
-                    ref.tx_method = changeAxis.transformMethodName
                 }
                 else
                 {
@@ -439,8 +438,7 @@ class DeltaProcessor
             baseAxis.referenceCubeName == changeAxis.referenceCubeName &&
             baseAxis.referenceAxisName == changeAxis.referenceAxisName &&
             baseAxis.transformApp == changeAxis.transformApp &&
-            baseAxis.transformCubeName == changeAxis.transformCubeName &&
-            baseAxis.transformMethodName == changeAxis.transformMethodName
+            baseAxis.transformCubeName == changeAxis.transformCubeName
     }
 
     /**

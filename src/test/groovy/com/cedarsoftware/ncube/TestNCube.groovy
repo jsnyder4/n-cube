@@ -9,18 +9,11 @@ import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
+
 /**
  * NCube tests.
  *
@@ -41,27 +34,15 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestNCube
+class TestNCube extends NCubeBaseTest
 {
     private static final boolean _debug = false
-
-    @Before
-    void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
 
     @Test
     void testPopulateProductLineCube()
     {
         NCube<Object> ncube = new NCube<>("ProductLine")
-        NCubeManager.addCube(ncube.applicationID, ncube)
+        runtimeClient.addCube(ncube)
 
         Axis prodLine = new Axis("PROD_LINE", AxisType.DISCRETE, AxisValueType.STRING, false)
         prodLine.addColumn("CommAuto")
@@ -74,7 +55,7 @@ class TestNCube
         ncube.addAxis(bu)
 
         NCube<String> commAuto = new NCube<>("CommAuto")
-        NCubeManager.addCube(commAuto.applicationID, commAuto)
+        runtimeClient.addCube(commAuto)
         Axis caAttr = new Axis("Attribute", AxisType.DISCRETE, AxisValueType.STRING, false)
         caAttr.addColumn("busType")
         caAttr.addColumn("riskType")
@@ -83,7 +64,7 @@ class TestNCube
         commAuto.addAxis(caAttr)
 
         NCube<String> commGL = new NCube<>("CommGL")
-        NCubeManager.addCube(commGL.applicationID, commGL)
+        runtimeClient.addCube(commGL)
         Axis glAttr = new Axis("Attribute", AxisType.DISCRETE, AxisValueType.STRING, false)
         glAttr.addColumn("busType")
         glAttr.addColumn("riskType")
@@ -92,7 +73,7 @@ class TestNCube
         commGL.addAxis(glAttr)
 
         NCube<String> commIM = new NCube<>("CommIM")
-        NCubeManager.addCube(commIM.applicationID, commIM)
+        runtimeClient.addCube(commIM)
         Axis imAttr = new Axis("Attribute", AxisType.DISCRETE, AxisValueType.STRING, false)
         imAttr.addColumn("busType")
         imAttr.addColumn("riskType")
@@ -102,7 +83,7 @@ class TestNCube
         commIM.addAxis(imAttr)
 
         NCube<String> commSBP = new NCube<>("SBPProperty")
-        NCubeManager.addCube(commSBP.applicationID, commSBP)
+        runtimeClient.addCube(commSBP)
         Axis sbpAttr = new Axis("Attribute", AxisType.DISCRETE, AxisValueType.STRING, false)
         sbpAttr.addColumn("busType")
         sbpAttr.addColumn("riskType")
@@ -218,7 +199,7 @@ class TestNCube
             ncube.addAxis(axis3)
             assertTrue("should throw exception", false)
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalArgumentException ignored)
         {
             assertTrue("should throw exception", true)
         }
@@ -274,9 +255,9 @@ class TestNCube
     {
         NCube<String> ncube = new NCube<String>("existingCells")
         Axis buAxis = new Axis("BU", AxisType.DISCRETE, AxisValueType.STRING, false)
+        ncube.addAxis(buAxis)
         buAxis.addColumn("foo")
         buAxis.addColumn("bar")
-        ncube.addAxis(buAxis)
 
         def coord = [:]
         coord.put("BU", "foo")
@@ -701,7 +682,7 @@ class TestNCube
             assert axis == e.axisName
             assert -20 == e.value
         }
-        catch (Exception e)
+        catch (Exception ignored)
         {
             // varies
         }
@@ -1050,7 +1031,7 @@ class TestNCube
     void testCommandCellLookup()
     {
         NCube<Object> continentCounty = new NCube<Object>("ContinentCountries")
-        NCubeManager.addCube(continentCounty.applicationID, continentCounty)
+        runtimeClient.addCube(continentCounty)
         continentCounty.addAxis(NCubeBuilder.continentAxis)
         Axis countries = new Axis("Country", AxisType.DISCRETE, AxisValueType.STRING, true)
         countries.addColumn("Canada")
@@ -1058,11 +1039,11 @@ class TestNCube
         continentCounty.addAxis(countries)
 
         NCube<Object> canada = new NCube<Object>("Provinces")
-        NCubeManager.addCube(canada.applicationID, canada)
+        runtimeClient.addCube(canada)
         canada.addAxis(NCubeBuilder.provincesAxis)
 
         NCube<Object> usa = new NCube<Object>("States")
-        NCubeManager.addCube(usa.applicationID, usa)
+        runtimeClient.addCube(usa)
         usa.addAxis(NCubeBuilder.statesAxis)
 
         Map coord1 = [Continent:'North America', Country:'USA', State:'OH'] as Map
@@ -1083,7 +1064,7 @@ class TestNCube
     void testBadCommandCellLookup()
     {
         NCube<Object> continentCounty = new NCube<Object>("ContinentCountries")
-        NCubeManager.addCube(continentCounty.applicationID, continentCounty)
+        runtimeClient.addCube(continentCounty)
         continentCounty.addAxis(NCubeBuilder.continentAxis)
         Axis countries = new Axis("Country", AxisType.DISCRETE, AxisValueType.STRING, true)
         countries.addColumn("Canada")
@@ -1091,11 +1072,11 @@ class TestNCube
         continentCounty.addAxis(countries)
 
         NCube canada = new NCube("Provinces")
-        NCubeManager.addCube(canada.applicationID, canada)
+        runtimeClient.addCube(canada)
         canada.addAxis(NCubeBuilder.provincesAxis)
 
         NCube usa = new NCube("States")
-        NCubeManager.addCube(usa.applicationID, usa)
+        runtimeClient.addCube(usa)
         usa.addAxis(NCubeBuilder.statesAxis)
 
         Map coord1 = [Continent:'North America', Country:'USA', State:'OH'] as Map
@@ -1533,7 +1514,7 @@ class TestNCube
     @Test
     void testNearestAxisType()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("point2d.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'point2d.json')
 
         def coord = [:]
 
@@ -1623,12 +1604,11 @@ class TestNCube
     @Test
     void testLatLonAxisType()
     {
-        def coord = [:]
-        NCube cube = NCubeManager.getNCubeFromResource("latlon.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'latlon.json')
 
         String axisName = "Lat / Lon"
 
-        coord = new HashMap<String, Object>()
+        Map coord = new HashMap<String, Object>()
         coord.put("Lat / Lon", new LatLon(25, -112))
         assertEquals("Austin", cube.getCell(coord))
 
@@ -1657,7 +1637,7 @@ class TestNCube
     @Test
     void testSimpleJson1()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube6.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube6.json')
         assertTrue("TestCube".equals(ncube.name))
         Calendar cal = Calendar.instance
         cal.clear()
@@ -1686,7 +1666,7 @@ class TestNCube
     @Test
     void testSimpleJson2()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube5.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube5.json')
         def coord = [:]
         coord.put("Age", 10)
         assertEquals((Double) ncube.getCell(coord), 9.0d, 0.00001d)
@@ -1705,7 +1685,7 @@ class TestNCube
     @Test
     void testSimpleJson3()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube4.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube4.json')
         def coord = [:]
 
         coord.put("Code", "a")
@@ -1826,7 +1806,7 @@ class TestNCube
     @Test
     void testNearestLong()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube3.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube3.json')
         def coord = [:]
         coord.put("Code", 1)
         assertTrue("DEF".equals(ncube.getCell(coord)))
@@ -1839,7 +1819,7 @@ class TestNCube
     @Test
     void testNearestDouble()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube2.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube2.json')
         def coord = [:]
         coord.put("Code", 1.0f)
         assertTrue("DEF".equals(ncube.getCell(coord)))
@@ -1852,7 +1832,7 @@ class TestNCube
     @Test
     void testNearestDate()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testCube1.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube1.json')
         def coord = [:]
         Calendar cal = Calendar.instance
         cal.clear()
@@ -2020,7 +2000,7 @@ class TestNCube
     @Test
     void test2DSimpleJson()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("2DSimpleJson.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2DSimpleJson.json')
         def coord = [:]
         coord["businessDivisionCode"] = "ALT"
         coord["attribute"] = "workflowAppCode"
@@ -2172,8 +2152,8 @@ class TestNCube
         naCountries.addAxis(country)
 
         naCountries.setCell(new GroovyExpression("\$UsaStates(input)", null, false), coord)
-        NCubeManager.addCube(continents.applicationID, continents)
-        NCubeManager.addCube(naCountries.applicationID, naCountries)
+        runtimeClient.addCube(continents)
+        runtimeClient.addCube(naCountries)
 
         try
         {
@@ -2268,14 +2248,14 @@ class TestNCube
     @Test(expected=RuntimeException.class)
     void testInvalidTemplate()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource("template-with-error.json")
+        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template-with-error.json')
         n1.getCell([State:'TX'] as Map)
     }
 
     @Test
     void testUpdateColumnValue()
     {
-        NCube n1 = NCubeManager.getNCubeFromResource("updateColumns.json")
+        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'updateColumns.json')
         Axis state = n1.getAxis("state")
         Column col = state.findColumn("WY")
 
@@ -2308,9 +2288,9 @@ class TestNCube
     @Test
     void testBinaryUrl()
     {
-        NCubeManager.getNCubeFromResource("template1.json")
-        NCubeManager.getNCubeFromResource("template2.json")
-        NCube n1 = NCubeManager.getNCubeFromResource("urlContent.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template1.json')
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template2.json')
+        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def coord = [:]
         coord.put("sites", "BinaryFromLocalUrl")
         byte[] localBinaryBytes = (byte[]) n1.getCell(coord)
@@ -2480,7 +2460,6 @@ class TestNCube
         axis.addColumn("bad")
         axis.addColumn("scalar")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         def coord = [:]
         coord.put("type", "good")
@@ -2512,7 +2491,6 @@ class TestNCube
         axis.addColumn("bad")
         axis.addColumn("scalar")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         Map input = new HashMap()
         input.put("type", "bad")
@@ -2534,7 +2512,6 @@ class TestNCube
         axis.addColumn("bad")
         axis.addColumn("property")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         def coord = [:]
         coord.put("type", "good")
@@ -2566,7 +2543,6 @@ class TestNCube
         axis.addColumn(35)
         axis.addColumn(45)
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         def coord = [:]
         coord.put("age", 25)
@@ -2579,87 +2555,6 @@ class TestNCube
     }
 
     @Test
-    void testGroovyTwoMethods()
-    {
-        NCube ncube = new NCube("GroovyCube")
-        Axis axis = new Axis("method", AxisType.DISCRETE, AxisValueType.STRING, false)
-        axis.addColumn("doIt")
-        axis.addColumn("bar")
-        axis.addColumn("baz")
-        ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
-
-        def coord = [:]
-        coord.put("method", "doIt")
-        coord.put("age", 25)
-        ncube.setCell(new GroovyMethod(
-                "package ncube.grv.method; class Junk extends NCubeGroovyController " +
-                        "{\n" +
-                        "def doIt() {\n" +
-                        " int x = input.age * 10;" +
-                        " jump(x)" +
-                        "}\n" +
-                        "int jump(int x) { x * 2; }" +
-                        "}", null, false), coord)
-
-        def output = [:]
-        coord.put("method", "doIt")
-        coord.put("age", 25)
-        long start = System.currentTimeMillis()
-        Object o = null
-        for (int i = 0; i < 100000; i++)
-        {
-            o = ncube.getCell(coord, output)
-        }
-        long stop = System.currentTimeMillis()
-        println("execute GroovyMethod 100,000 times = " + (stop - start))
-        assertEquals(o, 500)
-    }
-
-    @Test
-    void testGroovyTwoMethodsAndClass()
-    {
-        NCube ncube = new NCube("GroovyCube")
-        Axis axis = new Axis("age", AxisType.DISCRETE, AxisValueType.LONG, false)
-        axis.addColumn(25)
-        axis.addColumn(35)
-        axis.addColumn(45)
-        ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
-
-        def coord = [:]
-        coord.put("age", 25)
-        coord.put("method", "doIt")
-        ncube.setCell(new GroovyMethod(
-                "package ncube.grv.method; class Junk extends NCubeGroovyController {" +
-                        "def doIt()" +
-                        "{" +
-                        " int x = input['age'] * 10;" +
-                        " return Fargo.freeze(jump(x))" +
-                        "}\n" +
-                        "int jump(int x) { x * 2; }\n" +
-                        "\n" +
-                        "static class Fargo {" +
-                        "static int freeze(int d) {" +
-                        "  -d" +
-                        "}}}", null, false), coord)
-
-        def output = [:]
-        coord.put("age", 25)
-        coord.put("method", "doIt")
-        long start = System.currentTimeMillis()
-        Object o = null
-        for (int i = 0; i < 100000; i++)
-        {
-            o = ncube.getCell(coord, output)
-            assertEquals(o, -500)
-        }
-        long stop = System.currentTimeMillis()
-        println("execute GroovyMethod 100,000 times = " + (stop - start))
-        assertEquals(o, -500)
-    }
-
-    @Test
     void testGroovy()
     {
         NCube ncube = new NCube("GroovyCube")
@@ -2668,7 +2563,6 @@ class TestNCube
         axis.addColumn(35)
         axis.addColumn(45)
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         // Bad command (CommandCell not GroovyProg used)
         Map coord = [:] as Map
@@ -2767,7 +2661,6 @@ class TestNCube
         axis.addColumn("good")
         axis.addColumn("bad")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         // Illustrates that return is optional in expressions
         def coord = [:]
@@ -2799,7 +2692,6 @@ class TestNCube
         axis.addColumn("alpha")
         axis.addColumn("beta")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         def coord = [:]
         coord.put("type", "good")
@@ -2830,7 +2722,6 @@ class TestNCube
         axis.addColumn("alpha")
         axis.addColumn("beta")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
 
         def coord = [:]
         coord.put("type", "good")
@@ -2866,7 +2757,7 @@ class TestNCube
         axis.addColumn("good")
         axis.addColumn("bad")
         ncube.addAxis(axis)
-        NCubeManager.addCube(ncube.applicationID, ncube)
+        runtimeClient.addCube(ncube)
 
         def coord = [:]
         coord.put("type", "good")
@@ -2879,7 +2770,7 @@ class TestNCube
         axis.addColumn("OH")
         axis.addColumn("TX")
         cube2.addAxis(axis)
-        NCubeManager.addCube(cube2.applicationID, cube2)
+        runtimeClient.addCube(cube2)
 
         coord.clear()
         coord.put("type", "good")
@@ -2934,7 +2825,7 @@ class TestNCube
     @Test
     void testSimpleJsonArray()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("simpleJsonArrayTest.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonArrayTest.json')
         def coord = [:]
         coord.put("Code", "ints")
         Object[] ints = (Object[]) ncube.getCell(coord)
@@ -2976,7 +2867,7 @@ class TestNCube
     @Test
     void testSimpleJsonExpression()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("simpleJsonExpression.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonExpression.json')
         Map coord = [:] as Map
         coord.put("code", "exp")
         Object ans = ncube.getCell(coord)
@@ -3050,14 +2941,14 @@ class TestNCube
     @Test(expected=CoordinateNotFoundException.class)
     void testNoColumnsNoCellsNoDefault()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("nocolumns-nocells-nodefault-error.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'nocolumns-nocells-nodefault-error.json')
         ncube.getCell([test:'foo'] as Map)
     }
 
     @Test
     void testNoColumnsNoCellsHasDefault()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("nocolumns-nocells-hasdefault.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'nocolumns-nocells-hasdefault.json')
         assertEquals("bar", ncube.getCell([test:'foo'] as Map))
     }
 
@@ -3066,7 +2957,7 @@ class TestNCube
     {
         // Throws no exception because cell is effectively orphaned.  This test exists so that
         // if we start throwing an exception, this test will need to be updated.
-        NCubeManager.getNCubeFromResource("id-in-cell-does-not-match-columns-error.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'id-in-cell-does-not-match-columns-error.json')
     }
 
     @Test
@@ -3074,13 +2965,13 @@ class TestNCube
     {
         // Throws no exception because cell is effectively orphaned.  This test exists so that
         // if we start throwing an exception, this test will need to be updated.
-        NCubeManager.getNCubeFromResource("url-command-without-value-and-url-error.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'url-command-without-value-and-url-error.json')
     }
 
     @Test
     void testCaseInsensitiveCoordinate()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("simpleJsonArrayTest.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonArrayTest.json')
         def coord = [:]
         coord.put("c0dE", "ints")
         try
@@ -3103,8 +2994,7 @@ class TestNCube
     @Test
     void testAtCommand()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testAtCommand.json")
-        NCubeManager.addCube(ncube.applicationID, ncube)
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testAtCommand.json')
         Map coord = new CaseInsensitiveMap()
         coord.put("Bu", "PIM")
         coord.put("State", "GA")
@@ -3136,7 +3026,7 @@ class TestNCube
     {
         try
         {
-            NCubeManager.getNCubeFromResource("idBasedCubeError.json")
+            runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idBasedCubeError.json')
             fail("should not get here")
         }
         catch (AxisOverlapException e)
@@ -3198,7 +3088,7 @@ class TestNCube
     @Test
     void testReadCubeList()
     {
-        List<NCube> ncubes = NCubeManager.getNCubesFromResource("testCubeList.json")
+        List<NCube> ncubes = runtimeClient.getNCubesFromResource(ApplicationID.testAppId, 'testCubeList.json')
         assertTrue(ncubes.size() == 2)
         NCube ncube1 = ncubes.get(0)
         assertEquals(ncube1.name, "TestCube")
@@ -3209,7 +3099,7 @@ class TestNCube
     @Test
     void testTemplate()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("simpleJsonExpression.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonExpression.json')
         def coord = [:]
         coord.put("code", "stdTemplate")
         coord.put("overdue", "not overdue")
@@ -3233,8 +3123,8 @@ class TestNCube
     @Test
     void testTemplateRefOtherCube()
     {
-        NCubeManager.getNCubeFromResource("template2.json")   // Get it loaded
-        NCube ncube = NCubeManager.getNCubeFromResource("template1.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template2.json')   // Get it loaded
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template1.json')
         def coord = [:]
         coord.put("state", "GA")
         coord.put("code", 1)
@@ -3267,8 +3157,8 @@ class TestNCube
     @Test
     void testTemplateWithEquivalentCube()
     {
-        NCubeManager.getNCubeFromResource("template2-equivalent.json")   // Get it loaded
-        NCube ncube = NCubeManager.getNCubeFromResource("template1.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template2-equivalent.json')   // Get it loaded
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template1.json')
         def coord = [:]
         coord.put("state", "GA")
         coord.put("code", 1)
@@ -3299,21 +3189,9 @@ class TestNCube
     }
 
     @Test
-    void testClassLoader() {
-        NCube ncube = NCubeManager.getNCubeFromResource("ncube-class-loader-test.json")
-        def coord = [:]
-
-        coord.put("code", "local")
-        assertEquals("Successful test run of local url classloader.", ncube.getCell(coord))
-
-        coord.put("code", "remote")
-        assertEquals("Successful test run of remote url classloader.", ncube.getCell(coord))
-    }
-
-    @Test
     void testExpressionWithImports()
     {
-        NCube<String> ncube = NCubeManager.getNCubeFromResource("simpleJsonExpression.json")
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonExpression.json')
         def coord = [:]
         coord.put("code", "expWithImport")
         String str = ncube.getCell(coord)
@@ -3323,8 +3201,8 @@ class TestNCube
     @Test
     void testTemplateRequiredScope()
     {
-        NCubeManager.getNCubeFromResource("stringIds.json")
-        NCube<String> ncube = NCubeManager.getNCubeFromResource("simpleJsonExpression.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'stringIds.json')
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonExpression.json')
         Set<String> scope = ncube.getRequiredScope([:], [:])
         assertEquals(1, scope.size())
         assertTrue(scope.contains("CODe"))
@@ -3332,8 +3210,8 @@ class TestNCube
         scope = ncube.getOptionalScope([:], [:])
         assertEquals(0, scope.size())
 
-        NCubeManager.getNCubeFromResource("template2.json")   // Get it loaded
-        ncube = NCubeManager.getNCubeFromResource("template1.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template2.json')   // Get it loaded
+        ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'template1.json')
         scope = ncube.getRequiredScope([:], [:])
         assertEquals(2, scope.size())
         assertTrue(scope.contains("coDe"))
@@ -3343,7 +3221,7 @@ class TestNCube
     @Test
     void testStringIds()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("stringIds.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'stringIds.json')
 
         def coord = [:]
         coord.put("age",15)
@@ -3393,7 +3271,7 @@ class TestNCube
     @Test
     void testIdNoValue()
     {
-        NCube<String> ncube = NCubeManager.getNCubeFromResource("idNoValue.json")
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
         def coord = [:]
         coord.put("age", 18)
         coord.put("state", "OH")
@@ -3409,7 +3287,7 @@ class TestNCube
     @Test
     void testUpdateColumns()
     {
-        NCube<String> ncube = NCubeManager.getNCubeFromResource("updateColumns.json")
+        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'updateColumns.json')
         assertEquals(30, ncube.cellMap.size())
 
         // Delete 1st, middle, and last column
@@ -3479,8 +3357,8 @@ class TestNCube
     @Test
     void testShortHandReferences()
     {
-        NCubeManager.getNCubeFromResource("stringIds.json")
-        NCube ncube = NCubeManager.getNCubeFromResource("simpleJsonExpression.json")
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'stringIds.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'simpleJsonExpression.json')
         Map coord = [:] as Map
         coord.put("code", "FixedExp")
         assertEquals(6.28d, (double) ncube.getCell(coord), 0.00001d)
@@ -3498,7 +3376,7 @@ class TestNCube
     @Test(expected=RuntimeException.class)
     void testGroovyExpressionThatDoesntExist()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testExpressionAxisUrl.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testExpressionAxisUrl.json')
         def coord = [:]
         coord.put("code", "exp")
         assertEquals(6.28d, ncube.getCell(coord))
@@ -3507,91 +3385,13 @@ class TestNCube
     @Test(expected=RuntimeException.class)
     void testNullCube()
     {
-        NCubeManager.getNCubeFromResource("null-error.json")
-    }
-
-    @Test
-    void testExpandableUrlRef()
-    {
-        NCubeManager.getNCubeFromResource("urlPieces.json")
-        NCube ncube = NCubeManager.getNCubeFromResource("urlWithNcubeRefs.json")
-
-        def coord = [:]
-        coord.put("env_level", "local")
-        coord.put("protocol", "http")
-        coord.put("content", "ai")
-        String html = (String) ncube.getCell(coord)
-        assertNotNull(html)
-
-        coord.put("protocol", "https")
-        coord.put("content", "ai")
-        String html1 = (String) ncube.getCell(coord)
-        assertEquals(html, html1)
-
-        coord.put("protocol", "http")
-        coord.put("content", "lwt")
-        String html2 = (String) ncube.getCell(coord)
-        assertNotEquals(html, html2)
-    }
-
-    @Test
-    void testTemplateFromUrl()
-    {
-        NCubeManager.getNCubeFromResource("urlPieces.json")
-        NCube ncube = NCubeManager.getNCubeFromResource("urlWithNcubeRefs.json")
-
-        def coord = [:]
-        coord.put("env_level", "local")
-        coord.put("protocol", "http")
-        coord.put("content", "ai")
-        String html = (String) ncube.getCell(coord)
-        assertNotNull(html)
-
-        coord.put("protocol", "https")
-        coord.put("content", "ai")
-        String html1 = (String) ncube.getCell(coord)
-        assertEquals(html, html1)
-
-        coord.put("protocol", "http")
-        coord.put("content", "vend")
-        String html2 = (String) ncube.getCell(coord)
-        assertNotEquals(html, html2)
-    }
-
-    @Test
-    void testExpressionFromUrl()
-    {
-        NCubeManager.getNCubeFromResource("urlPieces.json")
-        NCube ncube = NCubeManager.getNCubeFromResource("urlWithNcubeRefs.json")
-
-        def coord = [:]
-        coord["env_level"] = "local"
-        coord["protocol"] = "http"
-        coord["content"] = "hello"
-        String html = (String) ncube.getCell(coord)
-        assertNotNull(html)
-        assertEquals("Hello, world.", html)
-
-        coord["protocol"] = "https"
-        coord["content"] = "hello"
-        String html1 = (String) ncube.getCell(coord)
-        assertEquals(html, html1)
-
-        coord["protocol"] = "http"
-        coord["content"] = "hello2"
-        def x = ncube.getCell(coord)
-        assert x == "Hello, world."  // Not 2, because the same class name was used for same classpath.
-
-        coord["protocol"] = "http"
-        coord["content"] = "95"
-        Integer num = (Integer) ncube.getCell(coord)
-        assertEquals(95, num.intValue())
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'null-error.json')
     }
 
     @Test
     void testGroovyMethods()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("testGroovyMethods1.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testGroovyMethods1.json')
         def coord = [:]
         coord.put("method", "foo")
         coord.put("state", "OH")
@@ -3636,7 +3436,7 @@ class TestNCube
     @Test(expected = RuntimeException.class)
     void testCommandCellReferencedCubeNotFoundOnExpandUrl()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("expand-url-cube-not-found-error.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'expand-url-cube-not-found-error.json')
         Map<String, Object> map = new HashMap<String,Object>()
         map.put("Sites", "StringFromLocalUrl")
         ncube.getCell(map)
@@ -3663,7 +3463,7 @@ class TestNCube
     @Test
     void testContainsCellValue()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("containsCell.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'containsCell.json')
 
         def coord = [:]
         coord.put("Gender", "Male")
@@ -3708,7 +3508,7 @@ class TestNCube
     @Test
     void testMetaPropsRead()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("containsCell.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'containsCell.json')
         assertTrue(ncube.metaProperties.size() > 0)
         assertEquals("y", ncube.metaProperties.get("x"))
 
@@ -3741,7 +3541,7 @@ class TestNCube
     @Test
     void testMetaPropAPIs()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("containsCell.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'containsCell.json')
 
         Axis axis = ncube.getAxis("gender")
         assertTrue(axis.metaProperties.size() > 0)
@@ -3800,7 +3600,7 @@ class TestNCube
     @Test
     void testHtmlCubeTitle()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("debugExp.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp.json')
         String html = ncube.toHtml()
         assertNotNull(html)
 //        System.out.println("html = " + html)
@@ -3809,7 +3609,7 @@ class TestNCube
     @Test
     void testHtml2DCubeTitle()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("debugExp2D.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp2D.json')
         String html = ncube.toHtml()
         assertNotNull(html)
 //        System.out.println("html = " + html)
@@ -3827,68 +3627,13 @@ class TestNCube
     @Test
     void testDebugExpression()
     {
-        NCube sysClasspath = NCubeManager.getNCubeFromResource("sys.classpath.local.resources.json")
-        NCubeManager.addCube(ApplicationID.testAppId, sysClasspath)
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.local.resources.json')
 
-        NCube ncube = NCubeManager.getNCubeFromResource("debugExp.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp.json')
         Map coord = [:] as Map
         int age = 9
         coord.age = age
         assertEquals(Math.pow(age, 2), (double) ncube.getCell(coord), 0.00001d)
-    }
-
-    public static NCube createTempDirClassPathCube()
-    {
-        NCube cpCube = new NCube<>("sys.classpath")
-
-        Axis axis = new Axis("environment", AxisType.DISCRETE, AxisValueType.STRING, true)
-        cpCube.addAxis(axis)
-
-        String base = System.getProperty("java.io.tmpdir")
-        cpCube.setCell(new GroovyExpression("new com.cedarsoftware.ncube.util.CdnClassLoader(['" + new File(base).toURI().toURL().toString() + "','http://files.cedarsoftware.com'])", null, false), new HashMap())
-        return cpCube
-    }
-
-    @Test
-    void testReloadGroovyClass()
-    {
-        String base = System.getProperty("java.io.tmpdir")
-
-        ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, "reloadGroovyTest", ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        NCube cpCube = createTempDirClassPathCube()
-
-        // manually set classpath cube
-        NCubeManager.updateCube(appId, cpCube, true)
-
-        FileOutputStream fo = new FileOutputStream(base + File.separator + "Abc.groovy")
-        String code = "import ncube.grv.exp.NCubeGroovyExpression; class Abc extends NCubeGroovyExpression { def run() { return 10 } }";
-        fo.write(code.bytes)
-        fo.close()
-
-        NCubeManager.getNCubeFromResource(appId, "testReloadGroovyClass.json")
-        NCube ncube = NCubeManager.getCube(appId, "testReloadGroovy")
-
-        def coord = [:]
-        coord.put("state", "OH")
-        Map output = new LinkedHashMap()
-        Object out = ncube.getCell(coord, output)
-        assertEquals(10, out)
-
-        NCubeManager.clearCache(appId)
-
-        fo = new FileOutputStream(base + File.separator + "Abc.groovy")
-        code = "import ncube.grv.exp.NCubeGroovyExpression; class Abc extends NCubeGroovyExpression { def run() { return 20 } }"
-        fo.write(code.bytes)
-        fo.close()
-        fo.flush()
-
-        ncube = NCubeManager.getNCubeFromResource(appId, "testReloadGroovyClass.json")
-        out = ncube.getCell(coord, output)
-        assertEquals(20, out)
-
-        coord.put("state", "IN")
-        String gcode = (String) ncube.getCell(coord, output)
-        assertEquals(code, gcode)
     }
 
     @Test
@@ -3972,7 +3717,7 @@ class TestNCube
     @Test
     void testContainsCellWithDefault()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("containsCellNoDefault.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'containsCellNoDefault.json')
 
         Map input = new HashMap()
         input.put("gender", "Female")
@@ -4042,7 +3787,7 @@ class TestNCube
     @Test
     void testRequiredScope()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("requiredScopeKeys.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'requiredScopeKeys.json')
         Set<String> scope = ncube.getRequiredScope([:], [:])
         assertEquals(3, scope.size())
         assertTrue(scope.contains("codE"))
@@ -4078,7 +3823,7 @@ class TestNCube
     @Test
     void testRequiredScopeSetCell()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("requiredScopeKeys.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'requiredScopeKeys.json')
 
         Map input = new HashMap()
         input.put("code", 0)
@@ -4126,7 +3871,7 @@ class TestNCube
     @Test
     void testNoRequiredScope()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource("noRequiredScope.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'noRequiredScope.json')
         Set<String> scope = ncube.getRequiredScope([:], [:])
         assertEquals(0, scope.size())
 
@@ -4137,7 +3882,7 @@ class TestNCube
     @Test
     void testCubeEquals()
     {
-        NCube c1 = NCubeManager.getNCubeFromResource("testCube6.json")
+        NCube c1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testCube6.json')
         NCube c2 = c1.duplicate("TestCube")
         String sha1_a = c1.sha1()
         String sha1_b = c2.sha1()
@@ -4206,7 +3951,7 @@ class TestNCube
     @Test
     void testDuplicateMetaProperties()
     {
-        NCube c1 = NCubeManager.getNCubeFromResource("testDuplicate.json")
+        NCube c1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'testDuplicate.json')
         NCube c2 = c1.duplicate("DupeTest")
         assertTrue(c2.metaProperties.containsKey("money"))
         assertEquals(100.0d, (double) c2.metaProperties.get("money"), 0.00001d)
@@ -4230,7 +3975,7 @@ class TestNCube
     @Test
     void testAbsoluteHttpUrlToGroovy()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("urlContent.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def coord = [:]
         coord.put("sites", "AbsoluteHttpUrl")
         String s = (String) cube.getCell(coord)
@@ -4246,14 +3991,14 @@ class TestNCube
             NCube.validateCubeName("This:is.not/legal#and-hard_to|read")
             fail("should not make it here")
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalArgumentException ignored)
         { }
         try
         {
             NCube.validateCubeName(" NotValid")
             fail("should not make it here")
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalArgumentException ignored)
         { }
     }
 
@@ -4268,7 +4013,7 @@ class TestNCube
             NCube.validateCubeName("")
             fail("should not make it here")
         }
-        catch (Exception e)
+        catch (Exception ignored)
         { }
 
         try
@@ -4276,7 +4021,7 @@ class TestNCube
             NCube.validateCubeName(null)
             fail("should not make it here")
         }
-        catch (Exception e)
+        catch (Exception ignored)
         { }
     }
 
@@ -4299,8 +4044,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionCellValue()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube, cube2)
         assertEquals(0, delta.size())
 
@@ -4341,8 +4086,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionCubeName()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.name = "funkey"
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4357,8 +4102,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionCubeMetaProp()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.setMetaProperty("foo", "bar")
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4371,8 +4116,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionDimMismatchAdded()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.addAxis(NCubeBuilder.statesAxis)
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4384,8 +4129,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionAxisPropDiff()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         Axis age = cube2.getAxis("age")
         age.columnOrder = Axis.SORTED
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
@@ -4400,8 +4145,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionAxisMetaPropDiff()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         Axis age = cube2.getAxis("age")
         age.setMetaProperty("foo", 18)
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
@@ -4417,8 +4162,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionDimMismatchRemoved()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.deleteAxis("gender")
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4430,8 +4175,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionDimMismatchAddRemove()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.deleteAxis("gender")
         cube2.addAxis(NCubeBuilder.statesAxis)
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
@@ -4449,8 +4194,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionColumnAdded()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.addColumn("age", new Range(55, 70))
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4464,8 +4209,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionColumnDeleted()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.deleteColumn("gender", "male")
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
@@ -4478,8 +4223,8 @@ class TestNCube
     @Test
     void testDeltaDescriptionColumnMetaProp()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         Axis age = cube2.getAxis("age")
         Column column = age.findColumn(48)
         column.setMetaProperty("baz", "qux")
@@ -4497,12 +4242,12 @@ class TestNCube
     @Test
     void testDeltaDescriptionCellAdded()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         def coord = [:]
         coord.put("age", 48)
         coord.put("gender", "male")
         cube.removeCell(coord)
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(1, delta.size())
 
@@ -4516,12 +4261,12 @@ class TestNCube
     @Test
     void testDeltaDescriptionCellCleared()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         def coord = [:]
         coord.put("age", 48)
         coord.put("gender", "male")
         cube.removeCell(coord)
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube, cube2)
         assertEquals(1, delta.size())
 
@@ -4538,12 +4283,12 @@ class TestNCube
     @Test
     void testDeltaDescriptionColumChanged()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         Axis axis = cube.getAxis("gender")
         Column col = axis.findColumn("male")
         cube.updateColumn(col.id, "mule")
 
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube, cube2)
         assertEquals(1, delta.size())
 
@@ -4556,12 +4301,12 @@ class TestNCube
     @Test
     void testDeltaDescriptionAxisDeletedAndColumChanged()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         Axis axis = cube.getAxis("gender")
         Column col = axis.findColumn("male")
         cube.updateColumn(col.id, "mule")
 
-        NCube cube2 = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         cube2.deleteAxis("agE")
         List<Delta> delta = DeltaProcessor.getDeltaDescription(cube2, cube)
         assertEquals(2, delta.size())
@@ -4579,7 +4324,7 @@ class TestNCube
     @Test
     void testSha1CollectionCell()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         String sha1 = cube.sha1()
         def coord = [:]
         coord.put("age", 48)
@@ -4591,7 +4336,7 @@ class TestNCube
     @Test
     void testSha1CycleBreaker()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("delta.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'delta.json')
         String sha1 = cube.sha1()
 
         // Create cycle
@@ -4613,8 +4358,8 @@ class TestNCube
     @Test
     void testRuleDelta()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("deltaRule.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("deltaRule.json")
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'deltaRule.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'deltaRule.json')
 
         def coord = [:]
         coord.put("rule", "Init Random")
@@ -4702,8 +4447,8 @@ class TestNCube
     @Test
     void testGetPopulatedCells()
     {
-        NCube cube = NCubeManager.getNCubeFromResource("urlPieces.json")
-        assert cube.getPopulatedCellCoordinates().size() == 2
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
+        assert cube.populatedCellCoordinates.size() == 2
 
         cube = new NCube('Hey')
         Axis one = new Axis('one', AxisType.DISCRETE, AxisValueType.STRING, false)
@@ -4722,40 +4467,40 @@ class TestNCube
         cube.addAxis(one)
         cube.addAxis(two)
 
-        assert cube.getPopulatedCellCoordinates().size() == 0
+        assert cube.populatedCellCoordinates.size() == 0
 
         cube.setCell('hi', [one:1, two:'a'] as Map)
-        List<Map> cells = cube.getPopulatedCellCoordinates()
+        List<Map> cells = cube.populatedCellCoordinates
         assert cells.size() == 1
         Map coord = cells[0]
         assert coord.one == '1'
         assert coord.two == 'a'
         cube.setCell('hey', [one:2, two:'a'] as Map)
-        cells = cube.getPopulatedCellCoordinates()
+        cells = cube.populatedCellCoordinates
         assert cells.size() == 2
     }
 
     @Test
     void testMergeDiffDimensions()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("debugExp.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("debugExp2D.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp2D.json')
         assert null == DeltaProcessor.getDelta(cube1, cube2)
     }
 
     @Test
     void testMergeDiffAxisNames()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("2DSimpleJson.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("debugExp2D.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2DSimpleJson.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'debugExp2D.json')
         assert null == DeltaProcessor.getDelta(cube1, cube2)
     }
 
     @Test
     void testMergeSameCube()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("2DSimpleJson.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("2DSimpleJson.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2DSimpleJson.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2DSimpleJson.json')
         assert cube1.sha1() == cube2.sha1()
         Map delta = DeltaProcessor.getDelta(cube1, cube2)
         DeltaProcessor.mergeDeltaSet(cube1, delta)
@@ -4765,8 +4510,8 @@ class TestNCube
     @Test
     void testMergeOtherWithContentIntoEmpty()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("empty2D.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("merge1.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'empty2D.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge1.json')
         Map cubeDelta = DeltaProcessor.getDelta(cube1, cube2)
         Map delta = (Map) cubeDelta[DeltaProcessor.DELTA_CELLS]
         DeltaProcessor.mergeDeltaSet(cube1, cubeDelta)
@@ -4786,26 +4531,26 @@ class TestNCube
         coord = [row:5, column:'E'] as Map
         assert cube1.containsCell(coord)
 
-        assert cube1.getNumCells() == 5
+        assert cube1.numCells == 5
     }
 
     @Test
     void testMergeEmptyIntoContent()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("merge1.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("empty2D.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge1.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'empty2D.json')
         Map cubeDelta = DeltaProcessor.getDelta(cube1, cube2)
         Map delta = (Map) cubeDelta[DeltaProcessor.DELTA_CELLS]
         assert delta.size() == 5
         DeltaProcessor.mergeDeltaSet(cube1, cubeDelta)
-        assert cube1.getNumCells() == 0
+        assert cube1.numCells == 0
     }
 
     @Test
     void testMergeConflictCellOverlap()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("merge1.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("merge2.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge1.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge2.json')
         String cube1Sha = cube1.sha1()
         String cube2Sha = cube2.sha1()
         Map cubeDelta1 = DeltaProcessor.getDelta(cube1, cube2)
@@ -4823,8 +4568,8 @@ class TestNCube
     @Test
     void testMergeNormal()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("merge1.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("merge2.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge1.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge2.json')
         Map coord = [row:3, column:'C'] as Map
         cube1.removeCell(coord);
         Map delta = DeltaProcessor.getDelta(cube1, cube2);
@@ -4836,8 +4581,8 @@ class TestNCube
     @Test
     void testMergeNormalCaseEquivalency()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("merge2.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("merge2.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge2.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge2.json')
         Map coord = [row:3, column:'C'] as Map
         cube1.removeCell(coord);
         Map delta = DeltaProcessor.getDelta(cube1, cube2);
@@ -4850,9 +4595,9 @@ class TestNCube
     @Test
     void testCellChangeSetCompatibility()
     {
-        NCube cube1 = NCubeManager.getNCubeFromResource("merge1.json")
-        NCube cube2 = NCubeManager.getNCubeFromResource("merge2.json")
-        NCube cube3 = NCubeManager.getNCubeFromResource("merge3.json")
+        NCube cube1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge1.json')
+        NCube cube2 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge2.json')
+        NCube cube3 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'merge3.json')
 
         Map changeSet1 = DeltaProcessor.getDelta(cube2, cube1)
         Map changeSet2 = DeltaProcessor.getDelta(cube2, cube3)
@@ -4873,7 +4618,7 @@ class TestNCube
             NCube.fromSimpleJson((InputStream)null)
             fail()
         }
-        catch (NullPointerException e)
+        catch (NullPointerException ignored)
         {
         }
 
@@ -4882,7 +4627,7 @@ class TestNCube
             NCube.fromSimpleJson((String)null)
             fail()
         }
-        catch (NullPointerException e)
+        catch (NullPointerException ignored)
         {
         }
     }
@@ -4898,7 +4643,7 @@ class TestNCube
     void testContainsCoordWithBadCoord()
     {
         NCube ncube = NCubeBuilder.getTestNCube2D(false)
-        assert false == ncube.containsCellById(null)
+        assert !ncube.containsCellById(null)
     }
 
     @Test
@@ -4922,8 +4667,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnRuleCubeWithDefault()
     {
-        NCube ncube = NCubeBuilder.getRuleWithOutboundRefs()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.ruleWithOutboundRefs
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 2
 
         Map coord = [rule: "${'(availability): @test.available[:]'}"] as CaseInsensitiveMap
@@ -4936,8 +4681,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnCubeWithMultipleRefCubesPerCoord()
     {
-        NCube ncube = NCubeBuilder.getCubeWithMultipleRefCubesPerCoord()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.cubeWithMultipleRefCubesPerCoord
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 2
 
         Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
@@ -4950,8 +4695,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnCubeWithColumnDefault()
     {
-        NCube ncube = NCubeBuilder.getCubeWithColumnDefault()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.cubeWithColumnDefault
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 2
 
         Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
@@ -4964,8 +4709,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnCubeWithCubeDefault()
     {
-        NCube ncube = NCubeBuilder.getCubeWithCubeDefault()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.cubeWithCubeDefault
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 2
 
         Map coord = [Axis1: 'Axis1Col2', Axis2: 'Axis2Col2'] as CaseInsensitiveMap
@@ -4978,8 +4723,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnCubeWithDefaultColumns()
     {
-        NCube ncube = NCubeBuilder.getCubeWithDefaultColumns()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.cubeWithDefaultColumns
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 4
 
         Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
@@ -4998,8 +4743,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnCubeWithAllDefaults()
     {
-        NCube ncube = NCubeBuilder.getCubeWithAllDefaults()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.cubeWithAllDefaults
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 7
 
         Map coord = [Axis1: 'Axis1Col1', Axis2: 'Axis2Col1'] as CaseInsensitiveMap
@@ -5027,8 +4772,8 @@ class TestNCube
     @Test
     void testGetReferencedCubeNamesOnRuleCubeWithAllDefaults()
     {
-        NCube ncube = NCubeBuilder.getRuleCubeWithAllDefaults()
-        Map<Map, Set<String>> refs = ncube.getReferencedCubeNames()
+        NCube ncube = NCubeBuilder.ruleCubeWithAllDefaults
+        Map<Map, Set<String>> refs = ncube.referencedCubeNames
         assert refs.size() == 6
 
         Map coord = [Axis2: 'Axis2Col1', RuleAxis1: "${'(Condition1): @Condition1[:]'}"] as CaseInsensitiveMap
@@ -5061,22 +4806,22 @@ class TestNCube
     void testPotentialCells()
     {
         NCube ncube = NCubeBuilder.get5DTestCube()
-        assert 48 == ncube.getNumPotentialCells()
+        assert 48 == ncube.numPotentialCells
 
-        ncube = NCubeBuilder.getDiscrete1D()
-        assert 2 == ncube.getNumPotentialCells()
+        ncube = NCubeBuilder.discrete1D
+        assert 2 == ncube.numPotentialCells
 
-        ncube = NCubeBuilder.getTestNCube3D_Boolean()
-        assert 144 == ncube.getNumPotentialCells()
+        ncube = NCubeBuilder.testNCube3D_Boolean
+        assert 144 == ncube.numPotentialCells
 
-        ncube = NCubeBuilder.getTrackingTestCube()
-        assert 4 == ncube.getNumPotentialCells()
+        ncube = NCubeBuilder.trackingTestCube
+        assert 4 == ncube.numPotentialCells
     }
 
     @Test
     void testAt()
     {
-        NCube ncube = NCubeBuilder.getDiscrete1DEmptyWithDefault()
+        NCube ncube = NCubeBuilder.discrete1DEmptyWithDefault
         ncube.setCell(1, [state:'OH'])
         ncube.setCell(2, [state:'TX'])
 
@@ -5090,7 +4835,7 @@ class TestNCube
     @Test
     void testNullCell()
     {
-        NCube ncube = NCubeBuilder.getDiscrete1D()
+        NCube ncube = NCubeBuilder.discrete1D
         ncube.clearCells()
         Map input = [state:'OH']
         ncube.setCell(null, input)
@@ -5155,7 +4900,7 @@ class TestNCube
             assert axis.findColumnByName('credit-score')
             assert axis.findColumnByName('BR1')
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalArgumentException ignored)
         {
             fail('NCube RULE axis without name causing error.')
         }
@@ -5166,12 +4911,13 @@ class TestNCube
     void testGetCubeSpeed()
     {
         NCube ncube = NCubeBuilder.discrete1D
-        NCubeManager.addCube(ApplicationID.testAppId, ncube)
+        ncube.applicationID = ApplicationID.testAppId
+        runtimeClient.addCube(ncube)
 
         long start = System.nanoTime()
         for (int i=0; i < 1000000; i++)
         {
-            NCubeManager.getCube(ApplicationID.testAppId, ncube.name)
+            runtimeClient.getCube(ApplicationID.testAppId, ncube.name)
         }
         long end = System.nanoTime()
 
@@ -5183,7 +4929,7 @@ class TestNCube
 
     private void simpleJsonCompare(String name)
     {
-        NCube<?> ncube = NCubeManager.getNCubeFromResource(name)
+        NCube<?> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, name)
         int h1 = ncube.hashCode()
         NCube dupe = ncube.duplicate(ncube.name)
         int h2 = dupe.hashCode()

@@ -3,18 +3,9 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
-import groovy.transform.TypeChecked
-import groovy.transform.TypeCheckingMode
 import org.junit.Test
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNotSame
-import static org.junit.Assert.assertSame
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
 
 /**
  * ApplicationID Tests
@@ -156,8 +147,8 @@ class TestApplicationID
     void testAppKey()
     {
         ApplicationID appId = new ApplicationID('Sears', 'Inventory', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        assertEquals 'sears / inventory / 1.0.0 / test /', appId.cacheKey('')
-        assertEquals 'sears / inventory / 1.0.0 / test /', appId.toString()
+        assertEquals 'sears/inventory/1.0.0/snapshot/test/', appId.cacheKey('')
+        assertEquals 'Sears/Inventory/1.0.0/SNAPSHOT/TEST/', appId.toString()
     }
 
     @Test
@@ -166,7 +157,7 @@ class TestApplicationID
         ApplicationID appId1 = new ApplicationID('Sears', 'Inventory', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         ApplicationID appId2 = new ApplicationID('Sears', 'Inventory', '1.0.0', ReleaseStatus.RELEASE.name(), ApplicationID.TEST_BRANCH)
 
-        assertEquals appId1.cacheKey(''), appId2.cacheKey('')
+        assertNotEquals appId1.cacheKey(''), appId2.cacheKey('')
         assertNotEquals appId1, appId2
         assertNotEquals appId1.hashCode(), appId2.hashCode()
 
@@ -209,7 +200,8 @@ class TestApplicationID
     void testAppStrSameAsToString()
     {
         ApplicationID appId = new ApplicationID('Sears', 'Inventory', '1.0.0', ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        assertEquals appId.toString(), appId.cacheKey('')
+        assertNotEquals(appId.toString(), appId.cacheKey(''))
+        assertEquals(appId.toString().toLowerCase(), appId.cacheKey(''))
     }
 
     // Want to know if this assumption ever changes
@@ -565,33 +557,8 @@ class TestApplicationID
     {
         ApplicationID appId = new ApplicationID('Sears', 'Inventory', '1.0.0', ReleaseStatus.RELEASE.name(), 'JIRA-555')
         appId.validate()
-        assert appId.getBranch() == 'JIRA-555'
+        assert appId.branch == 'JIRA-555'
         assert appId.cacheKey().contains('jira-555')
-    }
-
-    @Test
-    @TypeChecked(TypeCheckingMode.SKIP)
-    void testGetBootstrapVersion()
-    {
-        System.setProperty("NCUBE_PARAMS", '{}')
-        NCubeManager.systemParams = null
-
-        ApplicationID id = ApplicationID.getBootVersion('foo', 'bar')
-        assertEquals 'foo', id.tenant
-        assertEquals 'bar', id.app
-        assertEquals '0.0.0', id.version
-        assertEquals 'SNAPSHOT', id.status
-        assertEquals 'HEAD', id.branch
-
-        System.setProperty("NCUBE_PARAMS", '{"branch":"qux"}')
-        NCubeManager.systemParams = null;
-
-        id = ApplicationID.getBootVersion('foo', 'bar')
-        assertEquals 'foo', id.tenant
-        assertEquals 'bar', id.app
-        assertEquals '0.0.0', id.version
-        assertEquals 'SNAPSHOT', id.status
-        assertEquals 'qux', id.branch
     }
 
     @Test
@@ -603,7 +570,7 @@ class TestApplicationID
         try {
             rel.validateStatusIsNotRelease()
         } catch (IllegalArgumentException e) {
-            assertEquals("Status cannot be 'RELEASE'", e.getMessage());
+            assertEquals("Status cannot be 'RELEASE'", e.message);
         }
     }
 
@@ -616,7 +583,7 @@ class TestApplicationID
         try {
             rel.validateBranchIsNotHead()
         } catch (IllegalArgumentException e) {
-            assertEquals("Branch cannot be 'HEAD'", e.getMessage());
+            assertEquals("Branch cannot be 'HEAD'", e.message);
         }
     }
 
@@ -641,5 +608,14 @@ class TestApplicationID
         ApplicationID appId = ApplicationID.testAppId
         assert appId.versionValue == 999 * 1000 * 1000 + 99 * 1000 + 9
         assert ApplicationID.getVersionValue('5.6') == 0     // needs 3 parts
+    }
+
+    @Test
+    void testApplicationIdIsCaseInsensitive()
+    {
+        ApplicationID lower = new ApplicationID('foo', 'bar', '1.0.0', ReleaseStatus.SNAPSHOT.name(), 'baz')
+        ApplicationID upper = new ApplicationID('FOO', 'BAR', '1.0.0', ReleaseStatus.SNAPSHOT.name(), 'BAZ')
+        assert lower == upper
+        assert lower.hashCode() == upper.hashCode()
     }
 }

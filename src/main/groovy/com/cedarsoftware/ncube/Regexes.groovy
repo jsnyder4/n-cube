@@ -69,6 +69,7 @@ interface Regexes
     Pattern hasClassDefPattern = Pattern.compile('^(|.*?\\s+)class\\s+([a-zA-Z_0-9$\\.]+).*?\\{.*?\\}.*$', Pattern.DOTALL)
 
     Pattern isOraclePattern = ~/(?i)^.*Oracle.*$/
+    Pattern isHSQLDBPattern = ~/(?i)^.*HSQL Database Engine Driver.*$/
 
     Pattern rangePattern = ~/\s*([^,]+)[,](.*)\s*$/
 }

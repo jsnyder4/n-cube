@@ -1,0 +1,60 @@
+{
+  "ncube": "rpm",
+  "axes": [
+    {
+      "id": 3,
+      "name": "property",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 3001434944618,
+          "type": "string",
+          "value": "type"
+        },
+        {
+          "id": 3001397628508,
+          "type": "string",
+          "value": "value"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "transform",
+      "hasDefault": false,
+      "type": "DISCRETE",
+      "valueType": "LONG",
+      "preferredOrder": 1,
+      "fireAll": true,
+      "columns": [
+        {
+          "id": 4000472251581,
+          "type": "long",
+          "value": 1
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": [
+        3001434944618,
+        4000472251581
+      ],
+      "type": "string",
+      "value": "add"
+    },
+    {
+      "id": [
+        3001397628508,
+        4000472251581
+      ],
+      "type": "string",
+      "value": "CLASS_TRAITS"
+    }
+  ]
+}

@@ -6,8 +6,6 @@ import groovy.transform.CompileStatic
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BRANCH
-
 /**
  * This class binds together Tenant, App, version, status, and branch.  These fields together
  * completely identify the application that a given n-cube belongs to.
@@ -92,23 +90,19 @@ class ApplicationID
         return branch
     }
 
-    String cacheKey()
+    String cacheKey(String name = '')
     {
-        return cacheKey("")
+        name = name ?: ''
+        return "${toString()}${name}".toLowerCase()
     }
 
-    String cacheKey(String name)
+    /**
+     * Convert "tenant/app/version/status/branch/" to ApplicationID
+     */
+    static ApplicationID convert(String appIdString)
     {
-        if (StringUtilities.isEmpty(name))
-        {
-            return (tenant + ' / ' + app + ' / ' + version + ' / ' + branch + ' /').toLowerCase()
-        }
-        return (tenant + ' / ' + app + ' / ' + version + ' / ' + branch + ' / ' + name).toLowerCase()
-    }
-
-    String branchAgnosticCacheKey()
-    {
-        return (tenant + ' / ' + app + ' / ' + version + ' / ').toLowerCase()
+        List<String> pieces = appIdString.tokenize('/')
+        return new ApplicationID(pieces[0].trim(), pieces[1].trim(), pieces[2].trim(), pieces[3].trim().toUpperCase(), pieces[4].trim())
     }
 
     boolean equals(Object o)
@@ -139,7 +133,7 @@ class ApplicationID
 
     String toString()
     {
-        return cacheKey()
+        return "${tenant}/${app}/${version}/${status}/${branch}/"
     }
 
     boolean isSnapshot()
@@ -340,12 +334,6 @@ class ApplicationID
         }
     }
 
-    static ApplicationID getBootVersion(String tenant, String app)
-    {
-        String branch = NCubeManager.systemParams[NCUBE_PARAMS_BRANCH]
-        return new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), StringUtilities.isEmpty(branch) ? HEAD : branch)
-    }
-
     boolean equalsNotIncludingBranch(ApplicationID that)
     {
         return StringUtilities.equalsIgnoreCase(tenant, that.tenant) &&
@@ -381,5 +369,18 @@ class ApplicationID
         int minor = Integer.valueOf(pieces[1]) * 1000
         int patch = Integer.valueOf(pieces[2].split('-')[0])
         return major + minor + patch
+    }
+
+    /**
+     * Validate ApplicationID is not null and valid
+     * @param appId ApplicationID to test
+     */
+    static void validateAppId(ApplicationID appId)
+    {
+        if (appId == null)
+        {
+            throw new IllegalArgumentException('ApplicationID cannot be null')
+        }
+        appId.validate()
     }
 }

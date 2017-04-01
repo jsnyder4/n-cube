@@ -3,20 +3,17 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.util.CdnRouter
 import com.cedarsoftware.ncube.util.CdnRoutingProvider
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 
+import javax.servlet.ReadListener
 import javax.servlet.ServletInputStream
 import javax.servlet.ServletOutputStream
+import javax.servlet.WriteListener
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-import static org.mockito.Mockito.doThrow
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.when
+import static org.mockito.Mockito.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -36,20 +33,8 @@ import static org.mockito.Mockito.when
  *         limitations under the License.
  */
 @CompileStatic
-class TestCdnRouter
+class TestCdnRouter extends NCubeCleanupBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testRoute()
     {
@@ -68,7 +53,7 @@ class TestCdnRouter
 
         setDefaultCdnRoutingProvider()
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         byte[] bytes = ((DumboOutputStream) out).bytes
@@ -83,8 +68,8 @@ class TestCdnRouter
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class)
 
         when(request.servletPath).thenReturn '/dyn/view/500'
-        setupMockRequestHeaders request
-        setupMockResponseHeaders response
+        setupMockRequestHeaders(request)
+        setupMockResponseHeaders(response)
 
         ServletOutputStream out = new DumboOutputStream()
         ServletInputStream input = new DumboInputStream()
@@ -94,11 +79,11 @@ class TestCdnRouter
 
         setDefaultCdnRoutingProvider()
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
-        router.route request, response
+        router.route(request, response)
 
-        verify(response, times(1)).sendError 500, 'Invalid URL in cell (malformed or cannot resolve given classpath): tests/does/not/exist/index.html, cube: CdnRouterTest, app: none / default_app / 999.99.9 / test /'
+        verify(response, times(1)).sendError(500, 'Invalid URL in cell (malformed or cannot resolve given classpath): tests/does/not/exist/index.html, cube: CdnRouterTest, app: NONE/DEFAULT_APP/999.99.9/SNAPSHOT/TEST/')
     }
 
     @Test
@@ -147,10 +132,10 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), "TEST", 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         new CdnRouter().route request, response
 
-        verify(response, times(1)).sendError 500, 'CdnRouter - Error occurred: Could not load routing cube using app: none / default_app / 999.99.9 / test /, cube name: foo'
+        verify(response, times(1)).sendError 500, 'CdnRouter - Error occurred: Could not load routing cube using app: NONE/DEFAULT_APP/999.99.9/SNAPSHOT/TEST/, cube name: foo'
     }
 
     @Test
@@ -171,8 +156,8 @@ class TestCdnRouter
         setDefaultCdnRoutingProvider()
 
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-        NCubeManager.getUrlClassLoader(appId, [:])
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getUrlClassLoader(appId, [:])
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
 
         CdnRouter router = new CdnRouter()
         router.route(request, response)
@@ -198,7 +183,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), "TEST", null, true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.cubeName\' in the Map coordinate.'
@@ -222,7 +207,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider null, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), "TEST", 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.tenant\' in the Map coordinate.'
@@ -246,7 +231,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, null, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), "TEST", 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.app\' in the Map coordinate.'
@@ -270,7 +255,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, null, ReleaseStatus.SNAPSHOT.name(), "TEST", 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.version\' in the Map coordinate.'
@@ -294,7 +279,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, null, "TEST", 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.status\' in the Map coordinate.'
@@ -318,7 +303,7 @@ class TestCdnRouter
 
         setCdnRoutingProvider ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), null, 'foo', true
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
         CdnRouter router = new CdnRouter()
         router.route request, response
         verify(response, times(1)).sendError HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 'CdnRouter - CdnRoutingProvider did not set up \'router.branch\' in the Map coordinate.'
@@ -404,7 +389,7 @@ class TestCdnRouter
 
         setDefaultCdnRoutingProvider()
 
-        NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
 
         CdnRouter router = new CdnRouter()
         router.route(request, response)
@@ -468,7 +453,7 @@ class TestCdnRouter
         cdnRouteFile 'cachedFile', true
     }
 
-    private static void cdnRouteFile(String logicalFileName, boolean mustMatch) throws IOException
+    private void cdnRouteFile(String logicalFileName, boolean mustMatch) throws IOException
     {
         HttpServletRequest request = Mockito.mock HttpServletRequest.class
         HttpServletResponse response = Mockito.mock HttpServletResponse.class
@@ -485,7 +470,7 @@ class TestCdnRouter
 
         setDefaultCdnRoutingProvider()
 
-        NCube cube = NCubeManager.getNCubeFromResource 'cdnRouterTest.json'
+        NCube cube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
 
         new CdnRouter().route request, response
         byte[] bytes = ((DumboOutputStream) out).bytes
@@ -511,7 +496,7 @@ class TestCdnRouter
     @Test
     void testDefaultRoute()
     {
-        NCube router = NCubeManager.getNCubeFromResource('cdnRouter.json')
+        NCube router = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouter.json')
 
         Axis axis = router.getAxis('content.name')
         assert 5 == axis.columns.size()
@@ -549,7 +534,7 @@ class TestCdnRouter
     {
         ByteArrayOutputStream bao = new ByteArrayOutputStream()
 
-        public byte[] getBytes()
+        byte[] getBytes()
         {
             try
             {
@@ -561,9 +546,18 @@ class TestCdnRouter
             return bao.toByteArray()
         }
 
-        public void write(int b) throws IOException
+        void write(int b) throws IOException
         {
             bao.write(b)
+        }
+
+        boolean isReady()
+        {
+            return false
+        }
+
+        void setWriteListener(WriteListener writeListener) {
+
         }
     }
 
@@ -571,9 +565,23 @@ class TestCdnRouter
     {
         ByteArrayInputStream bao = new ByteArrayInputStream(new byte[0])
 
-        public int read() throws IOException
+        int read() throws IOException
         {
             return bao.read()
+        }
+
+        boolean isFinished()
+        {
+            return false
+        }
+
+        boolean isReady()
+        {
+            return false
+        }
+
+        void setReadListener(ReadListener readListener) {
+
         }
     }
 

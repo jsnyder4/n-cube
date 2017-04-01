@@ -1,8 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.CaseInsensitiveMap
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -24,30 +22,18 @@ import static org.junit.Assert.assertEquals
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestNCubeTest
+class TestNCubeTest extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testNCubeTest()
     {
-        String name = 'test-1';
+        String name = 'test-1'
         Map<String, CellInfo> params = new CaseInsensitiveMap<>()
         params['int'] = new CellInfo('int', '5', false, false)
         params['double'] = new CellInfo('double', '5.75', false, false)
         params['key1'] = new CellInfo('string', 'foo', false, false)
 
-        CellInfo[] info = new CellInfo[1];
+        CellInfo[] info = new CellInfo[1]
         info[0] = new CellInfo('exp', "'bar'", false, false)
 
         NCubeTest test = new NCubeTest(name, params, info)
@@ -58,9 +44,9 @@ class TestNCubeTest
         Map<String, CellInfo> coord = test.coord
         assert 3 == coord.size()
 
-        def coord1 = test.getCoordWithValues()
+        def coord1 = test.coordWithValues
         assert 5 == coord1.int
-        assertEquals(5.75, coord1.double, 0.00001d)
+        assertEquals(5.75, coord1.double as double, 0.00001d)
         assert 'foo' == coord1.key1
 
         final List<GroovyExpression> testAssertions = test.createAssertions()

@@ -22,8 +22,8 @@ import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import java.lang.reflect.Array
 import java.lang.reflect.Field
@@ -59,7 +59,7 @@ import java.util.zip.GZIPOutputStream
 @CompileStatic
 class NCube<T>
 {
-    private static final Logger LOG = LogManager.getLogger(NCube.class)
+    private static final Logger LOG = LoggerFactory.getLogger(NCube.class)
     public static final String DEFAULT_CELL_VALUE_TYPE = 'defaultCellValueType'
     public static final String DEFAULT_CELL_VALUE = 'defaultCellValue'
     public static final String DEFAULT_CELL_VALUE_URL = 'defaultCellValueUrl'
@@ -357,6 +357,13 @@ class NCube<T>
             }
         }
 
+        Collections.sort(result, new Comparator<Advice>() {
+            int compare(Advice a1, Advice a2)
+            {
+                return a1.name.compareToIgnoreCase(a2.name)
+            }
+        })
+
         return result
     }
 
@@ -377,8 +384,7 @@ class NCube<T>
     }
 
     /**
-     * @return String version of this n-cube.  The version is set when the n-cube is loaded by
-     * the NCubeManager.
+     * @return String version of this n-cube as it was loaded.
      */
     String getVersion()
     {
@@ -1801,6 +1807,17 @@ class NCube<T>
     void addAxis(final Axis axis)
     {
         String axisName = axis.name
+        long startId = 1
+        long originalId = axis.id
+        while (idToAxis.containsKey(originalId))
+        {
+            originalId = startId++
+        }
+        if (originalId != axis.id)
+        {
+            axis.reindex(originalId)
+        }
+
         if (axisList.containsKey(axisName))
         {
             throw new IllegalArgumentException("An axis with the name '${axisName}' already exists on cube: ${name}")
@@ -1838,7 +1855,7 @@ class NCube<T>
         }
 
         axisList[axisName] = axis
-        idToAxis.put(axis.id, axis)
+        idToAxis[axis.id] = axis
         clearSha1()
     }
 

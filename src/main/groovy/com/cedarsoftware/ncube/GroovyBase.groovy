@@ -6,8 +6,8 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.Phases
@@ -44,7 +44,7 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_VERS
 @CompileStatic
 abstract class GroovyBase extends UrlCommandCell
 {
-    private static final Logger LOG = LogManager.getLogger(GroovyBase.class)
+    private static final Logger LOG = LoggerFactory.getLogger(GroovyBase.class)
     protected transient String L2CacheKey  // in-memory cache of (SHA-1(source) || SHA-1(URL + classpath.urls)) to compiled class
     private volatile transient Class runnableCode = null
     /**
@@ -348,7 +348,7 @@ abstract class GroovyBase extends UrlCommandCell
 
         if (cube.name.toLowerCase().startsWith("sys."))
         {   // No URLs allowed, nor code from sys.classpath when executing these cubes
-            output.loader = (GroovyClassLoader)NCubeManager.getLocalClassloader(cube.applicationID)
+            output.loader = (GroovyClassLoader)runtimeClient.getLocalClassloader(cube.applicationID)
             output.source = cmd
         }
         else if (isUrlUsed)
@@ -399,7 +399,6 @@ abstract class GroovyBase extends UrlCommandCell
         }
         else
         {   // specified via URL, add classLoader URL strings to URL for SHA-1 source.
-            NCube cube = getNCube(ctx)
             GroovyClassLoader gcLoader = getAppIdClassLoader(ctx)
             URL[] urls = gcLoader.URLs
             StringBuilder s = new StringBuilder()
@@ -414,22 +413,22 @@ abstract class GroovyBase extends UrlCommandCell
         L2CacheKey = EncryptionUtilities.calculateSHA1Hash(StringUtilities.getUTF8Bytes(content))
     }
 
-    private static GroovyClassLoader getAppIdClassLoader(Map<String, Object> ctx)
+    private GroovyClassLoader getAppIdClassLoader(Map<String, Object> ctx)
     {
         NCube cube = getNCube(ctx)
         ApplicationID appId = cube.applicationID
-        GroovyClassLoader gcLoader = (GroovyClassLoader) NCubeManager.getUrlClassLoader(appId, getInput(ctx))
+        GroovyClassLoader gcLoader = (GroovyClassLoader) runtimeClient.getUrlClassLoader(appId, getInput(ctx))
         return gcLoader
     }
 
-    private static String getTargetByteCodeVersion()
+    private String getTargetByteCodeVersion()
     {
-        return NCubeManager.systemParams[NCUBE_PARAMS_BYTE_CODE_VERSION] ?: '1.8'
+        return runtimeClient.systemParams[NCUBE_PARAMS_BYTE_CODE_VERSION] ?: '1.8'
     }
 
-    private static boolean isNCubeCodeGenDebug()
+    private boolean isNCubeCodeGenDebug()
     {
-        return 'true'.equalsIgnoreCase(NCubeManager.systemParams[NCUBE_PARAMS_BYTE_CODE_DEBUG] as String)
+        return 'true'.equalsIgnoreCase(runtimeClient.systemParams[NCUBE_PARAMS_BYTE_CODE_DEBUG] as String)
     }
 
     protected static String expandNCubeShortCuts(String groovy)

@@ -2,12 +2,13 @@ package com.cedarsoftware.ncube.util
 
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeManager
+import com.cedarsoftware.ncube.NCubeAppContext
+import com.cedarsoftware.ncube.NCubeClient
 import com.cedarsoftware.ncube.Regexes
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -35,8 +36,9 @@ import java.util.regex.Matcher
 @CompileStatic
 class CdnRouter
 {
+    private static NCubeClient ncubeClient
     private static CdnRoutingProvider provider
-    private static final Logger LOG = LogManager.getLogger(CdnRouter.class)
+    private static final Logger LOG = LoggerFactory.getLogger(CdnRouter.class)
     public static final String TENANT = 'router.tenant'
     public static final String APP = 'router.app'
     public static final String CUBE_VERSION = 'router.version'
@@ -47,6 +49,11 @@ class CdnRouter
     public static final String CONTENT_NAME = 'content.name'
     public static final String HTTP_REQUEST = 'http.request'
     public static final String HTTP_RESPONSE = 'http.response'
+
+    CdnRouter()
+    {
+        ncubeClient = NCubeAppContext.ncubeClient
+    }
 
     static void setCdnRoutingProvider(CdnRoutingProvider p)
     {
@@ -137,7 +144,7 @@ class CdnRouter
             coord[HTTP_RESPONSE] = response
 
             ApplicationID appId = new ApplicationID(tenant, app, version, status, branch)
-            NCube routingCube = NCubeManager.getCube(appId, cubeName)
+            NCube routingCube = ncubeClient.getCube(appId, cubeName)
             if (routingCube == null)
             {
                 throw new IllegalStateException("Could not load routing cube using app: " + appId + ", cube name: " + cubeName)

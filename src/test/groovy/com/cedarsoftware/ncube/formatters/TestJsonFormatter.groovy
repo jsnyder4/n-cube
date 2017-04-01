@@ -1,25 +1,19 @@
 package com.cedarsoftware.ncube.formatters
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeBuilder
-import com.cedarsoftware.ncube.NCubeManager
-import com.cedarsoftware.ncube.TestNCubeManager
-import com.cedarsoftware.ncube.TestingDatabaseHelper
-import com.cedarsoftware.ncube.TestingDatabaseManager
+
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
-import org.junit.After
-import org.junit.Before
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 import static org.mockito.Matchers.anyInt
 import static org.mockito.Matchers.anyObject
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -37,29 +31,10 @@ import static org.mockito.Mockito.when
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-class TestJsonFormatter
+@CompileStatic
+class TestJsonFormatter extends NCubeBaseTest
 {
-    public static String USER_ID = TestNCubeManager.USER_ID
     public static ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, "clearCacheTest", ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-    public static ApplicationID usedId = new ApplicationID(ApplicationID.DEFAULT_TENANT, "usedInvalidId", ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
-
-    private TestingDatabaseManager manager;
-
-    @Before
-    void setup()
-    {
-        manager = TestingDatabaseHelper.testingDatabaseManager
-        manager.setUp()
-        NCubeManager.NCubePersister = TestingDatabaseHelper.persister
-    }
-
-    @After
-    void tearDown()
-    {
-        manager.tearDown()
-        manager = null;
-        NCubeManager.clearCache()
-    }
 
     @Test
     void testJsonFormatter()
@@ -74,12 +49,9 @@ class TestJsonFormatter
     @Test
     void testConvertArray()
     {
-
-        NCube[] cubes = TestingDatabaseHelper.getCubesFromDisk('sys.classpath.tests.json', 'arrays.json')
-        manager.addCubes(ApplicationID.testAppId, 'lol', cubes)
-
-        NCube ncube = cubes[1];
-
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'arrays.json')
+        
         def coord = [Code:'longs']
         assertEquals 9223372036854775807L, ((Object[]) ncube.getCell(coord))[2]
 
@@ -97,10 +69,10 @@ class TestJsonFormatter
         assertEquals Boolean.FALSE, ((Object[]) ncube.getCell(coord))[3]
 
         coord.Code = 'floats'
-        assertEquals 3.8f, ((Object[]) ncube.getCell(coord))[2], 0.00001d
+        assertEquals(3.8d, ((Object[]) ncube.getCell(coord))[2] as double, 0.00001d)
 
         coord.Code = 'doubles'
-        assertEquals 10.1d, ((Object[]) ncube.getCell(coord))[2], 0.00001d
+        assertEquals(10.1d, ((Object[]) ncube.getCell(coord))[2] as double, 0.00001d)
 
         coord.Code = 'bigints'
         assertEquals 0g, ((Object[]) ncube.getCell(coord))[0]
@@ -127,17 +99,15 @@ class TestJsonFormatter
         assertEquals Boolean.FALSE, ((Object[]) ncube.getCell(coord))[3]
 
         coord.Code = 'floats'
-        assertEquals new Float(3.8), ((Object[]) ncube.getCell(coord))[2], 0.00001d
+        assertEquals(3.8f, ((Object[]) ncube.getCell(coord))[2] as double, 0.00001d)
 
         coord.Code= 'doubles'
-        assertEquals 10.1, ((Object[]) ncube.getCell(coord))[2], 0.00001d
+        assertEquals(10.1d, ((Object[]) ncube.getCell(coord))[2] as double, 0.00001d)
 
         coord.Code = 'bigints'
         assertEquals new BigInteger('0'), ((Object[]) ncube.getCell(coord))[0]
         assertEquals new BigInteger('9223372036854775807'), ((Object[]) ncube.getCell(coord))[2]
         assertEquals new BigInteger('147573952589676410000'), ((Object[]) ncube.getCell(coord))[3]
-
-        manager.removeBranches([ApplicationID.testAppId] as ApplicationID[])
     }
 
     @Test
@@ -153,9 +123,9 @@ class TestJsonFormatter
     void testNullValueGoingToAppend()
     {
         OutputStream stream = mock(OutputStream.class)
-        when(stream.write(anyObject(), anyInt(), anyInt())).thenThrow(new IOException("foo error"))
+        when(stream.write(anyObject() as byte[], anyInt(), anyInt()) as Object).thenThrow(new IOException("foo error"))
 
-        BufferedInputStream input = null;
+        BufferedInputStream input = null
 
         try
         {
@@ -163,7 +133,7 @@ class TestJsonFormatter
             formatter.append((String)null)
             fail()
         }
-        catch (NullPointerException e)
+        catch (NullPointerException ignored)
         {
         }
         finally
@@ -182,7 +152,7 @@ class TestJsonFormatter
         }
         catch (IllegalArgumentException e)
         {
-            assert e.message.contains('cannot be null')
+            assertContainsIgnoreCase(e.message, 'cannot be null')
         }
     }
 
@@ -198,8 +168,7 @@ class TestJsonFormatter
         }
         catch (IllegalStateException e)
         {
-            String msg = e.getMessage().toLowerCase()
-            assertTrue(msg.contains("builder is not a stringwriter"))
+            assertContainsIgnoreCase(e.message, 'builder is not a stringwriter')
         }
     }
 
@@ -216,7 +185,7 @@ class TestJsonFormatter
         catch (IllegalStateException e)
         {
             assertEquals IllegalArgumentException.class, e.cause.class
-            assert e.message.contains('Unable to format NCube')
+            assertContainsIgnoreCase(e.message, 'unable to format')
         }
     }
 
@@ -233,15 +202,15 @@ class TestJsonFormatter
         catch (IllegalStateException e)
         {
             assertEquals(IllegalArgumentException.class, e.cause.class)
-            assert e.message.contains('Unable to format NCube')
-            assert e.cause.message.contains('Cell cannot be an array')
+            assertContainsIgnoreCase(e.message, 'unable to format')
+            assertContainsIgnoreCase(e.cause.message, 'cell cannot be an array')
         }
     }
 
     @Test
     void testAlternateJsonFormat()
     {
-        NCube ncube = NCubeManager.getNCubeFromResource(ApplicationID.testAppId, "idBasedCube.json")
+        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, "idBasedCube.json")
         String json = ncube.toFormattedJson([indexFormat: true])
         assert json.contains('"cells":{"1')
         assert json.contains('":{"type":"string","value":"1 10"}')
@@ -302,14 +271,14 @@ class TestJsonFormatter
         {
             names.add f.name
         }
-        return names;
+        return names
     }
 
     void runAllTests(List<String> strings)
     {
         for (String f : strings)
         {
-            String original = NCubeManager.getResourceAsString(f)
+            String original = NCubeRuntime.getResourceAsString(f)
             NCube ncube = NCube.fromSimpleJson(original)
 
             //long start = System.nanoTime()

@@ -1,0 +1,83 @@
+{
+  "ncube":"visualizer.readJsonOnLocalToCubes",
+  "axes":[
+    {
+      "id":1,
+      "name":"method",
+      "hasDefault":false,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":1001066966110,
+          "type":"exp",
+          "name":"Set path prefixes and cube name(s)",
+          "value":"true"
+        },
+        {
+          "id":1000256107271,
+          "type":"exp",
+          "name":"Read json used for visualizer configs from local",
+          "value":"true"
+        },
+        {
+          "id":1000000000003,
+          "type":"exp",
+          "name":"Read json used for rpm testing from local",
+          "value":"true"
+        },
+        {
+          "id":1000667371990,
+          "type":"exp",
+          "name":"Read json used for non-rpm testing from local",
+          "value":"true"
+        },
+        {
+          "id":1000000000004,
+          "type":"exp",
+          "name":"Add or update cubes from json",
+          "value":"true"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        1000000000003
+      ],
+      "type":"exp",
+      "value":"//Read json used for rpm testing from local\n\nfinal String JSON_FILE_SUFFIX = '.json'\n\nClassLoader cl = NCubeGroovyExpression.getClassLoader()\norg.springframework.core.io.support.ResourcePatternResolver resolver = new org.springframework.core.io.support.PathMatchingResourcePatternResolver(cl)\norg.springframework.core.io.Resource[] resources = resolver.getResources(\"${output.rpmPathPrefix}${output.name}${JSON_FILE_SUFFIX}\")\n\noutput.rpmresources = resources"
+    },
+    {
+      "id":[
+        1000000000004
+      ],
+      "type":"exp",
+      "value":"//Add or update cubes\n\nList configCubes = []\nList rpmCubes = []\nList nonRpmCubes = []\n\n//Add or update config cubes\noutput.configresources?.each { org.springframework.core.io.Resource resource ->\n\tNCube cube = NCube.createCubeFromStream(resource.inputStream)\n\tcube.applicationID = applicationID\n\tNCubeManager.updateCube(applicationID, cube)\n        configCubes << cube.name\n}\n\n//Add or update rpm cubes\noutput.rpmresources?.each { org.springframework.core.io.Resource resource ->\n\tNCube cube = NCube.createCubeFromStream(resource.inputStream)\n\tcube.applicationID = applicationID\n\tNCubeManager.updateCube(applicationID, cube)\n        rpmCubes << cube.name\n}\n\n//Add or update non-rpm cubes\noutput.nonRpmResources?.each { org.springframework.core.io.Resource resource ->\n\tNCube cube = NCube.createCubeFromStream(resource.inputStream)\n\tcube.applicationID = applicationID\n\tNCubeManager.updateCube(applicationID, cube)\n        nonRpmCubes << cube.name\n}\n\noutput.configCubes = configCubes\noutput.rpmCubes = rpmCubes\noutput.nonRpmCubes = nonRpmCubes \noutput.totalRpmCubesUpdated = configCubes.size()\noutput.totalRpmCubesUpdated = rpmCubes.size()\noutput.totalNonRpmCubesUpdated = nonRpmCubes .size()"
+    },
+    {
+      "id":[
+        1001066966110
+      ],
+      "type":"exp",
+      "value":"//Set path prefixes and cube name(s)\n\noutput.name = '*'  //* for all json files in folder\n\nString resourceLocation = 'file:///C:/Development/BUE/n-cube-editor/src/main/resources/config/'\nC:\\Development\\BUE\\n-cube-editor\\src\\main\\resources\\config\noutput.configPathPrefix = resourceLocation + 'Visualizer*'\n\nString testResourceLocation = 'file:///C:/Development/BUE/n-cube-editor/src/test/resources/'\noutput.nonRpmPathPrefix = testResourceLocation + 'visualizer/**/'\noutput.rpmPathPrefix = testResourceLocation + 'rpmvisualizer/**/'"
+    },
+    {
+      "id":[
+        1000667371990
+      ],
+      "type":"exp",
+      "value":"//Read json used for non-rpm testing from local\n\nfinal String JSON_FILE_SUFFIX = '.json'\n\nClassLoader cl = NCubeGroovyExpression.getClassLoader()\norg.springframework.core.io.support.ResourcePatternResolver resolver = new org.springframework.core.io.support.PathMatchingResourcePatternResolver(cl)\norg.springframework.core.io.Resource[] resources = resolver.getResources(\"${output.nonRpmPathPrefix}${output.name}${JSON_FILE_SUFFIX}\")\n\noutput.nonRpmResources = resources"
+    },
+    {
+      "id":[
+        1000256107271
+      ],
+      "type":"exp",
+      "value":"//Read json used for visualizer config from local\n\nfinal String JSON_FILE_SUFFIX = '.json'\n\nClassLoader cl = NCubeGroovyExpression.getClassLoader()\norg.springframework.core.io.support.ResourcePatternResolver resolver = new org.springframework.core.io.support.PathMatchingResourcePatternResolver(cl)\norg.springframework.core.io.Resource[] resources = resolver.getResources(\"${output.configPathPrefix}${output.name}${JSON_FILE_SUFFIX}\")\n\noutput.configresources = resources"
+    }
+  ]
+}

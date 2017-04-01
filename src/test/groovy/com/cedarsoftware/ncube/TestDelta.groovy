@@ -4,15 +4,12 @@ import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXIS_REF_CHANGE
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -31,20 +28,8 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestDelta
+class TestDelta extends NCubeCleanupBaseTest
 {
-    @Before
-    void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testDeltaApis()
     {
@@ -94,7 +79,7 @@ class TestDelta
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 32
 
-        count = cube2.getAxis("state").getColumns().size()
+        count = cube2.getAxis("state").columns.size()
         assert cube2.getAxis('state').findColumn('OH') != null
         assert cube2.getAxis('state').findColumn('TX') != null
         assert cube2.getAxis('state').findColumn('GA') == null
@@ -175,7 +160,7 @@ class TestDelta
 
         List<Delta> delta1 = DeltaProcessor.getDeltaDescription(cube1, orig1)
         List<Delta> delta2 = DeltaProcessor.getDeltaDescription(cube2, orig2)
-        List<Delta> delta3 = DeltaProcessor.getDeltaDescription(cube2, cube1)
+//        List<Delta> delta3 = DeltaProcessor.getDeltaDescription(cube2, cube1)
 
         assert delta1.size() == delta2.size()
         //TODO assert delta sets are incompatible
@@ -263,7 +248,7 @@ class TestDelta
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 24
 
-        count = cube2.getAxis("rule").getColumns().size()
+        count = cube2.getAxis("rule").columns.size()
         assert count == 1
         assert cube2.getAxis('rule').findColumn('init') != null
         assert cube2.getAxis('rule').findColumn('process') == null
@@ -506,7 +491,7 @@ class TestDelta
         assert '99' == getCellIgnoreRule(cube2, coord)
         coord.rule = 'Finalize'
         assert '88' == getCellIgnoreRule(cube2, coord)
-        assert cube2.getNumCells() == 50
+        assert cube2.numCells == 50
     }
 
     @Test
@@ -538,7 +523,7 @@ class TestDelta
         assert '99' == getCellIgnoreRule(cube2, coord)
         coord.rule = 'Finalize'
         assert '88' == getCellIgnoreRule(cube2, coord)
-        assert cube2.getNumCells() == 50
+        assert cube2.numCells == 50
     }
 
     @Test
@@ -619,7 +604,7 @@ class TestDelta
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
         cube1.setCell('love', coord)
         assert 'love' == getCellIgnoreRule(cube1, coord)
-        assert cube1.getNumCells() == 49
+        assert cube1.numCells == 49
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
@@ -629,7 +614,7 @@ class TestDelta
         Axis age = cube2.getAxis('age')
         assert age.size() == 3
         assert 'love' == getCellIgnoreRule(cube2, coord)
-        assert cube2.getNumCells() == 49
+        assert cube2.numCells == 49
     }
 
     @Test
@@ -643,11 +628,11 @@ class TestDelta
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
         cube1.setCell('love', coord)
         assert 'love' == getCellIgnoreRule(cube1, coord)
-        assert cube1.getNumCells() == 49
+        assert cube1.numCells == 49
         cube1.addColumn('rule', 'true', 'summary')
         Map coord2 = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'summary'] as Map
         cube1.setCell('fear', coord2)
-        assert cube1.getNumCells() == 50
+        assert cube1.numCells == 50
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
@@ -657,7 +642,7 @@ class TestDelta
         Axis age = cube2.getAxis('age')
         assert age.size() == 3
         assert 'love' == getCellIgnoreRule(cube2, coord)
-        assert cube2.getNumCells() == 50
+        assert cube2.numCells == 50
 
         assert 'fear' == getCellIgnoreRule(cube2, coord2)
         Axis rule = cube2.getAxis('rule')
@@ -698,7 +683,7 @@ class TestDelta
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
         NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
 
-        Column column = cube1.getAxis('rule').getColumns()[0]
+        Column column = cube1.getAxis('rule').columns[0]
         cube1.deleteColumn('rule', column.id)
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
@@ -715,9 +700,9 @@ class TestDelta
     @Test
     void testDeleteColumnWithNoNameFromRuleAxis()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.getTestRuleCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.getTestRuleCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getTestRuleCube()
+        NCube<String> cube1 = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube<String> cube2 = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube<String> orig = (NCube<String>) NCubeBuilder.testRuleCube
 
         assert cube1.numCells == 3
         Column col1 = cube1.getAxis('rule').columns[0]
@@ -741,9 +726,9 @@ class TestDelta
     @Test
     void testChangeColumnWithNoNameOnRuleAxis()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.getTestRuleCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.getTestRuleCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getTestRuleCube()
+        NCube<String> cube1 = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube<String> cube2 = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube<String> orig = (NCube<String>) NCubeBuilder.testRuleCube
 
         assert cube1.numCells == 3
         Column col1 = cube1.getAxis('rule').columns[0]
@@ -757,8 +742,8 @@ class TestDelta
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.numCells == 3
 
-        Column col2 = rule.getColumns()[0]
-        assert '1 < 2' == col2.getValue().toString()
+        Column col2 = rule.columns[0]
+        assert '1 < 2' == col2.value.toString()
     }
 
     @Test
@@ -791,9 +776,9 @@ class TestDelta
     @Test
     void testDiscreteAddDefaultColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.getDiscrete1D()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.getDiscrete1D()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getDiscrete1D()
+        NCube<String> cube1 = (NCube<String>) NCubeBuilder.discrete1D
+        NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1D
+        NCube<String> orig = (NCube<String>) NCubeBuilder.discrete1D
 
         Axis state = (Axis) cube1['state']
         assert state.size() == 2
@@ -815,7 +800,7 @@ class TestDelta
     @Test
     void testDiscreteRemoveDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getDiscrete1D()
+        NCube<String> orig = (NCube<String>) NCubeBuilder.discrete1D
         orig.addColumn('state', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
@@ -832,7 +817,7 @@ class TestDelta
         }
         catch (InvalidCoordinateException e)
         {
-            e.getMessage().contains('required scope')
+            e.message.contains('required scope')
             assert cube1.name == e.cubeName
             assert !e.coordinateKeys
             assert e.requiredKeys.contains('state')
@@ -854,7 +839,7 @@ class TestDelta
         }
         catch (InvalidCoordinateException e)
         {
-            e.getMessage().contains('required scope')
+            e.message.contains('required scope')
             assert cube2.name == e.cubeName
             assert !e.coordinateKeys
             assert e.requiredKeys.contains('state')
@@ -865,9 +850,9 @@ class TestDelta
     @Test
     void testRuleAddDefaultColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.getRule1D()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.getRule1D()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getRule1D()
+        NCube<String> cube1 = (NCube<String>) NCubeBuilder.rule1D
+        NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
+        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
 
         Axis rules = (Axis) cube1['rule']
         assert rules.size() == 2
@@ -889,7 +874,7 @@ class TestDelta
     @Test
     void testRuleRemoveDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getRule1D()
+        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
         orig.addColumn('rule', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
@@ -930,9 +915,9 @@ class TestDelta
     @Test
     void testUpdateRemoveRuleColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.getRule1D()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.getRule1D()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getRule1D()
+        NCube<String> cube1 = (NCube<String>) NCubeBuilder.rule1D
+        NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
+        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
 
         Axis rule = (Axis) cube1['rule']
         Column process = rule.findColumn('process')
@@ -950,7 +935,7 @@ class TestDelta
     @Test
     void testUpdateRemoveRuleDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.getRule1D()
+        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
         orig.addColumn('rule', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
@@ -1020,7 +1005,7 @@ class TestDelta
 
         Axis state = cube1['state'] as Axis
         assert state.columnOrder == Axis.DISPLAY
-        List<Column> cols = state.getColumns()
+        List<Column> cols = state.columns
         assert cols[0].value == 'OH'
         assert cols[1].value == 'GA'
         assert cols[2].value == 'TX'
@@ -1034,7 +1019,7 @@ class TestDelta
 
         state = cube2['state'] as Axis
         assert state.columnOrder == Axis.SORTED      // sort indicator updated
-        cols = state.getColumns()
+        cols = state.columns
         assert cols[0].value == 'GA'                 // actual sort order honored
         assert cols[1].value == 'OH'
         assert cols[2].value == 'TX'
@@ -1049,16 +1034,16 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'kpartlow' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.1
-        List<NCubeInfoDto> list = VersionControl.getBranchChangesForHead(appIdKpartlow)
-        VersionControl.commitBranch(appIdKpartlow, list as Object[])
+        List<NCubeInfoDto> list = mutableClient.getBranchChangesForHead(appIdKpartlow)
+        mutableClient.commitBranch(appIdKpartlow, list as Object[])
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
-        list = VersionControl.getBranchChangesForHead(appIdjdereg)
-        Map<String, Object> commits = VersionControl.commitBranch(appIdjdereg, list as Object[])
-        NCubeInfoDto dto = (commits[VersionControl.BRANCH_UPDATES] as List<NCubeInfoDto>).first()
+        list = mutableClient.getBranchChangesForHead(appIdjdereg)
+        Map<String, Object> commits = mutableClient.commitBranch(appIdjdereg, list as Object[])
+        NCubeInfoDto dto = (commits[mutableClient.BRANCH_UPDATES] as List<NCubeInfoDto>).first()
         assert dto.notes.contains('merged')
 
-        NCube referrer = NCubeManager.loadCube(appIdKpartlow.asHead(), 'States')
+        NCube referrer = mutableClient.getCube(appIdKpartlow.asHead(), 'States')
         Axis axis = referrer['state'] as Axis
         assert axis.metaProperties.referenceVersion == '1.0.2'
     }
@@ -1072,26 +1057,26 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
-        VersionControl.commitBranch(appIdjdereg)
+        mutableClient.commitBranch(appIdjdereg)
 
         // Commit a change in 'kpartlow' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.1
         // Should fail because kpartlow branch is behind and needs to be updated (merged) first
         try
         {
-            VersionControl.commitBranch(appIdKpartlow)
+            mutableClient.commitBranch(appIdKpartlow)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+            assert (e.errors[mutableClient.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_REJECTS] as Map).size() == 1
         }
 
         // Update branch 1.0.1 -> 1.0.2
-        Map map = VersionControl.updateBranch(appIdKpartlow)
+        Map map = mutableClient.updateBranch(appIdKpartlow)
         assert (map.adds as List).size() == 0
         assert (map.deletes as List).size() == 0
         assert (map.updates as List).size() == 1
@@ -1114,15 +1099,16 @@ class TestDelta
         setupLibrary()
         setupLibraryReference()
         ApplicationID appId = setupBranch('MyBranch', '1.0.2')
-        NCube cube = NCubeManager.loadCube(appId, 'States')
+        NCube cube = mutableClient.getCube(appId, 'States')
 
         // Add non-reference axis
         Axis property = new Axis('property', AxisType.DISCRETE, AxisValueType.STRING, true)
         cube.addAxis(property)
-        NCubeManager.updateCube(appId, cube)
+        mutableClient.updateCube(cube)
         // Update meta-properties on a non-reference axis
         property.addMetaProperties([hip: 'hop'] as Map)
-        NCubeManager.updateAxisMetaProperties(appId, 'States', 'property', property.metaProperties)
+        mutableClient.updateAxisMetaProperties(appId, 'States', 'property', property.metaProperties)
+        cube = mutableClient.getCube(appId, 'States')
 
         // Add default column
         cube.addColumn(axisName, null)
@@ -1147,7 +1133,7 @@ class TestDelta
         oh.setMetaProperty('num', 3)
         tx.setMetaProperty('num', 4)
         defCol.setMetaProperty('meta', 'prop')
-        NCubeManager.updateCube(appId, cube)
+        mutableClient.updateCube(cube)
 
         // Initial basic setup assertions
         assert axis.hasDefaultColumn()
@@ -1160,9 +1146,9 @@ class TestDelta
 
         // Update reference axis via meta properties
         axis.addMetaProperties([referenceVersion: '1.0.1'] as Map)
-        NCubeManager.updateAxisMetaProperties(appId, 'States', axisName, axis.metaProperties)
 
-        cube = NCubeManager.loadCube(appId, 'States')
+        mutableClient.updateAxisMetaProperties(appId, 'States', axisName, axis.metaProperties)
+        cube = mutableClient.getCube(appId, 'States')
         axis = cube.getAxis(axisName)
         ga = axis.findColumn('GA')
         oh = axis.findColumn('OH')
@@ -1198,15 +1184,16 @@ class TestDelta
 
         // Update reference axis via meta properties to previous version
         axis.addMetaProperties([referenceVersion: '1.0.2'] as Map)
-        NCubeManager.updateAxisMetaProperties(appId, 'States', axisName, axis.metaProperties)
 
-        cube = NCubeManager.loadCube(appId, 'States')
+        mutableClient.updateAxisMetaProperties(appId, 'States', axisName, axis.metaProperties)
+        cube = mutableClient.getCube(appId, 'States')
         axis = cube.getAxis(axisName)
         al = axis.findColumn('AL')
         ga = axis.findColumn('GA')
         oh = axis.findColumn('OH')
         tx = axis.findColumn('TX')
         defCol = axis.findColumn(null)
+        assert defCol.default
         // Changed structure assertions
         assert axis.hasDefaultColumn()
         assert 5 == axis.columns.size()
@@ -1230,24 +1217,24 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'kpartlow' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.1
-        VersionControl.commitBranch(appIdKpartlow)
+        mutableClient.commitBranch(appIdKpartlow)
 
-        NCube statesJdereg = NCubeManager.loadCube(appIdjdereg, 'States')
+        NCube statesJdereg = mutableClient.getCube(appIdjdereg, 'States')
         statesJdereg.breakAxisReference('state')
-        NCubeManager.updateCube(appIdjdereg, statesJdereg, true)
+        mutableClient.updateCube(statesJdereg)
 
         try
         {
-            VersionControl.commitBranch(appIdjdereg)
+            mutableClient.commitBranch(appIdjdereg)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+            assert (e.errors[mutableClient.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_REJECTS] as Map).size() == 1
         }
     }
 
@@ -1260,24 +1247,25 @@ class TestDelta
         ApplicationID appIdjdereg = setupBranch('jdereg', '1.0.2')
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
-        VersionControl.commitBranch(appIdjdereg)
+        mutableClient.commitBranch(appIdjdereg)
 
-        NCube statesKpartlow = NCubeManager.loadCube(appIdKpartlow, 'States')
+        NCube statesKpartlow = mutableClient.getCube(appIdKpartlow, 'States')
         statesKpartlow.breakAxisReference('state')
-        NCubeManager.updateCube(appIdKpartlow, statesKpartlow, true)
+        mutableClient.updateCube(statesKpartlow)
 
         try
         {
-            VersionControl.commitBranch(appIdKpartlow)
+            mutableClient.commitBranch(appIdKpartlow)
             fail()
         }
         catch (BranchMergeException e)
         {
-            assert (e.errors[VersionControl.BRANCH_ADDS] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_DELETES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_UPDATES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_RESTORES] as Map).size() == 0
-            assert (e.errors[VersionControl.BRANCH_REJECTS] as Map).size() == 1
+            Map data = e.errors
+            assert (data[mutableClient.BRANCH_ADDS] as Map).size() == 0
+            assert (data[mutableClient.BRANCH_DELETES] as Map).size() == 0
+            assert (data[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+            assert (data[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+            assert (data[mutableClient.BRANCH_REJECTS] as Map).size() == 1
         }
     }
 
@@ -1288,8 +1276,8 @@ class TestDelta
         setupLibraryReference()
         ApplicationID branch1 = setupBranch('branch1', '1.0.1')
         ApplicationID branch2 = setupBranch('branch2', '1.0.1')
-        NCube branch1Cube = NCubeManager.getCube(branch1, 'States')
-        NCube branch2Cube = NCubeManager.getCube(branch2, 'States')
+        NCube branch1Cube = mutableClient.getCube(branch1, 'States')
+        NCube branch2Cube = mutableClient.getCube(branch2, 'States')
         Map deltas = DeltaProcessor.getDelta(branch1Cube, branch2Cube)
         Map stateRefAxisDeltas = deltas[DELTA_AXES]['State'][DELTA_AXIS_REF_CHANGE] as Map
         assert stateRefAxisDeltas.size() == 0
@@ -1299,7 +1287,7 @@ class TestDelta
     void testDeleteColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
     {
         setupLibrary()
-        NCube base = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        NCube base = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         NCube change = base.duplicate('george')
         change.deleteColumn('Column', 'C')
         base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
@@ -1312,7 +1300,7 @@ class TestDelta
     void testAddColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
     {
         setupLibrary()
-        NCube base = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        NCube base = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         NCube change = base.duplicate('george')
         change.addColumn('Column', 'D')
         base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
@@ -1344,12 +1332,13 @@ class TestDelta
     {
         NCube<String> states = (NCube<String>) NCubeBuilder.discrete1DEmptyWithDefault
         ApplicationID appId = ApplicationID.testAppId.asVersion('1.0.0')
-        NCubeManager.updateCube(appId, states, true)
-        List<NCubeInfoDto> list = VersionControl.getBranchChangesForHead(appId)
-        VersionControl.commitBranch(appId, list as Object[])
-        NCubeManager.releaseCubes(appId, '1.0.1')
+        states.applicationID = appId
+        mutableClient.createCube(states)
+        List<NCubeInfoDto> list = mutableClient.getBranchChangesForHead(appId)
+        mutableClient.commitBranch(appId, list as Object[])
+        mutableClient.releaseCubes(appId, '1.0.1')
 
-        NCube ref = NCubeManager.getNCubeFromResource('2D1Ref.json')
+        NCube ref = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         Axis state = ref.getAxis('state')
         ref.addColumn('state', null)
         Column ohio = state.findColumn('OH')
@@ -1625,22 +1614,25 @@ class TestDelta
         NCube<String> states2 = (NCube<String>) NCubeBuilder.discrete1D
 
         ApplicationID appId = ApplicationID.testAppId.asVersion('1.0.0')
-        NCubeManager.updateCube(appId, states2, true)
-        List<NCubeInfoDto> list = VersionControl.getBranchChangesForHead(appId)
-        VersionControl.commitBranch(appId, list as Object[])
-        NCubeManager.releaseCubes(appId, '1.0.1')
+        states2.applicationID = appId
+        mutableClient.createCube(states2)
+        List<NCubeInfoDto> list = mutableClient.getBranchChangesForHead(appId)
+        mutableClient.commitBranch(appId, list as Object[])
+        mutableClient.releaseCubes(appId, '1.0.1')
 
         appId = ApplicationID.testAppId.asVersion('1.0.1')
-        NCubeManager.updateCube(appId, states3, true)
-        list = VersionControl.getBranchChangesForHead(appId)
-        VersionControl.commitBranch(appId, list as Object[])
-        NCubeManager.releaseCubes(appId, '1.0.2')
+        states3.applicationID = appId
+        mutableClient.updateCube(states3)
+        list = mutableClient.getBranchChangesForHead(appId)
+        mutableClient.commitBranch(appId, list as Object[])
+        mutableClient.releaseCubes(appId, '1.0.2')
 
         appId = ApplicationID.testAppId.asVersion('1.0.2')
-        NCubeManager.updateCube(appId, states4, true)
-        list = VersionControl.getBranchChangesForHead(appId)
-        VersionControl.commitBranch(appId, list as Object[])
-        NCubeManager.releaseCubes(appId, '1.0.3')
+        states4.applicationID = appId
+        mutableClient.updateCube(states4)
+        list = mutableClient.getBranchChangesForHead(appId)
+        mutableClient.commitBranch(appId, list as Object[])
+        mutableClient.releaseCubes(appId, '1.0.3')
     }
 
     static void setupLibraryReference()
@@ -1648,13 +1640,14 @@ class TestDelta
         NCube<String> statesRef = NCubeBuilder.stateReferrer
 
         ApplicationID appId = ApplicationID.testAppId.asVersion('2.0.0')
-        NCubeManager.updateCube(appId, statesRef, true)
-        List<NCubeInfoDto> list = VersionControl.getBranchChangesForHead(appId)
-        VersionControl.commitBranch(appId, list as Object[])
+        statesRef.applicationID = appId
+        mutableClient.createCube(statesRef)
+        List<NCubeInfoDto> list = mutableClient.getBranchChangesForHead(appId)
+        mutableClient.commitBranch(appId, list as Object[])
 
-        list = NCubeManager.search(appId.asHead(), null, null, null)
+        list = mutableClient.search(appId.asHead(), null, null, null)
         assert list.size() == 1
-        statesRef = NCubeManager.getCube(appId.asHead(), 'states') as NCube
+        statesRef = mutableClient.getCube(appId.asHead(), 'states') as NCube
         Map input = [state:'OH']
         assert 1 == statesRef.getCell(input) as int
         input.state = 'TX'
@@ -1667,8 +1660,9 @@ class TestDelta
         Axis state = states.getAxis('state')
         state.setMetaProperty(ReferenceAxisLoader.REF_VERSION, refVer)
         ApplicationID appId = ApplicationID.testAppId.asBranch(branch).asSnapshot().asVersion('2.0.0')
-        NCubeManager.copyBranch(appId.asHead(), appId)
-        NCubeManager.updateCube(appId, states, true)
+        states.applicationID = appId
+        mutableClient.copyBranch(appId.asHead(), appId, false)
+        mutableClient.updateCube(states)
         return appId
     }
 

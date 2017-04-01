@@ -13,8 +13,8 @@ import com.cedarsoftware.util.io.JsonReader
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.sql.Blob
 import java.sql.Connection
@@ -24,7 +24,6 @@ import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Timestamp
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.zip.GZIPOutputStream
 
@@ -53,7 +52,7 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 @CompileStatic
 class NCubeJdbcPersister
 {
-    private static final Logger LOG = LogManager.getLogger(NCubeJdbcPersister.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NCubeJdbcPersister.class)
     static final SafeSimpleDateFormat DATE_TIME_FORMAT = new SafeSimpleDateFormat('yyyy-MM-dd HH:mm:ss')
     static final String CUBE_VALUE_BIN = 'cube_value_bin'
     static final String TEST_DATA_BIN = 'test_data_bin'
@@ -520,8 +519,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         return infoRecs
     }
 
-    static void updateCube(Connection c, ApplicationID appId, NCube cube, String username)
+    static void updateCube(Connection c, NCube cube, String username)
     {
+        ApplicationID appId = cube.applicationID
         Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
                                        (SEARCH_INCLUDE_TEST_DATA): true,
                                        (SEARCH_EXACT_MATCH_NAME): true,
@@ -553,7 +553,26 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
         if (!rowFound)
         {
-            insertCube(c, appId, cube, 0L, null, "created", true, null, username, 'updateCube')
+            throw new IllegalArgumentException("Unable to update cube: ${cube.name} in app: ${appId}, cube does not exist")
+        }
+    }
+
+    static void createCube(Connection c, NCube cube, String username)
+    {
+        ApplicationID appId = cube.applicationID
+        Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_INCLUDE_TEST_DATA): true,
+                                       (SEARCH_EXACT_MATCH_NAME): true,
+                                       (METHOD_NAME) : 'createCube'] as Map
+        boolean rowFound = false
+        runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
+            throw new IllegalArgumentException("Unable to create cube: ${cube.name} in app: ${appId}, cube already exists (it may need to be restored)")
+        })
+
+        // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
+        if (!rowFound)
+        {
+            insertCube(c, appId, cube, 0L, null, "created", true, null, username, 'createCube')
         }
     }
 
@@ -743,7 +762,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         return result
     }
 
-    static List<NCubeInfoDto> commitCubes(Connection c, ApplicationID appId, Object[] cubeIds, String username, long txId)
+    static List<NCubeInfoDto> commitCubes(Connection c, ApplicationID appId, Object[] cubeIds, String username, String requestUser, long txId)
     {
         List<NCubeInfoDto> infoRecs = []
         if (ArrayUtilities.isEmpty(cubeIds))
@@ -806,7 +825,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 if (changeType)
                 {
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
-                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, 'committed to HEAD, txId: [' + txId + ']', false, sha1, null, username, 'commitCubes')
+                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}]", false, sha1, null, username, 'commitCubes')
                     Map map1 = [head_sha1: sha1, create_dt: nowAsTimestamp(), id: cubeIds[i]]
                     Sql sql1 = getSql(c)
                     sql1.executeUpdate(map1, '/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id')
@@ -1493,7 +1512,7 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
 
     static boolean updateTestData(Connection c, ApplicationID appId, String cubeName, String testData)
     {
-        Long maxRev = getMaxRevision(c, appId, cubeName, 'updateTestData')
+        Long maxRev = getMaxRevision(c, appId, cubeName, 'saveTests')
 
         if (maxRev == null)
         {
@@ -1506,7 +1525,7 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         Sql sql = getSql(c)
 
         String update = """\
-/* updateTestData */
+/* saveTests */
 UPDATE n_cube SET test_data_bin=:testData
 WHERE app_cd = :app AND ${buildNameCondition('n_cube_nm')} = :cube AND version_no_cd = :ver
 AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
@@ -1769,6 +1788,15 @@ ORDER BY abs(revision_number) DESC"""
         list.add(dto)
     }
 
+    static void clearTestDatabase(Connection c)
+    {
+        if (isHSQLDB(c))
+        {
+            Sql sql = getSql(c)
+            sql.execute('/* Clear HSQLDB */ DELETE FROM n_cube')
+        }
+    }
+
     protected static NCube buildCube(ApplicationID appId, ResultSet row)
     {
         NCube ncube = NCube.createCubeFromStream(row.getBinaryStream(CUBE_VALUE_BIN))
@@ -1840,6 +1868,16 @@ ORDER BY abs(revision_number) DESC"""
             LOG.info('Oracle JDBC driver: ' + isOracle.get())
         }
         return isOracle.get()
+    }
+
+    static boolean isHSQLDB(Connection c)
+    {
+        if (c == null)
+        {
+            return false
+        }
+
+        return Regexes.isHSQLDBPattern.matcher(c.metaData.driverName).matches()
     }
 
     /**

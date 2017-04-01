@@ -1,0 +1,83 @@
+{
+  "ncube":"visualizer.writeCubesToJsonOnLocal",
+  "axes":[
+    {
+      "id":1,
+      "name":"method",
+      "hasDefault":false,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":1001294724408,
+          "type":"exp",
+          "name":"Set path prefixes",
+          "value":"true"
+        },
+        {
+          "id":1001385034657,
+          "type":"exp",
+          "name":"Get list of cubes used for visualizer config",
+          "value":"true"
+        },
+        {
+          "id":1000000000003,
+          "type":"exp",
+          "name":"Get list of cubes used for rpm testing of visualizer",
+          "value":"true"
+        },
+        {
+          "id":1001827256759,
+          "type":"exp",
+          "name":"Get list of cubes used for non-rpm testing of visualizer",
+          "value":"true"
+        },
+        {
+          "id":1000000000004,
+          "type":"exp",
+          "name":"Write cubes to json on local",
+          "value":"true"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        1000000000003
+      ],
+      "type":"exp",
+      "value":"@visualizer.Cubes[cubeType: 'rpm']"
+    },
+    {
+      "id":[
+        1001827256759
+      ],
+      "type":"exp",
+      "value":"@visualizer.Cubes[cubeType: 'nonRpm']"
+    },
+    {
+      "id":[
+        1000000000004
+      ],
+      "type":"exp",
+      "value":"//Write cubes to local\n\nfinal String UTF8 = 'utf-8'\nfinal String JSON_FILE_SUFFIX = '.json'\n\nList configJsonFiles = []\nList rpmJsonFiles = []\nList nonRpmJsonFiles = []\n\n//Write files used for visualizer config to local\noutput.configNames?.each { \n\tString cubeName = it as String\n\tNCube ncube = getCube(it)\n\tFile file = new File(output.configPathPrefix as String, cubeName + JSON_FILE_SUFFIX)\n\tfile.withWriter(UTF8){writer -> \n\t\twriter.writeLine(JsonWriter.formatJson(ncube.toFormattedJson()))\n\t}\n\tconfigJsonFiles << cubeName \n}\n\n//Write files used for non-rpm testing to local\noutput.nonRpmNames?.each { \n\tString cubeName = it as String\n\tNCube ncube = getCube(it)\n\tFile file = new File(output.nonRpmPathPrefix as String, cubeName + JSON_FILE_SUFFIX)\n\tfile.withWriter(UTF8){writer -> \n\t\twriter.writeLine(JsonWriter.formatJson(ncube.toFormattedJson()))\n\t}\n\tnonRpmJsonFiles << cubeName \n}\n\n//Write files used for rpm testing to local\noutput.rpmNames?.each { \n\tString cubeName = it as String\n\tNCube ncube = getCube(it)\n\tFile file = new File(output.rpmPathPrefix as String, cubeName + JSON_FILE_SUFFIX)\n\tfile.withWriter(UTF8){writer -> \n\t\twriter.writeLine(JsonWriter.formatJson(ncube.toFormattedJson()))\n\t}\n\trpmJsonFiles << cubeName \n}\n\noutput.configJsonFiles = configJsonFiles \noutput.rpmJsonFiles = rpmJsonFiles \noutput.nonRpmJsonFiles = nonRpmJsonFiles \noutput.totalConfigJsonFilesWritten = configJsonFiles .size()\noutput.totalRpmJsonFilesWritten = rpmJsonFiles .size()\noutput.totalNonRpmJsonFilesWritten = nonRpmJsonFiles .size()"
+    },
+    {
+      "id":[
+        1001385034657
+      ],
+      "type":"exp",
+      "value":"@visualizer.Cubes[cubeType: 'config']"
+    },
+    {
+      "id":[
+        1001294724408
+      ],
+      "type":"exp",
+      "value":"//Set path prefixes\n\nString resourceLocation = 'C:/Development/BUE/n-cube-editor/src/main/resources/'\noutput.configPathPrefix = resourceLocation + 'config/'\n\nString testResourceLocation = 'C:/Development/BUE/n-cube-editor/src/test/resources/'\noutput.nonRpmPathPrefix = testResourceLocation + 'visualizer'\noutput.rpmPathPrefix = testResourceLocation + 'rpmvisualizer'"
+    }
+  ]
+}

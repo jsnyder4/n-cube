@@ -1,8 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 import java.lang.reflect.Constructor
@@ -29,20 +27,8 @@ import static org.junit.Assert.assertNotNull
  *         limitations under the License.
  */
 @CompileStatic
-class TestGroovyTemplate
+class TestGroovyTemplate extends NCubeBaseTest
 {
-    @Before
-    public void setUp()
-    {
-        TestingDatabaseHelper.setupDatabase()
-    }
-
-    @After
-    public void tearDown()
-    {
-        TestingDatabaseHelper.tearDownDatabase()
-    }
-
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
     {
@@ -56,9 +42,8 @@ class TestGroovyTemplate
     @Test
     void testTemplateThatUsesClasspath()
     {
-        NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
-        NCube template = NCubeManager.getNCubeFromResource('templateUsesClassPath.json')
-        NCubeManager.addCube(ApplicationID.testAppId, template)
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        NCube template = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([loc:'web', testType:'templateTest'] as Map)
         assert text.contains('from the web')
         assert text.contains('Hello, world."')
@@ -71,9 +56,8 @@ class TestGroovyTemplate
     @Test
     void testNCubeGroovyExpressionThatUsesClasspath()
     {
-        NCubeManager.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
-        NCube template = NCubeManager.getNCubeFromResource('templateUsesClassPath.json')
-        NCubeManager.addCube(ApplicationID.testAppId, template)
+        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        NCube template = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([testType:'expressionTest'] as Map)
         assert text.contains('Hello, world."')
     }

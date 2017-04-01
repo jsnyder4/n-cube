@@ -1,7 +1,7 @@
 package com.cedarsoftware.ncube.util
 
+import com.cedarsoftware.ncube.NCubeBaseTest
 import groovy.transform.CompileStatic
-import org.junit.Ignore
 import org.junit.Test
 
 import static org.junit.Assert.assertNotNull
@@ -24,7 +24,7 @@ import static org.junit.Assert.assertNull
  *         limitations under the License.
  */
 @CompileStatic
-class TestCdnClassLoader
+class TestCdnClassLoader extends NCubeBaseTest
 {
     @Test
     void testLocalResources()
@@ -66,7 +66,7 @@ class TestCdnClassLoader
     void testGetResourcesWithLocalResource()
     {
         CdnClassLoader testLoader1 = new CdnClassLoader(TestCdnClassLoader.class.classLoader)
-        testLoader1.getResources("ddl/hsqldb-schema.sql").nextElement()
+        testLoader1.getResources("config/hsqldb-schema.sql").nextElement()
         try
         {
             new CdnClassLoader(TestCdnClassLoader.class.classLoader).getResources("ddl/xhsqldb-schema.sql").nextElement()

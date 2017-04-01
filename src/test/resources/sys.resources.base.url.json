@@ -22,7 +22,7 @@
     {
       "id": [],
       "type": "exp",
-      "value": "Map map = NCubeManager.systemParams; String version = map?.containsKey('version') ? map.version : input.version; return 'http://files.cedarsoftware.com/foo/' + version + '/';"
+      "value": "Map map = getSystemParams(); String version = map?.containsKey('version') ? map.version : input.version; return 'http://files.cedarsoftware.com/foo/' + version + '/';"
     }
   ]
 }
