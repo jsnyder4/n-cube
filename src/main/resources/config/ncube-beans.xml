@@ -8,45 +8,27 @@
    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
 
     <context:annotation-config />
+    <context:component-scan base-package="com.cedarsoftware.config" />
     <aop:aspectj-autoproxy/>
 
     <bean id="appContext" class="com.cedarsoftware.ncube.NCubeAppContext"/>
 
-    <bean id="ncubeCacheManager" class="com.cedarsoftware.ncube.util.GCacheManager">
-        <constructor-arg ref="ncubeRemoval"/>
-        <constructor-arg value="${ncube.cache.max.size}"/>
-        <constructor-arg value="${ncube.cache.evict.type}"/>
-        <constructor-arg value="${ncube.cache.evict.duration}"/>
-        <constructor-arg value="${ncube.cache.evict.units}"/>
-        <constructor-arg value="${ncube.cache.concurrency}"/>
-    </bean>
-
-    <bean id="permCacheManager" class="com.cedarsoftware.ncube.util.GCacheManager">
-        <constructor-arg><null/></constructor-arg>
-        <constructor-arg value="${perm.cache.max.size}"/>
-        <constructor-arg value="${perm.cache.evict.type}"/>
-        <constructor-arg value="${perm.cache.evict.duration}"/>
-        <constructor-arg value="${perm.cache.evict.units}"/>
-        <constructor-arg value="${perm.cache.concurrency}"/>
-    </bean>
-
-    <bean id="ncubeRemoval" class="com.cedarsoftware.ncube.util.NCubeRemoval"/>
-
     <beans profile="client">
 
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="jsonHttpProxy"/>
+            <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
             <constructor-arg value="${ncube.allow.mutable.methods}"/>
         </bean>
 
-        <bean id="jsonHttpProxy" class="com.cedarsoftware.util.JsonHttpProxy">
+        <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
             <constructor-arg value="${server.scheme}"/>
             <constructor-arg value="${server.host}"/>
             <constructor-arg value="${server.port}"/>
             <constructor-arg value="${server.context}"/>
             <constructor-arg value="${server.username}"/>
             <constructor-arg value="${server.password}"/>
+            <constructor-arg value="${server.numConnections}"/>
         </bean>
 
     </beans>
@@ -62,19 +44,19 @@
             <constructor-arg value="true"/>
         </bean>
 
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="jsonHttpProxy"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods}"/>
-        </bean>
-        
-        <bean id="jsonHttpProxy" class="com.cedarsoftware.util.JsonHttpProxy">
+        <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
             <constructor-arg value="${server.scheme}"/>
             <constructor-arg value="${server.host}"/>
             <constructor-arg value="${server.port}"/>
             <constructor-arg value="${server.context}"/>
             <constructor-arg value="${server.username}"/>
             <constructor-arg value="${server.password}"/>
+        </bean>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="callableBean"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="${ncube.allow.mutable.methods}"/>
         </bean>
 
     </beans>
@@ -113,28 +95,16 @@
         </bean>
 
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="reflectiveProxy"/>
+            <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
             <constructor-arg value="true"/>
         </bean>
 
+        <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
+        
         <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
             <constructor-arg ref="persister"/>
             <constructor-arg ref="permCacheManager"/>
-        </bean>
-
-        <bean id="reflectiveProxy" class="com.cedarsoftware.util.ReflectiveProxy"/>
-
-    </beans>
-
-    <beans profile="test-database">
-
-        <bean id="hsqlSetup" class="com.cedarsoftware.util.HsqlSchemaCreator">
-            <constructor-arg value="org.hsqldb.jdbcDriver"/>
-            <constructor-arg value="jdbc:hsqldb:mem:testdb"/>
-            <constructor-arg value="sa"/>
-            <constructor-arg value=""/>
-            <constructor-arg value="/config/hsqldb-schema.sql"/>
         </bean>
 
     </beans>

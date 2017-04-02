@@ -56,11 +56,6 @@ class NCubeAppContext implements ApplicationContextAware
         return getBean(MANAGER_BEAN) as NCubeTestServer
     }
 
-    void setApplicationContext(ApplicationContext applicationContext)
-    {
-        ctx = applicationContext
-    }
-
     static boolean isTest()
     {
         return ctx.containsBean('hsqlSetup') as boolean
@@ -69,5 +64,10 @@ class NCubeAppContext implements ApplicationContextAware
     static boolean isClientTest()
     {
         return ctx.environment.activeProfiles.contains('client')
+    }
+
+    void setApplicationContext(ApplicationContext applicationContext)
+    {
+        ctx = applicationContext
     }
 }

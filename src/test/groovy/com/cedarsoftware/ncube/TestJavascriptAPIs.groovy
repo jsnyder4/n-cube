@@ -172,7 +172,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         if (NCubeAppContext.clientTest)
         {
-            JsonHttpProxy proxy = NCubeAppContext.getBean('jsonHttpProxy') as JsonHttpProxy
+            JsonHttpProxy proxy = NCubeAppContext.getBean('callableBean') as JsonHttpProxy
             proxy.invokeMethod('call', ['ncubeController', methodName, args])
         }
         else
