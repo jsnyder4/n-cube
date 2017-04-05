@@ -1490,35 +1490,35 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return branchChanges.toArray()
     }
 
-    String generateCommitLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
     {
         appId = addTenant(appId)
-        String commitId = mutableClient.generateCommitLink(appId, infoDtos)
-        return commitId
+        String prId = mutableClient.generatePullRequestLink(appId, infoDtos)
+        return prId
     }
 
-    Object honorCommit(String commitId)
+    Object mergePullRequest(String prId)
     {
-        Map result = mutableClient.honorCommit(commitId)
+        Map result = mutableClient.mergePullRequest(prId)
         return result
     }
 
-    NCube cancelCommit(String commitId)
+    NCube cancelPullRequest(String prId)
     {
-        NCube result = mutableClient.cancelCommit(commitId)
+        NCube result = mutableClient.cancelPullRequest(prId)
         return result
     }
 
-    NCube reopenCommit(String commitId)
+    NCube reopenPullRequest(String prId)
     {
-        NCube result = mutableClient.reopenCommit(commitId)
+        NCube result = mutableClient.reopenPullRequest(prId)
         return result
     }
 
-    Object[] getCommits()
+    Object[] getPullRequests(Date startDate, Date endDate)
     {
-        Object[] commits = mutableClient.commits
-        return commits
+        Object[] pullRequests = mutableClient.getPullRequests(startDate, endDate)
+        return pullRequests
     }
 
     Object commitCube(ApplicationID appId, String cubeName)

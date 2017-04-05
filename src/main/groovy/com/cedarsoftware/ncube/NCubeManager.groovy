@@ -1870,136 +1870,142 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         return ApplicationID.DEFAULT_TENANT
     }
 
-    String generateCommitLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
     {
         List<Map<String, String>> commitRecords = getCommitRecords(appId, infoDtos)
-        String commitInfoJson = commitRecords.empty ? null : JsonWriter.objectToJson(commitRecords)
+        String prInfoJson = commitRecords.empty ? null : JsonWriter.objectToJson(commitRecords)
         Date time = new Date()
         String newId = time.format('yyyyMMdd.HHmmss.') + String.format('%05d', UniqueIdGenerator.uniqueId % 100000)
         String user = getUserId()
 
-        NCube commitCube = new NCube("tx.${newId}")
-        commitCube.applicationID = new ApplicationID(appId.tenant, SYS_APP, '0.0.0', ReleaseStatus.SNAPSHOT.toString(), ApplicationID.HEAD)
-        commitCube.addAxis(new Axis(PR_PROP, AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1))
-        commitCube.addColumn(PR_PROP, PR_STATUS)
-        commitCube.addColumn(PR_PROP, PR_APP)
-        commitCube.addColumn(PR_PROP, PR_CUBES)
-        commitCube.addColumn(PR_PROP, PR_REQUESTER)
-        commitCube.addColumn(PR_PROP, PR_REQUEST_TIME)
-        commitCube.addColumn(PR_PROP, PR_ID)
-        commitCube.addColumn(PR_PROP, PR_MERGER)
-        commitCube.addColumn(PR_PROP, PR_MERGE_TIME)
-        commitCube.setCell(PR_OPEN, [(PR_PROP):PR_STATUS])
-        commitCube.setCell(appId.toString(), [(PR_PROP):PR_APP])
-        commitCube.setCell(commitInfoJson, [(PR_PROP):PR_CUBES])
-        commitCube.setCell(user, [(PR_PROP):PR_REQUESTER])
-        commitCube.setCell(time.format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_REQUEST_TIME])
+        NCube prCube = new NCube("tx.${newId}")
+        prCube.applicationID = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        prCube.addAxis(new Axis(PR_PROP, AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1))
+        prCube.addColumn(PR_PROP, PR_STATUS)
+        prCube.addColumn(PR_PROP, PR_APP)
+        prCube.addColumn(PR_PROP, PR_CUBES)
+        prCube.addColumn(PR_PROP, PR_REQUESTER)
+        prCube.addColumn(PR_PROP, PR_REQUEST_TIME)
+        prCube.addColumn(PR_PROP, PR_ID)
+        prCube.addColumn(PR_PROP, PR_MERGER)
+        prCube.addColumn(PR_PROP, PR_MERGE_TIME)
+        prCube.setCell(PR_OPEN, [(PR_PROP):PR_STATUS])
+        prCube.setCell(appId.toString(), [(PR_PROP):PR_APP])
+        prCube.setCell(prInfoJson, [(PR_PROP):PR_CUBES])
+        prCube.setCell(user, [(PR_PROP):PR_REQUESTER])
+        prCube.setCell(time.format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_REQUEST_TIME])
 
-        createCube(commitCube)
+        createCube(prCube)
         return newId
     }
 
-    Map<String, Object> honorCommit(String commitId)
+    Map<String, Object> mergePullRequest(String prId)
     {
-        NCube commitsCube = loadCommitsCube(commitId)
+        NCube prCube = loadPullRequestCube(prId)
 
-        String status = commitsCube.getCell([(PR_PROP):PR_STATUS])
-        String appIdString = commitsCube.getCell([(PR_PROP):PR_APP])
-        ApplicationID commitAppId = ApplicationID.convert(appIdString)
-        String requestUser = commitsCube.getCell([(PR_PROP): PR_REQUESTER])
-        String commitUser = commitsCube.getCell([(PR_PROP): PR_MERGER])
+        String status = prCube.getCell([(PR_PROP):PR_STATUS])
+        String appIdString = prCube.getCell([(PR_PROP):PR_APP])
+        ApplicationID prAppId = ApplicationID.convert(appIdString)
+        String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
+        String commitUser = prCube.getCell([(PR_PROP): PR_MERGER])
         if (status.contains(PR_CLOSED))
         {
-            throw new IllegalArgumentException("Commit request already closed. Status: ${status}, Requested by: ${requestUser}, Committed by: ${commitUser}, ApplicationID: ${commitAppId}")
+            throw new IllegalArgumentException("Pull request already closed. Status: ${status}, Requested by: ${requestUser}, Committed by: ${commitUser}, ApplicationID: ${prAppId}")
         }
 
-        String commitInfoJson = commitsCube.getCell([(PR_PROP):PR_CUBES]) as String
+        String prInfoJson = prCube.getCell([(PR_PROP):PR_CUBES]) as String
 
-        Object[] commitDtos = null
-        if (commitInfoJson != null)
+        Object[] prDtos = null
+        if (prInfoJson != null)
         {
-            List<Map<String, String>> commitInfo = JsonReader.jsonToJava(commitInfoJson) as List
-            Object[] allDtos = getBranchChangesForHead(commitAppId)
-            commitDtos = allDtos.findAll {
+            List<Map<String, String>> prInfo = JsonReader.jsonToJava(prInfoJson) as List
+            Object[] allDtos = getBranchChangesForHead(prAppId)
+            prDtos = allDtos.findAll {
                 NCubeInfoDto dto = it as NCubeInfoDto
-                commitInfo.find { Map<String, String> info ->
+                prInfo.find { Map<String, String> info ->
                     info.name == dto.name && info.id == dto.id
                 }
             }
         }
 
-        Map ret = commitBranchFromRequest(commitAppId, commitDtos, requestUser)
+        Map ret = commitBranchFromRequest(prAppId, prDtos, requestUser)
 
-        commitsCube.setCell(PR_COMPLETE, [(PR_PROP):PR_STATUS])
-        commitsCube.setCell(getUserId(), [(PR_PROP):PR_MERGER])
-        commitsCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_MERGE_TIME])
-        updateCube(commitsCube, true)
+        fillPullRequestUpdateInfo(prCube, PR_COMPLETE)
+        updateCube(prCube, true)
         return ret
     }
 
-    NCube cancelCommit(String commitId)
+    NCube cancelPullRequest(String prId)
     {
-        NCube commitsCube = loadCommitsCube(commitId)
-
-        String status = commitsCube.getCell([(PR_PROP):PR_STATUS])
-        if (status.contains(PR_CLOSED))
-        {
-            String requestUser = commitsCube.getCell([(PR_PROP): PR_REQUESTER])
-            String appIdString = commitsCube.getCell([(PR_PROP):PR_APP])
-            ApplicationID commitAppId = ApplicationID.convert(appIdString)
-            throw new IllegalArgumentException("Request is already closed. Status: ${status}, Requested by: ${requestUser}, ApplicationID: ${commitAppId}")
+        Closure exceptionTest = { String status ->
+            return status.contains(PR_CLOSED)
         }
-
-        commitsCube.setCell(PR_CANCEL, [(PR_PROP):PR_STATUS])
-        commitsCube.setCell(getUserId(), [(PR_PROP):PR_MERGER])
-        commitsCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_MERGE_TIME])
-        updateCube(commitsCube, true)
-        return commitsCube
+        String exceptionText = 'Pull request is already closed.'
+        NCube prCube = updatePullRequest(prId, exceptionTest, exceptionText, PR_CANCEL)
+        return prCube
     }
 
-    NCube reopenCommit(String commitId)
+    NCube reopenPullRequest(String prId)
     {
-        NCube commitsCube = loadCommitsCube(commitId)
-
-        String status = commitsCube.getCell([(PR_PROP):PR_STATUS])
-        if (status == PR_COMPLETE || !status.contains(PR_CLOSED))
-        {
-            String requestUser = commitsCube.getCell([(PR_PROP): PR_REQUESTER])
-            String appIdString = commitsCube.getCell([(PR_PROP):PR_APP])
-            ApplicationID commitAppId = ApplicationID.convert(appIdString)
-            throw new IllegalArgumentException("Unable to reopen commit. Status: ${status}, Requested by: ${requestUser}, ApplicationID: ${commitAppId}")
+        Closure exceptionTest = { String status ->
+            return status == PR_COMPLETE || !status.contains(PR_CLOSED)
         }
-
-        commitsCube.setCell(PR_OPEN, [(PR_PROP):PR_STATUS])
-        commitsCube.setCell(getUserId(), [(PR_PROP):PR_MERGER])
-        commitsCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_MERGE_TIME])
-        updateCube(commitsCube, true)
-        return commitsCube
+        String exceptionText = 'Unable to reopen pull request.'
+        NCube prCube = updatePullRequest(prId, exceptionTest, exceptionText, PR_OPEN)
+        return prCube
     }
 
-    private NCube loadCommitsCube(String commitId)
+    private void fillPullRequestUpdateInfo(NCube prCube, String status)
     {
-        ApplicationID sysAppId = new ApplicationID(tenant, 'sys.app', '0.0.0', ReleaseStatus.SNAPSHOT.toString(), ApplicationID.HEAD)
-        NCube commitsCube = loadCube(sysAppId, "tx.${commitId}")
-        if (commitsCube == null)
-        {
-            throw new IllegalArgumentException("Invalid commit id: ${commitId}")
-        }
-        return commitsCube
+        prCube.setCell(status, [(PR_PROP):PR_STATUS])
+        prCube.setCell(getUserId(), [(PR_PROP):PR_MERGER])
+        prCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_MERGE_TIME])
     }
 
-    Object[] getCommits()
+    private NCube updatePullRequest(String prId, Closure exceptionTest, String exceptionText, String newStatus)
+    {
+        NCube prCube = loadPullRequestCube(prId)
+
+        String status = prCube.getCell([(PR_PROP):PR_STATUS])
+        if (exceptionTest(status))
+        {
+            String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
+            String appIdString = prCube.getCell([(PR_PROP):PR_APP])
+            ApplicationID prAppId = ApplicationID.convert(appIdString)
+            throw new IllegalArgumentException("${exceptionText} Status: ${status}, Requested by: ${requestUser}, ApplicationID: ${prAppId}")
+        }
+
+        fillPullRequestUpdateInfo(prCube, newStatus)
+        updateCube(prCube, true)
+        return prCube
+    }
+
+    private NCube loadPullRequestCube(String prId)
+    {
+        NCube prCube = loadCube(new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD), "tx.${prId}")
+        if (prCube == null)
+        {
+            throw new IllegalArgumentException("Invalid pull request id: ${prId}")
+        }
+        return prCube
+    }
+
+    Object[] getPullRequests(Date startDate, Date endDate)
     {
         List<Map> results = []
-        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, '0.0.0', ReleaseStatus.SNAPSHOT.toString(), ApplicationID.HEAD)
-        List<NCubeInfoDto> dtos = search(sysAppId, 'tx.', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        dtos.sort {it.name}
-        for (NCubeInfoDto dto : dtos)
+        ApplicationID appId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        List<NCube> cubes = persister.getPullRequestCubes(appId, startDate, endDate)
+        cubes.sort {it.name}
+        for (NCube cube : cubes)
         {
-            NCube cube = loadCubeById(Long.parseLong(dto.id))
-            Map commitInfo = cube.getMap([(PR_PROP):[] as Set])
-            commitInfo.put('txid', dto.name.substring(3))
-            results.add(commitInfo)
+            Map prInfo = cube.getMap([(PR_PROP):[] as Set])
+            if (!(prInfo.appId instanceof ApplicationID))
+            {
+                prInfo.appId = ApplicationID.convert(prInfo.appId as String)
+                prInfo.cubeNames = JsonReader.jsonToJava(prInfo.cubeNames as String)
+            }
+            prInfo.txid = cube.name.substring(3)
+            results.add(prInfo)
         }
         return results as Object[]
     }
@@ -2010,8 +2016,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
      */
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
     {
-        String commitId = generateCommitLink(appId, inputCubes)
-        return honorCommit(commitId)
+        String prId = generatePullRequestLink(appId, inputCubes)
+        return mergePullRequest(prId)
     }
 
     private Map<String, Object> commitBranchFromRequest(ApplicationID appId, Object[] inputCubes, String requestUser)

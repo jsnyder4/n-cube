@@ -419,40 +419,40 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return map
     }
 
-    String generateCommitLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
     {
-        verifyAllowMutable('generateCommitLink')
-        String link = bean.call(beanName, 'generateCommitLink', [appId, infoDtos]) as String
+        verifyAllowMutable('generatePullRequestLink')
+        String link = bean.call(beanName, 'generatePullRequestLink', [appId, infoDtos]) as String
         return link
     }
 
-    Map<String, Object> honorCommit(String commitId)
+    Map<String, Object> mergePullRequest(String commitId)
     {
-        verifyAllowMutable('honorCommit')
-        Map result = bean.call(beanName, 'honorCommit', [commitId]) as Map
+        verifyAllowMutable('mergePullRequest')
+        Map result = bean.call(beanName, 'mergePullRequest', [commitId]) as Map
         return result
     }
 
-    NCube cancelCommit(String commitId)
+    NCube cancelPullRequest(String commitId)
     {
-        verifyAllowMutable('cancelCommit')
-        NCube ncube = bean.call(beanName, 'cancelCommit', [commitId]) as NCube
+        verifyAllowMutable('cancelPullRequest')
+        NCube ncube = bean.call(beanName, 'cancelPullRequest', [commitId]) as NCube
         clearCubeFromCache(ncube.applicationID, ncube.name)
         return ncube
     }
 
-    NCube reopenCommit(String commitId)
+    NCube reopenPullRequest(String commitId)
     {
-        verifyAllowMutable('reopenCommit')
-        NCube ncube = bean.call(beanName, 'reopenCommit', [commitId]) as NCube
+        verifyAllowMutable('reopenPullRequest')
+        NCube ncube = bean.call(beanName, 'reopenPullRequest', [commitId]) as NCube
         clearCubeFromCache(ncube.applicationID, ncube.name)
         return ncube
     }
 
-    Object[] getCommits()
+    Object[] getPullRequests(Date startDate, Date endDate)
     {
-        verifyAllowMutable('getCommits')
-        Object[] result = bean.call(beanName, 'getCommits', []) as Object[]
+        verifyAllowMutable('getPullRequests')
+        Object[] result = bean.call(beanName, 'getPullRequests', [startDate, endDate]) as Object[]
         return result
     }
 

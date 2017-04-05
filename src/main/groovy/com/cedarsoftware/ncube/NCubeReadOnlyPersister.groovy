@@ -97,6 +97,15 @@ interface NCubeReadOnlyPersister
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
 
     /**
+     * Get the list of pull requests for the given tenant from appId.
+     * @param appId ApplicationID containing the tenant getting pull request data.
+     * @param startDate Beginning date for when the pull request was created.
+     * @param endDate End date for when the pull request was created.
+     * @return List of pull request cubes.
+     */
+    List<NCube> getPullRequestCubes(ApplicationID appId, Date startDate, Date endDate)
+
+    /**
      * Get the list of branches for the given ApplicationID
      * @param appId ApplicationID containing the tenant, app, version, and status values.  The branch field of
      * ApplicationID is ignored, and all branches are returned for the supplied tenant, app, version, and status.

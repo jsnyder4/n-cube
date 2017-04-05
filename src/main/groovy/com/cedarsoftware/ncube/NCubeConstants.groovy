@@ -28,6 +28,8 @@ interface NCubeConstants
     final String ERROR_CANNOT_RELEASE_000 = 'Version 0.0.0 is for system configuration and cannot be released.'
     final String ERROR_CANNOT_RELEASE_TO_000 = 'Version 0.0.0 is for system configuration and cannot be created from the release process.'
 
+    final String SEARCH_CREATE_DATE_START = 'createStartDate'
+    final String SEARCH_CREATE_DATE_END = 'createEndDate'
     final String SEARCH_INCLUDE_CUBE_DATA = 'includeCubeData'
     final String SEARCH_INCLUDE_TEST_DATA = 'includeTestData'
     final String SEARCH_INCLUDE_NOTES = 'includeNotes'
@@ -39,6 +41,7 @@ interface NCubeConstants
     final String SEARCH_FILTER_EXCLUDE = 'excludeTags'
 
     final String SYS_APP = 'sys.app'
+    final String SYS_BOOT_VERSION = '0.0.0'
     final String SYS_BOOTSTRAP = 'sys.bootstrap'
     final String SYS_PROTOTYPE = 'sys.prototype'
     final String SYS_PERMISSIONS = 'sys.permissions'

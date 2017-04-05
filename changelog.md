@@ -2,6 +2,8 @@
 * 4.0.0
   * Built as a Spring Boot application
   * NCubeManager converted from having static APIs to being a Spring injected instance (accessible through interface)
+  * Enhancement: Changed way pull request data is accessed for efficiency.
+  * Enhancement: Added search options for start and end create date parameters to cut down on cubes searched.
 * 3.6.13/3.6.14
   * Enhancement: Updated reference axes transforms so they won't execute code on the server (support for transforms that execute code remains)
   * Enhancement: Axis supports a new ValueType (CISTRING - case insenstive string)

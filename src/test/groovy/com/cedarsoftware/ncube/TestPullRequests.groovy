@@ -4,6 +4,7 @@ import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeConstants.*
 import static org.junit.Assert.fail
 
 /**
@@ -27,56 +28,56 @@ import static org.junit.Assert.fail
  */
 
 @CompileStatic
-class TestCommit extends NCubeCleanupBaseTest
+class TestPullRequests extends NCubeCleanupBaseTest
 {
     private static ApplicationID appId = ApplicationID.testAppId
-    private static ApplicationID sysApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'sys.app', '0.0.0', ReleaseStatus.SNAPSHOT.toString(), ApplicationID.HEAD)
+    private static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
     @Test
-    void testGenerateCommitLink()
+    void testGeneratePullRequestLink()
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String commitId = mutableClient.generateCommitLink(appId, dtos.toArray())
-        assert commitId
+        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        assert prId
 
-        NCube commitCube = mutableClient.getCube(sysApp, "tx.${commitId}")
-        assert 'open' == commitCube.getCell([property: 'status'])
+        NCube prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        assert 'open' == prCube.getCell([property: 'status'])
 
-        String appIdStr = commitCube.getCell([property: 'appId'])
-        ApplicationID commitApp = ApplicationID.convert(appIdStr)
-        assert appId == commitApp
+        String appIdStr = prCube.getCell([property: 'appId'])
+        ApplicationID prApp = ApplicationID.convert(appIdStr)
+        assert appId == prApp
 
-        String cubeNames = commitCube.getCell([property: 'cubeNames'])
-        List commitInfos = JsonReader.jsonToJava(cubeNames) as List
-        assert 1 == commitInfos.size()
-        Map commitInfo = commitInfos[0]
-        assert commitInfo.name == 'TestBranch'
-        assert commitInfo.changeType == 'C'
-        assert commitInfo.id
-        assert commitInfo.head == null
+        String cubeNames = prCube.getCell([property: 'cubeNames'])
+        List prInfos = JsonReader.jsonToJava(cubeNames) as List
+        assert 1 == prInfos.size()
+        Map prInfo = prInfos[0]
+        assert prInfo.name == 'TestBranch'
+        assert prInfo.changeType == 'C'
+        assert prInfo.id
+        assert prInfo.head == null
     }
 
     @Test
-    void testCancelAndReopenCommit()
+    void testCancelAndReopenPullRequest()
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String commitId = mutableClient.generateCommitLink(appId, dtos.toArray())
-        assert commitId
+        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        assert prId
 
-        NCube commitCube = mutableClient.getCube(sysApp, "tx.${commitId}")
-        assert 'open' == commitCube.getCell([property: 'status'])
+        NCube prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        assert 'open' == prCube.getCell([property: 'status'])
 
         // cancel commit
-        mutableClient.cancelCommit(commitId)
-        commitCube = mutableClient.getCube(sysApp, "tx.${commitId}")
-        assert 'closed cancelled' == commitCube.getCell([property: 'status'])
+        mutableClient.cancelPullRequest(prId)
+        prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        assert 'closed cancelled' == prCube.getCell([property: 'status'])
 
         // attempt to cancel a previously cancelled commit
         try
         {
-            mutableClient.cancelCommit(commitId)
+            mutableClient.cancelPullRequest(prId)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -85,14 +86,14 @@ class TestCommit extends NCubeCleanupBaseTest
         }
 
         // reopen a commit
-        mutableClient.reopenCommit(commitId)
-        commitCube = mutableClient.getCube(sysApp, "tx.${commitId}")
-        assert 'open' == commitCube.getCell([property: 'status'])
+        mutableClient.reopenPullRequest(prId)
+        prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        assert 'open' == prCube.getCell([property: 'status'])
 
         // attempt to reopen a previously reopened commit
         try
         {
-            mutableClient.reopenCommit(commitId)
+            mutableClient.reopenPullRequest(prId)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -102,20 +103,20 @@ class TestCommit extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testGetCommits()
+    void testGetPullRequests()
     {
         preloadCubes(ApplicationID.testAppId, 'test.branch.1.json', 'test.branch.age.1.json')
         List<NCubeInfoDto> branchDtos = mutableClient.search(appId, 'TestBranch', null, null)
         List<NCubeInfoDto> ageDtos = mutableClient.search(appId, 'TestAge', null, null)
-        mutableClient.generateCommitLink(appId, branchDtos.toArray())
-        mutableClient.generateCommitLink(appId, ageDtos.toArray())
+        mutableClient.generatePullRequestLink(appId, branchDtos.toArray())
+        mutableClient.generatePullRequestLink(appId, ageDtos.toArray())
 
-        Object[] commits = mutableClient.commits
-        assert 2 == commits.length
+        Object[] prs = mutableClient.getPullRequests(null, null)
+        assert 2 == prs.length
     }
 
     @Test
-    void testHonorCommit()
+    void testMergePullRequest()
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
@@ -123,8 +124,8 @@ class TestCommit extends NCubeCleanupBaseTest
         List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
         assert 0 == headDtos.size()
 
-        String commitId = mutableClient.generateCommitLink(appId, dtos.toArray())
-        mutableClient.honorCommit(commitId)
+        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        mutableClient.mergePullRequest(prId)
 
         headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
         assert 1 == headDtos.size()
@@ -132,7 +133,7 @@ class TestCommit extends NCubeCleanupBaseTest
         // attempt to commit a request that's already been committed
         try
         {
-            mutableClient.honorCommit(commitId)
+            mutableClient.mergePullRequest(prId)
             fail()
         }
         catch (IllegalArgumentException e)
@@ -146,7 +147,7 @@ class TestCommit extends NCubeCleanupBaseTest
     {
         try
         {
-            mutableClient.honorCommit('123')
+            mutableClient.mergePullRequest('123')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -156,7 +157,7 @@ class TestCommit extends NCubeCleanupBaseTest
 
         try
         {
-            mutableClient.cancelCommit('123')
+            mutableClient.cancelPullRequest('123')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -166,7 +167,7 @@ class TestCommit extends NCubeCleanupBaseTest
 
         try
         {
-            mutableClient.reopenCommit('123')
+            mutableClient.reopenPullRequest('123')
             fail()
         }
         catch (IllegalArgumentException e)
@@ -176,7 +177,7 @@ class TestCommit extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testHonorCommitByOtherUser()
+    void testMergePullRequestByOtherUser()
     {
         String origUser = mutableClient.userId
         String otherUser = 'otherUser'
@@ -190,12 +191,12 @@ class TestCommit extends NCubeCleanupBaseTest
 
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String commitId = mutableClient.generateCommitLink(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
 
         // change over to other user
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = otherUser
-        mutableClient.honorCommit(commitId)
+        mutableClient.mergePullRequest(prId)
 
         List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
         String notes = headDtos[0].notes
