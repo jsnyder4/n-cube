@@ -4,8 +4,8 @@
        xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-   http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
-   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd">
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
     <context:annotation-config />
     <context:component-scan base-package="com.cedarsoftware.config" />
@@ -29,6 +29,25 @@
             <constructor-arg value="${server.username}"/>
             <constructor-arg value="${server.password}"/>
             <constructor-arg value="${server.numConnections}"/>
+        </bean>
+
+    </beans>
+
+    <beans profile="combined-client">
+
+        <import resource="ncube-beans-persister.xml"/>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="callableBean"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="${ncube.allow.mutable.methods}"/>
+        </bean>
+
+        <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
+
+        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+            <constructor-arg ref="persister"/>
+            <constructor-arg ref="permCacheManager"/>
         </bean>
 
     </beans>

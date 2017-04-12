@@ -919,31 +919,29 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.renameCube(appId, oldName, newName)
     }
 
-    void promoteRevision(ApplicationID appId, long cubeId)
+    void promoteRevision(long cubeId)
     {
-        appId = addTenant(appId)
         NCube ncube = mutableClient.loadCubeById(cubeId)
-        saveJson(appId, ncube.toFormattedJson())
+        mutableClient.updateCube(ncube)
     }
 
     void saveJson(ApplicationID appId, String json)
     {
         appId = addTenant(appId)
         json = json.trim()
-        List cubes
+        List<NCube> cubes
         if (json.startsWith("["))
         {
             cubes = getCubes(json)
         }
         else
         {
-            cubes = new ArrayList()
+            cubes = new ArrayList<>()
             cubes.add(NCube.fromSimpleJson(json))
         }
 
-        for (Object object : cubes)
+        for (ncube in cubes)
         {
-            NCube ncube = (NCube) object
             ncube.applicationID = appId
             try
             {
