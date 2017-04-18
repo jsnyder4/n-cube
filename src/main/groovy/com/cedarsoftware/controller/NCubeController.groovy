@@ -1488,10 +1488,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return branchChanges.toArray()
     }
 
-    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
     {
         appId = addTenant(appId)
-        String prId = mutableClient.generatePullRequestLink(appId, infoDtos)
+        String prId = mutableClient.generatePullRequestHash(appId, infoDtos)
         return prId
     }
 

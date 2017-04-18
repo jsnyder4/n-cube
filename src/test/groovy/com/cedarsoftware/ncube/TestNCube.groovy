@@ -4601,13 +4601,13 @@ class TestNCube extends NCubeBaseTest
 
         Map changeSet1 = DeltaProcessor.getDelta(cube2, cube1)
         Map changeSet2 = DeltaProcessor.getDelta(cube2, cube3)
-        assertFalse DeltaProcessor.areDeltaSetsCompatible(changeSet1, changeSet2, false)
-        assertFalse DeltaProcessor.areDeltaSetsCompatible(changeSet2, changeSet1, false)
+        assertFalse DeltaProcessor.areDeltaSetsCompatible(changeSet1, changeSet2)
+        assertFalse DeltaProcessor.areDeltaSetsCompatible(changeSet2, changeSet1)
 
         changeSet1 = DeltaProcessor.getDelta(cube1, cube2)
         changeSet2 = DeltaProcessor.getDelta(cube3, cube2)
-        assert DeltaProcessor.areDeltaSetsCompatible(changeSet1, changeSet2, false)
-        assert DeltaProcessor.areDeltaSetsCompatible(changeSet2, changeSet1, false)
+        assert DeltaProcessor.areDeltaSetsCompatible(changeSet1, changeSet2)
+        assert DeltaProcessor.areDeltaSetsCompatible(changeSet2, changeSet1)
     }
 
     @Test

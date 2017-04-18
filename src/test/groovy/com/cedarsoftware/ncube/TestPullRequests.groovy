@@ -4,7 +4,6 @@ import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
 import static org.junit.Assert.fail
 
 /**
@@ -31,14 +30,14 @@ import static org.junit.Assert.fail
 class TestPullRequests extends NCubeCleanupBaseTest
 {
     private static ApplicationID appId = ApplicationID.testAppId
-    private static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+    private static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, NCubeConstants.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
     @Test
     void testGeneratePullRequestLink()
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
         assert prId
 
         NCube prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
@@ -56,6 +55,16 @@ class TestPullRequests extends NCubeCleanupBaseTest
         assert prInfo.changeType == 'C'
         assert prInfo.id
         assert prInfo.head == null
+
+        try
+        {
+            mutableClient.generatePullRequestHash(appId, dtos.toArray())
+            fail()
+        }
+        catch (IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'request', 'exists')
+        }
     }
 
     @Test
@@ -63,15 +72,14 @@ class TestPullRequests extends NCubeCleanupBaseTest
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
         assert prId
 
         NCube prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
         assert 'open' == prCube.getCell([property: 'status'])
 
         // cancel commit
-        mutableClient.cancelPullRequest(prId)
-        prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        prCube = mutableClient.cancelPullRequest(prId)
         assert 'closed cancelled' == prCube.getCell([property: 'status'])
 
         // attempt to cancel a previously cancelled commit
@@ -86,8 +94,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
         }
 
         // reopen a commit
-        mutableClient.reopenPullRequest(prId)
-        prCube = mutableClient.getCube(sysAppId, "tx.${prId}")
+        prCube = mutableClient.reopenPullRequest(prId)
         assert 'open' == prCube.getCell([property: 'status'])
 
         // attempt to reopen a previously reopened commit
@@ -108,8 +115,8 @@ class TestPullRequests extends NCubeCleanupBaseTest
         preloadCubes(ApplicationID.testAppId, 'test.branch.1.json', 'test.branch.age.1.json')
         List<NCubeInfoDto> branchDtos = mutableClient.search(appId, 'TestBranch', null, null)
         List<NCubeInfoDto> ageDtos = mutableClient.search(appId, 'TestAge', null, null)
-        mutableClient.generatePullRequestLink(appId, branchDtos.toArray())
-        mutableClient.generatePullRequestLink(appId, ageDtos.toArray())
+        mutableClient.generatePullRequestHash(appId, branchDtos.toArray())
+        mutableClient.generatePullRequestHash(appId, ageDtos.toArray())
 
         Object[] prs = mutableClient.getPullRequests(null, null)
         assert 2 == prs.length
@@ -122,9 +129,9 @@ class TestPullRequests extends NCubeCleanupBaseTest
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
 
         List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
-        assert 0 == headDtos.size()
+        assert headDtos.empty
 
-        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
         mutableClient.mergePullRequest(prId)
 
         headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
@@ -191,7 +198,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
 
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
 
         // change over to other user
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager

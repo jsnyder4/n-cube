@@ -35,26 +35,23 @@ class DeltaProcessor
     public static final String DELTA_AXES_COLUMNS = 'delta-col'
     public static final String DELTA_AXES = 'delta-axis'
 
-    public static final String DELTA_NCUBE_META_ADD = 'ncube-meta-add'
+    public static final String DELTA_NCUBE_META_PUT = 'ncube-meta-put'
     public static final String DELTA_NCUBE_META_REMOVE = 'ncube-meta-del'
-    public static final String DELTA_NCUBE_META_CHANGE = 'ncube-meta-upd'
 
     public static final String DELTA_COLUMN_ADD = 'col-add'
     public static final String DELTA_COLUMN_REMOVE = 'col-del'
     public static final String DELTA_COLUMN_CHANGE = 'col-upd'
     public static final String DELTA_CELL_REMOVE = 'cell-del'
 
-    public static final String DELTA_COLUMN_META_ADD = 'col-meta-add'
+    public static final String DELTA_COLUMN_META_PUT = 'col-meta-put'
     public static final String DELTA_COLUMN_META_REMOVE = 'col-meta-del'
-    public static final String DELTA_COLUMN_META_CHANGE = 'col-meta-upd'
 
     public static final String DELTA_AXIS_REF_CHANGE = 'axis-ref-changed'
     public static final String DELTA_AXIS_SORT_CHANGED = 'axis-sort-changed'
     public static final String DELTA_AXIS_COLUMNS = 'axis-col-delta'
 
-    public static final String DELTA_AXIS_META_ADD = 'axis-meta-add'
+    public static final String DELTA_AXIS_META_PUT = 'axis-meta-put'
     public static final String DELTA_AXIS_META_REMOVE = 'axis-meta-del'
-    public static final String DELTA_AXIS_META_CHANGE = 'axis-meta-upd'
 
     /**
      * Fetch the difference between this cube and the passed in cube.  The two cubes must have the same number of axes
@@ -101,20 +98,15 @@ class DeltaProcessor
         {
             String propertyName
             String changeType
-            if (Delta.Type.ADD == delta1.type)
-            {
-                propertyName = (delta1.destVal as MapEntry).key as Comparable
-                changeType = DELTA_NCUBE_META_ADD
-            }
-            else if (Delta.Type.DELETE == delta1.type)
+            if (Delta.Type.DELETE == delta1.type)
             {
                 propertyName = (delta1.sourceVal as MapEntry).key as Comparable
                 changeType = DELTA_NCUBE_META_REMOVE
             }
             else
             {
-                propertyName = (delta1.sourceVal as MapEntry).key as Comparable
-                changeType = DELTA_NCUBE_META_CHANGE
+                propertyName = (delta1.destVal as MapEntry).key as Comparable
+                changeType = DELTA_NCUBE_META_PUT
             }
             metaDeltaMap[propertyName] = [destVal: delta1.destVal, changeType: changeType] as Map
         }
@@ -152,7 +144,7 @@ class DeltaProcessor
         // Step 0: Merge ncube-level changes
         Map<String, Map<String, Object>> ncubeDeltas = deltaSet[DELTA_NCUBE] as Map
         ncubeDeltas.each {String metaPropName, Map<String, Object> ncubeDelta ->
-            if (DELTA_NCUBE_META_ADD == ncubeDelta.changeType || DELTA_NCUBE_META_CHANGE == ncubeDelta.changeType)
+            if (DELTA_NCUBE_META_PUT == ncubeDelta.changeType)
             {
                 mergeTarget.setMetaProperty(metaPropName, (ncubeDelta.destVal as MapEntry).value)
             }
@@ -178,7 +170,7 @@ class DeltaProcessor
                     {
                         AxisDelta axisDelta = axisChange as AxisDelta
                         String key = axisDelta.locatorKey
-                        if (DELTA_AXIS_META_ADD == axisDelta.changeType || DELTA_AXIS_META_CHANGE == axisDelta.changeType)
+                        if (DELTA_AXIS_META_PUT == axisDelta.changeType)
                         {
                             axis.setMetaProperty(key, axisDelta.axis.getMetaProperty(key))
                         }
@@ -226,7 +218,7 @@ class DeltaProcessor
                     {
                         mergeTarget.updateColumn(column.id, column.value)
                     }
-                    else if (DELTA_COLUMN_META_ADD == colDelta.changeType || DELTA_COLUMN_META_CHANGE == colDelta.changeType)
+                    else if (DELTA_COLUMN_META_PUT == colDelta.changeType)
                     {
                         Comparable value = axis.getValueToLocateColumn(column)
                         Column findCol = axis.findColumn(value)
@@ -281,7 +273,7 @@ class DeltaProcessor
      * @param direction = true (HEAD -> branch), false = (branch -> HEAD)
      * @return boolean true if the two cell change-sets are compatible, false otherwise.
      */
-    static boolean areDeltaSetsCompatible(Map<String, Object> branchDelta, Map<String, Object> headDelta, boolean direction)
+    static boolean areDeltaSetsCompatible(Map<String, Object> branchDelta, Map<String, Object> headDelta)
     {
         if (branchDelta == null || headDelta == null)
         {
@@ -309,13 +301,17 @@ class DeltaProcessor
             Map<String, Object> headChange = headMetaDeltas[axisName] as Map
 
             if (headChange == null)
+            {
                 continue   // no HEAD meta-property change, branchChange is OK
-
+            }
             if (branchChange.changeType != headChange.changeType)
+            {
                 return false   // different change type (REMOVE vs ADD, CHANGE vs REMOVE, etc.)
-
+            }
             if((branchChange.destVal as MapEntry).value != (headChange.destVal as MapEntry).value)
+            {
                 return false
+            }
         }
         return true
     }
@@ -356,38 +352,6 @@ class DeltaProcessor
                     }
                     branchChange.remove(DELTA_AXIS_COLUMNS)
                     headChange.remove(DELTA_AXIS_COLUMNS)
-
-                    if (!branchChange.isEmpty() && !headChange.isEmpty())
-                    {   // Both are reference axes
-                        String bTenant = branchChange.ref_tenant
-                        String hTenant = headChange.ref_tenant
-                        String bApp = branchChange.ref_app
-                        String hApp = headChange.ref_app
-                        String bVer = branchChange.ref_version
-                        String hVer = headChange.ref_version
-                        String bStatus = branchChange.ref_status
-                        String hStatus = headChange.ref_status
-                        String bBranch = branchChange.ref_branch
-                        String hBranch = headChange.ref_branch
-                        String bCube = branchChange.ref_cube
-                        String hCube = headChange.ref_cube
-                        String bAxis = branchChange.ref_axis
-                        String hAxis = headChange.ref_axis
-
-                        if (StringUtilities.equalsIgnoreCase(bTenant, hTenant) &&
-                                StringUtilities.equalsIgnoreCase(bApp, hApp) &&
-                                StringUtilities.equalsIgnoreCase(bStatus, hStatus) &&
-                                StringUtilities.equalsIgnoreCase(bBranch, hBranch) &&
-                                StringUtilities.equalsIgnoreCase(bCube, hCube) &&
-                                StringUtilities.equalsIgnoreCase(bAxis, hAxis))
-                        {
-                            // OK
-                        }
-                        else
-                        {
-                            return false
-                        }
-                    }
                 }
                 else if (branchChanges[axisEntryKey] instanceof AxisDelta)
                 {
@@ -395,13 +359,17 @@ class DeltaProcessor
                     AxisDelta headChange = headChanges[axisEntryKey] as AxisDelta
 
                     if (headChange == null)
+                    {
                         continue   // no corresponding HEAD change, branchChange is OK
-
+                    }
                     if (branchChange.changeType != headChange.changeType)
+                    {
                         return false   // different change type (REMOVE vs ADD, CHANGE vs REMOVE, etc.)
-
+                    }
                     if(branchChange.axis.getMetaProperty(axisEntryKey) != headChange.axis.getMetaProperty(axisEntryKey))
+                    {
                         return false
+                    }
                 }
             }
         }
@@ -436,22 +404,28 @@ class DeltaProcessor
                 ColumnDelta delta2 = changes2[delta1.locatorKey]
 
                 if (delta2 == null)
+                {
                     continue   // no column changed with same ID, delta1 is OK
-
+                }
                 if (delta2.axisType != delta1.axisType)
+                {
                     return false   // different axis types
-
+                }
                 if (delta1.column.value != delta2.column.value)
+                {
                     return false   // value is different for column with same ID
-
+                }
                 if (delta1.changeType != delta2.changeType)
+                {
                     return false   // different change type (REMOVE vs ADD, CHANGE vs REMOVE, etc.)
-
+                }
                 if (delta1.changeType.contains('meta'))
                 {
                     String key = delta1.locatorKey as String
-                    if(delta1.column.getMetaProperty(key) != delta2.column.getMetaProperty(key))
+                    if (delta1.column.getMetaProperty(key) != delta2.column.getMetaProperty(key))
+                    {
                         return false
+                    }
                 }
             }
         }
@@ -512,43 +486,9 @@ class DeltaProcessor
             axisDeltas[DELTA_AXIS_SORT_CHANGED] = changeAxis.columnOrder
         }
 
-        ApplicationID changeApp = changeAxis.referencedApp
-        ApplicationID changeTxApp = changeAxis.transformApp
         Map ref = [:]
         axisDeltas[DELTA_AXIS_REF_CHANGE] = ref
-
-        if (changeAxis.reference && baseAxis.reference)
-        {   // Record desired change reference axis info
-            if (!areReferenceAxesEqual(baseAxis, changeAxis))
-            {
-                ref.ref_tenant = changeApp.tenant
-                ref.ref_app = changeApp.app
-                ref.ref_version = changeApp.version
-                ref.ref_status = changeApp.status
-                ref.ref_branch = changeApp.branch
-                ref.ref_cube = changeAxis.referenceCubeName
-                ref.ref_axis = changeAxis.referenceAxisName
-
-                if (changeAxis.referenceTransformed)
-                {
-                    ref.tx_app = changeTxApp.app
-                    ref.tx_version = changeTxApp.version
-                    ref.tx_status = changeTxApp.status
-                    ref.tx_branch = changeTxApp.branch
-                    ref.tx_cube = changeAxis.transformCubeName
-                }
-                else
-                {
-                    ref.tx_app = null
-                    ref.tx_version = null
-                    ref.tx_status = null
-                    ref.tx_branch = null
-                    ref.tx_cube = null
-                    ref.tx_method = null
-                }
-            }
-        }
-        else if (changeAxis.reference != baseAxis.reference)
+        if (changeAxis.reference != baseAxis.reference)
         {
             ref[DELTA_AXIS_COLUMNS] = true
         }
@@ -558,34 +498,20 @@ class DeltaProcessor
         {
             String propertyName
             String changeType
-            if (Delta.Type.ADD == delta.type)
-            {
-                propertyName = (delta.destVal as MapEntry).key as Comparable
-                changeType = DELTA_AXIS_META_ADD
-            }
-            else if (Delta.Type.DELETE == delta.type)
+            if (Delta.Type.DELETE == delta.type)
             {
                 propertyName = (delta.sourceVal as MapEntry).key as Comparable
                 changeType = DELTA_AXIS_META_REMOVE
             }
             else
             {
-                propertyName = (delta.sourceVal as MapEntry).key as Comparable
-                changeType = DELTA_AXIS_META_CHANGE
+                propertyName = (delta.destVal as MapEntry).key as Comparable
+                changeType = DELTA_AXIS_META_PUT
             }
             axisDeltas[propertyName] = new AxisDelta(changeAxis, propertyName, changeType)
         }
 
         return axisDeltas
-    }
-
-    private static boolean areReferenceAxesEqual(Axis baseAxis, Axis changeAxis)
-    {
-        return baseAxis.referencedApp == changeAxis.referencedApp &&
-            baseAxis.referenceCubeName == changeAxis.referenceCubeName &&
-            baseAxis.referenceAxisName == changeAxis.referenceAxisName &&
-            baseAxis.transformApp == changeAxis.transformApp &&
-            baseAxis.transformCubeName == changeAxis.transformCubeName
     }
 
     /**
@@ -651,20 +577,15 @@ class DeltaProcessor
                 {
                     String propertyName
                     String changeType
-                    if (Delta.Type.ADD == delta.type)
-                    {
-                        propertyName = (delta.destVal as MapEntry).key as Comparable
-                        changeType = DELTA_COLUMN_META_ADD
-                    }
-                    else if (Delta.Type.DELETE == delta.type)
+                    if (Delta.Type.DELETE == delta.type)
                     {
                         propertyName = (delta.sourceVal as MapEntry).key as Comparable
                         changeType = DELTA_COLUMN_META_REMOVE
                     }
                     else
                     {
-                        propertyName = (delta.sourceVal as MapEntry).key as Comparable
-                        changeType = DELTA_COLUMN_META_CHANGE
+                        propertyName = (delta.destVal as MapEntry).key as Comparable
+                        changeType = DELTA_COLUMN_META_PUT
                     }
                     deltaColumns[propertyName] = new ColumnDelta(baseAxis.type, changeColumn, propertyName, changeType)
                 }

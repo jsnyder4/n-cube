@@ -46,8 +46,8 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testBadInputToChangeSetComparator()
     {
-        assert !DeltaProcessor.areDeltaSetsCompatible(null, [:], false)
-        assert !DeltaProcessor.areDeltaSetsCompatible([:], null, false)
+        assert !DeltaProcessor.areDeltaSetsCompatible(null, [:])
+        assert !DeltaProcessor.areDeltaSetsCompatible([:], null)
     }
 
     @Test
@@ -77,7 +77,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 32
@@ -134,7 +134,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig1, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig2, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert !compatibleChange
     }
 
@@ -189,7 +189,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig1, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig2, cube2)  // Other guy made no changes
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert !compatibleChange
     }
 
@@ -215,7 +215,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)  // Other guy made no changes
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 49
@@ -246,7 +246,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)  // Other guy made no changes
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 24
@@ -287,7 +287,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)  // Other guy made no changes
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         assert cube2.cellMap.size() == 48
         try
@@ -322,7 +322,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)  // Other guy made no changes
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis axis = cube2.getAxis('rule')
@@ -359,7 +359,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube1)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 50
@@ -398,7 +398,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube1)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.cellMap.size() == 50
@@ -426,7 +426,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis state = cube2.getAxis('state')
@@ -455,7 +455,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis state = cube2.getAxis('state');
@@ -485,7 +485,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -517,7 +517,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -549,7 +549,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert !compatibleChange
     }
 
@@ -566,7 +566,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -587,7 +587,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
 
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -611,7 +611,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis age = cube2.getAxis('age')
@@ -639,7 +639,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis age = cube2.getAxis('age')
@@ -665,7 +665,7 @@ class TestDelta extends NCubeCleanupBaseTest
         assert 12 == cube1.numCells
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -691,7 +691,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         Axis rule = cube2.getAxis('rule')
@@ -714,7 +714,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         assert cube2.numCells == 3
         Axis rule = cube2.getAxis('rule')
@@ -739,7 +739,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         Axis rule = cube2.getAxis('rule')
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
@@ -766,7 +766,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         rule = (Axis)cube2['rule']
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
@@ -791,7 +791,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         state = (Axis) cube2['state']
         assert state.size() == 2
@@ -829,7 +829,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
 
         assert '3' == cube2.getCell([:])
@@ -865,7 +865,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         rules = (Axis) cube2['rule']
         assert rules.size() == 2
@@ -898,7 +898,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
 
         assert '3' == getCellIgnoreRule(cube2, [:])
@@ -931,7 +931,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert !compatibleChange
     }
 
@@ -957,7 +957,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         DeltaProcessor.mergeDeltaSet(cube1, delta2)
@@ -1016,7 +1016,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
-        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2, false)
+        boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
 

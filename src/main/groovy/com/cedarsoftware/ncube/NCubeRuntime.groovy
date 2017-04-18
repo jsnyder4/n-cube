@@ -421,10 +421,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return map
     }
 
-    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
     {
-        verifyAllowMutable('generatePullRequestLink')
-        String link = bean.call(beanName, 'generatePullRequestLink', [appId, infoDtos]) as String
+        verifyAllowMutable('generatePullRequestHash')
+        String link = bean.call(beanName, 'generatePullRequestHash', [appId, infoDtos]) as String
         return link
     }
 

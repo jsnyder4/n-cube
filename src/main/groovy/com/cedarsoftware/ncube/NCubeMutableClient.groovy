@@ -98,7 +98,7 @@ interface NCubeMutableClient extends NCubeClient
 
     Map<String, Object> updateBranch(ApplicationID appId, Object[] cubeDtos)
 
-    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
 
     Map<String, Object> mergePullRequest(String prId)
 

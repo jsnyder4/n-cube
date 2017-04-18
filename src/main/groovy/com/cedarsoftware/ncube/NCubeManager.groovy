@@ -8,6 +8,7 @@ import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
@@ -422,7 +423,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000)
         }
-        if (search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size() != 0)
+        if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
             throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}")
         }
@@ -448,11 +449,11 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000)
         }
-        if (search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size() != 0)
+        if (!search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
             throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}")
         }
-        if (search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size() != 0)
+        if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
             throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}")
         }
@@ -1148,7 +1149,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                 }
             }
         }
-        if (matches.size() == 0)
+        if (matches.empty)
         {
             matches.add(resourcePermissionAxis.defaultColumn)
         }
@@ -1899,16 +1900,27 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         return ApplicationID.DEFAULT_TENANT
     }
 
-    String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
+    String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
     {
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
         List<Map<String, String>> commitRecords = getCommitRecords(appId, infoDtos)
-        String prInfoJson = commitRecords.empty ? null : JsonWriter.objectToJson(commitRecords)
-        Date time = new Date()
-        String newId = time.format('yyyyMMdd.HHmmss.') + String.format('%05d', UniqueIdGenerator.uniqueId % 100000)
-        String user = getUserId()
 
-        NCube prCube = new NCube("tx.${newId}")
-        prCube.applicationID = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        if (commitRecords.empty)
+        {
+            throw new IllegalArgumentException('A pull request cannot be created because there are no cubes to be committed.')
+        }
+
+        commitRecords.sort(true, {Map it -> it.id})
+        String prInfoJson = JsonWriter.objectToJson(commitRecords)
+        String sha1 = EncryptionUtilities.calculateSHA1Hash(prInfoJson.getBytes('UTF-8'))
+
+        if (getCube(sysAppId, 'tx.' + sha1))
+        {
+            throw new IllegalArgumentException('A pull request already exists for this change set.')
+        }
+
+        NCube prCube = new NCube("tx.${sha1}")
+        prCube.applicationID = sysAppId
         prCube.addAxis(new Axis(PR_PROP, AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1))
         prCube.addColumn(PR_PROP, PR_STATUS)
         prCube.addColumn(PR_PROP, PR_APP)
@@ -1921,11 +1933,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         prCube.setCell(PR_OPEN, [(PR_PROP):PR_STATUS])
         prCube.setCell(appId.toString(), [(PR_PROP):PR_APP])
         prCube.setCell(prInfoJson, [(PR_PROP):PR_CUBES])
-        prCube.setCell(user, [(PR_PROP):PR_REQUESTER])
-        prCube.setCell(time.format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_REQUEST_TIME])
+        prCube.setCell(getUserId(), [(PR_PROP):PR_REQUESTER])
+        prCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_REQUEST_TIME])
 
         createCube(prCube)
-        return newId
+        return sha1
     }
 
     Map<String, Object> mergePullRequest(String prId)
@@ -2052,11 +2064,13 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
     private NCube loadPullRequestCube(String prId)
     {
-        NCube prCube = loadCube(new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD), "tx.${prId}")
-        if (prCube == null)
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        List<NCubeInfoDto> dtos = search(sysAppId, "tx.${prId}", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_EXACT_MATCH_NAME):true])
+        if (dtos.empty)
         {
             throw new IllegalArgumentException("Invalid pull request id: ${prId}")
         }
+        NCube prCube = loadCubeById(dtos.first().id as long)
         return prCube
     }
 
@@ -2065,7 +2079,6 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         List<Map> results = []
         ApplicationID appId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
         List<NCube> cubes = persister.getPullRequestCubes(appId, startDate, endDate)
-        cubes.sort {it.name}
         for (NCube cube : cubes)
         {
             Map prInfo = cube.getMap([(PR_PROP):[] as Set])
@@ -2080,6 +2093,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             prInfo[PR_TXID] = cube.name.substring(3)
             results.add(prInfo)
         }
+        results.sort(true, {Map a, Map b -> Converter.convert(b[PR_REQUEST_TIME], Date.class) as Date <=> Converter.convert(a[PR_REQUEST_TIME], Date.class) as Date})
         return results as Object[]
     }
 
@@ -2089,7 +2103,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
      */
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
     {
-        String prId = generatePullRequestLink(appId, inputCubes)
+        String prId = generatePullRequestHash(appId, inputCubes)
         return mergePullRequest(prId)
     }
 
@@ -2345,7 +2359,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
         NCubeInfoDto branchDto = list.first()     // only 1 because we used exact match
         list = search(appId.asHead(), cubeName, null, options)
-        if (list.size() == 0)
+        if (list.empty)
         {   // New n-cube - up-to-date because it does not yet exist in HEAD - the branch n-cube is the Creator.
             return true
         }
@@ -2384,7 +2398,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
         branchDelta = DeltaProcessor.getDelta(baseCube, branchCube)
 
-        if (DeltaProcessor.areDeltaSetsCompatible(branchDelta, headDelta, headToBranch))
+        if (DeltaProcessor.areDeltaSetsCompatible(branchDelta, headDelta))
         {
             if (headToBranch)
             {
@@ -2408,14 +2422,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             diff = DeltaProcessor.getDeltaDescription(branchCube, headCube)
         }
 
-        if (diff.size() > 0)
-        {
-            return null
-        }
-        else
+        if (diff.empty)
         {
             return branchCube
         }
+        return null
     }
 
     private NCubeInfoDto getCubeInfo(ApplicationID appId, NCubeInfoDto dto)

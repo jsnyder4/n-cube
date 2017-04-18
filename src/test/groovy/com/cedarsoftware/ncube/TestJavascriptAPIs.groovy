@@ -74,7 +74,6 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         mutableClient.commitBranch(ncube1.applicationID)
 
         assert !mutableClient.isCubeUpToDate(ncube2.applicationID, ncube2.name)    // Not up-to-date because BRANCH2 created cube (no HEAD sha1) which matches a cube in HEAD
-        mutableClient.commitBranch(ncube2.applicationID)
 
         assert mutableClient.isCubeUpToDate(ncube1.applicationID, ncube1.name)    // same as HEAD, up-to-date
         assert !mutableClient.isCubeUpToDate(ncube2.applicationID, ncube2.name)    // same as HEAD, but no HEAD SHA1
@@ -175,7 +174,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         NCube ncube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(BRANCH1, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(BRANCH1, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(BRANCH1, dtos.toArray())
 
         mutableClient.deleteBranch(BRANCH1)
 
@@ -197,7 +196,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         NCube ncube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(BRANCH1, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(BRANCH1, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(BRANCH1, dtos.toArray())
 
         mutableClient.deleteBranch(BRANCH1)
         createCubeFromResource(BRANCH1, 'test.branch.age.1.json')
@@ -220,7 +219,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         NCube ncube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(BRANCH1, ncube.name, null, null)
-        String prId = mutableClient.generatePullRequestLink(BRANCH1, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(BRANCH1, dtos.toArray())
         ncube.setCell('FOO', [Code : 10])
         mutableClient.updateCube(ncube)
 
