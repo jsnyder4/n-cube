@@ -1497,8 +1497,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     Object mergePullRequest(String prId)
     {
-        Map result = mutableClient.mergePullRequest(prId)
-        return result
+        try
+        {
+            Map result = mutableClient.mergePullRequest(prId)
+            return result
+        }
+        catch (IllegalStateException e)
+        {
+            mutableClient.obsoletePullRequest(prId)
+            throw e
+        }
     }
 
     NCube cancelPullRequest(String prId)

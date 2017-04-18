@@ -1250,13 +1250,51 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNull(mutableClient.getCube(HEAD, "TestAge"))
         assertNull(mutableClient.getCube(HEAD, "TestBranch"))
 
-//        ApplicationID newSnapshot = HEAD.createNewSnapshotId("1.29.0")
         ApplicationID newBranchSnapshot = BRANCH1.createNewSnapshotId("1.29.0")
 
         ApplicationID release = HEAD.asRelease()
 
         testValuesOnBranch(release)
         testValuesOnBranch(newBranchSnapshot, "FOO")
+    }
+
+    @Test
+    void testReleaseCubesWithOpenPullRequests()
+    {
+        // load cube with same name, but different structure in TEST branch
+        preloadCubes(HEAD, 'test.branch.1.json', 'test.branch.age.1.json')
+        assert 2 == mutableClient.copyBranch(HEAD, BRANCH1)
+
+        NCube cube = runtimeClient.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        assertNotNull(cube)
+        mutableClient.updateCube(cube)
+
+        // create pull request with version 1.28.0
+        String prId = mutableClient.generatePullRequestLink(BRANCH1, mutableClient.getBranchChangesForHead(BRANCH1))
+        Object[] prInfos = mutableClient.pullRequests
+        assert 1 == prInfos.size()
+        ApplicationID prAppId = (prInfos[0] as Map)[PR_APP] as ApplicationID
+        assert HEAD.equalsNotIncludingBranch(prAppId)
+
+        // release 1.28.0
+        assert 2 == mutableClient.releaseCubes(HEAD, '1.29.0')
+
+        // test 1.29.0 snapshot still has same values
+        ApplicationID newBranchSnapshot = BRANCH1.asVersion('1.29.0')
+        ApplicationID newBranchHead = newBranchSnapshot.asHead()
+        testValuesOnBranch(newBranchHead)
+        testValuesOnBranch(newBranchSnapshot, 'FOO')
+
+        // test PR version updated to version 1.29.0
+        prInfos = mutableClient.pullRequests
+        assert 1 == prInfos.size()
+        prAppId = (prInfos[0] as Map)[PR_APP] as ApplicationID
+        assert newBranchSnapshot.equalsNotIncludingBranch(prAppId)
+
+        // test PR merged with version 1.29.0
+        mutableClient.mergePullRequest(prId)
+        testValuesOnBranch(newBranchHead, 'FOO')
+        testValuesOnBranch(newBranchSnapshot, 'FOO')
     }
 
     @Test

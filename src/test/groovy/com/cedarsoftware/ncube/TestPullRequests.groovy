@@ -136,7 +136,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
             mutableClient.mergePullRequest(prId)
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'request', 'closed', 'status', 'requested', 'committed', 'applicationid')
         }

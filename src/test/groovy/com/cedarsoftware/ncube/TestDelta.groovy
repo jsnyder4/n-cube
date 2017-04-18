@@ -30,6 +30,9 @@ import static org.junit.Assert.*
 @CompileStatic
 class TestDelta extends NCubeCleanupBaseTest
 {
+    private static final ApplicationID BRANCH1 = ApplicationID.testAppId.asBranch('branch1')
+    private static final ApplicationID BRANCH2 = ApplicationID.testAppId.asBranch('branch2')
+
     @Test
     void testDeltaApis()
     {
@@ -1039,13 +1042,27 @@ class TestDelta extends NCubeCleanupBaseTest
 
         // Commit a change in 'jdereg' branch that moves HEAD 'states' cube from reference 1.0.0 to 1.0.2
         list = mutableClient.getBranchChangesForHead(appIdjdereg)
-        Map<String, Object> commits = mutableClient.commitBranch(appIdjdereg, list as Object[])
-        NCubeInfoDto dto = (commits[mutableClient.BRANCH_UPDATES] as List<NCubeInfoDto>).first()
-        assert dto.notes.contains('merged')
+        try
+        {
+            mutableClient.commitBranch(appIdjdereg, list as Object[])
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[mutableClient.BRANCH_ADDS] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_DELETES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+            assert (e.errors[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+        }
 
-        NCube referrer = mutableClient.getCube(appIdKpartlow.asHead(), 'States')
-        Axis axis = referrer['state'] as Axis
-        assert axis.metaProperties.referenceVersion == '1.0.2'
+        Map map = mutableClient.updateBranch(appIdjdereg)
+        assert (map.adds as List).size() == 0
+        assert (map.deletes as List).size() == 0
+        assert (map.updates as List).size() == 0
+        assert (map.restores as List).size() == 0
+        assert (map.fastforwards as List).size() == 0
+        assert (map.rejects as List).size() == 1
     }
 
     @Test
@@ -1075,14 +1092,14 @@ class TestDelta extends NCubeCleanupBaseTest
             assert (e.errors[mutableClient.BRANCH_REJECTS] as Map).size() == 1
         }
 
-        // Update branch 1.0.1 -> 1.0.2
+        // Update branch 1.0.1 -> 1.0.2 - conflict because HEAD moved to 1.0.2 and branch moved to 1.0.1
         Map map = mutableClient.updateBranch(appIdKpartlow)
         assert (map.adds as List).size() == 0
         assert (map.deletes as List).size() == 0
-        assert (map.updates as List).size() == 1
+        assert (map.updates as List).size() == 0
         assert (map.restores as List).size() == 0
         assert (map.fastforwards as List).size() == 0
-        assert (map.rejects as List).size() == 0
+        assert (map.rejects as List).size() == 1
 
         // TODO: Write many more reference axis tests
         // auto-merge reference axis (with diff transform)
@@ -1605,6 +1622,482 @@ class TestDelta extends NCubeCleanupBaseTest
         assert 'bar' == oh.getMetaProperty('foo')
         assert col1.id == oh.id
         assert col2.id == cube3state.findColumn('KY').id
+    }
+
+    @Test
+    void testUpdateFromHeadWithMetaProperties()
+    {
+        setupLibrary()
+        setupLibraryReference()
+        ApplicationID branch1 = setupBranch('branch1', '1.0.0')
+        ApplicationID branch2 = setupBranch('branch2', '1.0.0')
+        testClient.clearCache()
+
+        NCube ncube1 = mutableClient.getCube(branch1, 'States')
+        ncube1.setMetaProperty('foo', 1000)
+        Axis other = new Axis('other', AxisType.DISCRETE, AxisValueType.STRING, false)
+        other.setMetaProperty('x', 100)
+        Column foo = new Column('foo')
+        foo.setMetaProperty('a', 1)
+        foo.setMetaProperty('b', 2)
+        other.addColumn(foo)
+        ncube1.addAxis(other)
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(branch1)
+        mutableClient.updateBranch(branch2)
+
+        AxisRef axisRef = mutableClient.getReferenceAxes(branch1)[0]
+        axisRef.destVersion = '1.0.1'
+        mutableClient.updateReferenceAxes([axisRef].toArray())
+        mutableClient.commitBranch(branch1)
+
+        NCube ncube2 = mutableClient.getCube(branch2, 'States')
+        ncube2.setMetaProperty('bar', 2000)
+        Axis axis = ncube2.getAxis('other')
+        axis.setMetaProperty('y' , 200)
+        Column column = ncube2.findColumn('other', 'foo')
+        column.setMetaProperty('default_value', 5)
+        column.setMetaProperty('a', 10)
+        column.removeMetaProperty('b')
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        mutableClient.updateBranch(branch2)
+
+        ncube2 = mutableClient.getCube(branch2, 'States')
+        assert 2000 == ncube2.getMetaProperty('bar')
+        axis = ncube2.getAxis('other')
+        assert 200 == axis.getMetaProperty('y')
+        column = ncube2.findColumn('other', 'foo')
+        assert 5 == column.getMetaProperty('default_value')
+        assert 10 == column.getMetaProperty('a')
+        assert !column.getMetaProperty('b')
+    }
+
+    @Test
+    void testColumnMetaBranchesUpdateToDifferentValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Column oh = ncube1.findColumn('state', 'OH')
+        oh.setMetaProperty('a', 2)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to different value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Column column = ncube2.getAxis('state').findColumn('OH')
+        column.setMetaProperty('a', 3)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testColumnMetaRemoveUpdatedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Column oh = ncube1.findColumn('state', 'OH')
+        oh.setMetaProperty('a', 10)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 remove meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Column column = ncube2.getAxis('state').findColumn('OH')
+        column.removeMetaProperty('a')
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testColumnMetaUpdateRemovedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 remove meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Column oh = ncube1.findColumn('state', 'OH')
+        oh.removeMetaProperty('a')
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Column column = ncube2.getAxis('state').findColumn('OH')
+        column.setMetaProperty('a', 3)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testColumnMetaAddSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 add meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Column oh = ncube1.findColumn('state', 'OH')
+        oh.setMetaProperty('c', 10)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 add meta-property with same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Column column = ncube2.getAxis('state').findColumn('OH')
+        column.setMetaProperty('c', 10)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    @Test
+    void testColumnMetaUpdateToSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Column oh = ncube1.findColumn('state', 'OH')
+        oh.setMetaProperty('a', 2)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Column column = ncube2.getAxis('state').findColumn('OH')
+        column.setMetaProperty('a', 2)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    @Test
+    void testAxisMetaBranchesUpdateToDifferentValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Axis state = ncube1.getAxis('state')
+        state.setMetaProperty('x', 200)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to different value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Axis axis = ncube2.getAxis('state')
+        axis.setMetaProperty('x', 300)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testAxisMetaRemoveUpdatedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Axis state = ncube1.getAxis('state')
+        state.setMetaProperty('x', 300)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 remove meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Axis axis = ncube2.getAxis('state')
+        axis.removeMetaProperty('x')
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testAxisMetaUpdateRemovedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 remove meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Axis state = ncube1.getAxis('state')
+        state.removeMetaProperty('x')
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Axis axis = ncube2.getAxis('state')
+        axis.setMetaProperty('x', 300)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testAxisMetaAddSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 add meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Axis state = ncube1.getAxis('state')
+        state.setMetaProperty('z', 10)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 add meta-property with same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Axis axis = ncube2.getAxis('state')
+        axis.setMetaProperty('z', 10)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    @Test
+    void testAxisMetaUpdateToSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        Axis state = ncube1.getAxis('state')
+        state.setMetaProperty('x', 200)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        Axis axis = ncube2.getAxis('state')
+        axis.setMetaProperty('x', 200)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    @Test
+    void testNCubeMetaBranchesUpdateToDifferentValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        ncube1.setMetaProperty('foo', 3000)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to different value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        ncube2.setMetaProperty('foo', 4000)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testNCubeMetaRemoveUpdatedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        ncube1.setMetaProperty('foo', 4000)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 remove meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        ncube2.removeMetaProperty('foo')
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testNCubeMetaUpdateRemovedProperty()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 remove meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        ncube1.removeMetaProperty('foo')
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        ncube2.setMetaProperty('foo', 300)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 1
+    }
+
+    @Test
+    void testNCubeMetaAddSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 add meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        ncube1.setMetaProperty('baz', 3000)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 add meta-property with same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        ncube2.setMetaProperty('baz', 3000)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    @Test
+    void testNCubeMetaUpdateToSameValue()
+    {
+        setupMetaPropertyTest()
+
+        // BRANCH1 update meta-property
+        NCube ncube1 = mutableClient.getCube(BRANCH1, 'SimpleDiscrete')
+        ncube1.setMetaProperty('foo', 200)
+        ncube1.clearSha1()
+        mutableClient.updateCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+
+        // BRANCH2 update meta-property to same value
+        NCube ncube2 = mutableClient.getCube(BRANCH2, 'SimpleDiscrete')
+        ncube2.setMetaProperty('foo', 200)
+        ncube2.clearSha1()
+        mutableClient.updateCube(ncube2)
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH2)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+    }
+
+    static void setupMetaPropertyTest()
+    {
+        NCube ncube = NCubeBuilder.discrete1D
+        ncube.applicationID = BRANCH1
+        ncube.setMetaProperty('foo', 1000)
+        ncube.setMetaProperty('bar', 2000)
+        Axis state = ncube.getAxis('state')
+        state.setMetaProperty('x', 100)
+        state.setMetaProperty('y', 200)
+        Column oh = ncube.findColumn('state','OH')
+        oh.setMetaProperty('a', 1)
+        oh.setMetaProperty('b', 2)
+        mutableClient.createCube(ncube)
+        mutableClient.commitBranch(BRANCH1)
+        mutableClient.updateBranch(BRANCH2)
     }
 
     static void setupLibrary()

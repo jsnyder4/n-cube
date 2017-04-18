@@ -3,7 +3,7 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 
 /**
- * Class used to hold column difference (delta) information.
+ * Class used to hold axis difference (delta) information.
  *
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -22,23 +22,21 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-class ColumnDelta
+class AxisDelta
 {
-    AxisType axisType
-    Column column
+    Axis axis
+    String locatorKey
     String changeType
-    Comparable locatorKey
 
-    ColumnDelta(AxisType axisType, Column column, Comparable locatorKey, String changeType)
+    AxisDelta(Axis axis, String locatorKey, String changeType)
     {
-        this.axisType = axisType
-        this.column = column
+        this.axis = axis
         this.locatorKey = locatorKey
         this.changeType = changeType
     }
 
     String toString()
     {
-        return "${axisType}/${changeType}/${column.toString()}/${locatorKey}"
+        return "${changeType}/${axis.toString()}/${locatorKey}"
     }
 }

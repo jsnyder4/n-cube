@@ -100,11 +100,15 @@ interface NCubeMutableClient extends NCubeClient
 
     String generatePullRequestLink(ApplicationID appId, Object[] infoDtos)
 
-    Map<String, Object> mergePullRequest(String commitId)
+    Map<String, Object> mergePullRequest(String prId)
 
-    NCube cancelPullRequest(String commitId)
+    NCube obsoletePullRequest(String prId)
 
-    NCube reopenPullRequest(String commitId)
+    NCube cancelPullRequest(String prId)
+
+    NCube reopenPullRequest(String prId)
+
+    Object[] getPullRequests()
 
     Object[] getPullRequests(Date startDate, Date endDate)
 

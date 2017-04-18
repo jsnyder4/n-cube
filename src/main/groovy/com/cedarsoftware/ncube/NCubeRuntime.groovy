@@ -31,6 +31,8 @@ import static com.cedarsoftware.ncube.NCubeConstants.MANAGER_BEAN
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BRANCH
 import static com.cedarsoftware.ncube.NCubeConstants.PROPERTY_CACHE
+import static com.cedarsoftware.ncube.NCubeConstants.PR_APP
+import static com.cedarsoftware.ncube.NCubeConstants.PR_CUBE
 import static com.cedarsoftware.ncube.NCubeConstants.SYS_BOOTSTRAP
 
 /**
@@ -426,30 +428,47 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return link
     }
 
-    Map<String, Object> mergePullRequest(String commitId)
+    Map<String, Object> mergePullRequest(String prId)
     {
         verifyAllowMutable('mergePullRequest')
-        Map result = bean.call(beanName, 'mergePullRequest', [commitId]) as Map
+        Map result = bean.call(beanName, 'mergePullRequest', [prId]) as Map
+
+        ApplicationID headAppId = (result[PR_APP] as ApplicationID).asHead()
+        clearCache(headAppId)
+        result.remove(PR_APP)
+
+        NCube prCube = result[PR_CUBE] as NCube
+        clearCubeFromCache(prCube.applicationID, prCube.name)
+        result.remove(PR_CUBE)
+
         return result
     }
 
-    NCube cancelPullRequest(String commitId)
+    NCube obsoletePullRequest(String prId)
+    {
+        verifyAllowMutable('obsoletePullRequest')
+        NCube ncube = bean.call(beanName, 'obsoletePullRequest', [prId]) as NCube
+        clearCubeFromCache(ncube.applicationID, ncube.name)
+        return ncube
+    }
+
+    NCube cancelPullRequest(String prId)
     {
         verifyAllowMutable('cancelPullRequest')
-        NCube ncube = bean.call(beanName, 'cancelPullRequest', [commitId]) as NCube
+        NCube ncube = bean.call(beanName, 'cancelPullRequest', [prId]) as NCube
         clearCubeFromCache(ncube.applicationID, ncube.name)
         return ncube
     }
 
-    NCube reopenPullRequest(String commitId)
+    NCube reopenPullRequest(String prId)
     {
         verifyAllowMutable('reopenPullRequest')
-        NCube ncube = bean.call(beanName, 'reopenPullRequest', [commitId]) as NCube
+        NCube ncube = bean.call(beanName, 'reopenPullRequest', [prId]) as NCube
         clearCubeFromCache(ncube.applicationID, ncube.name)
         return ncube
     }
 
-    Object[] getPullRequests(Date startDate, Date endDate)
+    Object[] getPullRequests(Date startDate = null, Date endDate = null)
     {
         verifyAllowMutable('getPullRequests')
         Object[] result = bean.call(beanName, 'getPullRequests', [startDate, endDate]) as Object[]

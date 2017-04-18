@@ -161,11 +161,16 @@ class ApplicationID
     /**
      * Allow ApplicationID to be converted to Map as in <code>appId as Map</code>
      */
-    Map asType(Class clazz)
+    Object asType(Class clazz)
     {
+
         if (Map.isAssignableFrom(clazz))
         {
             return [tenant: tenant, app: app, version: version, status: status, branch: branch]
+        }
+        else if (ApplicationID.isAssignableFrom(clazz))
+        {
+            return this
         }
         else
         {
