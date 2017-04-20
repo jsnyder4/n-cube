@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 
 /**
  * This class manages a list of NCubes.  This class is referenced
@@ -485,7 +486,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         Map prAppIdCoord = [(PR_PROP):PR_APP]
         Map prStatusCoord = [(PR_PROP):PR_STATUS]
         Date startDate = new Date() - 60
-        List<NCube> prCubes = persister.getPullRequestCubes(appId, startDate, null)
+        List<NCube> prCubes = getPullRequestCubes(startDate, null)
         for (NCube prCube : prCubes)
         {
             Object prAppIdObj = prCube.getCell(prAppIdCoord)
@@ -699,6 +700,26 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return cubes
     }
 
+    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String content, Map options = [:])
+    {
+        ApplicationID.validateAppId(appId)
+
+        if (!options[SEARCH_EXACT_MATCH_NAME])
+        {
+            cubeNamePattern = handleWildCard(cubeNamePattern)
+        }
+
+        content = handleWildCard(content)
+
+        Map permInfo = getPermInfo(appId)
+        List<NCube> cubes = persister.cubeSearch(appId, cubeNamePattern, content, options)
+        if (!permInfo.skipPermCheck)
+        {
+            cubes.removeAll { !fastCheckPermissions(appId, it.name, Action.READ, permInfo) }
+        }
+        return cubes
+    }
+
     /**
      * This API will hand back a List of AxisRef, which is a complete description of a Reference
      * Axis pointer. It includes the Source ApplicationID, source Cube Name, source Axis Name,
@@ -712,14 +733,13 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         assertPermissions(appId, null)
 
         // Step 1: Fetch all NCubeInfoDto's for the passed in ApplicationID
-        List<NCubeInfoDto> list = persister.search(appId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCube> list = cubeSearch(appId, null, "*${REF_APP}*", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         List<AxisRef> refAxes = []
 
-        for (NCubeInfoDto dto : list)
+        for (NCube source : list)
         {
             try
             {
-                NCube source = persister.loadCubeById(dto.id as long)
                 for (Axis axis : source.axes)
                 {
                     if (axis.reference)
@@ -732,15 +752,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                         ApplicationID refAppId = axis.referencedApp
                         ref.destApp = refAppId.app
                         ref.destVersion = refAppId.version
-                        ref.destCubeName = axis.getMetaProperty(ReferenceAxisLoader.REF_CUBE_NAME)
-                        ref.destAxisName = axis.getMetaProperty(ReferenceAxisLoader.REF_AXIS_NAME)
+                        ref.destCubeName = axis.getMetaProperty(REF_CUBE_NAME)
+                        ref.destAxisName = axis.getMetaProperty(REF_AXIS_NAME)
 
                         ApplicationID transformAppId = axis.transformApp
                         if (transformAppId)
                         {
                             ref.transformApp = transformAppId.app
                             ref.transformVersion = transformAppId.version
-                            ref.transformCubeName = axis.getMetaProperty(ReferenceAxisLoader.TRANSFORM_CUBE_NAME)
+                            ref.transformCubeName = axis.getMetaProperty(TRANSFORM_CUBE_NAME)
                         }
 
                         refAxes.add(ref)
@@ -749,7 +769,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             }
             catch (Exception e)
             {
-                LOG.warn("Unable to load cube: ${dto.name}, app: ${dto.applicationID}", e)
+                LOG.warn("Unable to load cube: ${source.name}, app: ${source.applicationID}", e)
             }
         }
         return refAxes
@@ -793,10 +813,10 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
                 if (axis.reference)
                 {
-                    axis.setMetaProperty(ReferenceAxisLoader.REF_APP, destApp)
-                    axis.setMetaProperty(ReferenceAxisLoader.REF_VERSION, destVersion)
-                    axis.setMetaProperty(ReferenceAxisLoader.REF_CUBE_NAME, destCubeName)
-                    axis.setMetaProperty(ReferenceAxisLoader.REF_AXIS_NAME, destAxisName)
+                    axis.setMetaProperty(REF_APP, destApp)
+                    axis.setMetaProperty(REF_VERSION, destVersion)
+                    axis.setMetaProperty(REF_CUBE_NAME, destCubeName)
+                    axis.setMetaProperty(REF_AXIS_NAME, destAxisName)
                     ApplicationID appId = new ApplicationID(srcAppId.tenant, destApp, destVersion, ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)
 
                     NCube target = persister.loadCube(appId, destCubeName)
@@ -816,9 +836,9 @@ Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
                     }
 
-                    axis.setMetaProperty(ReferenceAxisLoader.TRANSFORM_APP, transformApp)
-                    axis.setMetaProperty(ReferenceAxisLoader.TRANSFORM_VERSION, transformVersion)
-                    axis.setMetaProperty(ReferenceAxisLoader.TRANSFORM_CUBE_NAME, transformCubeName)
+                    axis.setMetaProperty(TRANSFORM_APP, transformApp)
+                    axis.setMetaProperty(TRANSFORM_VERSION, transformVersion)
+                    axis.setMetaProperty(TRANSFORM_CUBE_NAME, transformCubeName)
 
                     if (transformApp && transformVersion && transformCubeName)
                     {   // If transformer cube reference supplied, verify that the cube exists
@@ -2077,8 +2097,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     Object[] getPullRequests(Date startDate = null, Date endDate = null)
     {
         List<Map> results = []
-        ApplicationID appId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
-        List<NCube> cubes = persister.getPullRequestCubes(appId, startDate, endDate)
+        List<NCube> cubes = getPullRequestCubes(startDate, endDate)
         for (NCube cube : cubes)
         {
             Map prInfo = cube.getMap([(PR_PROP):[] as Set])
@@ -2095,6 +2114,13 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         }
         results.sort(true, {Map a, Map b -> Converter.convert(b[PR_REQUEST_TIME], Date.class) as Date <=> Converter.convert(a[PR_REQUEST_TIME], Date.class) as Date})
         return results as Object[]
+    }
+
+    private List<NCube> getPullRequestCubes(Date startDate, Date endDate)
+    {
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_CREATE_DATE_START):startDate, (SEARCH_CREATE_DATE_END):endDate]
+        return cubeSearch(sysAppId, 'tx.*', null, options)
     }
 
     /**

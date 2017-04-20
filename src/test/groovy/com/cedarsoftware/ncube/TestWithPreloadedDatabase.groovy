@@ -5955,7 +5955,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testBootstrapWithOverrides()
 	{
-        ApplicationID id = testClient.getBootVersion(ApplicationID.DEFAULT_TENANT, 'example')
+        ApplicationID id = runtimeClient.getBootVersion(ApplicationID.DEFAULT_TENANT, 'example')
         assert id.tenant == ApplicationID.DEFAULT_TENANT
         assert id.app == 'example'
         assert id.version == '0.0.0'
@@ -6177,7 +6177,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty("NCUBE_PARAMS", '{}')
         testClient.clearSysParams()
 
-        ApplicationID id = testClient.getBootVersion('foo', 'bar')
+        ApplicationID id = runtimeClient.getBootVersion('foo', 'bar')
         assertEquals 'foo', id.tenant
         assertEquals 'bar', id.app
         assertEquals '0.0.0', id.version
@@ -6187,7 +6187,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty("NCUBE_PARAMS", '{"branch":"qux"}')
         testClient.clearSysParams()
 
-        id = testClient.getBootVersion('foo', 'bar')
+        id = runtimeClient.getBootVersion('foo', 'bar')
         assertEquals 'foo', id.tenant
         assertEquals 'bar', id.app
         assertEquals '0.0.0', id.version

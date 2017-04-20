@@ -30,7 +30,5 @@ interface NCubeTestClient
 
     Cache getCacheForApp(ApplicationID appId)
 
-    ApplicationID getBootVersion(String tenant, String app)
-
     void clearTestDatabase()
 }

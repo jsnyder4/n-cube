@@ -145,7 +145,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     NCube loadCubeById(long id)
     {
         NCube ncube = bean.call(beanName, 'loadCubeById', [id]) as NCube
-        prepareCube(ncube)
+        applyAdvices(ncube)
         return ncube
     }
 

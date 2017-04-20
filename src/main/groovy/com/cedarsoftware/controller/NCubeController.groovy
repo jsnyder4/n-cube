@@ -1573,7 +1573,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         Boolean result = mutableClient.deleteBranch(appId)
         removeBranchFromCache(appId)
         ApplicationID bootAppId = appId.asVersion('0.0.0')
-        if (!mutableClient.search(bootAppId, '*', null, null).size())
+        if (mutableClient.search(bootAppId, '*', null, null).empty)
         {
             removeBranchFromCache(bootAppId)
         }

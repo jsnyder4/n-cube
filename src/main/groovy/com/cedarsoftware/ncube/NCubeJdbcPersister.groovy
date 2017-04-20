@@ -95,16 +95,23 @@ class NCubeJdbcPersister
         return list
     }
 
-    static List<NCube> getPullRequestCubes(Connection c, ApplicationID appId, Date startDate, Date endDate)
+    static List<NCube> cubeSearch(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
     {
         List<NCube> cubes = []
-        ApplicationID sysAppId = new ApplicationID(appId.tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
-        Map<String, Object> options = new CaseInsensitiveMap<>()
+        Pattern searchPattern = null
+        if (StringUtilities.hasContent(searchContent))
+        {
+            searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
+        }
+
         options[SEARCH_INCLUDE_CUBE_DATA] = true
-        options[SEARCH_ACTIVE_RECORDS_ONLY] = true
-        options[SEARCH_CREATE_DATE_START] = startDate
-        options[SEARCH_CREATE_DATE_END] = endDate
-        runSelectCubesStatement(c, sysAppId, 'tx.*', options, { ResultSet row -> cubes << buildCube(sysAppId, row) })
+        options[METHOD_NAME] = 'cubeSearch'
+        runSelectCubesStatement(c, appId, cubeNamePattern, options, { ResultSet row ->
+            if (getCubeInfoRecords(appId, searchPattern, [], options, row))
+            {
+                cubes << buildCube(appId, row)
+            }
+        })
         return cubes
     }
 
@@ -1704,7 +1711,7 @@ ORDER BY abs(revision_number) DESC"""
         return rev
     }
 
-    protected static void getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
+    protected static NCubeInfoDto getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
     {
         boolean hasSearchPattern = searchPattern != null
         Set<String> includeFilter = options[SEARCH_FILTER_INCLUDE] as Set
@@ -1746,12 +1753,12 @@ ORDER BY abs(revision_number) DESC"""
                         }
                         if (!foundInRefAxColumn)
                         {
-                            return
+                            return null
                         }
                     }
                     else
                     {
-                        return
+                        return null
                     }
                 }
             }
@@ -1767,7 +1774,7 @@ ORDER BY abs(revision_number) DESC"""
                     copyTags.retainAll(includeFilter)
                     if (copyTags.empty)
                     {   // Skip this n-cube : the user passed in TAGs to match, and none did.
-                        return
+                        return null
                     }
                 }
 
@@ -1775,9 +1782,9 @@ ORDER BY abs(revision_number) DESC"""
                 if (excludeFilter)
                 {   // User is excluding by one or more tokens
                     copyTags.retainAll(excludeFilter)
-                    if (copyTags.size() > 0)
+                    if (!copyTags.empty)
                     {   // cube had 1 or more cube_tags that matched a tag in the exclusion list.
-                        return
+                        return null
                     }
                 }
             }
@@ -1805,6 +1812,7 @@ ORDER BY abs(revision_number) DESC"""
         dto.sha1 = row.getString('sha1')
         dto.headSha1 = row.getString('head_sha1')
         list.add(dto)
+        return dto
     }
 
     static void clearTestDatabase(Connection c)
