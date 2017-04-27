@@ -264,6 +264,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
+    String getCubeRawJson(ApplicationID appId, String cubeName)
+    {
+        String result = bean.call(beanName, 'getCubeRawJson', [appId, cubeName]) as String
+        return result
+    }
+
     Boolean deleteBranch(ApplicationID appId)
     {
         verifyAllowMutable('deleteBranch')

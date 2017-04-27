@@ -46,7 +46,7 @@ class NCubeAppContext implements ApplicationContextAware
         return ctx.getBean(beanName) as NCubeClient
     }
 
-    static NCubeRuntimeClient getRuntimeClient()
+    static NCubeRuntimeClient getNcubeRuntime()
     {
         return getBean(RUNTIME_BEAN) as NCubeRuntimeClient
     }

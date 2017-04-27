@@ -50,6 +50,13 @@ interface NCubeReadOnlyPersister
     NCube loadCubeBySha1(ApplicationID appId, String name, String sha1)
 
     /**
+     * Load n-cube raw JSON by name (latest revision)
+     * @param appId ApplicationID containing the n-cube
+     * @param name String name of the n-cube to load
+     */
+    String loadCubeRawJson(ApplicationID appId, String name)
+
+    /**
      * Get all application names for the given tenant
      * @param tenant String name of tenant
      * @return List of all applications for the given tenant.  If none exist, an empty list

@@ -45,7 +45,7 @@ class NCubeBaseTest implements NCubeConstants
 
     static NCubeRuntimeClient getRuntimeClient()
     {
-        return NCubeAppContext.runtimeClient
+        return NCubeAppContext.ncubeRuntime
     }
 
     static NCubeMutableClient getMutableClient()

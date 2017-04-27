@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+
 /**
  * NCubeController API.
  *
@@ -208,8 +210,23 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     String getJson(ApplicationID appId, String cubeName, Map options)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
-        return formatCube(ncube, options)
+        try
+        {
+            NCube ncube = loadCube(appId, cubeName)
+            return formatCube(ncube, options)
+        }
+        catch(IllegalStateException e)
+        {
+            if (options.mode == 'json')
+            {
+                LOG.error(e.message, e)
+                return mutableClient.getCubeRawJson(appId, cubeName)
+            }
+            else
+            {
+                throw e
+            }
+        }
     }
 
     NCube getCube(ApplicationID appId, String cubeName)
@@ -767,20 +784,20 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
 
         Map args = [:]
-        args[ReferenceAxisLoader.REF_TENANT] = refAppId.tenant
-        args[ReferenceAxisLoader.REF_APP] = refAppId.app
-        args[ReferenceAxisLoader.REF_VERSION] = refAppId.version
-        args[ReferenceAxisLoader.REF_STATUS] = refAppId.status
-        args[ReferenceAxisLoader.REF_BRANCH] = refAppId.branch
-        args[ReferenceAxisLoader.REF_CUBE_NAME] = refCubeName  // cube name of the holder of the referring (pointing) axis
-        args[ReferenceAxisLoader.REF_AXIS_NAME] = refAxisName    // axis name of the referring axis (the variable that you had missing earlier)
+        args[REF_TENANT] = refAppId.tenant
+        args[REF_APP] = refAppId.app
+        args[REF_VERSION] = refAppId.version
+        args[REF_STATUS] = refAppId.status
+        args[REF_BRANCH] = refAppId.branch
+        args[REF_CUBE_NAME] = refCubeName  // cube name of the holder of the referring (pointing) axis
+        args[REF_AXIS_NAME] = refAxisName    // axis name of the referring axis (the variable that you had missing earlier)
         if (transformAppId?.app)
         {
-            args[ReferenceAxisLoader.TRANSFORM_APP] = transformAppId.app // Notice no target tenant.  User MUST stay within TENENT boundary
-            args[ReferenceAxisLoader.TRANSFORM_VERSION] = transformAppId.version
-            args[ReferenceAxisLoader.TRANSFORM_STATUS] = transformAppId.status
-            args[ReferenceAxisLoader.TRANSFORM_BRANCH] = transformAppId.branch
-            args[ReferenceAxisLoader.TRANSFORM_CUBE_NAME] = transformCubeName
+            args[TRANSFORM_APP] = transformAppId.app // Notice no target tenant.  User MUST stay within TENENT boundary
+            args[TRANSFORM_VERSION] = transformAppId.version
+            args[TRANSFORM_STATUS] = transformAppId.status
+            args[TRANSFORM_BRANCH] = transformAppId.branch
+            args[TRANSFORM_CUBE_NAME] = transformCubeName
         }
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, axisName, args)
 

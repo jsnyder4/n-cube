@@ -38,4 +38,6 @@ interface NCubeClient
     Object[] getVersions(String app)
 
     Set<String> getBranches(ApplicationID appId)
+
+    String getCubeRawJson(ApplicationID appId, String cubeName)
 }

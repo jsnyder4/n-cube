@@ -309,14 +309,6 @@ class Axis
     }
 
     /**
-     * @return String method name of referenced transform method (or null if this is not a reference axis)
-     */
-    String getTransformMethodName()
-    {
-        return getMetaProperty(TRANSFORM_METHOD_NAME)
-    }
-
-    /**
      * @return boolean true if this Axis is a reference Axis AND there is a transformer app
      * specified for the reference.
      */

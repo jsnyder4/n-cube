@@ -3365,28 +3365,9 @@ class NCube<T>
      */
     static <T> NCube<T> createCubeFromStream(InputStream stream)
     {
-        if (stream == null)
-        {
-            throw new IllegalArgumentException("Stream cannot be null to create cube.")
-        }
-
-        InputStream newStream = null
-        byte[] header = new byte[2]
-
         try
         {
-            newStream = new BufferedInputStream(stream)
-            newStream.mark(5)
-
-            int count = newStream.read(header)
-            if (count < 2)
-            {
-                throw new IllegalStateException("Invalid cube existing of 0 or 1 bytes")
-            }
-
-            newStream.reset()
-            newStream = ByteUtilities.isGzipped(header) ? new GZIPInputStream(newStream) : newStream
-            return fromSimpleJson(newStream)
+            return fromSimpleJson(rawStreamToInputStream(stream))
         }
         catch (Exception e)
         {
@@ -3394,8 +3375,29 @@ class NCube<T>
         }
         finally
         {
-            IOUtilities.close(newStream)
+            IOUtilities.close(stream)
         }
+    }
+
+    static protected InputStream rawStreamToInputStream(InputStream stream)
+    {
+        if (stream == null)
+        {
+            throw new IllegalArgumentException("Stream cannot be null to create cube.")
+        }
+
+        byte[] header = new byte[2]
+        InputStream newStream = new BufferedInputStream(stream)
+        newStream.mark(5)
+
+        int count = newStream.read(header)
+        if (count < 2)
+        {
+            throw new IllegalStateException("Invalid cube existing of 0 or 1 bytes")
+        }
+
+        newStream.reset()
+        return ByteUtilities.isGzipped(header) ? new GZIPInputStream(newStream) : newStream
     }
 
     /**

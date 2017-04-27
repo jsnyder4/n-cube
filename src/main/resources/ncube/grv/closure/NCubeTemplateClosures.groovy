@@ -11,7 +11,7 @@ import com.cedarsoftware.util.StringUtilities
 
 NCubeRuntimeClient getRuntimeClient()
 {
-    return NCubeAppContext.runtimeClient
+    return NCubeAppContext.ncubeRuntime
 }
 
 NCube getCube(String name = ncube.name, boolean quiet = false)

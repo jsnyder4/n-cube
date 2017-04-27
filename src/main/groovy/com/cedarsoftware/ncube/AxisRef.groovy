@@ -30,10 +30,13 @@ class AxisRef
     String srcAxisName
     String destApp
     String destVersion
+    String destStatus
+    String destBranch
     String destCubeName
     String destAxisName
     String transformApp
     String transformVersion
+    String transformStatus
+    String transformBranch
     String transformCubeName
-    String transformMethodName
 }

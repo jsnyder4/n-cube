@@ -67,7 +67,7 @@ abstract class UrlCommandCell implements CommandCell
     {
         if (ncubeRuntimeClient == null)
         {
-            ncubeRuntimeClient = NCubeAppContext.runtimeClient
+            ncubeRuntimeClient = NCubeAppContext.ncubeRuntime
         }
         return ncubeRuntimeClient
     }

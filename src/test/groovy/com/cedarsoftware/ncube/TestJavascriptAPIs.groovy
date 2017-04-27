@@ -4,13 +4,22 @@ import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.JsonHttpProxy
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.util.StringUtil
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 
 import javax.servlet.http.HttpServletRequest
 
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
 import static org.junit.Assert.fail
 
 /**
@@ -57,6 +66,55 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
             })
             JsonCommandServlet.servletRequest.set(request)
 
+        }
+    }
+    
+    @Test
+    void testGetJson()
+    {
+        NCube ncube1 = NCubeBuilder.discrete1D
+        NCube ncube2 = NCubeBuilder.discrete1D
+        ncube1.applicationID = BRANCH1
+        ncube2.applicationID = BRANCH2
+        mutableClient.createCube(ncube1)
+        String cubeName = ncube1.name
+
+        Map<String, Object> args = [
+                (REF_TENANT): BRANCH1.tenant,
+                (REF_APP): BRANCH1.app,
+                (REF_VERSION): BRANCH1.version,
+                (REF_STATUS): BRANCH1.status,
+                (REF_BRANCH): BRANCH1.branch,
+                (REF_CUBE_NAME): cubeName,
+                (REF_AXIS_NAME): 'state'
+        ] as Map<String, Object>
+
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, 'stateSource', args)
+        Axis axis = new Axis('stateSource', 1, false, refAxisLoader)
+        ncube2.addAxis(axis)
+        mutableClient.createCube(ncube2)
+
+        // test valid cube json calls
+        String json = call('getJson', [BRANCH2, cubeName, [mode:'json']])
+        assert StringUtilities.hasContent(json)
+        json = call('getJson', [BRANCH2, cubeName, [mode:'json-index']])
+        assert StringUtilities.hasContent(json)
+
+        mutableClient.deleteBranch(BRANCH1)
+        runtimeClient.clearCache(BRANCH2)
+
+        // invalid cube json, but raw json should still load
+        json = call('getJson', [BRANCH2, cubeName, [mode:'json']])
+        assert StringUtilities.hasContent(json)
+
+        try
+        { // invalid cube json should cause exception
+            call('getJson', [BRANCH2, cubeName, [mode:'json-index']])
+            fail()
+        }
+        catch (IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'error reading cube from stream')
         }
     }
 

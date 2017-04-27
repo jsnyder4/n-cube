@@ -49,6 +49,8 @@ class TestTransforms extends NCubeCleanupBaseTest
         assert reference.findColumn('TX')
         assert reference.findColumn('GA')
 
+        assert 1 == mutableClient.getReferenceAxes(appId).size()
+
         appCube.removeAxisReferenceTransform(refAxisName)
         String json = appCube.toFormattedJson()
         Axis reloadAxis = NCube.fromSimpleJson(json).get(refAxisName)
@@ -56,6 +58,8 @@ class TestTransforms extends NCubeCleanupBaseTest
         assert reloadAxis.findColumn('OH')
         assert reloadAxis.findColumn('NJ')
         assert reloadAxis.findColumn('TX')
+
+        assert 1 == mutableClient.getReferenceAxes(appId).size()
     }
 
     @Test

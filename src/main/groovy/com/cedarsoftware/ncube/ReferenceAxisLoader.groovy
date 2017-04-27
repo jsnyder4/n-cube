@@ -63,7 +63,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
      * @param refAxisArgs Map containing all the key-value pairs to describe the referenced n-cube + axis
      * and an optional reference to a transformation cube.<br>
      * required keys: sourceTenant, sourceApp, sourceVersion, sourceStatus, sourceBranch, referenceCubeName, referenceAxisName
-     * optional keys (transformer): transformApp, transformVersion, transformStatus, transformBranch, transformCubeName, transformMethodName
+     * optional keys (transformer): transformApp, transformVersion, transformStatus, transformBranch, transformCubeName
      */
     ReferenceAxisLoader(String containingCubeName, String sourceAxisName, Map<String , Object> args)
     {

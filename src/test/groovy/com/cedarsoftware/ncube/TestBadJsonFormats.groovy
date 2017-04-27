@@ -103,9 +103,9 @@ class TestBadJsonFormats extends NCubeBaseTest
         {
             NCube.createCubeFromStream(null)
         }
-        catch (IllegalArgumentException e)
+        catch (IllegalStateException e)
         {
-            e.message.toLowerCase().contains('stream cannot be null')
+            assertContainsIgnoreCase(e.message, 'error reading cube from stream')
         }
     }
 

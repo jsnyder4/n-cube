@@ -6198,14 +6198,13 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testGetReferenceAxes()
     {
+        ApplicationID appId = ApplicationID.testAppId
         NCube one = NCubeBuilder.discrete1DAlt
-        one.applicationID = ApplicationID.testAppId
+        one.applicationID = appId
         mutableClient.createCube(one)
         assert one.getAxis('state').size() == 2
 
         Map<String, Object> args = [:]
-
-        ApplicationID appId = ApplicationID.testAppId
         args[REF_TENANT] = appId.tenant
         args[REF_APP] = appId.app
         args[REF_VERSION] = appId.version
@@ -6218,7 +6217,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource', args)
         Axis axis = new Axis('stateSource', 1, false, refAxisLoader)
         NCube two = new NCube('Mongo')
-        two.applicationID = ApplicationID.testAppId
+        two.applicationID = appId
         two.addAxis(axis)
 
         two.setCell('a', [stateSource:'OH'] as Map)
@@ -6232,19 +6231,76 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert reload.getAxis('stateSource').reference
         mutableClient.createCube(two)
 
-        List<AxisRef> axisRefs = mutableClient.getReferenceAxes(ApplicationID.testAppId)
+        List<AxisRef> axisRefs = mutableClient.getReferenceAxes(appId)
         assert axisRefs.size() == 1
         AxisRef axisRef = axisRefs[0]
+        assert 'stateSource' == axisRef.srcAxisName
+        assert appId.app == axisRef.destApp
+        assert appId.version == axisRef.destVersion
+        assert appId.status == axisRef.destStatus
+        assert appId.branch == axisRef.destBranch
+        assert 'SimpleDiscrete' == axisRef.destCubeName
+        assert 'state' == axisRef.destAxisName
 
-        // Will fail because cube is not RELEASE / HEAD
         try
         {
-            mutableClient.updateReferenceAxes([axisRef] as Object[])
+            mutableClient.commitBranch(appId)
             fail()
         }
-        catch (IllegalArgumentException e)
+        catch(IllegalStateException e)
         {
-            assertContainsIgnoreCase(e.message, 'cannot point', 'reference axis', 'non-existing cube')
+            assertContainsIgnoreCase(e.message, 'not performed', 'snapshot')
+        }
+    }
+
+    @Test
+    void testMultipleReferenceAxisVersionPerApp()
+    {
+        ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
+        ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
+        ApplicationID snapshotAppId = ApplicationID.testAppId.asVersion('3.0.0')
+        NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = firstReleaseAppId
+        mutableClient.createCube(one)
+        assert one.getAxis('state').size() == 2
+        mutableClient.commitBranch(firstReleaseAppId)
+        mutableClient.releaseCubes(firstReleaseAppId, secondReleaseAppId.version)
+        mutableClient.releaseCubes(secondReleaseAppId, snapshotAppId.version)
+
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = firstReleaseAppId.tenant
+        args[REF_APP] = firstReleaseAppId.app
+        args[REF_VERSION] = firstReleaseAppId.version
+        args[REF_STATUS] = ReleaseStatus.RELEASE.name()
+        args[REF_BRANCH] = ApplicationID.HEAD
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        NCube two = new NCube('Mongo')
+        two.applicationID = snapshotAppId
+        two.addAxis(axis)
+        args[REF_VERSION] = secondReleaseAppId.version
+        refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource2', args)
+        axis = new Axis('stateSource2', 2, false, refAxisLoader)
+        axis.findColumn('TX').setMetaProperty('baz', 'quux')
+        axis.setMetaProperty('ear', 'hear')
+        two.addAxis(axis)
+        mutableClient.createCube(two)
+
+        List<AxisRef> axisRefs = mutableClient.getReferenceAxes(snapshotAppId)
+        assert axisRefs.size() == 2
+        assert axisRefs[0].destVersion != axisRefs[1].destVersion
+
+        try
+        {
+            mutableClient.commitBranch(snapshotAppId)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not performed', 'versions')
         }
     }
 

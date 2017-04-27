@@ -46,7 +46,7 @@ class CdnClassLoader extends GroovyClassLoader
         super(loader, null)
         _preventRemoteBeanInfo = preventRemoteBeanInfo
         _preventRemoteCustomizer = preventRemoteCustomizer
-        runtimeClient = NCubeAppContext.runtimeClient
+        runtimeClient = NCubeAppContext.ncubeRuntime
 
         if (acceptedDomains == null)
         {

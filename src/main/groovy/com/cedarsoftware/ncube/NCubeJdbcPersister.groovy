@@ -13,6 +13,7 @@ import com.cedarsoftware.util.io.JsonReader
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.runtime.IOGroovyMethods
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -113,6 +114,21 @@ class NCubeJdbcPersister
             }
         })
         return cubes
+    }
+
+    static String loadCubeRawJson(Connection c, ApplicationID appId, String cubeName)
+    {
+        Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
+                                       (SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_EXACT_MATCH_NAME): true] as Map
+
+        String json = null
+        options[METHOD_NAME] = 'loadCubeRawJson'
+        runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
+            InputStream input = NCube.rawStreamToInputStream(row.getBinaryStream(CUBE_VALUE_BIN))
+            json = IOGroovyMethods.getText(input, 'UTF-8')
+        })
+        return json
     }
 
     static NCube loadCube(Connection c, ApplicationID appId, String cubeName)
