@@ -244,10 +244,10 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "pullToBranch(${appId}, ${cubeIds.length} cubes, txID=${txId})", username)
     }
 
-    boolean updateBranchCubeHeadSha1(Long cubeId, String headSha1)
+    boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1)
     {
-        return (boolean) jdbcOperation({ Connection c -> persister.updateBranchCubeHeadSha1(c, cubeId, headSha1) },
-                "updateBranchCubeHeadSha1(${cubeId}, ${headSha1})")
+        return (boolean) jdbcOperation({ Connection c -> persister.updateBranchCubeHeadSha1(c, cubeId, branchSha1, headSha1) },
+                "updateBranchCubeHeadSha1(${cubeId}, ${branchSha1}, ${headSha1})")
     }
 
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)

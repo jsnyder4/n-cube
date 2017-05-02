@@ -615,9 +615,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testRenameNCube()
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
-        NCube ncube2 = NCubeBuilder.getTestNCube2D(true)
         ncube1.applicationID = defaultSnapshotApp
-        ncube2.applicationID = defaultSnapshotApp
 
         try
         {
@@ -630,22 +628,22 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         }
 
         mutableClient.createCube(ncube1)
-        mutableClient.createCube(ncube2)
-
         mutableClient.renameCube(defaultSnapshotApp, ncube1.name, 'test.Floppy')
 
-        Object[] cubeList = mutableClient.search(defaultSnapshotApp, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> cubeList = mutableClient.search(defaultSnapshotApp, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
-        assertTrue(cubeList.length == 2)
+        assert 1 == cubeList.size()
 
-        NCubeInfoDto nc1 = (NCubeInfoDto) cubeList[0]
-        NCubeInfoDto nc2 = (NCubeInfoDto) cubeList[1]
+        NCubeInfoDto nc1 = cubeList[0]
 
-        assertTrue(nc1.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Age-Gender') || nc2.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Age-Gender'))
-        assertTrue(nc1.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Floppy') || nc2.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Floppy'))
+        assert nc1.toString().startsWith('NONE/ncube.test/1.0.0/SNAPSHOT/TEST/test.Floppy')
+        assert 'test.Floppy' == nc1.name
 
-        assertTrue(nc1.name == 'test.Floppy' || nc2.name == 'test.Floppy')
-        assertFalse(nc1.name == 'test.Floppy' && nc2.name == 'test.Floppy')
+        // added to be sure CUBE_VALUE_BIN was not being deleted
+        List<NCubeInfoDto> newRevisions = mutableClient.getRevisionHistory(defaultSnapshotApp, 'test.Floppy')
+        assert mutableClient.loadCubeById(newRevisions[0].id as long)
+        List<NCubeInfoDto> oldRevisions = mutableClient.getRevisionHistory(defaultSnapshotApp, 'test.ValidTrailorConfigs')
+        assert mutableClient.loadCubeById(oldRevisions[0].id as long)
     }
 
     @Test

@@ -798,14 +798,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             ApplicationID.validateAppId(srcApp)
             srcApp.validateBranchIsNotHead()
             assertPermissions(srcApp, axisRef.srcCubeName, Action.UPDATE)
+            ApplicationID destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, axisRef.destStatus, axisRef.destBranch)
+            ApplicationID.validateAppId(destAppId)
+            assertPermissions(destAppId, axisRef.destCubeName)
             if (source)
             {
                 uniqueAppIds.add(srcApp)
             }
-            ApplicationID destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, axisRef.destStatus, axisRef.destBranch)
-            ApplicationID.validateAppId(destAppId)
-            assertPermissions(destAppId, axisRef.destCubeName)
-            if (!source)
+            else
             {
                 uniqueAppIds.add(destAppId)
             }
@@ -814,7 +814,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             {
                 ApplicationID transformAppId = new ApplicationID(srcApp.tenant, axisRef.transformApp, axisRef.transformVersion, axisRef.transformStatus, axisRef.transformBranch)
                 ApplicationID.validateAppId(transformAppId)
-                assertPermissions(transformAppId, axisRef.transformCubeName, Action.READ)
+                assertPermissions(transformAppId, axisRef.transformCubeName)
                 if (!source)
                 {
                     uniqueAppIds.add(transformAppId)
@@ -824,7 +824,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return uniqueAppIds
     }
 
-    private boolean validateReferenceAxesAppIds(ApplicationID appId)
+    private void validateReferenceAxesAppIds(ApplicationID appId)
     {
         String snapshot = ReleaseStatus.SNAPSHOT.name()
         List<AxisRef> axisRefs = getReferenceAxes(appId)
@@ -849,7 +849,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 checklist[refAppId.app] = refAppId
             }
         }
-        return true
     }
 
     void updateReferenceAxes(Object[] axisRefs)
@@ -1953,7 +1952,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                     // Fast-Forward branch
                     // Update HEAD SHA-1 on branch directly (no need to insert)
                     NCubeInfoDto branchCube = getCubeInfo(appId, updateCube)
-                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(branchCube.id, Long.class), updateCube.sha1)
+                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(branchCube.id, Long.class), branchCube.sha1, updateCube.sha1)
                     fastforwards.add(updateCube)
                     break
                 case ChangeType.CONFLICT.code:

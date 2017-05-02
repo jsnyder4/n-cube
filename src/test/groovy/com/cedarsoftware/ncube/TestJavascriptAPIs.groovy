@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.controller.NCubeController
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.JsonHttpProxy
@@ -210,6 +211,25 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
 
         List<Delta> result = call('fetchJsonBranchDiffs', [newDto, origDto]) as List
         assert result.size() == 4
+    }
+
+    @Test
+    void testGetCellNoExecuteByCoordinate()
+    {
+        NCube cube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
+        String cubeCall = cube.getCellNoExecute([Code:0]) as String
+        CellInfo apiCall = call('getCellNoExecuteByCoordinate', [BRANCH1, cube.name, [Code:0]]) as CellInfo
+        assert cubeCall == apiCall.value
+
+        try
+        {
+            call('getCellNoExecuteByCoordinate', [BRANCH1, cube.name, [Code:1]])
+            fail()
+        }
+        catch(CoordinateNotFoundException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not found on axis', )
+        }
     }
 
     @Test

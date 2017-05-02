@@ -129,7 +129,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
     {
         try
         {
-            new NCubeJdbcPersister().updateBranchCubeHeadSha1(null, null, 'badSha1')
+            new NCubeJdbcPersister().updateBranchCubeHeadSha1(null, null, 'branchSha1', 'badSha1')
         }
         catch (IllegalArgumentException e)
         {
@@ -137,11 +137,21 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
         }
         try
         {
-            new NCubeJdbcPersister().updateBranchCubeHeadSha1(null, 75, '')
+            new NCubeJdbcPersister().updateBranchCubeHeadSha1(null, 75, '', 'badSha1')
         }
         catch (IllegalArgumentException e)
         {
             assert e.message.toLowerCase().contains('sha-1 cannot be empty')
+        }
+        try
+        {
+            new NCubeJdbcPersister().updateBranchCubeHeadSha1(null, 75, 'branchSha1', '')
+        }
+        catch (IllegalArgumentException e)
+        {
+            assert e.message.toLowerCase().contains('head sha-1')
+            assert e.message.toLowerCase().contains('cannot be empty')
+
         }
     }
 

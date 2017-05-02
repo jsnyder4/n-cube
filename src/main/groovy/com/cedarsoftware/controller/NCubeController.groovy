@@ -1211,6 +1211,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cellInfo
     }
 
+    Object getCellNoExecuteByCoordinate(ApplicationID appId, String cubeName, Map coordinate)
+    {
+        appId = addTenant(appId)
+        NCube ncube = loadCube(appId, cubeName)
+        Object cell = ncube.getCellNoExecute(coordinate)
+        CellInfo cellInfo = new CellInfo(cell)
+        cellInfo.collapseToUiSupportedTypes()
+        return cellInfo
+    }
+
     /**
      * This API will fetch particular cell values (identified by the idArrays) for the passed
      * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>

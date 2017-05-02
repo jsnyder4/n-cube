@@ -680,10 +680,10 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
     static boolean renameCube(Connection c, ApplicationID appId, String oldName, String newName, String username)
     {
         byte[] oldBytes = null
+        byte[] testData = null
         Long oldRevision = null
         String oldSha1 = null
         String oldHeadSha1 = null
-        byte[] testData = null
 
         Map<String, Object> options = [
                 (SEARCH_INCLUDE_CUBE_DATA):true,
@@ -694,6 +694,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         NCube ncube = null
         runSelectCubesStatement(c, appId, oldName, options, 1, { ResultSet row ->
             oldRevision = row.getLong('revision_number')
+            oldBytes = row.getBytes(CUBE_VALUE_BIN)
             testData = row.getBytes(TEST_DATA_BIN)
             oldSha1 = row.getString('sha1')
             oldHeadSha1 = row.getString('head_sha1')
@@ -1017,13 +1018,18 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
      * Fast forward branch cube to HEAD cube, because even though it's HEAD_SHA-1 value is out-of-date,
      * the cubes current SHA-1 is the same as the HEAD cube's SHA-1.  Therefore, we can 'scoot' up the
      * cube record's HEAD-SHA-1 value to the same as the HEAD Cube's SHA-1.
-     * In addition, reset the changed flag to 0.
+     * In addition, set the changed flag based on whether SHA-1 matches HEAD SHA-1.
      */
-    static boolean updateBranchCubeHeadSha1(Connection c, Long cubeId, String headSha1)
+    static boolean updateBranchCubeHeadSha1(Connection c, Long cubeId, String branchSha1, String headSha1)
     {
         if (cubeId == null)
         {
             throw new IllegalArgumentException("Update branch cube's HEAD SHA-1, cube id cannot be empty")
+        }
+
+        if (StringUtilities.isEmpty(branchSha1))
+        {
+            throw new IllegalArgumentException("Update branch cube's SHA-1 cannot be empty")
         }
 
         if (StringUtilities.isEmpty(headSha1))
@@ -1032,8 +1038,9 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         }
 
         Map map = [sha1:headSha1, id: cubeId]
+        int changed = branchSha1 != headSha1 ? 1 : 0
         Sql sql = getSql(c)
-        int count = sql.executeUpdate(map, '/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = 0 WHERE n_cube_id = :id')
+        int count = sql.executeUpdate(map, "/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = ${changed} WHERE n_cube_id = :id")
         if (count == 0)
         {
             throw new IllegalArgumentException("error updating branch cube: ${cubeId}, to HEAD SHA-1: ${headSha1}, no record found.")

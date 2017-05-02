@@ -2083,6 +2083,62 @@ class TestDelta extends NCubeCleanupBaseTest
         assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
     }
 
+    @Test
+    void testChangedFlag()
+    {
+        // create 2 branches (and HEAD) with simple n-cube
+        NCube ncube1 = NCubeBuilder.discrete1D
+        String ncubeName = ncube1.name
+        ncube1.applicationID = BRANCH1
+        mutableClient.createCube(ncube1)
+        mutableClient.commitBranch(BRANCH1)
+        mutableClient.updateBranch(BRANCH2)
+
+        // BRANCH1 change TX from 2->20
+        ncube1.setCell(20, [state: 'TX'])
+        mutableClient.updateCube(ncube1)
+
+        // BRANCH2 change OH from 1->10 and commit
+        NCube ncube2 = mutableClient.getCube(BRANCH2, ncubeName)
+        ncube2.setCell(10, [state: 'OH'])
+        mutableClient.updateCube(ncube2)
+        mutableClient.commitBranch(BRANCH2)
+
+        // BRANCH1 "steals" OH change from BRANCH2
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(ncube2, ncube1)
+        List<Delta> deltasToMerge = deltas.findAll { it.description.contains("OH")}
+        mutableClient.mergeDeltas(BRANCH1, ncubeName, deltasToMerge)
+
+        // Update from HEAD shows fast forward because update was "stolen" previously
+        Map<String, Object> result = mutableClient.updateBranch(BRANCH1)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+
+        NCubeInfoDto dto = mutableClient.search(BRANCH1, ncubeName, null, null)[0]
+        assert dto.changed
+
+        // BRANCH2 change OH from 10->100 and commit
+        ncube2.setCell(100, [state: 'OH'])
+        mutableClient.updateCube(ncube2)
+        mutableClient.commitBranch(BRANCH2)
+
+        // Update from HEAD shows update because there's a new change in HEAD
+        result = mutableClient.updateBranch(BRANCH1)
+        assert (result[mutableClient.BRANCH_ADDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_DELETES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_UPDATES] as Map).size() == 1
+        assert (result[mutableClient.BRANCH_RESTORES] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_FASTFORWARDS] as Map).size() == 0
+        assert (result[mutableClient.BRANCH_REJECTS] as Map).size() == 0
+
+        ncube1 = mutableClient.getCube(BRANCH1, ncubeName)
+        assert 20 == ncube1.getCell([state: 'TX'])
+    }
+
     static void setupMetaPropertyTest()
     {
         NCube ncube = NCubeBuilder.discrete1D
