@@ -232,6 +232,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
+    List<NCubeInfoDto> getCellAnnotation(ApplicationID appId, String cubeName, Set<Long> ids, boolean ignoreVersion = false)
+    {
+        List<NCubeInfoDto> result = bean.call(beanName, 'getCellAnnotation', [appId, cubeName, ids, ignoreVersion]) as List
+        return result
+    }
+
     List<String> getAppNames()
     {
         List<String> result = bean.call(beanName, 'getAppNames', []) as List

@@ -60,6 +60,10 @@ interface NCubeMutableClient extends NCubeClient
 
     List<NCubeInfoDto> getRevisionHistory(ApplicationID appId, String cubeName, boolean ignoreVersion)
 
+    List<NCubeInfoDto> getCellAnnotation(ApplicationID appId, String cubeName, Set<Long> ids)
+
+    List<NCubeInfoDto> getCellAnnotation(ApplicationID appId, String cubeName, Set<Long> ids, boolean ignoreVersion)
+
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId)
 
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, boolean copyWithHistory)

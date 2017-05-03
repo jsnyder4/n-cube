@@ -188,6 +188,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cubeInfos.toArray()
     }
 
+    Object[] getCellAnnotation(ApplicationID appId, String cubeName, Object[] ids, boolean ignoreVersion = false)
+    {
+        appId = addTenant(appId)
+        List<NCubeInfoDto> cubeInfos = mutableClient.getCellAnnotation(appId, cubeName, getCoordinate(ids), ignoreVersion)
+        return cubeInfos.toArray()
+    }
+
     String getHtml(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)

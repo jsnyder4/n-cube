@@ -196,6 +196,42 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     }
 
     /**
+     * Get a List<NCubeInfoDto> containing all history for the given cell of a cube.
+     */
+    List<NCubeInfoDto> getCellAnnotation(ApplicationID appId, String cubeName, Set<Long> ids, boolean ignoreVersion = false)
+    {
+        ApplicationID.validateAppId(appId)
+        NCube.validateCubeName(cubeName)
+        assertPermissions(appId, cubeName)
+        List<NCubeInfoDto> revisions = persister.getRevisions(appId, cubeName, ignoreVersion).sort(true, {NCubeInfoDto rev -> rev.revision as long})
+        List<NCubeInfoDto> relevantRevDtos = []
+        NCubeInfoDto prevDto
+        NCube oldCube
+        for (NCubeInfoDto revDto : revisions)
+        {
+            NCube newCube = loadCubeById(revDto.id as long)
+            if (prevDto && oldCube)
+            {
+                List<Delta> diffs = DeltaProcessor.getDeltaDescription(newCube, oldCube)
+                for (Delta diff : diffs)
+                {
+                    if (diff.location == Delta.Location.CELL && diff.locId == ids)
+                    {
+                        if (relevantRevDtos.empty)
+                        {
+                            relevantRevDtos.add(prevDto)
+                        }
+                        relevantRevDtos.add(revDto)
+                    }
+                }
+            }
+            prevDto = revDto
+            oldCube = newCube
+        }
+        return relevantRevDtos ?: [revisions.first()]
+    }
+
+    /**
      * Return a List of Strings containing all unique App names for the given tenant.
      */
     List<String> getAppNames()

@@ -1164,7 +1164,6 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
-//        assert history[0].createHid == USER_ID    // fails on travis-ci
         assert history[0].notes == 'notes follow'
         assertNotNull history[0].toString()
 
@@ -1178,7 +1177,6 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assert history[1].name == 'test.Age-Gender'
         assert history[0].revision == '1'
         assert history[1].revision == '0'
-//        assert history[1].createHid == USER_ID    // fails on travis-ci
         assert history[1].notes == 'notes follow'
 
         long rev0Id = Converter.convert(history[1].id, long.class) as long
@@ -1199,7 +1197,6 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
-//        assert history[0].createHid == USER_ID        // fails on travis-ci
         assert history[0].notes == 'notes follow'
         assertNotNull history[0].toString()
 
@@ -1218,6 +1215,71 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.lockApp(defaultSnapshotApp, false)
         List<NCubeInfoDto> fullHistory = mutableClient.getRevisionHistory(defaultSnapshotApp.asVersion('2.0.0').asHead(), cube.name, true)
         assert fullHistory.size() == 1
+    }
+
+    @Test
+    void testCellAnnotate()
+    {
+        Map testCoord = [Gender:'Male', Age: 42]
+        NCube cube = createCube()
+        cube.setCell(7d, testCoord)
+        mutableClient.updateCube(cube);
+        cube.setCell(2d, [Gender:'Male', Age: 10])
+        mutableClient.updateCube(cube);
+        cube.setCell(5d, [Gender:'Male', Age: 42])
+        mutableClient.updateCube(cube);
+
+        Set<Long> ids = []
+        ids << cube.getAxis('Gender').findColumn('Male').id
+        ids << cube.getAxis('Age').findColumn(42).id
+
+        List<NCubeInfoDto> revs = mutableClient.getCellAnnotation(defaultSnapshotApp, cube.name, ids)
+        assert 3 == revs.size()
+        assert '0' == revs[0].revision
+        assert '1' == revs[1].revision
+        assert '3' == revs[2].revision
+    }
+
+    @Test
+    void testCellAnnotateIgnoreVersion()
+    {
+        Map testCoord = [Gender:'Male', Age: 42]
+        Map searchOpts = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_EXACT_MATCH_NAME):true]
+        ApplicationID appId = defaultSnapshotApp
+        String newVer = '1.1.0'
+        NCube cube = createCube()
+        cube.setCell(7d, testCoord)
+        mutableClient.updateCube(cube)
+        mutableClient.commitBranch(appId)
+        mutableClient.releaseCubes(appId, newVer)
+
+        appId = appId.asVersion(newVer)
+        cube = mutableClient.loadCubeById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long)
+        cube.setCell(2d, [Gender:'Male', Age: 10])
+        mutableClient.updateCube(cube)
+        mutableClient.commitBranch(appId)
+        newVer = '1.2.0'
+        mutableClient.releaseCubes(appId, newVer)
+
+        appId = appId.asVersion(newVer)
+        cube = mutableClient.loadCubeById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long)
+        cube.setCell(5d, [Gender:'Male', Age: 42])
+        mutableClient.updateCube(cube)
+        mutableClient.commitBranch(appId)
+        newVer = '1.3.0'
+        mutableClient.releaseCubes(appId, newVer)
+
+        Set<Long> ids = []
+        ids << cube.getAxis('Gender').findColumn('Male').id
+        ids << cube.getAxis('Age').findColumn(42).id
+
+        appId = appId.asVersion(newVer)
+        List<NCubeInfoDto> revs = mutableClient.getCellAnnotation(appId.asHead(), cube.name, ids, true)
+        assert 2 == revs.size()
+        assert '1' == revs[0].revision
+        assert '1.1.0' == revs[0].version
+        assert '2' == revs[1].revision
+        assert '1.3.0' == revs[1].version
     }
 
     @Test
