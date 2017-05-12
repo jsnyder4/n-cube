@@ -3,12 +3,13 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.regex.Matcher
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.NCubeConstants.SYS_PROTOTYPE
 
 /**
  * This class is used to hold Groovy Expressions.  This means that
@@ -134,7 +135,7 @@ class N_${L2CacheKey} extends ${expClassName}
     {
         try
         {
-            return runtimeClient.getCube(appId, SYS_PROTOTYPE)
+            return ncubeRuntime.getCube(appId, SYS_PROTOTYPE)
         }
         catch (Exception e)
         {

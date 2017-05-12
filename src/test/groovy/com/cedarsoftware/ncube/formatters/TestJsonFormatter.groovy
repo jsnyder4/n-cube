@@ -7,6 +7,7 @@ import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 import static org.mockito.Matchers.anyInt
@@ -49,8 +50,8 @@ class TestJsonFormatter extends NCubeBaseTest
     @Test
     void testConvertArray()
     {
-        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
-        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'arrays.json')
+        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'arrays.json')
         
         def coord = [Code:'longs']
         assertEquals 9223372036854775807L, ((Object[]) ncube.getCell(coord))[2]
@@ -210,7 +211,7 @@ class TestJsonFormatter extends NCubeBaseTest
     @Test
     void testAlternateJsonFormat()
     {
-        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, "idBasedCube.json")
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, "idBasedCube.json")
         String json = ncube.toFormattedJson([indexFormat: true])
         assert json.contains('"cells":{"1')
         assert json.contains('":{"type":"string","value":"1 10"}')

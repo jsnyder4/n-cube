@@ -7,20 +7,14 @@ import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.JsonHttpProxy
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
-import org.codehaus.groovy.util.StringUtil
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 
 import javax.servlet.http.HttpServletRequest
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.fail
 
 /**
@@ -102,7 +96,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         assert StringUtilities.hasContent(json)
 
         mutableClient.deleteBranch(BRANCH1)
-        runtimeClient.clearCache(BRANCH2)
+        ncubeRuntime.clearCache(BRANCH2)
 
         // invalid cube json, but raw json should still load
         json = call('getJson', [BRANCH2, cubeName, [mode:'json']])
@@ -170,7 +164,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'ncube.test', '0.0.0', 'SNAPSHOT', 'jose')
         createCubeFromResource(appId, "sys.bootstrap.test.1.json")
 
-        ApplicationID bootId = runtimeClient.getApplicationID(appId.tenant, appId.app, [env:null]) as ApplicationID
+        ApplicationID bootId = ncubeRuntime.getApplicationID(appId.tenant, appId.app, [env:null]) as ApplicationID
         assert bootId.tenant == 'NONE'
         assert bootId.app == 'ncube.test'
         assert bootId.version == '1.28.0'
@@ -182,13 +176,13 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     void testFetchJsonRevDiffs()
     {
         createCubeFromResource(BRANCH1, 'test.branch.1.json')
-        List<NCubeInfoDto> cubes = runtimeClient.search(BRANCH1, 'TestBranch', null, null)
+        List<NCubeInfoDto> cubes = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
         long origId = Converter.convert(origDto.id, long.class) as long
-        NCube foo = runtimeClient.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        NCube foo = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         mutableClient.updateCube(foo)
-        List<NCubeInfoDto> cubes2 = runtimeClient.search(BRANCH1, 'TestBranch', null, null)
+        List<NCubeInfoDto> cubes2 = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
         long newId = Converter.convert(newDto.id, long.class) as long
@@ -202,10 +196,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         createCubeFromResource(BRANCH1, 'test.branch.1.json')
         createCubeFromResource(BRANCH2, 'test.branch.2.json')
-        List<NCubeInfoDto> cubes = runtimeClient.search(BRANCH1, 'TestBranch', null, null)
+        List<NCubeInfoDto> cubes = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
-        List<NCubeInfoDto> cubes2 = runtimeClient.search(BRANCH2, 'TestBranch', null, null)
+        List<NCubeInfoDto> cubes2 = ncubeRuntime.search(BRANCH2, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
 

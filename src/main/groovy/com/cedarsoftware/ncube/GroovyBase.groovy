@@ -6,19 +6,20 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.slf4j.LoggerFactory
-import org.slf4j.Logger
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.tools.GroovyClass
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_DEBUG
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_VERSION
 
@@ -348,7 +349,7 @@ abstract class GroovyBase extends UrlCommandCell
 
         if (cube.name.toLowerCase().startsWith("sys."))
         {   // No URLs allowed, nor code from sys.classpath when executing these cubes
-            output.loader = (GroovyClassLoader)runtimeClient.getLocalClassloader(cube.applicationID)
+            output.loader = (GroovyClassLoader)ncubeRuntime.getLocalClassloader(cube.applicationID)
             output.source = cmd
         }
         else if (isUrlUsed)
@@ -417,18 +418,18 @@ abstract class GroovyBase extends UrlCommandCell
     {
         NCube cube = getNCube(ctx)
         ApplicationID appId = cube.applicationID
-        GroovyClassLoader gcLoader = (GroovyClassLoader) runtimeClient.getUrlClassLoader(appId, getInput(ctx))
+        GroovyClassLoader gcLoader = (GroovyClassLoader) ncubeRuntime.getUrlClassLoader(appId, getInput(ctx))
         return gcLoader
     }
 
     private String getTargetByteCodeVersion()
     {
-        return runtimeClient.systemParams[NCUBE_PARAMS_BYTE_CODE_VERSION] ?: '1.8'
+        return ncubeRuntime.systemParams[NCUBE_PARAMS_BYTE_CODE_VERSION] ?: '1.8'
     }
 
     private boolean isNCubeCodeGenDebug()
     {
-        return 'true'.equalsIgnoreCase(runtimeClient.systemParams[NCUBE_PARAMS_BYTE_CODE_DEBUG] as String)
+        return 'true'.equalsIgnoreCase(ncubeRuntime.systemParams[NCUBE_PARAMS_BYTE_CODE_DEBUG] as String)
     }
 
     protected static String expandNCubeShortCuts(String groovy)

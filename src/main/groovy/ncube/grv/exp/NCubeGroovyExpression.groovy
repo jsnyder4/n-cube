@@ -1,12 +1,6 @@
 package ncube.grv.exp
 
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.Axis
-import com.cedarsoftware.ncube.Column
-import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeAppContext
-import com.cedarsoftware.ncube.NCubeInfoDto
-import com.cedarsoftware.ncube.NCubeRuntimeClient
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -14,6 +8,7 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
 
 /**
@@ -39,15 +34,9 @@ import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
 @CompileStatic
 class NCubeGroovyExpression
 {
-    private static NCubeRuntimeClient runtimeClient
     public Map input
     public Map output
     public NCube ncube
-
-    NCubeGroovyExpression()
-    {
-        runtimeClient = NCubeAppContext.ncubeRuntime
-    }
 
     /**
      * Fetch the named n-cube from the NCubeRuntime.  It looks at the same
@@ -63,7 +52,7 @@ class NCubeGroovyExpression
         {
             return ncube
         }
-        NCube cube = runtimeClient.getCube(ncube.applicationID, name)
+        NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
         if (cube == null && !quiet)
         {
             throw new IllegalArgumentException('n-cube: ' + name + ' not found.')
@@ -85,7 +74,7 @@ class NCubeGroovyExpression
      */
     Set<String> getCubeNames(boolean activeOnly = true)
     {
-        List<NCubeInfoDto> searchResults = runtimeClient.search(ncube.applicationID, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):activeOnly])
+        List<NCubeInfoDto> searchResults = ncubeRuntime.search(ncube.applicationID, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):activeOnly])
         Set<String> names = new CaseInsensitiveSet()
         searchResults.each { NCubeInfoDto dto -> names.add(dto.name) }
         return names
@@ -101,7 +90,7 @@ class NCubeGroovyExpression
      */
     List<NCubeInfoDto> search(String namePattern, String textPattern, Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true])
     {
-        List<NCubeInfoDto> dtos = runtimeClient.search(ncube.applicationID, namePattern, textPattern, options)
+        List<NCubeInfoDto> dtos = ncubeRuntime.search(ncube.applicationID, namePattern, textPattern, options)
         return dtos
     }
 
@@ -110,7 +99,7 @@ class NCubeGroovyExpression
      */
     Map<String, Object> getSystemParams()
     {
-        return runtimeClient.systemParams
+        return ncubeRuntime.systemParams
     }
 
     /**
@@ -153,7 +142,7 @@ class NCubeGroovyExpression
      */
     def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
     {
-        NCube target = runtimeClient.getCube(appId, cubeName)
+        NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
             throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
@@ -210,7 +199,7 @@ class NCubeGroovyExpression
      */
     def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
     {
-        NCube target = runtimeClient.getCube(appId, cubeName)
+        NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
             throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
@@ -327,7 +316,7 @@ class NCubeGroovyExpression
      */
     byte[] urlToBytes(String url)
     {
-        URL actualUrl = runtimeClient.getActualUrl(applicationID, url, input)
+        URL actualUrl = ncubeRuntime.getActualUrl(applicationID, url, input)
         return UrlUtilities.getContentFromUrl(actualUrl, true)
     }
 

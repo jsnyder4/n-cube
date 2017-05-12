@@ -8,6 +8,7 @@ import org.junit.Test
 
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXIS_REF_CHANGE
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.*
 
 /**
@@ -1304,7 +1305,7 @@ class TestDelta extends NCubeCleanupBaseTest
     void testDeleteColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
     {
         setupLibrary()
-        NCube base = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
+        NCube base = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         NCube change = base.duplicate('george')
         change.deleteColumn('Column', 'C')
         base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
@@ -1317,7 +1318,7 @@ class TestDelta extends NCubeCleanupBaseTest
     void testAddColumnOnNonReferenceAxisNotLostWhenUpdatingReferenceAxis()
     {
         setupLibrary()
-        NCube base = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
+        NCube base = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         NCube change = base.duplicate('george')
         change.addColumn('Column', 'D')
         base.getAxis('state').setMetaProperty('referenceVersion', '1.0.1')
@@ -1355,7 +1356,7 @@ class TestDelta extends NCubeCleanupBaseTest
         mutableClient.commitBranch(appId, list as Object[])
         mutableClient.releaseCubes(appId, '1.0.1')
 
-        NCube ref = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
+        NCube ref = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, '2D1Ref.json')
         Axis state = ref.getAxis('state')
         ref.addColumn('state', null)
         Column ohio = state.findColumn('OH')

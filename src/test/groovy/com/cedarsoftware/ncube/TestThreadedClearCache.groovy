@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
 
 /**
@@ -71,7 +72,7 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
                         {
                             if (random.nextInt(100) == 42)
                             {   // 1/100th of the time, clear the cache
-                                runtimeClient.clearCache(usedId)
+                                ncubeRuntime.clearCache(usedId)
                             }
                             else
                             {   // 99/100ths of the time, execute cells

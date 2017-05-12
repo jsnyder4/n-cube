@@ -3,6 +3,8 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -26,7 +28,7 @@ class TestOptionalScope extends NCubeBaseTest
     @Test
     void testOptionalScopeInDefaultCell()
     {
-        NCube n1 = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'optionalScope.json')
+        NCube n1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'optionalScope.json')
         Set<String> optionalScope = n1.getOptionalScope([:], [:])
         assert optionalScope.contains('teST')
         assert optionalScope.size() == 1

@@ -3,6 +3,8 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -106,8 +108,8 @@ class TestInputKeysUsed extends NCubeBaseTest
         NCube ncube2 = NCubeBuilder.trackingTestCubeSecondary
         ncube.applicationID = ApplicationID.testAppId
         ncube2.applicationID = ApplicationID.testAppId
-        runtimeClient.addCube(ncube)
-        runtimeClient.addCube(ncube2)
+        ncubeRuntime.addCube(ncube)
+        ncubeRuntime.addCube(ncube2)
 
         Map input = [Column: 'B', Row:1, state:'OH']
         Map output = [:]

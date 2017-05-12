@@ -6,6 +6,7 @@ import org.junit.Test
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
@@ -42,8 +43,8 @@ class TestGroovyTemplate extends NCubeBaseTest
     @Test
     void testTemplateThatUsesClasspath()
     {
-        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
-        NCube template = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
+        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        NCube template = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([loc:'web', testType:'templateTest'] as Map)
         assert text.contains('from the web')
         assert text.contains('Hello, world."')
@@ -56,8 +57,8 @@ class TestGroovyTemplate extends NCubeBaseTest
     @Test
     void testNCubeGroovyExpressionThatUsesClasspath()
     {
-        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
-        NCube template = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
+        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        NCube template = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([testType:'expressionTest'] as Map)
         assert text.contains('Hello, world."')
     }

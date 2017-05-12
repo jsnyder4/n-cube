@@ -8,6 +8,8 @@ import groovy.transform.CompileStatic
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * Process NCube template cells.  A template cell contains a String that may have both
  * NCube references to other NCubes within the <% %> or ${ } sections, AND, the
@@ -110,7 +112,7 @@ class GroovyTemplate extends ContentCmdCell
             cmd = replaceScriptletNCubeRefs(cmd, Regexes.velocityPattern, '${', '}')
 
             NCube ncube = getNCube(ctx)
-            URLClassLoader urlLoader = runtimeClient.getUrlClassLoader(ncube.applicationID, getInput(ctx))
+            URLClassLoader urlLoader = ncubeRuntime.getUrlClassLoader(ncube.applicationID, getInput(ctx))
             InputStream inStream = urlLoader.getResourceAsStream("ncube/grv/closure/NCubeTemplateClosures.groovy")
             String groovyClosures = new String(IOUtilities.inputStreamToBytes(inStream))
             IOUtilities.close(inStream)

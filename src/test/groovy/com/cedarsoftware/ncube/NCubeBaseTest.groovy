@@ -38,16 +38,6 @@ import static org.junit.Assert.assertTrue
 @Ignore
 class NCubeBaseTest implements NCubeConstants
 {
-    static NCubeClient getNcubeClient()
-    {
-        return NCubeAppContext.ncubeClient
-    }
-
-    static NCubeRuntimeClient getRuntimeClient()
-    {
-        return NCubeAppContext.ncubeRuntime
-    }
-
     static NCubeMutableClient getMutableClient()
     {
         String beanName = NCubeAppContext.containsBean(RUNTIME_BEAN) ? RUNTIME_BEAN : MANAGER_BEAN

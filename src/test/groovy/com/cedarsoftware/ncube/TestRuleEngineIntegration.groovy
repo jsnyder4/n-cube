@@ -3,6 +3,8 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * NCube RuleEngine Tests
  *
@@ -28,8 +30,8 @@ class TestRuleEngineIntegration extends NCubeCleanupBaseTest
     @Test
     void testNCubeGroovyExpressionAPIs()
     {
-        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'expressionTests.json')
-        runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'months.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'expressionTests.json')
+        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'months.json')
 
         Map input = ['Age': 10]
         Map output = [:]

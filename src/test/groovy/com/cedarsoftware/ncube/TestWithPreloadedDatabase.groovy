@@ -9,21 +9,9 @@ import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNotSame
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertSame
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static org.junit.Assert.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -937,7 +925,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert (result[mutableClient.BRANCH_RESTORES] as Map).empty
         assert (result[mutableClient.BRANCH_REJECTS] as Map).empty
 
-        NCube cube = runtimeClient.getNCubeFromResource(BRANCH1, "test.branch.2.json")
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, "test.branch.2.json")
         mutableClient.updateCube(cube)
         result = mutableClient.commitBranch(BRANCH1)
         assert (result[mutableClient.BRANCH_ADDS] as Map).empty
@@ -1206,7 +1194,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
 
-        NCube cube = runtimeClient.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         assertNotNull(cube)
         mutableClient.updateCube(cube)
 
@@ -1216,7 +1204,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         int rows = mutableClient.releaseCubes(HEAD, "1.29.0")
         assertEquals(2, rows)
 
-        Object[] versions = runtimeClient.getVersions(HEAD.app)
+        Object[] versions = ncubeRuntime.getVersions(HEAD.app)
         assert versions.length == 3
         assert versions.contains('0.0.0-SNAPSHOT')
         assert versions.contains('1.29.0-SNAPSHOT')
@@ -1242,7 +1230,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, 'test.branch.1.json', 'test.branch.age.1.json')
         assert 2 == mutableClient.copyBranch(HEAD, BRANCH1)
 
-        NCube cube = runtimeClient.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         assertNotNull(cube)
         mutableClient.updateCube(cube)
 
@@ -2356,7 +2344,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        cube = runtimeClient.getNCubeFromResource(BRANCH2, "test.branch.2.json")
+        cube = ncubeRuntime.getNCubeFromResource(BRANCH2, "test.branch.2.json")
         mutableClient.updateCube(cube)
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
@@ -2368,7 +2356,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         mutableClient.commitBranch(BRANCH2, dtos)
 
-        cube = runtimeClient.getNCubeFromResource(BRANCH1, "test.branch.2.json")
+        cube = ncubeRuntime.getNCubeFromResource(BRANCH1, "test.branch.2.json")
         mutableClient.updateCube(cube)
 
         dtos = mutableClient.getBranchChangesForHead(BRANCH1)
@@ -2402,7 +2390,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         sysPermissions.addColumn(AXIS_RESOURCE, cubeName)
         sysPermissions.setCell(true, [(AXIS_RESOURCE): cubeName, (AXIS_ROLE): ROLE_USER, (AXIS_ACTION): Action.READ.lower()])
         mutableClient.updateCube(sysPermissions)
-        List<NCubeInfoDto> dtos = runtimeClient.search(branchBoot, SYS_PERMISSIONS, null, null)
+        List<NCubeInfoDto> dtos = ncubeRuntime.search(branchBoot, SYS_PERMISSIONS, null, null)
         assert dtos.size() == 1
         NCubeInfoDto permissionDto = dtos[0]
         mutableClient.commitBranch(branchBoot, permissionDto)
@@ -4853,7 +4841,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.copyBranch(HEAD, BRANCH1)
         mutableClient.copyBranch(HEAD, BRANCH2)
 
-        NCube cube = runtimeClient.getNCubeFromResource(BRANCH2, "test.branch.2.json")
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH2, "test.branch.2.json")
         mutableClient.updateCube(cube)
         assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
 
@@ -4866,7 +4854,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
         assertEquals("BAZ", cube.getCell([Code : 10.0]))
 
-        cube = runtimeClient.getNCubeFromResource(BRANCH1, "test.branch.1.json")
+        cube = ncubeRuntime.getNCubeFromResource(BRANCH1, "test.branch.1.json")
         mutableClient.updateCube(cube)
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
@@ -5346,7 +5334,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.copyBranch(HEAD, BRANCH1)
         mutableClient.copyBranch(HEAD, BRANCH2)
 
-        NCube cube = runtimeClient.getNCubeFromResource(BRANCH2, "test.branch.2.json")
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH2, "test.branch.2.json")
         mutableClient.updateCube(cube)
         mutableClient.commitBranch(BRANCH2)
 
@@ -5354,7 +5342,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
         assertEquals("BAZ", cube.getCell([Code : 10.0]))
 
-        cube = runtimeClient.getNCubeFromResource(BRANCH1, "test.branch.1.json")
+        cube = ncubeRuntime.getNCubeFromResource(BRANCH1, "test.branch.1.json")
         mutableClient.updateCube(cube)
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
@@ -5955,7 +5943,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testBootstrapWithOverrides()
 	{
-        ApplicationID id = runtimeClient.getBootVersion(ApplicationID.DEFAULT_TENANT, 'example')
+        ApplicationID id = ncubeRuntime.getBootVersion(ApplicationID.DEFAULT_TENANT, 'example')
         assert id.tenant == ApplicationID.DEFAULT_TENANT
         assert id.app == 'example'
         assert id.version == '0.0.0'
@@ -6035,7 +6023,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNotEquals('file://C:/Development/private/groovy/', devLoaderAgain.URLs[2].toString())
 
         //  force cube clear so it will auto next time we get cube
-        runtimeClient.clearCache(appId)
+        ncubeRuntime.clearCache(appId)
         cube = mutableClient.getCube(appId, "sys.classpath")
         devLoaderAgain = cube.getCell([env:"DEV"])
 
@@ -6100,7 +6088,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNotEquals('file://C:/Development/private/groovy/', devLoaderAgain.URLs[2].toString())
 
         //  force cube clear so it will auto next time we get cube
-        runtimeClient.clearCache(appId)
+        ncubeRuntime.clearCache(appId)
         cube = mutableClient.getCube(appId, "sys.classpath")
         devLoaderAgain = cube.getCell([env:"DEV"])
 
@@ -6109,7 +6097,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals('file://C:/Development/private/groovy/', devLoaderAgain.URLs[2].toString())
 
         // Check version overload only
-        runtimeClient.clearCache(appId)
+        ncubeRuntime.clearCache(appId)
         testClient.clearSysParams()
         System.setProperty("NCUBE_PARAMS", '{"version":"1.28.0"}')
         // SAND hasn't been loaded yet so it should give us updated values based on the system params.
@@ -6128,7 +6116,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         NCube cube = mutableClient.getCube(appId, 'hello')
         Object out = cube.getCell(input)
         assertEquals('Hello, world.', out)
-        runtimeClient.clearCache(appId)
+        ncubeRuntime.clearCache(appId)
 
         cube = mutableClient.getCube(appId, 'hello')
         out = cube.getCell(input)
@@ -6160,9 +6148,9 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testGetAppIdFromBootstrapCube()
     {
-        ApplicationID zero = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'TEST', '0.0.0', ReleaseStatus.SNAPSHOT.name(), runtimeClient.systemParams[NCUBE_PARAMS_BRANCH] as String)
+        ApplicationID zero = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'TEST', '0.0.0', ReleaseStatus.SNAPSHOT.name(), ncubeRuntime.systemParams[NCUBE_PARAMS_BRANCH] as String)
         preloadCubes(zero, "sys.bootstrap.test.1.json")
-        ApplicationID appId = runtimeClient.getApplicationID(ApplicationID.DEFAULT_TENANT, 'TEST', null)
+        ApplicationID appId = ncubeRuntime.getApplicationID(ApplicationID.DEFAULT_TENANT, 'TEST', null)
 
         assertEquals(ApplicationID.DEFAULT_TENANT, appId.tenant)
         assertEquals('TEST', appId.app)
@@ -6177,7 +6165,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty("NCUBE_PARAMS", '{}')
         testClient.clearSysParams()
 
-        ApplicationID id = runtimeClient.getBootVersion('foo', 'bar')
+        ApplicationID id = ncubeRuntime.getBootVersion('foo', 'bar')
         assertEquals 'foo', id.tenant
         assertEquals 'bar', id.app
         assertEquals '0.0.0', id.version
@@ -6187,7 +6175,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty("NCUBE_PARAMS", '{"branch":"qux"}')
         testClient.clearSysParams()
 
-        id = runtimeClient.getBootVersion('foo', 'bar')
+        id = ncubeRuntime.getBootVersion('foo', 'bar')
         assertEquals 'foo', id.tenant
         assertEquals 'bar', id.app
         assertEquals '0.0.0', id.version
@@ -6376,8 +6364,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testDynamicallyLoadedCode()
     {
-        String save = runtimeClient.systemParams[NCUBE_ACCEPTED_DOMAINS]
-        runtimeClient.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
+        String save = ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS]
+        ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
         NCube ncube = NCubeBuilder.discrete1DEmpty
         GroovyExpression exp = new GroovyExpression('''\
 import org.apache.commons.collections.primitives.*
@@ -6394,11 +6382,11 @@ return ints''', null, false)
 
         if (save)
         {
-            runtimeClient.systemParams[NCUBE_ACCEPTED_DOMAINS] = save
+            ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = save
         }
         else
         {
-            runtimeClient.systemParams.remove(NCUBE_ACCEPTED_DOMAINS)
+            ncubeRuntime.systemParams.remove(NCUBE_ACCEPTED_DOMAINS)
         }
     }
 

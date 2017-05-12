@@ -2,21 +2,12 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import groovy.transform.CompileStatic
-import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static org.junit.Assert.*
 
 @CompileStatic
 class TestStringReferenceAxis extends CommonStringAxisTests {
@@ -54,7 +45,7 @@ class TestStringReferenceAxis extends CommonStringAxisTests {
         referenceCube.addAxis(referenceAxis)
         referenceCube.setCell(10, [Gender: 'Male'])
         referenceCube.setCell(11, [Gender: 'Female'])
-        runtimeClient.addCube(referenceCube)
+        ncubeRuntime.addCube(referenceCube)
         ncube = new NCube<Integer>("SingleStringAxis")
         Map<String, Object> args = [:]
 

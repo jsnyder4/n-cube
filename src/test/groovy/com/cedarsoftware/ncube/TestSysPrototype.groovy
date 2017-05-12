@@ -5,6 +5,8 @@ import org.junit.Test
 
 import java.awt.*
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -28,8 +30,8 @@ class TestSysPrototype extends NCubeBaseTest
     @Test
     void testInheritedImports()
     {
-        NCube prototype = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
-        NCube protoTests = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
+        NCube prototype = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
+        NCube protoTests = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
         Map coord = [state:'OH']
         assert protoTests.getCell(coord) == 2
 
@@ -42,8 +44,8 @@ class TestSysPrototype extends NCubeBaseTest
     @Test
     void testCustomBaseExpressionClass()
     {
-        NCube prototype = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
-        NCube protoTests = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
+        NCube prototype = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.prototype.json')
+        NCube protoTests = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'prototype.tests.json')
         Map coord = [state:'TX']
         assert protoTests.getCell(coord) == 70
     }

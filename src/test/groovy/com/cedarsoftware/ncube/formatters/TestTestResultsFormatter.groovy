@@ -5,6 +5,8 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -28,7 +30,7 @@ class TestTestResultsFormatter extends NCubeBaseTest
     @Test
     void testResultsFromNCube()
     {
-        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
+        NCube<String> ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
         def coord = [age:18, state:'OH']
         def output = [:]
         ncube.getCell(coord, output)
@@ -41,7 +43,7 @@ class TestTestResultsFormatter extends NCubeBaseTest
     @Test
     void testResultsWithOutputAndError()
     {
-        NCube<String> ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
+        NCube<String> ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
         def coord = [age:18, state:'OH']
         def output = ['foo.age':'56', 'foo.name':'John']
         ncube.getCell coord, output

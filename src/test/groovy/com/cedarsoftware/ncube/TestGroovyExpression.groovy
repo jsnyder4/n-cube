@@ -8,6 +8,7 @@ import org.junit.Test
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.fail
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -42,7 +43,7 @@ class TestGroovyExpression extends NCubeBaseTest
     @Test
     void testCompilerErrorOutput()
     {
-        NCube ncube = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'GroovyExpCompileError.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'GroovyExpCompileError.json')
         Map coord = [state: 'OH'] as Map
         Object x = ncube.getCell(coord)
         assert 'Hello, Ohio' == x
@@ -65,7 +66,7 @@ class TestGroovyExpression extends NCubeBaseTest
     {
         NCube ncube = new NCube('test')
         ncube.applicationID = ApplicationID.testAppId
-        runtimeClient.addCube(ncube)
+        ncubeRuntime.addCube(ncube)
         Axis axis = new Axis('day', AxisType.DISCRETE, AxisValueType.STRING, false)
         axis.addColumn('mon')
         axis.addColumn('tue')
@@ -188,7 +189,7 @@ return ret
     {
         NCube ncube = new NCube('test')
         ncube.applicationID = ApplicationID.testAppId
-        runtimeClient.addCube(ncube)
+        ncubeRuntime.addCube(ncube)
         Axis axis = new Axis('day', AxisType.DISCRETE, AxisValueType.STRING, false)
         axis.addColumn('mon')
         axis.addColumn('tue')

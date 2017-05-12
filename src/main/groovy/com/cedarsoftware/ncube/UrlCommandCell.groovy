@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  * @author Ken Partlow (kpartlow@gmail.com)
@@ -63,15 +65,6 @@ abstract class UrlCommandCell implements CommandCell
         this.hash = cmd == null ? url.hashCode() : cmd.hashCode()
     }
 
-    NCubeRuntimeClient getRuntimeClient()
-    {
-        if (ncubeRuntimeClient == null)
-        {
-            ncubeRuntimeClient = NCubeAppContext.ncubeRuntime
-        }
-        return ncubeRuntimeClient
-    }
-
     String getUrl()
     {
         return url
@@ -126,7 +119,7 @@ abstract class UrlCommandCell implements CommandCell
         {   // Try URL resolution twice (HTTP HEAD called for connecting relative URLs to sys.classpath)
             try
             {
-                return runtimeClient.getActualUrl(getNCube(ctx).applicationID, url, getInput(ctx))
+                return ncubeRuntime.getActualUrl(getNCube(ctx).applicationID, url, getInput(ctx))
             }
             catch(Exception e)
             {

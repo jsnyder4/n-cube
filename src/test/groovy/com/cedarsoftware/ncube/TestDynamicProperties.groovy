@@ -3,6 +3,8 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -36,7 +38,7 @@ class TestDynamicProperties extends NCubeBaseTest
     @Test
     void testCprStyleProperties()
     {
-        NCube cpr = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'cpr.json')
+        NCube cpr = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'cpr.json')
 
         assert 'CPR' == cpr.name
 

@@ -1,12 +1,11 @@
 package com.cedarsoftware.ncube.util
 
-import com.cedarsoftware.ncube.NCubeAppContext
-import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
 import java.util.concurrent.ConcurrentHashMap
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
 
 /**
@@ -30,7 +29,6 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
 @CompileStatic
 class CdnClassLoader extends GroovyClassLoader
 {
-    private static NCubeRuntimeClient runtimeClient
     private final boolean _preventRemoteBeanInfo
     private final boolean _preventRemoteCustomizer
     private final Map<String, URL> resourceCache = new ConcurrentHashMap<>()
@@ -46,11 +44,10 @@ class CdnClassLoader extends GroovyClassLoader
         super(loader, null)
         _preventRemoteBeanInfo = preventRemoteBeanInfo
         _preventRemoteCustomizer = preventRemoteCustomizer
-        runtimeClient = NCubeAppContext.ncubeRuntime
 
         if (acceptedDomains == null)
         {
-            String accepted = runtimeClient.systemParams[(NCUBE_ACCEPTED_DOMAINS)]
+            String accepted = ncubeRuntime.systemParams[(NCUBE_ACCEPTED_DOMAINS)]
             if (StringUtilities.hasContent(accepted))
             {
                 whiteList = Arrays.asList(accepted.split(";"))

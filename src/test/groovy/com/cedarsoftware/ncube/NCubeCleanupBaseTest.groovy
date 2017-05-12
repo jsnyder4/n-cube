@@ -5,6 +5,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -32,9 +34,9 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
     @Before
     void setup()
     {
-        NCube cp = runtimeClient.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sys.classpath.tests.json')
+        NCube cp = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sys.classpath.tests.json')
         mutableClient.createCube(cp)
-        cp = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
+        cp = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
         mutableClient.createCube(cp)
     }
 
@@ -61,6 +63,6 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
         {
             createCubeFromResource(id, name)
         }
-        runtimeClient.clearCache(id)
+        ncubeRuntime.clearCache(id)
     }
 }

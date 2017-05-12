@@ -1,4 +1,6 @@
 ### Revision History
+* 4.0.1
+  * Removed redundant executable flag in pom.xlm related to making a spring boot executable jar.
 * 4.0.0
   * Built as a Spring Boot application
   * NCubeManager converted from having static APIs to being a Spring injected instance (accessible through interface)
@@ -6,6 +8,12 @@
   * Enhancement: Added search options for start and end create date parameters to cut down on cubes searched.
   * Bug fix: NCubeController - promoteRevision calls updateCube directly and saveJson loop
   * Bug fix: Update n-cube changed flag during fast foward based on whether sha1 matches headSha1
+* 3.6.17
+  * Bug fix: Update n-cube changed flag during fast foward based on whether sha1 matches headSha1
+* 3.6.16
+  * Bug fix: Added delta processing for meta-properties on n-cube, axis, and column.
+* 3.6.15
+  * Bug fix: Batch updating reference axes would remove transforms
 * 3.6.13/3.6.14
   * Enhancement: Updated reference axes transforms so they won't execute code on the server (support for transforms that execute code remains)
   * Enhancement: Axis supports a new ValueType (CISTRING - case insenstive string)

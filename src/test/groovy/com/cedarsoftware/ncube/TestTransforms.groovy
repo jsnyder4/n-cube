@@ -4,6 +4,8 @@ import com.cedarsoftware.util.Converter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeClient
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.fail
 
@@ -358,9 +360,9 @@ class TestTransforms extends NCubeCleanupBaseTest
         ncube.addAxis(refAxis)
         mutableClient.createCube(ncube)
 
-        runtimeClient.clearCache(appId)
-        runtimeClient.clearCache(library)
-        runtimeClient.clearCache(transforms)
+        ncubeRuntime.clearCache(appId)
+        ncubeRuntime.clearCache(library)
+        ncubeRuntime.clearCache(transforms)
     }
 
     private static NCube createLibraryCube(AxisType type, AxisValueType valueType, List columns, String cubeName = 'Reference')

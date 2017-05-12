@@ -6,6 +6,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Ignore
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+
 @CompileStatic
 @Ignore
 class VisualizerBaseTest extends NCubeBaseTest implements VisualizerConstants, VisualizerTestConstants
@@ -46,12 +48,12 @@ class VisualizerBaseTest extends NCubeBaseTest implements VisualizerConstants, V
 
     protected Visualizer getVisualizer()
     {
-        return new Visualizer(runtimeClient)
+        return new Visualizer(ncubeRuntime)
     }
 
     protected VisualizerRelInfo getVisualizerRelInfo()
     {
-        return new VisualizerRelInfo(runtimeClient, appId)
+        return new VisualizerRelInfo(ncubeRuntime, appId)
     }
 
     protected Map loadGraph(Map options, boolean hasMessages = false)
@@ -180,7 +182,7 @@ class VisualizerBaseTest extends NCubeBaseTest implements VisualizerConstants, V
     protected static void addCubes(List<NCube> cubes)
     {
         cubes.each {NCube cube ->
-            runtimeClient.addCube(cube)
+            ncubeRuntime.addCube(cube)
         }
     }
 

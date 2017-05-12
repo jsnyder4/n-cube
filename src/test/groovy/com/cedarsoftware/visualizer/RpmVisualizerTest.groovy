@@ -1,13 +1,11 @@
 package com.cedarsoftware.visualizer
 
-import com.cedarsoftware.ncube.Axis
-import com.cedarsoftware.ncube.AxisType
-import com.cedarsoftware.ncube.AxisValueType
-import com.cedarsoftware.ncube.GroovyExpression
-import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import org.junit.Test
+
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
 @CompileStatic
 class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConstants, VisualizerTestConstants
@@ -511,7 +509,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     @Test
     void testLoadGraph_cubeNotFound()
     {
-        NCube cube = runtimeClient.getCube(appId, 'rpm.enum.partyrole.BasePartyRole.Parties')
+        NCube cube = ncubeRuntime.getCube(appId, 'rpm.enum.partyrole.BasePartyRole.Parties')
         try
         {
             //Change enum to have reference to non-existing cube
@@ -635,7 +633,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     {
         String startCubeName = 'rpm.class.ValidRpmClass'
         createNCubeWithValidRpmClass(startCubeName)
-        NCube cube = runtimeClient.getCube(appId, startCubeName)
+        NCube cube = ncubeRuntime.getCube(appId, startCubeName)
         cube.deleteAxis(AXIS_TRAIT)
 
         Map scope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
@@ -652,7 +650,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     {
         String startCubeName = 'rpm.class.ValidRpmClass'
         createNCubeWithValidRpmClass(startCubeName)
-        NCube cube = runtimeClient.getCube(appId, startCubeName)
+        NCube cube = ncubeRuntime.getCube(appId, startCubeName)
         cube.deleteAxis(AXIS_FIELD)
 
         Map scope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
@@ -669,7 +667,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     {
         String startCubeName = 'rpm.class.ValidRpmClass'
         createNCubeWithValidRpmClass(startCubeName)
-        NCube cube = runtimeClient.getCube(appId, startCubeName)
+        NCube cube = ncubeRuntime.getCube(appId, startCubeName)
         cube.getAxis(AXIS_FIELD).columns.remove(CLASS_TRAITS)
 
         Map scope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
@@ -684,7 +682,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     {
         String startCubeName = 'rpm.class.ValidRpmClass'
         createNCubeWithValidRpmClass(startCubeName)
-        NCube cube = runtimeClient.getCube(appId, startCubeName)
+        NCube cube = ncubeRuntime.getCube(appId, startCubeName)
         cube.getAxis(AXIS_TRAIT).columns.remove(R_EXISTS)
 
         Map scope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
@@ -699,7 +697,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     {
         String startCubeName = 'rpm.class.ValidRpmClass'
         createNCubeWithValidRpmClass(startCubeName)
-        NCube cube = runtimeClient.getCube(appId, startCubeName)
+        NCube cube = ncubeRuntime.getCube(appId, startCubeName)
         cube.getAxis(AXIS_TRAIT).columns.remove(R_RPM_TYPE)
 
         Map scope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
@@ -735,7 +733,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     @Test
     void testLoadGraph_exceptionInMinimumTrait()
     {
-        NCube cube = runtimeClient.getCube(appId, 'rpm.scope.class.Coverage.traits')
+        NCube cube = ncubeRuntime.getCube(appId, 'rpm.scope.class.Coverage.traits')
         Map coordinate = [(AXIS_FIELD): 'Exposure', (AXIS_TRAIT): R_EXISTS, coverage: 'FCoverage'] as Map
 
         try
@@ -1018,7 +1016,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     @Test
     void testLoadGraph_scopePrompt_missingRequiredScope_nonEPM()
     {
-        NCube cube = runtimeClient.getCube(appId, 'rpm.class.party.ProfitCenter')
+        NCube cube = ncubeRuntime.getCube(appId, 'rpm.class.party.ProfitCenter')
         try
         {
             //Change cube to have declared required scope
@@ -1048,7 +1046,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     @Test
     void testLoadGraph_scopePrompt_missingDeclaredRequiredScope()
     {
-        NCube cube = runtimeClient.getCube(appId, 'rpm.class.Coverage')
+        NCube cube = ncubeRuntime.getCube(appId, 'rpm.class.Coverage')
         try
         {
             //Change cube to have declared required scope
@@ -1396,13 +1394,13 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
     @Override
     protected Visualizer getVisualizer()
     {
-        return new RpmVisualizer(runtimeClient)
+        return new RpmVisualizer(ncubeRuntime)
     }
 
     @Override
     protected VisualizerRelInfo getVisualizerRelInfo()
     {
-        return new RpmVisualizerRelInfo(runtimeClient, appId)
+        return new RpmVisualizerRelInfo(ncubeRuntime, appId)
     }
 
     private void checkNode(String nodeName, String nodeType, String nodeNamePrefix = '', String nodeDetailsMessage = '', boolean unableToLoad = false, boolean showCellValues = false)
@@ -1547,7 +1545,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
         cube.addAxis(new Axis(axisName, AxisType.DISCRETE, AxisValueType.STRING, false, Axis.SORTED, 2))
         cube.addColumn(axisName, R_EXISTS)
         cube.addColumn(axisName, R_RPM_TYPE)
-        runtimeClient.addCube(cube)
+        ncubeRuntime.addCube(cube)
         return cube
     }
 

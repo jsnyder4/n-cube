@@ -12,6 +12,7 @@ import org.springframework.test.context.TestContextManager
 
 import java.util.concurrent.ConcurrentLinkedQueue
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
@@ -91,9 +92,9 @@ class TestThreading extends NCubeCleanupBaseTest
         testContextManager = new TestContextManager(getClass())
         testContextManager.prepareTestInstance(this)
         super.setup()
-        cp = runtimeClient.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.threading.json')
-        runtimeClient.clearCache(ApplicationID.testAppId)
-        runtimeClient.addCube(cp)
+        cp = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.threading.json')
+        ncubeRuntime.clearCache(ApplicationID.testAppId)
+        ncubeRuntime.addCube(cp)
     }
 
 //    @Ignore
@@ -161,8 +162,8 @@ class TestThreading extends NCubeCleanupBaseTest
 
         LOG.info "Running test with load=${load}, threads=${maxThreads}, count=${count}, loopCount=${loopCount}, clearCache=${clearCache}, loopTest=${loopTest}, preCache=${preCache}, sleep=${sleepTime}, sync=${sync}, remove=${remove}, warm=${warm}"
         buildAccessCube(maxThreads,count,warm)
-        NCube cube = runtimeClient.getCube(ApplicationID.testAppId, 'thread')
-        NCube supportingCube = runtimeClient.getCube(ApplicationID.testAppId, 'threadCount')
+        NCube cube = ncubeRuntime.getCube(ApplicationID.testAppId, 'thread')
+        NCube supportingCube = ncubeRuntime.getCube(ApplicationID.testAppId, 'threadCount')
 
         def allFailures = new ConcurrentLinkedQueue<Exception>()
         long totalDuration = 0
@@ -171,7 +172,7 @@ class TestThreading extends NCubeCleanupBaseTest
             if (i>0) LOG.debug "->loop: ${i}"
             if (clearCache) {
                 LOG.debug '==>clear cache'
-                runtimeClient.clearCache(ApplicationID.testAppId)
+                ncubeRuntime.clearCache(ApplicationID.testAppId)
 
                 NCube ncube1 = NCube.fromSimpleJson(cp.toFormattedJson())
                 NCube ncube2 = NCube.fromSimpleJson(supportingCube.toFormattedJson())
@@ -179,9 +180,9 @@ class TestThreading extends NCubeCleanupBaseTest
                 ncube1.applicationID = ApplicationID.testAppId
                 ncube2.applicationID = ApplicationID.testAppId
                 ncube2.applicationID = ApplicationID.testAppId
-                runtimeClient.addCube(ncube1)
-                runtimeClient.addCube(ncube2)
-                runtimeClient.addCube(ncube3)
+                ncubeRuntime.addCube(ncube1)
+                ncubeRuntime.addCube(ncube2)
+                ncubeRuntime.addCube(ncube3)
             }
 
             if (preCache) {
@@ -331,8 +332,8 @@ class TestThreading extends NCubeCleanupBaseTest
         threadCube = NCube.fromSimpleJson(threadCube.toFormattedJson())
         cube.applicationID = ApplicationID.testAppId
         threadCube.applicationID = ApplicationID.testAppId
-        runtimeClient.addCube(threadCube)
-        runtimeClient.addCube(cube)
+        ncubeRuntime.addCube(threadCube)
+        ncubeRuntime.addCube(cube)
 
         if (warm) {
             LOG.info 'warming...'
