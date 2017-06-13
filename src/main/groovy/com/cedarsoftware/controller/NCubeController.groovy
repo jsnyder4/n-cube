@@ -224,10 +224,15 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
         catch(IllegalStateException e)
         {
-            if (options.mode == 'json')
+            if (['json','json-pretty'].contains(options.mode))
             {
                 LOG.error(e.message, e)
-                return mutableClient.getCubeRawJson(appId, cubeName)
+                String json = mutableClient.getCubeRawJson(appId, cubeName)
+                if (options.mode == 'json-pretty')
+                {
+                    return JsonWriter.formatJson(json)
+                }
+                return json
             }
             else
             {
@@ -1568,7 +1573,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         options[(SEARCH_EXACT_MATCH_NAME)] = true
         options[(SEARCH_ACTIVE_RECORDS_ONLY)] = true
         List<NCubeInfoDto> list = mutableClient.search(appId, cubeName, null, options)
-        return mutableClient.commitBranch(appId, list)
+        return mutableClient.commitBranch(appId, list.toArray())
     }
 
     Object commitBranch(ApplicationID appId, Object[] infoDtos)
@@ -1683,7 +1688,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
         catch (Exception e)
         {
-            LOG.info('Unable to load sys.menu (sys.menu cube likely not in appId: ' + appId.toString() + ', exception: ' + e.message)
+            LOG.debug('Unable to load sys.menu (sys.menu cube likely not in appId: ' + appId.toString() + ', exception: ' + e.message)
             return ['title':'Enterprise Configurator',
                     'tab-menu':
                             ['n-cube':[html:'html/ntwobe.html',img:'img/letter-n.png'],

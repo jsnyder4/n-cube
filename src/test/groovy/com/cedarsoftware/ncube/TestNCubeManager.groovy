@@ -1924,7 +1924,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         userCube.setCell(true, [(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_READONLY])
         mutableClient.updateCube(userCube)
         List<NCubeInfoDto> dtos = mutableClient.search(branchBootApp, userCube.name, null, null)
-        mutableClient.commitBranch(branchBootApp, dtos)
+        mutableClient.commitBranch(branchBootApp, dtos.toArray())
         NCube headUserCube = mutableClient.getCube(defaultBootApp, SYS_USERGROUPS)
         assertFalse(headUserCube.getCell([(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_USER]) as Boolean)
         assertTrue(headUserCube.getCell([(AXIS_USER): otherUser, (AXIS_ROLE): ROLE_READONLY]) as Boolean)

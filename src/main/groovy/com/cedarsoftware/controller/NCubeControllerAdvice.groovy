@@ -9,6 +9,8 @@ import org.aspectj.lang.reflect.MethodSignature
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
+
 /**
  * Before Advice that sets user ID on current thread.
  *
@@ -57,11 +59,11 @@ class NCubeControllerAdvice
 
         if (time > 1000)
         {
-            LOG.info("[SLOW ${time}ms] ${MetaUtils.getLogMessage(methodName, args)}")
+            LOG.info("[SLOW - ${time} ms] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         else if (LOG.debugEnabled)
         {
-            LOG.debug(MetaUtils.getLogMessage(methodName, args))
+            LOG.debug(MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH))
         }
         return ret
     }

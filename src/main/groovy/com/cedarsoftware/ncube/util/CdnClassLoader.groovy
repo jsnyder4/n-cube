@@ -2,11 +2,14 @@ package com.cedarsoftware.ncube.util
 
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_GENERATED_CLASSES_DIR
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
@@ -36,12 +39,15 @@ class CdnClassLoader extends GroovyClassLoader
     private final URL nullUrl = new URL('http://null.com:8080')
     private final List<String> whiteList
 
+    private String generatedClassesDir
+    private static final Logger LOG = LoggerFactory.getLogger(CdnClassLoader.class)
+
     /**
      * Create a GroovyClassLoader using the given ClassLoader as parent
      */
     CdnClassLoader(ClassLoader loader, boolean preventRemoteBeanInfo = true, boolean preventRemoteCustomizer = true, List<String> acceptedDomains = null)
     {
-        super(loader, null)
+        super(configureParentClassLoader(loader), null)
         _preventRemoteBeanInfo = preventRemoteBeanInfo
         _preventRemoteCustomizer = preventRemoteCustomizer
 
@@ -61,6 +67,26 @@ class CdnClassLoader extends GroovyClassLoader
         {
             whiteList = acceptedDomains
         }
+
+        // if parent doesn't match loader, the URLClassLoader was injected for generated classes
+        generatedClassesDir = parent == loader ? '' : ((URLClassLoader)parent).getURLs().first().path
+        if (generatedClassesDir)
+        {
+            LOG.info( "Generated classes configured to use path=${generatedClassesDir}")
+        }
+    }
+
+    /**
+     * Injects URLClassLoader as parent to pickup generated classes directory, if configured
+     */
+    private static ClassLoader configureParentClassLoader(ClassLoader parent) {
+        String classesDir = determineGeneratedClassesDirectory()
+        if (classesDir)
+        {
+            File classesFile = new File(classesDir)
+            return new URLClassLoader([classesFile.toURI().toURL()] as URL [], parent)
+        }
+        return parent
     }
 
     /**
@@ -73,6 +99,47 @@ class CdnClassLoader extends GroovyClassLoader
     {
         this(CdnClassLoader.class.classLoader, true, true, acceptedDomains)
         addURLs(urlList)
+    }
+
+    /**
+     * Caches the class, if name is supplied and caching is configured,
+     * then delegates to super class to defineClass from raw bytes
+     *
+     * @param name String name of class to define, or null, if unknown
+     * @param byteCode byte [] of raw Class bytes
+     * @return generated Class definition
+     */
+    @Override
+    Class defineClass(String name, byte[] byteCode) {
+        if (name && generatedClassesDir)
+        {
+            dumpGeneratedClass(name,byteCode)
+        }
+
+        return super.defineClass(name, byteCode)
+    }
+
+    /**
+     * Writes the generated Groovy class to the directory identified by the NCUBE_PARAM:genClsDir
+     * @param name String of fully qualified name of the class
+     * @param bytes byte [] of Class to write
+     */
+    private void dumpGeneratedClass(String name, byte [] bytes) {
+        File classFile = null
+        try
+        {
+            classFile = new File("${generatedClassesDir}/${name.replace('.',File.separator)}.class")
+            if (ensureDirectoryExists(classFile.getParentFile()))
+            {
+                classFile.newOutputStream().withStream { stream ->
+                    stream.write(bytes)
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            LOG.warn("Failed to write class file with path=${classFile?.path}",e)
+        }
     }
 
     /**
@@ -342,5 +409,48 @@ class CdnClassLoader extends GroovyClassLoader
         resourceCache.clear()
         resourcesCache.clear()
         super.clearCache()
+    }
+
+    /**
+     * Determines value of generated classes directory from system params
+     */
+    protected static String determineGeneratedClassesDirectory()
+    {
+        try
+        {
+            String dirName = ncubeRuntime.getSystemParams()[NCUBE_PARAMS_GENERATED_CLASSES_DIR] as String ?: ''
+            if (dirName)
+            {
+                File dirFile = new File(dirName)
+                dirName = ensureDirectoryExists(dirFile) ? dirFile.path : ''
+            }
+            return dirName
+        }
+        catch (Exception e)
+        {
+            LOG.warn("Unable to determine classes directory", e)
+            return ''
+        }
+    }
+
+    /**
+     * Tries to validate the directory specified.
+     *
+     * @param dir File containing directory path to validate/create
+     * @return true if directory exists or can be created; otherwise, false
+     * @throws SecurityException from mkdirs invocation
+     */
+    private static boolean ensureDirectoryExists(File dir)
+    {
+        if (!dir.exists())
+        {
+            dir.mkdirs()
+        }
+        boolean valid = dir.isDirectory()
+        if (!valid)
+        {
+            LOG.warn("Failed to locate or create generated classes directory with path=${dir.path}")
+        }
+        return valid
     }
 }

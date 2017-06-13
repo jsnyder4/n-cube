@@ -69,6 +69,8 @@ interface NCubeConstants
     final String NCUBE_PARAMS_BYTE_CODE_VERSION = 'byteCodeVersion'
     final String NCUBE_ACCEPTED_DOMAINS = 'acceptedDomains'
     final String NCUBE_PARAMS_BRANCH = 'branch'
+    final String NCUBE_PARAMS_GENERATED_SOURCES_DIR = 'sourcesDir'
+    final String NCUBE_PARAMS_GENERATED_CLASSES_DIR = 'classesDir'
 
     final String PR_PROP = 'property'
     final String PR_STATUS = 'status'
@@ -90,4 +92,6 @@ interface NCubeConstants
     final String RUNTIME_BEAN = 'ncubeRuntime'
     final String MANAGER_BEAN = 'ncubeManager'
     final String CONTROLLER_BEAN = 'ncubeController'
+
+    final int LOG_ARG_LENGTH = 125
 }

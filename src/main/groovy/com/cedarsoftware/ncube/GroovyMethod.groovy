@@ -63,7 +63,7 @@ class GroovyMethod extends GroovyBase
         super(cmd, url, cacheable)
     }
 
-    protected String buildGroovy(Map<String, Object> ctx, String theirGroovy)
+    protected String buildGroovy(Map<String, Object> ctx, String className, String theirGroovy)
     {
         return theirGroovy
     }

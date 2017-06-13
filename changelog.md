@@ -1,6 +1,22 @@
 ### Revision History
+* 4.0.6
+  * Removed explicit spring dependencies in pom.xml that are consumed transitively via spring-boot-starter-* dependencies
+  * Changed log statements for method calls to include 125 (was 50) characters per argument
+  * Changed log level from INFO to DEBUG when sys.menu is not found
+* 4.0.5
+  * Support mode for json format when getting raw json (json-pretty, json)
+  * Update to Spring Boot 1.5.3, Spring 4.3.8, and Groovy 2.4.11
+* 4.0.4
+  * NCubeController.commitCube() was passing an incompatable argument to commitBranch. Fixed bug and added test coverage for commitCube. 
+* 4.0.3
+  * NCubeManager.getReferenceAxes() was incorrectly validating reference versions. 
+* 4.0.2
+  * Changed NCubeRuntime.getResourceAsString() to use Groovy APIs to get stream from Spring Boot executable jar, due to  zipfs execption using regular resource APIs.
 * 4.0.1
-  * Removed redundant executable flag in pom.xlm related to making a spring boot executable jar.
+  * Removed redundant executable flag in pom.xml related to making a spring boot executable jar.
+  * Added optional beanName to NCubeRuntime constructor
+  * Updated pom.xml to create executable jar
+  * Bug fix: Removed unnecessary URL encoding in JsonHttpProxy  
 * 4.0.0
   * Built as a Spring Boot application
   * NCubeManager converted from having static APIs to being a Spring injected instance (accessible through interface)

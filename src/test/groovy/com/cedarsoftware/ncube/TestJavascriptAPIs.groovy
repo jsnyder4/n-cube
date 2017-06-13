@@ -114,6 +114,17 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testCommitCube()
+    {
+        NCube cube = NCubeBuilder.discrete1D
+        cube.applicationID = BRANCH1
+        mutableClient.createCube(cube)
+        call('commitCube', [BRANCH1, cube.name])
+        List<NCubeInfoDto> dtos = mutableClient.search(BRANCH1, cube.name, null, null)
+        assert 1 == dtos.size()
+    }
+
+    @Test
     void testIsCubeUpToDate()
     {
         NCube ncube1 = NCubeBuilder.discrete1D

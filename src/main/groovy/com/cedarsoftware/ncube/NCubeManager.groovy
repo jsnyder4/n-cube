@@ -824,19 +824,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return refAxes
     }
 
-    private Set<ApplicationID> getReferenceAxesAppIds(Object[] axisRefs, boolean source)
+    private static Set<ApplicationID> getReferenceAxesAppIds(Object[] axisRefs, boolean source)
     {
         Set<ApplicationID> uniqueAppIds = new HashSet()
         for (Object obj : axisRefs)
         {
             AxisRef axisRef = obj as AxisRef
             ApplicationID srcApp = axisRef.srcAppId
-            ApplicationID.validateAppId(srcApp)
-            srcApp.validateBranchIsNotHead()
-            assertPermissions(srcApp, axisRef.srcCubeName, Action.UPDATE)
             ApplicationID destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, axisRef.destStatus, axisRef.destBranch)
-            ApplicationID.validateAppId(destAppId)
-            assertPermissions(destAppId, axisRef.destCubeName)
             if (source)
             {
                 uniqueAppIds.add(srcApp)
@@ -849,8 +844,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             if (axisRef.transformApp != null && axisRef.transformVersion != null && axisRef.transformStatus != null && axisRef.transformBranch != null)
             {
                 ApplicationID transformAppId = new ApplicationID(srcApp.tenant, axisRef.transformApp, axisRef.transformVersion, axisRef.transformStatus, axisRef.transformBranch)
-                ApplicationID.validateAppId(transformAppId)
-                assertPermissions(transformAppId, axisRef.transformCubeName)
                 if (!source)
                 {
                     uniqueAppIds.add(transformAppId)
@@ -860,11 +853,34 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return uniqueAppIds
     }
 
-    private void validateReferenceAxesAppIds(ApplicationID appId)
+    private void validateReferenceAxesAppIds(ApplicationID appId, List<NCubeInfoDto> infoDtos = null)
     {
         String snapshot = ReleaseStatus.SNAPSHOT.name()
-        List<AxisRef> axisRefs = getReferenceAxes(appId)
-        Set<ApplicationID> uniqueAppIds = getReferenceAxesAppIds(axisRefs.toArray(), false)
+        List<AxisRef> allAxisRefs = getReferenceAxes(appId)
+        List<AxisRef> checkAxisRefs = allAxisRefs
+        if (infoDtos)
+        {
+            checkAxisRefs = new ArrayList<AxisRef>()
+            for (NCubeInfoDto infoDto : infoDtos)
+            {
+                List<AxisRef> foundAxisRefs = allAxisRefs.findAll { AxisRef axisRef ->
+                    axisRef.srcCubeName == infoDto.name
+                }
+                checkAxisRefs.addAll(foundAxisRefs)
+            }
+        }
+        for (AxisRef ref : checkAxisRefs)
+        {
+            ApplicationID destAppId = new ApplicationID(ref.srcAppId.tenant, ref.destApp, ref.destVersion, ref.destStatus, ref.destBranch)
+            destAppId.validateAppId(destAppId)
+            assertPermissions(destAppId, ref.destCubeName)
+            if (ref.transformApp && ref.transformVersion && ref.transformStatus && ref.transformBranch) {
+                ApplicationID transformAppId = new ApplicationID(ref.srcAppId.tenant, ref.transformApp, ref.transformVersion, ref.transformStatus, ref.transformBranch)
+                destAppId.validateAppId(transformAppId)
+                assertPermissions(transformAppId, ref.destCubeName)
+            }
+        }
+        Set<ApplicationID> uniqueAppIds = getReferenceAxesAppIds(checkAxisRefs.toArray(), false)
         Map<String, ApplicationID> checklist = [:]
         for (ApplicationID refAppId : uniqueAppIds)
         {
@@ -891,7 +907,9 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     {
         Set<ApplicationID> uniqueAppIds = getReferenceAxesAppIds(axisRefs, true)
         for (ApplicationID appId : uniqueAppIds)
-        {   // Make sure we are not lock blocked on any of the appId's that are being updated.
+        {
+            assertPermissions(appId, null, Action.UPDATE)
+            // Make sure we are not lock blocked on any of the appId's that are being updated.
             assertNotLockBlocked(appId)
         }
 
@@ -899,62 +917,62 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             AxisRef axisRef = obj as AxisRef
             axisRef.with {
+                assertPermissions(srcAppId, srcCubeName, Action.UPDATE)
                 NCube ncube = persister.loadCube(srcAppId, srcCubeName)
                 Axis axis = ncube.getAxis(srcAxisName)
 
-                if (axis.reference)
-                {
-                    axis.setMetaProperty(REF_APP, destApp)
-                    axis.setMetaProperty(REF_VERSION, destVersion)
-                    axis.setMetaProperty(REF_STATUS, destStatus)
-                    axis.setMetaProperty(REF_BRANCH, destBranch)
-                    axis.setMetaProperty(REF_CUBE_NAME, destCubeName)
-                    axis.setMetaProperty(REF_AXIS_NAME, destAxisName)
-                    ApplicationID appId = new ApplicationID(srcAppId.tenant, destApp, destVersion, destStatus, destBranch)
+                axis.setMetaProperty(REF_APP, destApp)
+                axis.setMetaProperty(REF_VERSION, destVersion)
+                axis.setMetaProperty(REF_STATUS, destStatus)
+                axis.setMetaProperty(REF_BRANCH, destBranch)
+                axis.setMetaProperty(REF_CUBE_NAME, destCubeName)
+                axis.setMetaProperty(REF_AXIS_NAME, destAxisName)
+                ApplicationID appId = new ApplicationID(srcAppId.tenant, destApp, destVersion, destStatus, destBranch)
+                assertPermissions(appId, null)
 
-                    NCube target = persister.loadCube(appId, destCubeName)
-                    if (target == null)
-                    {
-                        throw new IllegalArgumentException("""\
+                NCube target = persister.loadCube(appId, destCubeName)
+                if (target == null)
+                {
+                    throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing cube: ${destCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
-                    }
+                }
 
-                    if (target.getAxis(destAxisName) == null)
-                    {
-                        throw new IllegalArgumentException("""\
+                if (target.getAxis(destAxisName) == null)
+                {
+                    throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing axis: ${destAxisName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
-                    }
+                }
 
-                    axis.setMetaProperty(TRANSFORM_APP, transformApp)
-                    axis.setMetaProperty(TRANSFORM_VERSION, transformVersion)
-                    axis.setMetaProperty(TRANSFORM_STATUS, transformStatus)
-                    axis.setMetaProperty(TRANSFORM_BRANCH, transformBranch)
-                    axis.setMetaProperty(TRANSFORM_CUBE_NAME, transformCubeName)
+                axis.setMetaProperty(TRANSFORM_APP, transformApp)
+                axis.setMetaProperty(TRANSFORM_VERSION, transformVersion)
+                axis.setMetaProperty(TRANSFORM_STATUS, transformStatus)
+                axis.setMetaProperty(TRANSFORM_BRANCH, transformBranch)
+                axis.setMetaProperty(TRANSFORM_CUBE_NAME, transformCubeName)
 
-                    if (transformApp && transformVersion && transformStatus && transformBranch && transformCubeName)
-                    {   // If transformer cube reference supplied, verify that the cube exists
-                        ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
-                        NCube transformCube = persister.loadCube(txAppId, transformCubeName)
-                        if (transformCube == null)
-                        {
-                            throw new IllegalArgumentException("""\
+                if (transformApp && transformVersion && transformStatus && transformBranch && transformCubeName)
+                {   // If transformer cube reference supplied, verify that the cube exists
+                    ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
+                    assertPermissions(txAppId, null)
+                    NCube transformCube = persister.loadCube(txAppId, transformCubeName)
+                    if (transformCube == null)
+                    {
+                        throw new IllegalArgumentException("""\
 Cannot point reference axis transformer to non-existing cube: ${transformCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
-                        }
                     }
-                    else
-                    {
-                        axis.removeTransform()
-                    }
-
-                    ncube.clearSha1()   // changing meta properties does not clear SHA-1 for recalculation.
-                    persister.updateCube(ncube, getUserId())
                 }
+                else
+                {
+                    axis.removeTransform()
+                }
+
+                ncube.clearSha1()   // changing meta properties does not clear SHA-1 for recalculation.
+                persister.updateCube(ncube, getUserId())
             }
         }
     }
@@ -2224,7 +2242,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
      */
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
     {
-        validateReferenceAxesAppIds(appId)
+        validateReferenceAxesAppIds(appId, inputCubes as List<NCubeInfoDto>)
         String prId = generatePullRequestHash(appId, inputCubes)
         return mergePullRequest(prId)
     }

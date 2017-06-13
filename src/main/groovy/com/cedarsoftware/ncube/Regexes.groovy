@@ -48,8 +48,8 @@ interface Regexes
     Pattern validVersion = ~/^\d+\.\d+\.\d+$/
     Pattern validCubeName = ~/^[$validNameChars]+$/
 
-    Pattern valid2Doubles = ~/^\s*(\-?\d+(?:\.\d+)?)\s*,\s*(\-?\d+(?:\.\d+)?)\s*$/
-    Pattern valid3Doubles = ~/^\s*(\-?\d+(?:\.\d+)?)\s*,\s*(\-?\d+(?:\.\d+)?)\s*,\s*(\-?\d+(?:\.\d+)?)\s*$/
+    Pattern valid2Doubles = ~/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+    Pattern valid3Doubles = ~/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
 
     Pattern groovyAbsRefCubeCellPattern =  ~/([^a-zA-Z0-9_]|^)[$]\s*([$validNameChars]+)\s*[(]($bracketMatch|$varMatch)[)]/
     Pattern groovyAbsRefCubeCellPatternA = ~/([^a-zA-Z0-9_]|^)[$]\s*([$validNameChars]+)\s*($bracketMatch)/
@@ -66,7 +66,7 @@ interface Regexes
 
     Pattern cdnUrlPattern = ~/^\/dyn\/([^\/]+)\/(.*)$/
 
-    Pattern hasClassDefPattern = Pattern.compile('^(|.*?\\s+)class\\s+([a-zA-Z_0-9$\\.]+).*?\\{.*?\\}.*$', Pattern.DOTALL)
+    Pattern hasClassDefPattern = ~/(?s)^(package\s+(?<packageName>[a-zA-Z_0-9$.]+))?(|.*[;\s]+)class\s+(?<className>[a-zA-Z_0-9$.]+).*?\{.*?}.*$/
 
     Pattern isOraclePattern = ~/(?i)^.*Oracle.*$/
     Pattern isHSQLDBPattern = ~/(?i)^.*HSQL Database Engine Driver.*$/

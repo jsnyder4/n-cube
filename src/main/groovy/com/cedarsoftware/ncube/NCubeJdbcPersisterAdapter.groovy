@@ -48,7 +48,7 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
             long time = Math.round((end - start) / 1000000.0d)
             if (time > 1000)
             {
-                LOG.info("    [${username}] ${msg} took ${time} ms [SLOW]")
+                LOG.info("    [SLOW DB - ${time} ms] [${username}] ${msg}")
             }
             return ret
         }

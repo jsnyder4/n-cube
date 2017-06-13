@@ -18,9 +18,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
@@ -67,13 +64,20 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private final boolean allowMutableMethods
     private final String beanName
 
-    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods)
+    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods, String beanName = null)
     {
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager
         this.adviceCacheManager = new GCacheManager()
         this.allowMutableMethods = allowMutableMethods
-        this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
+        if (StringUtilities.hasContent(beanName))
+        {
+            this.beanName = beanName
+        }
+        else
+        {
+            this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
+        }
     }
 
     /**
@@ -879,8 +883,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     static String getResourceAsString(String name) throws Exception
     {
         URL url = NCubeRuntime.class.getResource("/${name}")
-        Path resPath = Paths.get(url.toURI())
-        return new String(Files.readAllBytes(resPath), "UTF-8")
+        BufferedReader reader = new BufferedReader(new InputStreamReader(url.newInputStream()))
+        return reader.text
     }
     
     NCube getNCubeFromResource(ApplicationID appId, String name)
