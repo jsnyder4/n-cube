@@ -49,7 +49,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         return [new NCubeTest('foo', pairs, cellInfos)] as Object[]
     }
 
-    private static NCube createCube()
+    private static NCube createCube(boolean shouldCreateTests = false)
     {
         NCube<Double> ncube = NCubeBuilder.getTestNCube2D(true)
         ncube.applicationID = defaultSnapshotApp
@@ -67,7 +67,9 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         ncube.setCell(1.8d, coord)
 
         mutableClient.createCube(ncube)
-        mutableClient.saveTests(defaultSnapshotApp, ncube.name, createTests())
+        if (shouldCreateTests) {
+            mutableClient.saveTests(defaultSnapshotApp, ncube.name, createTests())
+        }
         mutableClient.updateNotes(defaultSnapshotApp, ncube.name, 'notes follow')
         return ncube
     }
@@ -143,7 +145,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testUpdateSavesTestData()
     {
-        NCube cube = createCube()
+        NCube cube = createCube(true)
         assertNotNull(cube)
 
         Object[] expectedTests = createTests()
@@ -878,7 +880,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             assertContainsIgnoreCase(e.message, 'could not fetch', 'test data')
         }
 
-        createCube()
+        createCube(true)
         Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
         assertNotNull(testData)
         assertTrue(testData.size() > 0)
@@ -905,6 +907,20 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         }
     }
 
+    @Test
+    void testSaveTestsUpdatesSha1()
+    {
+        createCube(true)
+        Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        assertNotNull(testData)
+        assert 1 == testData.size()
+        mutableClient.commitBranch(defaultSnapshotApp)
+
+        NCubeTest newTest = new NCubeTest('bar', testData[0].coord as Map, testData[0].expected as CellInfo[])
+        mutableClient.saveTests(defaultSnapshotApp, 'test.Age-Gender', newTest)
+        List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForHead(defaultSnapshotApp)
+        assert 1 == dtos.size()
+    }
 
     @Test
     void testEmptyNCubeMetaProps()

@@ -9,6 +9,7 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
@@ -642,6 +643,16 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         NCube.validateCubeName(cubeName)
         assertPermissions(appId, cubeName, Action.UPDATE)
         assertNotLockBlocked(appId)
+        List<NCube> cubes = cubeSearch(appId, cubeName, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
+        if (!cubes) {
+            throw new IllegalArgumentException("Cannot update test data, cube: ${cubeName} does not exist in app: ${appId}")
+        }
+        NCube cube = cubes.first()
+        List<NCubeInfoDto> revs = persister.getRevisions(appId, cubeName, false)
+        String date = CellInfo.dateTimeFormat.format(new Date())
+        cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, "rev ${revs.first().revision} - $date".toString())
+        cube.clearSha1()
+        updateCube(cube)
         return persister.updateTestData(appId, cubeName, testData)
     }
 

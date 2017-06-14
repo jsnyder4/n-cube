@@ -3,6 +3,8 @@
   * Removed explicit spring dependencies in pom.xml that are consumed transitively via spring-boot-starter-* dependencies
   * Changed log statements for method calls to include 125 (was 50) characters per argument
   * Changed log level from INFO to DEBUG when sys.menu is not found
+  * Enhancement: saveTests creates a new db record and uses the testUpdated NCube metaproperty.
+  * Updated NCube.duplicate() to include ApplicationID
 * 4.0.5
   * Support mode for json format when getting raw json (json-pretty, json)
   * Update to Spring Boot 1.5.3, Spring 4.3.8, and Groovy 2.4.11

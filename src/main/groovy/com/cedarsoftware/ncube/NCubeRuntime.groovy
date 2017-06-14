@@ -389,6 +389,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('saveTests')
         Boolean result = bean.call(beanName, 'saveTests', [appId, cubeName, tests]) as Boolean
+        clearCubeFromCache(appId, cubeName)
         return result
     }
 

@@ -3881,6 +3881,14 @@ class TestNCube extends NCubeBaseTest
     }
 
     @Test
+    void testDuplicate()
+    {
+        NCube c1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId.asBranch('branch'), 'testCube6.json')
+        NCube c2 = c1.duplicate('TestCube')
+        assert c1.applicationID == c2.applicationID
+    }
+
+    @Test
     void testCubeEquals()
     {
         NCube c1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'testCube6.json')

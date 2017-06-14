@@ -53,6 +53,7 @@ class NCube<T>
     public static final String DEFAULT_CELL_VALUE_CACHE = 'defaultCellValueCache'
     public static final String validCubeNameChars = '0-9a-zA-Z._-'
     public static final String RULE_EXEC_INFO = '_rule'
+    public static final String METAPROPERTY_TEST_UPDATED = 'testUpdated'
     protected static final byte[] TRUE_BYTES = 't'.bytes
     protected static final byte[] FALSE_BYTES = 'f'.bytes
     private static final byte[] A_BYTES = 'a'.bytes
@@ -2683,6 +2684,7 @@ class NCube<T>
     {
         NCube copy = createCubeFromBytes(cubeAsGzipJsonBytes)
         copy.setName(newName)
+        copy.applicationID = this.applicationID
         return copy
     }
 

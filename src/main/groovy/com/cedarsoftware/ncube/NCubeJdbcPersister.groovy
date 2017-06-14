@@ -181,7 +181,7 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
 /* loadCubeBySha1 */
 SELECT ${CUBE_VALUE_BIN}, sha1
 FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1""",
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND UPPER(sha1) = UPPER(:sha1)""",
                 0, 1, { ResultSet row ->
             cube = buildCube(appId, row)
         })
@@ -566,23 +566,18 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             rowFound = true
             Long revision = row.getLong("revision_number")
-            byte[] testData = row.getBytes(TEST_DATA_BIN)
-
-            if (revision < 0)
-            {
-                testData = null
-            }
-
+            boolean cubeActive = revision >= 0
+            byte[] testData = cubeActive ? row.getBytes(TEST_DATA_BIN) : null
             String headSha1 = row.getString('head_sha1')
             String oldSha1 = row.getString('sha1')
 
-            if (StringUtilities.equals(oldSha1, cube.sha1()) && revision >= 0)
+            if (cubeActive && StringUtilities.equalsIgnoreCase(oldSha1, cube.sha1()))
             {
                 // SHA-1's are equal and both revision values are positive.  No need for new revision of record.
                 return
             }
 
-            boolean changed = cube.sha1() != headSha1
+            boolean changed = !StringUtilities.equalsIgnoreCase(cube.sha1() ,headSha1)
             insertCube(c, appId, cube, Math.abs(revision as long) + 1, testData, "updated", changed, headSha1, username, 'updateCube')
         })
 
@@ -747,7 +742,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                        (METHOD_NAME) : 'commitMergedCubeToBranch'] as Map
 
         NCubeInfoDto result = null
-        boolean changed = cube.sha1() != headSha1
+        boolean changed = !StringUtilities.equalsIgnoreCase(cube.sha1(), headSha1)
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             Long revision = row.getLong('revision_number')
@@ -986,8 +981,8 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
 SELECT h.revision_number FROM
 (SELECT revision_number, head_sha1, create_dt FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
-AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = head_sha1) b
-JOIN n_cube h ON h.sha1 = b.head_sha1
+AND tenant_cd = :tenant AND branch_id = :branch AND UPPER(sha1) = UPPER(head_sha1)) b
+JOIN n_cube h ON UPPER(h.sha1) = UPPER(b.head_sha1)
 WHERE h.app_cd = :app AND h.branch_id = 'HEAD' AND h.tenant_cd = :tenant AND h.create_dt <= b.create_dt
 ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { ResultSet row ->
             maxRev = row.getLong('revision_number')
@@ -1007,7 +1002,7 @@ ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { Re
 /* rollbackCubes.findRollbackRev */
 SELECT revision_number FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
-AND tenant_cd = :tenant AND branch_id = :branch AND revision_number >= 0 AND sha1 = head_sha1
+AND tenant_cd = :tenant AND branch_id = :branch AND revision_number >= 0 AND UPPER(sha1) = UPPER(head_sha1)
 ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             maxRev = row.getLong("revision_number")
         });
@@ -1038,7 +1033,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         }
 
         Map map = [sha1:headSha1, id: cubeId]
-        int changed = branchSha1 != headSha1 ? 1 : 0
+        int changed = StringUtilities.equalsIgnoreCase(branchSha1, headSha1) ? 0 : 1
         Sql sql = getSql(c)
         int count = sql.executeUpdate(map, "/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = ${changed} WHERE n_cube_id = :id")
         if (count == 0)
@@ -1159,7 +1154,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         {
             headSha1 = sourceSha1
         }
-        else if (sourceSha1 == actualHeadSha1)
+        else if (StringUtilities.equalsIgnoreCase(sourceSha1, actualHeadSha1))
         {
             headSha1 = actualHeadSha1
         }
@@ -1169,7 +1164,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             changed = true
         }
 
-        if (sourceSha1 == sourceHeadSha1 && (sourceRevision < 0 != newRevision < 0)) {
+        if ((sourceRevision < 0 != newRevision < 0) && StringUtilities.equalsIgnoreCase(sourceSha1, sourceHeadSha1)) {
             changed = true
         }
 
@@ -1360,7 +1355,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                     ON LOWER(x.n_cube_nm) = LOWER(y.n_cube_nm) AND ABS(x.revision_number) = y.max_rev
                             WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = :branch) m
         WHERE LOWER(m.n_cube_nm) = LOWER(n.n_cube_nm) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status
-                AND n.branch_id = 'HEAD' AND n.sha1 = m.head_sha1 AND m.head_sha1 <> m.sha1"""
+                AND n.branch_id = 'HEAD' AND UPPER(n.sha1) = UPPER(m.head_sha1) AND UPPER(m.head_sha1) <> UPPER(m.sha1)"""
 
         int count = 0
         boolean autoCommit = c.autoCommit
@@ -1562,12 +1557,6 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
     static boolean updateTestData(Connection c, ApplicationID appId, String cubeName, String testData)
     {
         Long maxRev = getMaxRevision(c, appId, cubeName, 'saveTests')
-
-        if (maxRev == null)
-        {
-            throw new IllegalArgumentException("Cannot update test data, cube: ${cubeName} does not exist in app: ${appId}")
-        }
-
         Map map = [testData: StringUtilities.getUTF8Bytes(testData), tenant: padTenant(c, appId.tenant),
                    app     : appId.app, ver: appId.version, status: ReleaseStatus.SNAPSHOT.name(),
                    branch  : appId.branch, rev: maxRev, cube: buildName(cubeName)]
