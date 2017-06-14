@@ -80,10 +80,10 @@
         <version.httpclient>4.5.3</version.httpclient>
         <version.spring>4.3.8.RELEASE</version.spring>
         <version.springboot>1.5.3.RELEASE</version.springboot>
-        <version.mysql.connector.java>5.1.40</version.mysql.connector.java>
+        <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
         <version.tomcat.jdbc>8.0.41</version.tomcat.jdbc>
         <version.ojdbc>12.2.0.1</version.ojdbc>
-        <version.hsqldb>2.3.4</version.hsqldb>
+        <version.hsqldb>2.4.0</version.hsqldb>
         <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
         <version.apache.ivy>2.4.0</version.apache.ivy>
         <version.plugin.assembly>2.6</version.plugin.assembly>
