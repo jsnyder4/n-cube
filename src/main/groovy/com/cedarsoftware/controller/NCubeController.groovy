@@ -990,124 +990,25 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
     }
 
+    Map runTests(ApplicationID appId)
+    {
+        appId = addTenant(appId)
+        verifyAllowExecute('runTest')
+        return (mutableClient as NCubeRuntimeClient).runTests(appId)
+    }
+
+    Map runTests(ApplicationID appId, String cubeName, Object[] tests)
+    {
+        appId = addTenant(appId)
+        verifyAllowExecute('runTest')
+        return (mutableClient as NCubeRuntimeClient).runTests(appId, cubeName, tests)
+    }
+
     Map runTest(ApplicationID appId, String cubeName, NCubeTest test)
     {
-        try
-        {
-            verifyAllowExecute('runTest')
-
-            // Do not remove try-catch handler here - this API must handle it's own exceptions, instead
-            // of allowing the Around Advice to handle them.
-            Properties props = System.properties
-            String server = props.getProperty("http.proxyHost")
-            String port = props.getProperty("http.proxyPort")
-            LOG.info("proxy server: ${server}, proxy port: ${port}".toString())
-
-            appId = addTenant(appId)
-            NCube ncube = loadCube(appId, cubeName)
-            Map<String, Object> coord = test.coordWithValues
-            boolean success = true
-            Map output = new LinkedHashMap()
-            Map args = [input:coord, output:output, ncube:ncube]
-            Map<String, Object> copy = new LinkedHashMap(coord)
-
-            // If any of the input values are a CommandCell, execute them.  Use the fellow (same) input as input.
-            // In other words, other key/value pairs on the input map can be referenced in a CommandCell.
-            copy.each { key, value ->
-                if (value instanceof CommandCell)
-                {
-                    CommandCell cmd = (CommandCell) value
-                    redirectOutput(true)
-                    coord[key] = cmd.execute(args)
-                    redirectOutput(false)
-                }
-            }
-
-            Set<String> errors = new LinkedHashSet<>()
-            redirectOutput(true)
-            ncube.getCell(coord, output)               // Execute test case
-            redirectOutput(false)
-
-            List<GroovyExpression> assertions = test.createAssertions()
-            int i = 0
-
-            for (GroovyExpression exp : assertions)
-            {
-                i++
-
-                try
-                {
-                    Map assertionOutput = new LinkedHashMap<>(output)
-                    RuleInfo ruleInfo = new RuleInfo()
-                    assertionOutput[(NCube.RULE_EXEC_INFO)] = ruleInfo
-                    args.output = assertionOutput
-                    redirectOutput(true)
-                    if (!NCube.isTrue(exp.execute(args)))
-                    {
-                        errors.add("[assertion ${i} failed]: ${exp.cmd}".toString())
-                        success = false
-                    }
-                    redirectOutput(false)
-                }
-                catch (Exception e)
-                {
-                    errors.add('[exception]')
-                    errors.add('\n')
-                    errors.add(getTestCauses(e))
-                    success = false
-                }
-            }
-            
-            RuleInfo ruleInfoMain = (RuleInfo) output[(NCube.RULE_EXEC_INFO)]
-            ruleInfoMain.setSystemOut(fetchRedirectedOutput())
-            ruleInfoMain.setSystemErr(fetchRedirectedErr())
-            ruleInfoMain.setAssertionFailures(errors)
-            return ['_message': new TestResultsFormatter(output).format(), '_result' : success]
-        }
-        catch(Exception e)
-        {
-            fetchRedirectedOutput()
-            fetchRedirectedErr()
-            throw new IllegalStateException(getTestCauses(e), e)
-        }
-        finally
-        {
-            redirectOutput(false)
-        }
-    }
-
-    private String fetchRedirectedOutput()
-    {
-        OutputStream outputStream = System.out
-        if (outputStream instanceof ThreadAwarePrintStream)
-        {
-            return ((ThreadAwarePrintStream) outputStream).content
-        }
-        return ''
-    }
-
-    private String fetchRedirectedErr()
-    {
-        OutputStream outputStream = System.err
-        if (outputStream instanceof ThreadAwarePrintStreamErr)
-        {
-            return ((ThreadAwarePrintStreamErr) outputStream).content
-        }
-        return ''
-    }
-
-    private void redirectOutput(boolean redirect)
-    {
-        OutputStream outputStream = System.out
-        if (outputStream instanceof ThreadAwarePrintStream)
-        {
-            ((ThreadAwarePrintStream) outputStream).redirect = redirect
-        }
-        outputStream = System.err
-        if (outputStream instanceof ThreadAwarePrintStreamErr)
-        {
-            ((ThreadAwarePrintStreamErr) outputStream).redirect = redirect
-        }
+        appId = addTenant(appId)
+        verifyAllowExecute('runTest')
+        return (mutableClient as NCubeRuntimeClient).runTest(appId, cubeName, test)
     }
 
     Object[] getTests(ApplicationID appId, String cubeName)
@@ -1923,137 +1824,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             }
             map[key] = value
         }
-    }
-    
-    /**
-     * Given an exception, get an HTML version of it.  This version is reversed in order,
-     * so that the root cause is first, and then the caller, and so on.
-     * @param t Throwable exception for which to obtain the HTML
-     * @return String version of the Throwable in HTML format.  Surrounded with pre-tag.
-     */
-    static String getTestCauses(Throwable t)
-    {
-        LinkedList<Map<String, Object>> stackTraces = new LinkedList<>()
-
-        while (true)
-        {
-            stackTraces.push([msg: t.localizedMessage, trace: t.stackTrace] as Map)
-            t = t.cause
-            if (t == null)
-            {
-                break
-            }
-        }
-
-        // Convert from LinkedList to direct access list
-        List<Map<String, Object>> stacks = new ArrayList<>(stackTraces)
-        StringBuilder s = new StringBuilder()
-        int len = stacks.size()
-
-        for (int i=0; i < len; i++)
-        {
-            Map<String, Object> map = stacks[i]
-            s.append('<b style="color:darkred">')
-            s.append(map.msg)
-            s.append('</b><br>')
-
-            if (i != len - 1i)
-            {
-                Map nextStack = stacks[i + 1i]
-                StackTraceElement[] nextStackElementArray = (StackTraceElement[]) nextStack.trace
-                s.append(trace(map.trace as StackTraceElement[], nextStackElementArray))
-                s.append('<hr style="border-top: 1px solid #aaa;margin:8px"><b>Called by:</b><br>')
-            }
-            else
-            {
-                s.append(trace(map.trace as StackTraceElement[], null))
-            }
-        }
-
-        return '<pre>' + s + '</pre>'
-    }
-
-    private static String trace(StackTraceElement[] stackTrace, StackTraceElement[] nextStrackTrace)
-    {
-        StringBuilder s = new StringBuilder()
-        int len = stackTrace.length
-        for (int i=0; i < len; i++)
-        {
-            s.append('&nbsp;&nbsp;')
-            StackTraceElement element = stackTrace[i]
-            if (alreadyExists(element, nextStrackTrace))
-            {
-                s.append('...continues below<br>')
-                return s.toString()
-            }
-            else
-            {
-                s.append(element.className)
-                s.append('.')
-                s.append(element.methodName)
-                s.append('()&nbsp;<small><b class="pull-right">')
-                if (element.nativeMethod)
-                {
-                    s.append('Native Method')
-                }
-                else
-                {
-                    if (element.fileName)
-                    {
-                        s.append(element.fileName)
-                        s.append(':')
-                        s.append(element.lineNumber)
-                    }
-                    else
-                    {
-                        s.append('source n/a')
-                    }
-                }
-                s.append('</b></small><br>')
-            }
-        }
-
-        return s.toString()
-    }
-
-    private static boolean alreadyExists(StackTraceElement element, StackTraceElement[] stackTrace)
-    {
-        if (ArrayUtilities.isEmpty(stackTrace))
-        {
-            return false
-        }
-
-        for (StackTraceElement traceElement : stackTrace)
-        {
-            if (element.equals(traceElement))
-            {
-                return true
-            }
-        }
-        return false
-    }
-
-    private static String getCauses(Throwable t)
-    {
-        StringBuilder s = new StringBuilder()
-        while (t != null)
-        {
-            if (t.message == null)
-            {
-                s.append(t.toString())
-            }
-            else
-            {
-                s.append(t.message)
-            }
-            t = t.cause
-            if (t != null)
-            {
-                s.append('<hr style="border-top: 1px solid #aaa;margin:8px">')
-            }
-        }
-
-        return s.toString()
     }
 
     private static String getValueRepeatIfNecessary(Object[] values, int row, int col)

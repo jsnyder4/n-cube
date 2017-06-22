@@ -8,6 +8,7 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
+import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -15,6 +16,8 @@ import org.slf4j.LoggerFactory
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
@@ -72,6 +75,7 @@ class NCube<T>
     private T defaultCellValue
     private final Map<String, Advice> advices = [:]
     private Map metaProps = new CaseInsensitiveMap<>()
+    private static ConcurrentMap primitives = new ConcurrentHashMap()
     //  Sets up the defaultApplicationId for cubes loaded in from disk.
     private transient ApplicationID appId = ApplicationID.testAppId
     private static final ThreadLocal<Deque<StackEntry>> executionStack = new ThreadLocal<Deque<StackEntry>>() {
@@ -149,7 +153,7 @@ class NCube<T>
             stripFoistedAppId(ncube)
         }
     }
-    
+
     private static void stripFoistedAppId(NCube ncube)
     {
         ncube.removeMetaProperty('n-tenant')
@@ -509,7 +513,8 @@ class NCube<T>
             throw new IllegalArgumentException("Cannot set a cell to be an array type directly (except byte[]). Instead use GroovyExpression.")
         }
         clearSha1()
-        return cells[getCoordinateKey(coordinate)] = value
+        return cells[getCoordinateKey(coordinate)] = (T) internValue(value)
+
     }
 
     /**
@@ -528,7 +533,7 @@ class NCube<T>
         {
             throw new InvalidCoordinateException("Unable to setCellById() into n-cube: ${name} using coordinate: ${coordinate}. Add column(s) before assigning cells.", name)
         }
-        return cells[ids] = value
+        return cells[ids] = (T)internValue(value)
     }
 
     /**
@@ -852,7 +857,7 @@ class NCube<T>
                 if (count == null || count < 1)
                 {
                     throw new CoordinateNotFoundException("No conditions on the rule axis: ${axisName} fired, and there is no default column on this axis, cube: ${name}, input: ${coordinate}",
-                        name, coordinate, axisName)
+                            name, coordinate, axisName)
                 }
             }
         }
@@ -1230,8 +1235,8 @@ class NCube<T>
                 }
                 if (column == null)
                 {
-                   throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axisName}, cube: ${name}",
-                           name, input, axisName, value)
+                    throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axisName}, cube: ${name}",
+                            name, input, axisName, value)
                 }
                 bindings[axisName] = [column]    // Binding is a List of one column on non-rule axis
             }
@@ -1887,7 +1892,7 @@ class NCube<T>
             cells.clear()
             for (cell in newCells)
             {
-                cells[cell.key] = cell.value
+                cells[cell.key] = (T)internValue(cell.value)
             }
         }
         else
@@ -2568,11 +2573,11 @@ class NCube<T>
     {
         String name
         while (names.contains(name = "BR${count++}"))
-            ;
+        ;
         return new MapEntry(name, count)
     }
 
-   /**
+    /**
      * Snag all meta-properties on Axis that start with Axis.DEFAULT_COLUMN_PREFIX, as this
      * is where the default column's meta properties are stored, and copy them to the default
      * column (if one exists)
@@ -3485,5 +3490,35 @@ class NCube<T>
     Axis get(String axisName)
     {
         return axisList[axisName]
+    }
+
+    /**
+     * Intern the passed in value.  Collapses (folds) equivalent instances into same instance.
+     * @param value Object to intern (if possible)
+     * @return interned instance (if internable) otherwise passed-in instance is returned.
+     */
+    private Object internValue(Object value)
+    {
+        if (value == null)
+        {
+            return null
+        }
+
+        if (!MetaUtils.isLogicalPrimitive(value.class))
+        {   // don't attempt to intern null (NPE) or non-primitive instances
+            return value
+        }
+
+        if (primitives.containsKey(value))
+        {   // intern it (re-use instance)
+            return primitives[value]
+        }
+
+        Object singletonInstance = primitives.putIfAbsent(value, value)
+        if (singletonInstance != null)
+        {
+            return singletonInstance
+        }
+        return value
     }
 }

@@ -44,4 +44,12 @@ interface NCubeRuntimeClient extends NCubeClient
     ApplicationID getApplicationID(String tenant, String app, Map<String, Object> coord)
 
     ApplicationID getBootVersion(String tenant, String app)
+
+    Map runTests(ApplicationID appId)
+
+    Map runTests(ApplicationID appId, String cubeName, Object[] tests)
+
+    Map runTest(ApplicationID appId, String cubeName, NCubeTest test)
+
+    String getTestCauses(Throwable t)
 }

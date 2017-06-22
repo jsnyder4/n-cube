@@ -69,28 +69,28 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "createCube(${cube.applicationID.cacheKey(cube.name)})", username)
     }
 
-    String loadCubeRawJson(ApplicationID appId, String name)
+    String loadCubeRawJson(ApplicationID appId, String name, String username)
     {
         return (String) jdbcOperation({ Connection c -> persister.loadCubeRawJson(c, appId, name) },
-                "loadCubeRawJson(${appId.cacheKey(name)})")
+                "loadCubeRawJson(${appId.cacheKey(name)})", username)
     }
 
-    NCube loadCubeById(long cubeId)
+    NCube loadCubeById(long cubeId, String username)
     {
         return (NCube) jdbcOperation({ Connection c -> persister.loadCubeById(c, cubeId) },
-                "loadCubeById(${cubeId})")
+                "loadCubeById(${cubeId})", username)
     }
 
-    NCube loadCube(ApplicationID appId, String name)
+    NCube loadCube(ApplicationID appId, String name, String username)
     {
         return (NCube) jdbcOperation({ Connection c -> persister.loadCube(c, appId, name) },
-                "loadCube(${appId.cacheKey(name)})")
+                "loadCube(${appId.cacheKey(name)})", username)
     }
 
-    NCube loadCubeBySha1(ApplicationID appId, String name, String sha1)
+    NCube loadCubeBySha1(ApplicationID appId, String name, String sha1, String username)
     {
         return (NCube) jdbcOperation({ Connection c -> persister.loadCubeBySha1(c, appId, name, sha1) },
-                "loadCubeBySha1(${appId.cacheKey(name)}, ${sha1})")
+                "loadCubeBySha1(${appId.cacheKey(name)}, ${sha1})", username)
     }
 
     boolean restoreCubes(ApplicationID appId, Object[] names, String username)
@@ -99,28 +99,28 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "restoreCubes(${appId})", username)
     }
 
-    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion)
+    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion, String username)
     {
         return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.getRevisions(c, appId, cubeName, ignoreVersion) },
-                "getRevisions(${appId.cacheKey(cubeName)}")
+                "getRevisions(${appId.cacheKey(cubeName)}", username)
     }
 
-    Set<String> getBranches(ApplicationID appId)
+    Set<String> getBranches(ApplicationID appId, String username)
     {
         return (Set<String>) jdbcOperation({ Connection c -> persister.getBranches(c, appId) },
-                "getBranches(${appId})")
+                "getBranches(${appId})", username)
     }
 
-    boolean deleteBranch(ApplicationID branchId)
+    boolean deleteBranch(ApplicationID branchId, String username)
     {
         return (boolean) jdbcOperation({ Connection c -> persister.deleteBranch(c, branchId) },
-                "deleteBranch(${branchId})")
+                "deleteBranch(${branchId})", username)
     }
 
-    boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName)
+    boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName, String username)
     {
         return (boolean) jdbcOperation({ Connection c -> persister.doCubesExist(c, appId, ignoreStatus, methodName) },
-                "doCubesExist(${appId})")
+                "doCubesExist(${appId})", username)
     }
 
     boolean deleteCubes(ApplicationID appId, Object[] cubeNames, boolean allowDelete, String username)
@@ -129,46 +129,46 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "deleteCubes(${appId})", username)
     }
 
-    List<String> getAppNames(String tenant)
+    List<String> getAppNames(String tenant, String username)
     {
         return (List<String>) jdbcOperation({ Connection c -> persister.getAppNames(c, tenant) },
-                "getAppNames(${tenant})")
+                "getAppNames(${tenant})", username)
     }
 
-    Map<String, List<String>> getVersions(String tenant, String app)
+    Map<String, List<String>> getVersions(String tenant, String app, String username)
     {
         return (Map<String, List<String>>) jdbcOperation({ Connection c -> persister.getVersions(c, tenant, app) },
-                "getVersions(${tenant}, ${app})")
+                "getVersions(${tenant}, ${app})", username)
     }
 
-    int changeVersionValue(ApplicationID appId, String newVersion)
+    int changeVersionValue(ApplicationID appId, String newVersion, String username)
     {
         return (int) jdbcOperation({ Connection c -> persister.changeVersionValue(c, appId, newVersion) },
-                "changeVersionValue(${appId}, ${newVersion})")
+                "changeVersionValue(${appId}, ${newVersion})", username)
     }
 
-    int moveBranch(ApplicationID appId, String newSnapVer)
+    int moveBranch(ApplicationID appId, String newSnapVer, String username)
     {
         return (int) jdbcOperation({ Connection c -> persister.moveBranch(c, appId, newSnapVer) },
-                "moveBranch(${appId}, to version ${newSnapVer})")
+                "moveBranch(${appId}, to version ${newSnapVer})", username)
     }
 
-    int releaseCubes(ApplicationID appId, String newSnapVer)
+    int releaseCubes(ApplicationID appId, String newSnapVer, String username)
     {
         return (int) jdbcOperation({ Connection c -> persister.releaseCubes(c, appId, newSnapVer) },
-                "releaseCubes(${appId}, new snap ver: ${newSnapVer})")
+                "releaseCubes(${appId}, new snap ver: ${newSnapVer})", username)
     }
 
-    int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId)
+    int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
         return (int) jdbcOperation({ Connection c -> persister.copyBranch(c, srcAppId, targetAppId) },
-                "copyBranch(${srcAppId} -> ${targetAppId})")
+                "copyBranch(${srcAppId} -> ${targetAppId})", username)
     }
 
-    int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId)
+    int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
         return (int) jdbcOperation({ Connection c -> persister.copyBranchWithHistory(c, srcAppId, targetAppId) },
-                "copyBranchWithHistory(${srcAppId} -> ${targetAppId})")
+                "copyBranchWithHistory(${srcAppId} -> ${targetAppId})", username)
     }
 
     boolean renameCube(ApplicationID appId, String oldName, String newName, String username)
@@ -195,23 +195,29 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "duplicateCube(${oldAppId.cacheKey(oldName)} -> ${newAppId.cacheKey(newName)})", username)
     }
 
-    boolean updateNotes(ApplicationID appId, String cubeName, String notes)
+    boolean updateNotes(ApplicationID appId, String cubeName, String notes, String username)
     {
         String ellipse = notes?.length() > 100 ? '...' : ''
         return (boolean) jdbcOperation({ Connection c -> persister.updateNotes(c, appId, cubeName, notes) },
-                "updateNotes(${appId.cacheKey(cubeName)}, '${notes?.take(100) + ellipse}')")
+                "updateNotes(${appId.cacheKey(cubeName)}, '${notes?.take(100) + ellipse}')", username)
     }
 
-    boolean updateTestData(ApplicationID appId, String cubeName, String testData)
+    boolean updateTestData(ApplicationID appId, String cubeName, String testData, String username)
     {
         return (boolean) jdbcOperation({ Connection c -> persister.updateTestData(c, appId, cubeName, testData) },
-                "saveTests(${appId.cacheKey(cubeName)})")
+                "saveTests(${appId.cacheKey(cubeName)})", username)
     }
 
-    String getTestData(ApplicationID appId, String cubeName)
+    Map getAppTestData(ApplicationID appId, String username)
+    {
+        return (Map) jdbcOperation({ Connection c -> persister.getAppTestData(c, appId) },
+                "getAppTestData(${appId}", username)
+    }
+
+    String getTestData(ApplicationID appId, String cubeName, String username)
     {
         return (String) jdbcOperation({ Connection c -> persister.getTestData(c, appId, cubeName) },
-                "getTestData(${appId.cacheKey(cubeName)})")
+                "getTestData(${appId.cacheKey(cubeName)})", username)
     }
 
     NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, long txId)
@@ -244,27 +250,27 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "pullToBranch(${appId}, ${cubeIds.length} cubes, txID=${txId})", username)
     }
 
-    boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1)
+    boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1, String username)
     {
         return (boolean) jdbcOperation({ Connection c -> persister.updateBranchCubeHeadSha1(c, cubeId, branchSha1, headSha1) },
-                "updateBranchCubeHeadSha1(${cubeId}, ${branchSha1}, ${headSha1})")
+                "updateBranchCubeHeadSha1(${cubeId}, ${branchSha1}, ${headSha1})", username)
     }
 
-    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
+    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
     {
         return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.search(c, appId, cubeNamePattern, searchValue, options) },
-                "search(${appId}, ${cubeNamePattern}, ${searchValue})")
+                "search(${appId}, ${cubeNamePattern}, ${searchValue})", username)
     }
 
-    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
+    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
     {
         return (List<NCube>) jdbcOperation({ Connection c -> persister.cubeSearch(c, appId, cubeNamePattern, searchValue, options) },
-                "cubeSearch(${appId}, ${cubeNamePattern}, ${searchValue})")
+                "cubeSearch(${appId}, ${cubeNamePattern}, ${searchValue})", username)
     }
 
-    void clearTestDatabase()
+    void clearTestDatabase(String username)
     {
         jdbcOperation({ Connection c -> persister.clearTestDatabase(c) },
-                "clearTestDatabase()")
+                "clearTestDatabase()", username)
     }
 }

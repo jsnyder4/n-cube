@@ -41,19 +41,19 @@ interface NCubePersister extends NCubeReadOnlyPersister
     boolean mergeAcceptMine(ApplicationID appId, String cubeName, String username)
     NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, long txId)
     NCubeInfoDto commitMergedCubeToBranch(ApplicationID appId, NCube cube, String headSha1, String username, long txId)
-    boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1)
-    int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId)
-    int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId)
-    boolean deleteBranch(ApplicationID appId)
-    boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName)
+    boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1, String username)
+    int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)
+    int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId, String username)
+    boolean deleteBranch(ApplicationID appId, String username)
+    boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName, String username)
 
     // Release Management
-    int changeVersionValue(ApplicationID appId, String newVersion)
-    int moveBranch(ApplicationID appId, String newSnapVer)
-    int releaseCubes(ApplicationID appId, String newSnapVer)
+    int changeVersionValue(ApplicationID appId, String newVersion, String username)
+    int moveBranch(ApplicationID appId, String newSnapVer, String username)
+    int releaseCubes(ApplicationID appId, String newSnapVer, String username)
 
     // Testing
-    boolean updateNotes(ApplicationID appId, String cubeName, String notes)
-    boolean updateTestData(ApplicationID appId, String cubeName, String testData)
-    void clearTestDatabase()
+    boolean updateNotes(ApplicationID appId, String cubeName, String notes, String username)
+    boolean updateTestData(ApplicationID appId, String cubeName, String testData, String username)
+    void clearTestDatabase(String username)
 }

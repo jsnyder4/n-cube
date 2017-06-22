@@ -868,6 +868,19 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testGetAppTests()
+    {
+        createCube(true)
+        NCube noTestsCube = new NCube('noTests')
+        noTestsCube.applicationID = defaultSnapshotApp
+        mutableClient.createCube(noTestsCube)
+
+        Map testData = mutableClient.getAppTests(defaultSnapshotApp)
+        assert (testData['test.Age-Gender'] as Object[]).size()
+        assert !testData.containsKey('noTests')
+    }
+
+    @Test
     void testNCubeManagerTestData()
     {
         try

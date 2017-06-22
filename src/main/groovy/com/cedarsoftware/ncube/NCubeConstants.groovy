@@ -32,6 +32,7 @@ interface NCubeConstants
     final String SEARCH_CREATE_DATE_END = 'createEndDate'
     final String SEARCH_INCLUDE_CUBE_DATA = 'includeCubeData'
     final String SEARCH_INCLUDE_TEST_DATA = 'includeTestData'
+    final String SEARCH_ONLY_TEST_DATA = 'onlyTestData'
     final String SEARCH_INCLUDE_NOTES = 'includeNotes'
     final String SEARCH_DELETED_RECORDS_ONLY = 'deletedRecordsOnly'
     final String SEARCH_ACTIVE_RECORDS_ONLY = 'activeRecordsOnly'

@@ -1,10 +1,6 @@
 package com.cedarsoftware.visualizer
 
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.Axis
-import com.cedarsoftware.ncube.Column
-import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeRuntimeClient
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -13,6 +9,8 @@ import groovy.transform.CompileStatic
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
+import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 
 /**
  * Provides helper methods to load fields and traits for an rpm class.
@@ -285,7 +283,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 			throw new IllegalArgumentException("Invalid class identifier [" + className + "] was specified for " + cubeType);
 		}
 
-		NCube ncube = runtimeClient.getCube(appId, cubeType + "." + className);
+		NCube ncube = ncubeRuntime.getCube(appId, cubeType + "." + className);
 		if (ncube==null)
 		{
 			return null;
@@ -872,7 +870,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 				list.add(parseItem(isDigit, version.substring(startIndex)));
 			}
 
-			while (!stack.isEmpty()) {
+			while (!stack.empty) {
 				list = (ListItem) stack.pop();
 				list.normalize();
 			}

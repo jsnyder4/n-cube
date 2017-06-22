@@ -1,12 +1,16 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
+import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CallableBean
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.SystemUtilities
+import com.cedarsoftware.util.ThreadAwarePrintStream
+import com.cedarsoftware.util.ThreadAwarePrintStreamErr
 import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
@@ -119,6 +123,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             throw new IllegalArgumentException('cubeName cannot be null')
         }
         return getCubeInternal(appId, cubeName)
+    }
+
+    Map getAppTests(ApplicationID appId)
+    {
+        Map result = bean.call(beanName, 'getAppTests', [appId]) as Map
+        return result
     }
 
     Object[] getTests(ApplicationID appId, String cubeName)
@@ -543,7 +553,268 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             throw new IllegalStateException("${MUTABLE_ERROR} ${methodName}()")
         }
     }
-    
+
+    //-- Run Tests -------------------------------------------------------------------------------------------------
+
+    Map runTests(ApplicationID appId)
+    {
+        Map ret = [:]
+        Map appTests = getAppTests(appId)
+        for (Map.Entry cubeData : appTests)
+        {
+            String cubeName = cubeData.key
+            ret[cubeName] = runTests(appId, cubeName, cubeData.value as Object[])
+        }
+        return ret
+    }
+
+    Map runTests(ApplicationID appId, String cubeName, Object[] tests)
+    {
+        Map ret = [:]
+        for (Object t : tests)
+        {
+            NCubeTest test = t as NCubeTest
+            try
+            {
+                ret[test.name] = runTest(appId, cubeName, test)
+            }
+            catch (Exception e)
+            {
+                ret[test.name] = ['_message':e.message, '_result':e.stackTrace] as Map
+            }
+        }
+        return ret
+    }
+
+    Map runTest(ApplicationID appId, String cubeName, NCubeTest test)
+    {
+        try
+        {
+            // Do not remove try-catch handler here - this API must handle it's own exceptions, instead
+            // of allowing the Around Advice to handle them.
+            Properties props = System.properties
+            String server = props.getProperty("http.proxyHost")
+            String port = props.getProperty("http.proxyPort")
+            LOG.info("proxy server: ${server}, proxy port: ${port}".toString())
+
+            NCube ncube = getCube(appId, cubeName)
+            Map<String, Object> coord = test.coordWithValues
+            boolean success = true
+            Map output = new LinkedHashMap()
+            Map args = [input:coord, output:output, ncube:ncube]
+            Map<String, Object> copy = new LinkedHashMap(coord)
+
+            // If any of the input values are a CommandCell, execute them.  Use the fellow (same) input as input.
+            // In other words, other key/value pairs on the input map can be referenced in a CommandCell.
+            copy.each { key, value ->
+                if (value instanceof CommandCell)
+                {
+                    CommandCell cmd = (CommandCell) value
+                    redirectOutput(true)
+                    coord[key] = cmd.execute(args)
+                    redirectOutput(false)
+                }
+            }
+
+            Set<String> errors = new LinkedHashSet<>()
+            redirectOutput(true)
+            ncube.getCell(coord, output)               // Execute test case
+            redirectOutput(false)
+
+            List<GroovyExpression> assertions = test.createAssertions()
+            int i = 0
+
+            for (GroovyExpression exp : assertions)
+            {
+                i++
+
+                try
+                {
+                    Map assertionOutput = new LinkedHashMap<>(output)
+                    RuleInfo ruleInfo = new RuleInfo()
+                    assertionOutput[(NCube.RULE_EXEC_INFO)] = ruleInfo
+                    args.output = assertionOutput
+                    redirectOutput(true)
+                    if (!NCube.isTrue(exp.execute(args)))
+                    {
+                        errors.add("[assertion ${i} failed]: ${exp.cmd}".toString())
+                        success = false
+                    }
+                    redirectOutput(false)
+                }
+                catch (ThreadDeath t)
+                {
+                    throw t
+                }
+                catch (Throwable e)
+                {
+                    errors.add('[exception]')
+                    errors.add('\n')
+                    errors.add(getTestCauses(e))
+                    success = false
+                }
+            }
+
+            RuleInfo ruleInfoMain = (RuleInfo) output[(NCube.RULE_EXEC_INFO)]
+            ruleInfoMain.setSystemOut(fetchRedirectedOutput())
+            ruleInfoMain.setSystemErr(fetchRedirectedErr())
+            ruleInfoMain.setAssertionFailures(errors)
+            return ['_message': new TestResultsFormatter(output).format(), '_result': success]
+        }
+        catch(Exception e)
+        {
+            fetchRedirectedOutput()
+            fetchRedirectedErr()
+            throw new IllegalStateException(getTestCauses(e), e)
+        }
+        finally
+        {
+            redirectOutput(false)
+        }
+    }
+
+    private String fetchRedirectedOutput()
+    {
+        OutputStream outputStream = System.out
+        if (outputStream instanceof ThreadAwarePrintStream)
+        {
+            return ((ThreadAwarePrintStream) outputStream).content
+        }
+        return ''
+    }
+
+    private String fetchRedirectedErr()
+    {
+        OutputStream outputStream = System.err
+        if (outputStream instanceof ThreadAwarePrintStreamErr)
+        {
+            return ((ThreadAwarePrintStreamErr) outputStream).content
+        }
+        return ''
+    }
+
+    private void redirectOutput(boolean redirect)
+    {
+        OutputStream outputStream = System.out
+        if (outputStream instanceof ThreadAwarePrintStream)
+        {
+            ((ThreadAwarePrintStream) outputStream).redirect = redirect
+        }
+        outputStream = System.err
+        if (outputStream instanceof ThreadAwarePrintStreamErr)
+        {
+            ((ThreadAwarePrintStreamErr) outputStream).redirect = redirect
+        }
+    }
+
+    /**
+     * Given an exception, get an HTML version of it.  This version is reversed in order,
+     * so that the root cause is first, and then the caller, and so on.
+     * @param t Throwable exception for which to obtain the HTML
+     * @return String version of the Throwable in HTML format.  Surrounded with pre-tag.
+     */
+    String getTestCauses(Throwable t)
+    {
+        LinkedList<Map<String, Object>> stackTraces = new LinkedList<>()
+
+        while (true)
+        {
+            stackTraces.push([msg: t.localizedMessage, trace: t.stackTrace] as Map)
+            t = t.cause
+            if (t == null)
+            {
+                break
+            }
+        }
+
+        // Convert from LinkedList to direct access list
+        List<Map<String, Object>> stacks = new ArrayList<>(stackTraces)
+        StringBuilder s = new StringBuilder()
+        int len = stacks.size()
+
+        for (int i=0; i < len; i++)
+        {
+            Map<String, Object> map = stacks[i]
+            s.append('<b style="color:darkred">')
+            s.append(map.msg)
+            s.append('</b><br>')
+
+            if (i != len - 1i)
+            {
+                Map nextStack = stacks[i + 1i]
+                StackTraceElement[] nextStackElementArray = (StackTraceElement[]) nextStack.trace
+                s.append(trace(map.trace as StackTraceElement[], nextStackElementArray))
+                s.append('<hr style="border-top: 1px solid #aaa;margin:8px"><b>Called by:</b><br>')
+            }
+            else
+            {
+                s.append(trace(map.trace as StackTraceElement[], null))
+            }
+        }
+
+        return '<pre>' + s + '</pre>'
+    }
+
+    private static String trace(StackTraceElement[] stackTrace, StackTraceElement[] nextStrackTrace)
+    {
+        StringBuilder s = new StringBuilder()
+        int len = stackTrace.length
+        for (int i=0; i < len; i++)
+        {
+            s.append('&nbsp;&nbsp;')
+            StackTraceElement element = stackTrace[i]
+            if (alreadyExists(element, nextStrackTrace))
+            {
+                s.append('...continues below<br>')
+                return s.toString()
+            }
+            else
+            {
+                s.append(element.className)
+                s.append('.')
+                s.append(element.methodName)
+                s.append('()&nbsp;<small><b class="pull-right">')
+                if (element.nativeMethod)
+                {
+                    s.append('Native Method')
+                }
+                else
+                {
+                    if (element.fileName)
+                    {
+                        s.append(element.fileName)
+                        s.append(':')
+                        s.append(element.lineNumber)
+                    }
+                    else
+                    {
+                        s.append('source n/a')
+                    }
+                }
+                s.append('</b></small><br>')
+            }
+        }
+
+        return s.toString()
+    }
+
+    private static boolean alreadyExists(StackTraceElement element, StackTraceElement[] stackTrace)
+    {
+        if (ArrayUtilities.isEmpty(stackTrace))
+        {
+            return false
+        }
+
+        for (StackTraceElement traceElement : stackTrace)
+        {
+            if (element.equals(traceElement))
+            {
+                return true
+            }
+        }
+        return false
+    }
+
     //-- NCube Caching -------------------------------------------------------------------------------------------------
 
     /**

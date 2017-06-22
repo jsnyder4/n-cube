@@ -1194,6 +1194,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
     {
         boolean includeCubeData = toBoolean(options[SEARCH_INCLUDE_CUBE_DATA])
         boolean includeTestData = toBoolean(options[SEARCH_INCLUDE_TEST_DATA])
+        boolean onlyTestData = toBoolean(options[SEARCH_ONLY_TEST_DATA])
         boolean includeNotes = toBoolean(options[SEARCH_INCLUDE_NOTES])
         boolean changedRecordsOnly = toBoolean(options[SEARCH_CHANGED_RECORDS_ONLY])
         boolean activeRecordsOnly = toBoolean(options[SEARCH_ACTIVE_RECORDS_ONLY])
@@ -1233,6 +1234,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         String changedCondition = changedRecordsOnly ? ' AND n.changed = :changed' : ''
         String createDateStartCondition = createDateStart ? 'AND n.create_dt >= :createDateStart' : ''
         String createDateEndCondition = createDateEnd ? 'AND n.create_dt <= :createDateEnd' : ''
+        String onlyTestDataCondition = onlyTestData ? 'AND n.test_data_bin IS NOT NULL' : ''
         String testCondition = includeTestData ? ', n.test_data_bin' : ''
         String cubeCondition = includeCubeData ? ', n.cube_value_bin' : ''
         String notesCondition = includeNotes ? ', n.notes_bin' : ''
@@ -1249,7 +1251,7 @@ FROM n_cube n,
  ${nameCondition1}
  GROUP BY LOWER(n_cube_nm) ) m
 WHERE m.low_name = LOWER(n.n_cube_nm) AND m.max_rev = abs(n.revision_number) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status AND tenant_cd = :tenant AND n.branch_id = :branch
-${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCondition} ${createDateEndCondition}"""
+${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCondition} ${createDateEndCondition} ${onlyTestDataCondition}"""
 
         if (max >= 1)
         {   // Use pre-closure to fiddle with batch fetchSize and to monitor row count
@@ -1570,6 +1572,26 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
 
         int rows = sql.executeUpdate(map, update)
         return rows == 1
+    }
+
+    static Map getAppTestData(Connection c, ApplicationID appId)
+    {
+        Map ret = [:]
+
+        Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): false,
+                                       (SEARCH_INCLUDE_TEST_DATA): true,
+                                       (SEARCH_ONLY_TEST_DATA): true,
+                                       (SEARCH_ACTIVE_RECORDS_ONLY): true,
+                                       (METHOD_NAME) : 'getAppTestData'] as Map
+        runSelectCubesStatement(c, appId, null, options, { ResultSet row ->
+            String cubeName = row.getString('n_cube_nm')
+            if (!ret.containsKey(cubeName))
+            {
+                ret[cubeName] = new String(row.getBytes(TEST_DATA_BIN), 'UTF-8')
+            }
+        })
+
+        return ret
     }
 
     static String getTestData(Connection c, ApplicationID appId, String cubeName)

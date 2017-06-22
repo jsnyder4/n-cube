@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import sun.security.provider.SHA
 
 /**
  * Class used to carry the NCube meta-information
@@ -32,14 +31,14 @@ interface NCubeReadOnlyPersister
      * @return NCube loaded from database
      * @throws IllegalArgumentException if there is no n-cube with the given id.
      */
-    NCube loadCubeById(long id)
+    NCube loadCubeById(long id, String username)
 
     /**
      * Load n-cube by name (latest revision)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
      */
-    NCube loadCube(ApplicationID appId, String name)
+    NCube loadCube(ApplicationID appId, String name, String username)
 
     /**
      * Load n-cube by SHA-1 (latest revision with that SHA-1)
@@ -47,14 +46,14 @@ interface NCubeReadOnlyPersister
      * @param name String name of the n-cube to load
      * @param sha1 String SHA-1 of the n-cube to load
      */
-    NCube loadCubeBySha1(ApplicationID appId, String name, String sha1)
+    NCube loadCubeBySha1(ApplicationID appId, String name, String sha1, String username)
 
     /**
      * Load n-cube raw JSON by name (latest revision)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
      */
-    String loadCubeRawJson(ApplicationID appId, String name)
+    String loadCubeRawJson(ApplicationID appId, String name, String username)
 
     /**
      * Get all application names for the given tenant
@@ -63,7 +62,7 @@ interface NCubeReadOnlyPersister
      * is returned.
      * @throws IllegalArgumentException if the tenant name is empty or null.
      */
-    List<String> getAppNames(String tenant)
+    List<String> getAppNames(String tenant, String username)
 
     /**
      * Get all versions of an application (for a given tenant)
@@ -72,7 +71,7 @@ interface NCubeReadOnlyPersister
      * @return Map with two (2) entries.  ['SNAPSHOT'] = List<String>, ['RELEASE'] = List<String>
      *     The List is a list of String versions is in no specific order.
      */
-    Map<String, List<String>> getVersions(String tenant, String app)
+    Map<String, List<String>> getVersions(String tenant, String app, String username)
 
     /**
      * Get the Revision History for a given cube (within the passed in ApplicationID).
@@ -85,7 +84,7 @@ interface NCubeReadOnlyPersister
      * The ordering of the items in the list will have the highest revision number to lowest (in absolute value).
      * The ordering of the versions is not specified.
      */
-    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion)
+    List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion, String username)
 
     /**
      * Search the persisted storage for n-cube (NCubeInfoDto's) that match are within the passed in ApplicationID,
@@ -101,7 +100,7 @@ interface NCubeReadOnlyPersister
      * @param options
      * @return
      */
-    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
+    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
 
     /**
      * Same as search but returns built cubes.
@@ -111,7 +110,7 @@ interface NCubeReadOnlyPersister
      * @param options
      * @return
      */
-    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options)
+    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
 
     /**
      * Get the list of branches for the given ApplicationID
@@ -119,7 +118,15 @@ interface NCubeReadOnlyPersister
      * ApplicationID is ignored, and all branches are returned for the supplied tenant, app, version, and status.
      * @return Set of String branch names
      */
-    Set<String> getBranches(ApplicationID appId)
+    Set<String> getBranches(ApplicationID appId, String username)
+
+    /**
+     * Fetch the TEST data (in JSON format) for the full given ApplicationID.
+     * @param appId ApplicationID containing the n-cubes
+     * @return Map of cube names and string of JSON representing the tests for the given cube.
+     * @throws IllegalArgumentException if the passed in cubeName does not exist.
+     */
+    Map getAppTestData(ApplicationID appId, String username)
 
     /**
      * Fetch the TEST data (in JSON format) for the named n-cube within the given ApplicationID.
@@ -128,5 +135,5 @@ interface NCubeReadOnlyPersister
      * @return String of JSON representing the tests for the given cube.
      * @throws IllegalArgumentException if the passed in cubeName does not exist.
      */
-    String getTestData(ApplicationID appId, String cubeName)
+    String getTestData(ApplicationID appId, String cubeName, String username)
 }

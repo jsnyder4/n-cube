@@ -1,12 +1,12 @@
 package com.cedarsoftware.visualizer
 
-import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 import static com.cedarsoftware.visualizer.VisualizerConstants.DOUBLE_BREAK
 
 /**
@@ -17,12 +17,10 @@ import static com.cedarsoftware.visualizer.VisualizerConstants.DOUBLE_BREAK
 @CompileStatic
 class VisualizerHelper
 {
-	protected static NCubeRuntimeClient runtimeClient
 	protected static ApplicationID appId
 	
 	VisualizerHelper(NCubeRuntimeClient runtimeClient, ApplicationID appId)
 	{
-		this.runtimeClient = runtimeClient
 		this.appId = appId
 	}
 	
@@ -115,6 +113,6 @@ class VisualizerHelper
 	{
 		"""\
 <b>Message:</b> ${DOUBLE_BREAK}${e.message}${DOUBLE_BREAK}<b>Root cause: </b>\
-${DOUBLE_BREAK}${t.toString()}${DOUBLE_BREAK}<b>Stack trace: </b>${DOUBLE_BREAK}${NCubeController.getTestCauses(t)}"""
+${DOUBLE_BREAK}${t.toString()}${DOUBLE_BREAK}<b>Stack trace: </b>${DOUBLE_BREAK}${ncubeRuntime.getTestCauses(t)}"""
 	}
 }

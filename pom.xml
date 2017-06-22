@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>4.0.6</version>
+	<version>4.0.8-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -82,7 +82,6 @@
         <version.springboot>1.5.3.RELEASE</version.springboot>
         <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
         <version.tomcat.jdbc>8.0.41</version.tomcat.jdbc>
-        <version.ojdbc>12.2.0.1</version.ojdbc>
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
         <version.apache.ivy>2.4.0</version.apache.ivy>
@@ -104,17 +103,6 @@
     </properties>
 
     <repositories>
-        <repository>
-            <id>maven.oracle.com</id>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <url>https://maven.oracle.com</url>
-            <layout>default</layout>
-        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -129,10 +117,6 @@
             <releases>
                 <updatePolicy>never</updatePolicy>
             </releases>
-        </pluginRepository>
-        <pluginRepository>
-            <id>maven.oracle.com</id>
-            <url>https://maven.oracle.com</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -269,12 +253,6 @@
 
     <dependencies>
         
-        <dependency>
-            <groupId>com.oracle.jdbc</groupId>
-            <artifactId>ojdbc8</artifactId>
-            <version>${version.ojdbc}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

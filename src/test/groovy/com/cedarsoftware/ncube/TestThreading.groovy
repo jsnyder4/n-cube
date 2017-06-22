@@ -55,26 +55,26 @@ class TestThreading extends NCubeCleanupBaseTest
         int threads = 5
         int count = 5
 
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        data << [ [load:load,threads:threads,count:count, clearCache:false, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:false, loopTest:loopTest, preCache:true, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:true, sleep:sleep] ]
 
         load = 50; threads = 5; count = 5
-        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
-        data << [ ['load':load * 2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        data << [ [load:load * 2,threads:threads,count:count,clearCache:false, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load * 2,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load * 2,threads:threads,count:count,clearCache:false, loopTest:loopTest, preCache:true, sleep:sleep] ]
+        data << [ [load:load * 2,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:true, sleep:sleep] ]
 
         load = 25; threads = 5; count = 15
-        data << [ ['load':load,'threads':threads,'count':count*10,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count*10,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load*2,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        data << [ [load:load,threads:threads,count:count*10,clearCache:false, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count*10,clearCache:true, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load*2,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:true, sleep:sleep] ]
 
         load = 25; threads = 15; count = 15
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':false, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':false, 'sleep':sleep] ]
-        data << [ ['load':load,'threads':threads,'count':count,'clearCache':true, 'loopTest':loopTest, 'preCache':true, 'sleep':sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:false, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:false, sleep:sleep] ]
+        data << [ [load:load,threads:threads,count:count,clearCache:true, loopTest:loopTest, preCache:true, sleep:sleep] ]
 
         return data as Object [][]
     }

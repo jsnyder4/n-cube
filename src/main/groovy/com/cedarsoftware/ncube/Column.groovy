@@ -3,7 +3,11 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.proximity.Distance
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 /**
  * Holds the value of a 'column' on an axis.
@@ -41,10 +45,11 @@ class Column implements Comparable<Comparable>
     private int displayOrder
     private Comparable value
     protected Map<String, Object> metaProps = null
+    private static ConcurrentMap primitives = new ConcurrentHashMap()
 
     Column(Comparable value, long id = 0L, Map metaProps = null, int order = -1)
     {
-        this.value = value
+        this.value = internValue(value)
         this.id = id
         if (value == null)
         {
@@ -64,7 +69,7 @@ class Column implements Comparable<Comparable>
 
     Column(Column source)
     {
-        value = source.value
+        value = internValue(source.value)
         id = source.id
         displayOrder = source.displayOrder
         if (source.metaProps)
@@ -216,7 +221,7 @@ class Column implements Comparable<Comparable>
      */
     protected void setValue(Comparable v)
     {
-        value = v
+        value = internValue(v)
     }
 
     /**
@@ -280,5 +285,35 @@ class Column implements Comparable<Comparable>
             return value.toString()
         }
         return CellInfo.formatForDisplay(value)
+    }
+
+    /**
+     * Intern the passed in value.  Collapses (folds) equivalent instances into same instance.
+     * @param value Object to intern (if possible)
+     * @return interned instance (if internable) otherwise passed-in instance is returned.
+     */
+    private Comparable internValue(Comparable value)
+    {
+        if (value == null)
+        {
+            return null
+        }
+
+        if (!MetaUtils.isLogicalPrimitive(value.class))
+        {   // don't attempt to intern null (NPE) or non-primitive instances
+            return value
+        }
+
+        if (primitives.containsKey(value))
+        {   // intern it (re-use instance)
+            return primitives[value]
+        }
+
+        Comparable singletonInstance = primitives.putIfAbsent(value, value)
+        if (singletonInstance != null)
+        {
+            return singletonInstance
+        }
+        return value
     }
 }
