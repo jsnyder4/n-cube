@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
+import org.springframework.boot.autoconfigure.security.SecurityProperties
 
 import static org.junit.Assert.fail
 
@@ -123,7 +124,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testMergePullRequest()
+    void testMergeOwnPullRequest()
     {
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
@@ -146,6 +147,50 @@ class TestPullRequests extends NCubeCleanupBaseTest
         catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'request', 'closed', 'status', 'requested', 'committed', 'applicationid')
+        }
+    }
+
+    @Test
+    void testMergePullRequestFromBranchWithoutPermissionsOnThatBranch()
+    {
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        String origUser = manager.userId
+
+        // set up PR from branch
+        NCube ncube = createCubeFromResource('test.branch.1.json')
+        List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
+        List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
+        assert headDtos.empty
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
+
+        // test permissions for other user
+        manager.userId = 'noob'
+        try
+        {
+            mutableClient.assertPermissions(appId, null, Action.COMMIT)
+            manager.userId = origUser
+            fail()
+        }
+        catch (SecurityException e)
+        {
+            assertContainsIgnoreCase(e.message, 'operation not performed')
+        }
+
+        try
+        {
+            // other user merges
+            mutableClient.mergePullRequest(prId)
+
+            headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
+            assert 1 == headDtos.size()
+        }
+        catch (SecurityException ignore)
+        {
+            fail()
+        }
+        finally
+        {
+            manager.userId = origUser
         }
     }
 

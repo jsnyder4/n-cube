@@ -2283,12 +2283,15 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         List<NCubeInfoDto> finalUpdates
 
         long txId = UniqueIdGenerator.uniqueId
-        List<NCubeInfoDto> cubesToUpdate = getCubesToUpdate(appId, inputCubes, rejects)
+        List<NCubeInfoDto> cubesToUpdate = getCubesToUpdate(appId, inputCubes, rejects, true)
 
         String commitAction = Action.COMMIT.name()
+        String readAction = Action.READ.name()
+        ApplicationID headAppId = appId.asHead()
         for (NCubeInfoDto updateCube : cubesToUpdate)
         {
-            if (!checkPermissions(appId, updateCube.name, commitAction))
+            String cubeName = updateCube.name
+            if (!checkPermissions(headAppId, cubeName, commitAction) || !checkPermissions(appId, cubeName, readAction))
             {
                 rejects.add(updateCube)
                 continue
@@ -2394,13 +2397,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         return commitRecords
     }
 
-    private List<NCubeInfoDto> getCubesToUpdate(ApplicationID appId, Object[] inputCubes, List<NCubeInfoDto> rejects)
+    private List<NCubeInfoDto> getCubesToUpdate(ApplicationID appId, Object[] inputCubes, List<NCubeInfoDto> rejects, boolean isMerge = false)
     {
         ApplicationID.validateAppId(appId)
         appId.validateBranchIsNotHead()
         appId.validateStatusIsNotRelease()
         assertNotLockBlocked(appId)
-        assertPermissions(appId, null, Action.COMMIT)
+        if (!isMerge)
+        {
+            assertPermissions(appId, null, Action.COMMIT)
+        }
 
         List<NCubeInfoDto> newDtoList = getBranchChangesForHead(appId)
         if (inputCubes == null)
