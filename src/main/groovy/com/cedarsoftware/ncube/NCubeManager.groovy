@@ -1109,6 +1109,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         return item?.get()
     }
 
+    Map checkPermissions(ApplicationID appId, String resource, String[] actions)
+    {
+        Map ret = [:]
+        for (String action : actions)
+        {
+            ret[action] = checkPermissions(appId, resource, action)
+        }
+        return ret
+    }
+
     /**
      * Verify whether the action can be performed against the resource (typically cube name).
      * @param appId ApplicationID containing the n-cube being checked.

@@ -1,6 +1,7 @@
 ### Revision History
 * 4.0.8
   * Bug fix: no longer need branch permissions to merge a pull request from that branch.
+  * Bug fix: check permissions for multiple permissions now only makes one server call.
 * 4.0.7
   * Add ability to get and run all tests for an app.
   * Add username to all persister methods.

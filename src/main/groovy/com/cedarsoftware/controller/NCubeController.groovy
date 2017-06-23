@@ -106,10 +106,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     // ============================================= Begin API =========================================================
 
-    Boolean checkPermissions(ApplicationID appId, String resource, String action)
+    Map checkPermissions(ApplicationID appId, String resource, Object[] actions)
     {
         appId = addTenant(appId)
-        return mutableClient.checkPermissions(appId, resource, action == null ? Action.READ.name() : action)
+        return mutableClient.checkPermissions(appId, resource, actions as String[])
     }
 
     Boolean isAppAdmin(ApplicationID appId)
