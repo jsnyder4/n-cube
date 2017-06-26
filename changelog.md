@@ -1,4 +1,6 @@
 ### Revision History
+* 4.0.9
+  * Bug fix: Separated checkPermissions() and checkMultiplePermissions() from overridden API to two distinct APIs.
 * 4.0.8
   * Bug fix: no longer need branch permissions to merge a pull request from that branch.
   * Bug fix: check permissions for multiple permissions now only makes one server call.

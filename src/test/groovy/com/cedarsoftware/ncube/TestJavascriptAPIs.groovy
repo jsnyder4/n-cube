@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 
 /**
@@ -250,6 +251,17 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         createCubeFromResource(BRANCH1, 'test.execute.json')
         def result = call('execute', [BRANCH1, 'test.execute', 'plus', [value: 2.0d, term: 3.0d]])
         println result
+    }
+
+    @Test
+    void testCheckPermissions()
+    {
+        String read = Action.READ.name()
+        String update = Action.UPDATE.name()
+        NCube cube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
+        Map perms = call('checkPermissions', [BRANCH1, cube.name, [read, update].toArray()]) as Map
+        assertTrue perms[read] as Boolean
+        assertTrue perms[update] as Boolean
     }
 
     @Test

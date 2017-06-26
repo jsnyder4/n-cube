@@ -184,9 +184,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Map checkPermissions(ApplicationID appId, String resource, String[] actions)
+    Map checkMultiplePermissions(ApplicationID appId, String resource, String[] actions)
     {
-        Map result = bean.call(beanName, 'checkPermissions', [appId, resource, actions]) as Map
+        Map result = bean.call(beanName, 'checkMultiplePermissions', [appId, resource, actions]) as Map
         return result
     }
 

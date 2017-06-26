@@ -1,7 +1,6 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
-import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
@@ -109,7 +108,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Map checkPermissions(ApplicationID appId, String resource, Object[] actions)
     {
         appId = addTenant(appId)
-        return mutableClient.checkPermissions(appId, resource, actions as String[])
+        return mutableClient.checkMultiplePermissions(appId, resource, actions as String[])
     }
 
     Boolean isAppAdmin(ApplicationID appId)

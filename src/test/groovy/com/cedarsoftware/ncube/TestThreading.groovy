@@ -4,6 +4,7 @@ import com.cedarsoftware.util.StringUtilities
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -85,7 +86,13 @@ class TestThreading extends NCubeCleanupBaseTest
     }
 
     @Test
-    void test() {
+    void testQuiet()
+    {
+    }
+
+    @Ignore
+    void test()
+    {
         runTest testArgs
     }
 

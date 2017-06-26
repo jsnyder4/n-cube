@@ -1109,7 +1109,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         return item?.get()
     }
 
-    Map checkPermissions(ApplicationID appId, String resource, String[] actions)
+    Map checkMultiplePermissions(ApplicationID appId, String resource, String[] actions)
     {
         Map ret = [:]
         for (String action : actions)
