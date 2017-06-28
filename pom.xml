@@ -92,7 +92,7 @@
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
         <version.plugin.gpg>1.6</version.plugin.gpg>
-        <version.plugin.surefire>2.19.1</version.plugin.surefire>
+        <version.plugin.surefire>2.20</version.plugin.surefire>
         <version.plugin.tomcat7>2.0</version.plugin.tomcat7>
         <version.servlet.api>2.5</version.servlet.api>
         <version.servlet>3.1.0</version.servlet>

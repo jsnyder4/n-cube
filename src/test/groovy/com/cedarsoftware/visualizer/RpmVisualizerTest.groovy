@@ -3,12 +3,13 @@ package com.cedarsoftware.visualizer
 import com.cedarsoftware.ncube.*
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
+import org.junit.Ignore
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
 @CompileStatic
-class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConstants, VisualizerTestConstants
+@Ignore class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConstants, VisualizerTestConstants
 {
     static final String DETAILS_LABEL_UTILIZED_SCOPE_WITH_TRAITS = 'Utilized scope with traits'
     static final String DETAILS_LABEL_UTILIZED_SCOPE_WITHOUT_TRAITS = 'Utilized scope with no traits'

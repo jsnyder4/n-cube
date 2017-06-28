@@ -5,7 +5,7 @@ addons:
       - oracle-java8-installer
 
 language: java
-
+#dist: trusty
 jdk:
   - oraclejdk8
 
