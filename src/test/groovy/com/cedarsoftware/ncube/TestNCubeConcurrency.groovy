@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.Ignore
 import org.junit.Test
 
 import java.util.concurrent.CountDownLatch
@@ -31,8 +30,7 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 @CompileStatic
 class TestNCubeConcurrency extends NCubeBaseTest
 {
-    // Breaks travis-ci build
-    @Ignore
+    @Test
     void testConcurrencyWithDifferentFiles()
     {
         final CountDownLatch startLatch = new CountDownLatch(1)

@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.junit.Ignore
 import org.junit.Test
 
 import java.security.SecureRandom
@@ -42,7 +41,7 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
     }
     
     // Uncomment when testing threading.  This hits an external website, so use sparingly
-    @Ignore
+    @Test
     void testCubesWithThreadedClearCacheWithAppId()
     {
         createCubeFromResource(usedId, 'sys.classpath.2per.app.json')

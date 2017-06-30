@@ -76,7 +76,7 @@
         <version.java-util>1.26.0</version.java-util>
         <version.json-command-servlet>1.5.3</version.json-command-servlet>
         <version.groovy>2.4.11</version.groovy>
-        <version.guava>21.0</version.guava>
+        <version.guava>22.0</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
         <version.spring>4.3.8.RELEASE</version.spring>
         <version.springboot>1.5.3.RELEASE</version.springboot>
@@ -85,18 +85,16 @@
         <version.hsqldb>2.4.0</version.hsqldb>
         <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
         <version.apache.ivy>2.4.0</version.apache.ivy>
-        <version.plugin.assembly>2.6</version.plugin.assembly>
+        <version.plugin.assembly>3.0.0</version.plugin.assembly>
         <version.plugin.maven-compiler>3.6.1</version.plugin.maven-compiler>
         <version.plugin.gmavenplus>1.5</version.plugin.gmavenplus>
-        <version.plugin.nexus>1.6.7</version.plugin.nexus>
+        <version.plugin.nexus>1.6.8</version.plugin.nexus>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.surefire>2.20</version.plugin.surefire>
-        <version.plugin.tomcat7>2.0</version.plugin.tomcat7>
         <version.servlet.api>2.5</version.servlet.api>
         <version.servlet>3.1.0</version.servlet>
-        <version.plugin.war>2.6</version.plugin.war>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
         <tomcat.version>8.5.12</tomcat.version>
