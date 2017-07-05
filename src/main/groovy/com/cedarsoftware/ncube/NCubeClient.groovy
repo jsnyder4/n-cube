@@ -33,6 +33,8 @@ interface NCubeClient
 
     Object[] getTests(ApplicationID appId, String cubeName)
 
+    Object[] getTests(Long cubeId)
+
     String getNotes(ApplicationID appId, String cubeName)
 
     List<String> getAppNames()

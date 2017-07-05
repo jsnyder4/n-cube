@@ -63,6 +63,7 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
         jdbcOperation({ Connection c -> persister.updateCube(c, cube, username) },
                 "updateCube(${cube.applicationID.cacheKey(cube.name)})", username)
     }
+
     void createCube(NCube cube, final String username)
     {
         jdbcOperation({ Connection c -> persister.createCube(c, cube, username) },
@@ -202,12 +203,6 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "updateNotes(${appId.cacheKey(cubeName)}, '${notes?.take(100) + ellipse}')", username)
     }
 
-    boolean updateTestData(ApplicationID appId, String cubeName, String testData, String username)
-    {
-        return (boolean) jdbcOperation({ Connection c -> persister.updateTestData(c, appId, cubeName, testData) },
-                "saveTests(${appId.cacheKey(cubeName)})", username)
-    }
-
     Map getAppTestData(ApplicationID appId, String username)
     {
         return (Map) jdbcOperation({ Connection c -> persister.getAppTestData(c, appId) },
@@ -218,6 +213,12 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
     {
         return (String) jdbcOperation({ Connection c -> persister.getTestData(c, appId, cubeName) },
                 "getTestData(${appId.cacheKey(cubeName)})", username)
+    }
+
+    String getTestData(Long cubeId, String username)
+    {
+        return (String) jdbcOperation({ Connection c -> persister.getTestData(c, cubeId) },
+                "getTestData(${cubeId})", username)
     }
 
     NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, long txId)

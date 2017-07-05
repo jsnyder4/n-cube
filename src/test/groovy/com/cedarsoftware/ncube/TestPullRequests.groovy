@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.boot.autoconfigure.security.SecurityProperties
 
 import static org.junit.Assert.fail
 

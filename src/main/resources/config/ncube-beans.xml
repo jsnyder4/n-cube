@@ -22,13 +22,13 @@
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${server.scheme}"/>
-            <constructor-arg value="${server.host}"/>
-            <constructor-arg value="${server.port}"/>
-            <constructor-arg value="${server.context}"/>
-            <constructor-arg value="${server.username}"/>
-            <constructor-arg value="${server.password}"/>
-            <constructor-arg value="${server.numConnections}"/>
+            <constructor-arg value="${target.scheme}"/>
+            <constructor-arg value="${target.host}"/>
+            <constructor-arg value="${target.port}"/>
+            <constructor-arg value="${target.context}"/>
+            <constructor-arg value="${target.username}"/>
+            <constructor-arg value="${target.password}"/>
+            <constructor-arg value="${target.numConnections}"/>
         </bean>
 
     </beans>
@@ -70,12 +70,12 @@
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${server.scheme}"/>
-            <constructor-arg value="${server.host}"/>
-            <constructor-arg value="${server.port}"/>
-            <constructor-arg value="${server.context}"/>
-            <constructor-arg value="${server.username}"/>
-            <constructor-arg value="${server.password}"/>
+            <constructor-arg value="${target.scheme}"/>
+            <constructor-arg value="${target.host}"/>
+            <constructor-arg value="${target.port}"/>
+            <constructor-arg value="${target.context}"/>
+            <constructor-arg value="${target.username}"/>
+            <constructor-arg value="${target.password}"/>
         </bean>
 
     </beans>

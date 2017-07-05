@@ -4915,6 +4915,359 @@ class TestNCube extends NCubeBaseTest
         }
     }
 
+    @Test
+    void testMapReduceWithBasicQuery()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'NY\'')
+
+        assert queryResult.size() == 2
+
+        Map row = queryResult['B']
+        assert row['foo'] == 'NY'
+        assert row['bar'] == 'a string long enough to test contains'
+
+        row = queryResult['F']
+        assert row['foo'] == 'NY'
+        assert row['bar'] == null
+    }
+
+    @Test
+    void testMapReduceWithComplexQuery()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'IN\' || (input.bar instanceof Number && input.bar < 50)')
+
+        assert queryResult.size() == 2
+
+        Map row = queryResult['C']
+        assert row['foo'] == 'IN'
+        assert row['bar'] == 'something random'
+
+        row = queryResult['D']
+        assert row['foo'] == 'KY'
+        assert row['bar'] == 33
+    }
+
+    @Test
+    void testMapReduceWithContains()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.bar?.toString()?.contains(\'test contains\')')
+
+        assert queryResult.size() == 2
+
+        Map row = queryResult['B']
+        assert row['foo'] == 'NY'
+        assert row['bar'] == 'a string long enough to test contains'
+
+        row = queryResult['E']
+        assert row['foo'] == 'TX'
+        assert row['bar'] == 'also test contains'
+    }
+
+    @Test
+    void testMapReduceWithMultipleConditions()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'NY\' && input.bar?.contains(\'a string long enough\')')
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['B']
+        assert row['foo'] == 'NY'
+        assert row['bar'] == 'a string long enough to test contains'
+    }
+
+    @Test
+    void testMapReduceLookingForEmptyValue()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', '!input.bar')
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['F']
+        assert row['foo'] == 'NY'
+        assert row['bar'] == null
+    }
+
+    @Test
+    void testMapReduceFindAllRows()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'true')
+
+        assert queryResult.size() == 8
+        assert queryResult.keySet().containsAll(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
+    }
+
+    @Test
+    void testMapReduceWithCommandCell()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'')
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['G']
+        assert row['foo'] == 'OH'
+        assert row['bar'] == '5 G - bar'
+    }
+
+    @Test
+    void testMapReduceWithOtherDimensions()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [bind: 'bindToAValue'])
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['A']
+        assert row['foo'] == 'OH'
+        assert row['bar'] == 'Ohio'
+    }
+
+    @Test
+    void testMapReduceWithOtherDimensionsMissingBindings()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [:])
+            fail 'Should have thrown an IllegalArgumentException'
+        }
+        catch(IllegalArgumentException ex)
+        {
+            String message = ex.message
+            assert message.contains('row axis [key]')
+            assert message.contains('query axis [query]')
+            assert message.contains('bindings for axes [bind]')
+            assert message.contains('must be supplied')
+        }
+    }
+
+    @Test
+    void testMapReduceWithOtherDimensionsInvalidCoordinate()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [bind: 'invalid'])
+            fail 'Should have thrown a CoordinateNotFoundException'
+        }
+        catch (CoordinateNotFoundException ex)
+        {
+            String message = ex.message
+            assert message.contains('Column [invalid]')
+            assert message.contains('axis [bind]')
+            assert message.contains('not found')
+            assert message.contains('cube [Test.Select.MultiDimension]')
+        }
+    }
+
+    @Test
+    void testMapReduceWithNonDiscreteRowAxis()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryRowAxisRangeTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo != \'N/A\' && input.foo != \'Slow\'')
+
+        assert queryResult.size() == 3
+
+        Map row = queryResult['legal']
+        assert row['foo'] == 'Legal'
+        assert row['bar'] == 'DEF'
+
+        row = queryResult['fair']
+        assert row['foo'] == 'Fair'
+        assert row['bar'] == 'GHI'
+
+        row = queryResult['average']
+        assert row['foo'] == 'Average'
+        assert row['bar'] == 'JKL'
+    }
+
+    @Test
+    void testMapReduceWithNonDiscreteRowAxisMissingNames()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryRowAxisMissingNamesTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', 'query', 'true')
+            fail 'Should have thrown an IllegalStateException'
+        }
+        catch(IllegalStateException ex)
+        {
+            String message = ex.message
+            assert message.contains('Axis [key]')
+            assert message.contains('cube [Test.Select.RowAxisRange.MissingNames]')
+            assert message.contains('not a discrete axis')
+            assert message.contains('must be named')
+        }
+    }
+
+    @Test
+    void testMapReduceWithNonDiscreteColumnAxis()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryColumnAxisSetTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.group2 != \'Y\'')
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['location']
+        assert row['group1'] == 'midwest'
+        assert row['group2'] == 'scattered'
+        assert row['group3'] == 'western'
+    }
+
+    @Test
+    void testMapReduceWithNonDiscreteColumnAxisMissingNames()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryColumnAxisMissingNamesTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', 'query', 'true')
+            fail 'Should have thrown an IllegalStateException'
+        }
+        catch(IllegalStateException ex)
+        {
+            String message = ex.message
+            assert message.contains('Axis [query]')
+            assert message.contains('cube [Test.Select.ColumnAxisSet.MissingNames]')
+            assert message.contains('not a discrete axis')
+            assert message.contains('must be named')
+        }
+    }
+
+    @Test
+    void testMapReduceWithNoRowAxisName()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+
+        try
+        {
+            ncube.mapReduce(null, 'query', 'input.foo == \'NY\'')
+        }
+        catch(IllegalArgumentException ex)
+        {
+            assert ex.message == 'The key row axis cannot be null'
+        }
+    }
+
+    @Test
+    void testMapReduceWithNoColumnAxisName()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', null, 'input.foo == \'NY\'')
+        }
+        catch(IllegalArgumentException ex)
+        {
+            assert ex.message == 'The query axis cannot be null'
+        }
+    }
+
+    @Test
+    void testMapReduceWithNoWhereClause()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+
+        try
+        {
+            ncube.mapReduce('key', 'query', null)
+        }
+        catch(IllegalArgumentException ex)
+        {
+            assert ex.message == 'The where clause cannot be null'
+        }
+    }
+
+    @Test
+    void testMapReduceWithFilterAndReturnSets()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'TX\'', [:], [:], ['foo'] as Set, ['bar'] as Set)
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['E']
+        assert row.size() == 1
+        assert row['bar'] == 'also test contains'
+    }
+
+    @Test
+    void testMapReduceWithFilterAndReturnSetsColumnInBoth()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'TX\'', [:], [:], ['foo'] as Set, ['foo', 'bar'] as Set)
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['E']
+        assert row.size() == 2
+        assert row['foo'] == 'TX'
+        assert row['bar'] == 'also test contains'
+    }
+
+    @Test
+    void testMapReduceWithFilterAndReturnSetsNonDiscreteAxis()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryColumnAxisSetTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.group2 != \'Y\'', [:], [:], ['group2'] as Set, ['group3'] as Set)
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['location']
+        assert row.size() == 1
+        assert row['group3'] == 'western'
+    }
+
+    @Test
+    void testMapReduceWithFilterAndReturnSetsRunningCommandCell()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [:], ['foo'] as Set, ['bar'] as Set)
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['G']
+        assert row.size() == 1
+        assert row['bar'] == '5 G - bar'
+    }
+
+    @Test
+    void testMapReduceFromGroovyExpression()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.getCell([key: 'H', query: 'bar'])
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['D']
+        assert row['foo'] == 'KY'
+        assert row['bar'] == 33
+    }
+
+    @Test
+    void testMapReduceFromGroovyExpressionAgainstAnotherCube()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube otherCube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
+        Map queryResult = ncube.getCell([key: 'H', query: 'bar', bind: 'bindToAValue', cubeName: 'Test.Select.MultiDimension'])
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['A']
+        assert row['foo'] == 'OH'
+        assert row['bar'] == 'Ohio'
+    }
+
     // For testing getCube speed()
     @Ignore
     void testGetCubeSpeed()

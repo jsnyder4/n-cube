@@ -86,8 +86,6 @@ interface NCubeMutableClient extends NCubeClient
 
     void updateAxisMetaProperties(ApplicationID appId, String cubeName, String axisName, Map<String, Object> newMetaProperties)
 
-    Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
-
     Boolean updateNotes(ApplicationID appId, String cubeName, String notes)
 
     Set<String> getReferencesFrom(ApplicationID appId, String cubeName)

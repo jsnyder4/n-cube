@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
+import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.DeepEquals
 import org.junit.Test
@@ -49,7 +50,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         return [new NCubeTest('foo', pairs, cellInfos)] as Object[]
     }
 
-    private static NCube createCube(boolean shouldCreateTests = false)
+    private static NCube createCube()
     {
         NCube<Double> ncube = NCubeBuilder.getTestNCube2D(true)
         ncube.applicationID = defaultSnapshotApp
@@ -66,10 +67,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         coord.gender = 'male'
         ncube.setCell(1.8d, coord)
 
+        ncube.testData = createTests()
         mutableClient.createCube(ncube)
-        if (shouldCreateTests) {
-            mutableClient.saveTests(defaultSnapshotApp, ncube.name, createTests())
-        }
         mutableClient.updateNotes(defaultSnapshotApp, ncube.name, 'notes follow')
         return ncube
     }
@@ -97,7 +96,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, version, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         ncube.applicationID = appId
         mutableClient.createCube(ncube)
-        mutableClient.saveTests(appId, ncube.name, createTests())
+        ncube.testData = createTests()
         mutableClient.updateNotes(appId, ncube.name, 'notes follow')
 
         mutableClient.search(appId, name1, null, [(SEARCH_EXACT_MATCH_NAME) : true])
@@ -145,7 +144,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testUpdateSavesTestData()
     {
-        NCube cube = createCube(true)
+        NCube cube = createCube()
         assertNotNull(cube)
 
         Object[] expectedTests = createTests()
@@ -474,7 +473,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.createCube(ncube1)
         assertTrue(ncube1.numDimensions == 3)
         mutableClient.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
-        mutableClient.saveTests(defaultSnapshotApp, ncube1.name, createTests())
+        ncube1.testData = createTests()
+        mutableClient.updateCube(ncube1)
         Object[] testData = mutableClient.getTests(defaultSnapshotApp, ncube1.name)
         Object[] expectedTests = createTests()
         assertTrue(DeepEquals.deepEquals(expectedTests, testData))
@@ -564,7 +564,6 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
         assertTrue('Trailer Config Notes' == notes1)
 
-        mutableClient.saveTests(next, 'test.ValidTrailorConfigs', null)
         String testData = mutableClient.getTests(next, 'test.ValidTrailorConfigs')
         assertNull(testData)
     }
@@ -870,7 +869,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testGetAppTests()
     {
-        createCube(true)
+        createCube()
         NCube noTestsCube = new NCube('noTests')
         noTestsCube.applicationID = defaultSnapshotApp
         mutableClient.createCube(noTestsCube)
@@ -893,20 +892,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             assertContainsIgnoreCase(e.message, 'could not fetch', 'test data')
         }
 
-        createCube(true)
+        createCube()
         Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
         assertNotNull(testData)
-        assertTrue(testData.size() > 0)
-
-        try
-        {
-            mutableClient.saveTests(defaultSnapshotApp, 'test.funky', null)
-            fail('should not make it here')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertContainsIgnoreCase(e.message, 'cannot update', 'test data', 'does not exist')
-        }
+        assert testData.size() > 0
 
         ApplicationID newId = defaultSnapshotApp.createNewSnapshotId('0.1.1')
         try
@@ -923,14 +912,15 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testSaveTestsUpdatesSha1()
     {
-        createCube(true)
+        NCube cube = createCube()
         Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
         assertNotNull(testData)
         assert 1 == testData.size()
         mutableClient.commitBranch(defaultSnapshotApp)
 
         NCubeTest newTest = new NCubeTest('bar', testData[0].coord as Map, testData[0].expected as CellInfo[])
-        mutableClient.saveTests(defaultSnapshotApp, 'test.Age-Gender', newTest)
+        cube.testData = [newTest].toArray()
+        mutableClient.updateCube(cube)
         List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForHead(defaultSnapshotApp)
         assert 1 == dtos.size()
     }
@@ -1248,11 +1238,11 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         Map testCoord = [Gender:'Male', Age: 42]
         NCube cube = createCube()
         cube.setCell(7d, testCoord)
-        mutableClient.updateCube(cube);
+        mutableClient.updateCube(cube)
         cube.setCell(2d, [Gender:'Male', Age: 10])
-        mutableClient.updateCube(cube);
+        mutableClient.updateCube(cube)
         cube.setCell(5d, [Gender:'Male', Age: 42])
-        mutableClient.updateCube(cube);
+        mutableClient.updateCube(cube)
 
         Set<Long> ids = []
         ids << cube.getAxis('Gender').findColumn('Male').id

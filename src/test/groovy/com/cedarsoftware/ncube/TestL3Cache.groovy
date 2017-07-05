@@ -435,13 +435,13 @@ class TestL3Cache extends NCubeCleanupBaseTest
         return cdnClassLoader['generatedClassesDir']
     }
 
-    private void configureSysParams(srcDirPath,clsDirPath)
+    private static void configureSysParams(String srcDirPath, String clsDirPath)
     {
         ncubeRuntime.clearSysParams()
 
-        System.setProperty("NCUBE_PARAMS", "{\"${NCUBE_PARAMS_GENERATED_SOURCES_DIR}\":\"${srcDirPath}\",\"${NCUBE_PARAMS_GENERATED_CLASSES_DIR}\":\"${clsDirPath}\"}")
-        assertEquals(srcDirPath,ncubeRuntime.getSystemParams()[NCUBE_PARAMS_GENERATED_SOURCES_DIR])
-        assertEquals(clsDirPath,ncubeRuntime.getSystemParams()[NCUBE_PARAMS_GENERATED_CLASSES_DIR])
+        System.setProperty("NCUBE_PARAMS", """{"${NCUBE_PARAMS_GENERATED_SOURCES_DIR}":"${srcDirPath.replace('\\', '\\\\')}","${NCUBE_PARAMS_GENERATED_CLASSES_DIR}":"${clsDirPath.replace('\\', '\\\\')}"}""")
+        assertEquals(srcDirPath,ncubeRuntime.systemParams[NCUBE_PARAMS_GENERATED_SOURCES_DIR])
+        assertEquals(clsDirPath,ncubeRuntime.systemParams[NCUBE_PARAMS_GENERATED_CLASSES_DIR])
     }
 
     private void reloadCubes() {

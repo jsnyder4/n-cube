@@ -563,11 +563,23 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                        (SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'updateCube'] as Map
         boolean rowFound = false
+
+        String updatedTestData
+        if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
+        {
+            updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
+            cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+            if (updatedTestData)
+            {
+                cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, "rev ${getMaxRevision(c, cube.applicationID, cube.name, 'updateCube') + 1}".toString())
+            }
+        }
+
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             rowFound = true
             Long revision = row.getLong("revision_number")
             boolean cubeActive = revision >= 0
-            byte[] testData = cubeActive ? row.getBytes(TEST_DATA_BIN) : null
+            byte[] testData = updatedTestData ? updatedTestData.bytes : row.getBytes(TEST_DATA_BIN)
             String headSha1 = row.getString('head_sha1')
             String oldSha1 = row.getString('sha1')
 
@@ -596,6 +608,12 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                        (SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'createCube'] as Map
         boolean rowFound = false
+        String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
+        if (updatedTestData)
+        {
+            cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+        }
+
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             throw new IllegalArgumentException("Unable to create cube: ${cube.name} in app: ${appId}, cube already exists (it may need to be restored)")
         })
@@ -603,7 +621,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
         if (!rowFound)
         {
-            insertCube(c, appId, cube, 0L, null, "created", true, null, username, 'createCube')
+            insertCube(c, appId, cube, 0L, updatedTestData?.bytes, "created", true, null, username, 'createCube')
         }
     }
 
@@ -1556,24 +1574,6 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         return count
     }
 
-    static boolean updateTestData(Connection c, ApplicationID appId, String cubeName, String testData)
-    {
-        Long maxRev = getMaxRevision(c, appId, cubeName, 'saveTests')
-        Map map = [testData: StringUtilities.getUTF8Bytes(testData), tenant: padTenant(c, appId.tenant),
-                   app     : appId.app, ver: appId.version, status: ReleaseStatus.SNAPSHOT.name(),
-                   branch  : appId.branch, rev: maxRev, cube: buildName(cubeName)]
-        Sql sql = getSql(c)
-
-        String update = """\
-/* saveTests */
-UPDATE n_cube SET test_data_bin=:testData
-WHERE app_cd = :app AND ${buildNameCondition('n_cube_nm')} = :cube AND version_no_cd = :ver
-AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
-
-        int rows = sql.executeUpdate(map, update)
-        return rows == 1
-    }
-
     static Map getAppTestData(Connection c, ApplicationID appId)
     {
         Map ret = [:]
@@ -1594,20 +1594,35 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         return ret
     }
 
+    static String getTestData(Connection c, Long cubeId)
+    {
+        Map map = [cubeId: cubeId]
+        String select = "/* getTestData */ SELECT test_data_bin FROM n_cube WHERE n_cube_id = :cubeId"
+        String msg = "Could not fetch test data for cube with id ${cubeId}"
+        return fetchTestData(c, map, select, msg)
+    }
+
     static String getTestData(Connection c, ApplicationID appId, String cubeName)
     {
         Map map = appId as Map
         map.cube = buildName(cubeName)
         map.tenant = padTenant(c, appId.tenant)
-        Sql sql = getSql(c)
-        byte[] testBytes = null
-        boolean found = false
 
         String select = """\
 /* getTestData */
 SELECT test_data_bin FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch
 ORDER BY abs(revision_number) DESC"""
+
+        String msg = "Could not fetch test data, cube: ${cubeName} does not exist in app: ${appId}"
+        return fetchTestData(c, map, select, msg)
+    }
+
+    private static String fetchTestData(Connection c, Map map, String select, String msg)
+    {
+        Sql sql = getSql(c)
+        byte[] testBytes = null
+        boolean found = false
 
         sql.eachRow(select, map, 0, 1, { ResultSet row ->
             testBytes = row.getBytes(TEST_DATA_BIN)
@@ -1616,7 +1631,7 @@ ORDER BY abs(revision_number) DESC"""
 
         if (!found)
         {
-            throw new IllegalArgumentException("Could not fetch test data, cube: ${cubeName} does not exist in app: ${appId}")
+            throw new IllegalArgumentException(msg)
         }
         return testBytes == null ? '' : new String(testBytes, "UTF-8")
     }

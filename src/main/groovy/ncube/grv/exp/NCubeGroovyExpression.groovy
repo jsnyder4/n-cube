@@ -208,6 +208,21 @@ class NCubeGroovyExpression
         return target.getCell(input, output, defaultValue)
     }
 
+    Map mapReduce(String rowAxisName, String colAxisName, String where = 'true', Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null)
+    {
+        NCube target
+        if(cubeName)
+        {
+            appId = appId ?: getApplicationID()
+            target = ncubeRuntime.getCube(appId, cubeName)
+        }
+        else
+        {
+            target = ncube
+        }
+        return target.mapReduce(rowAxisName, colAxisName, where, output, input, columnsToSearch, columnsToReturn)
+    }
+
     /**
      * Restart rule execution.  The Map contains the names of rule axes to rule names.  For any rule axis
      * specified in the map, the rule step counter will be moved (jumped) to the named rule.  More than one

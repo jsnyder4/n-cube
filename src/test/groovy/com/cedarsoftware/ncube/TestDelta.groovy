@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -459,7 +460,7 @@ class TestDelta extends NCubeCleanupBaseTest
         boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
-        Axis state = cube2.getAxis('state');
+        Axis state = cube2.getAxis('state')
         assertNotNull state.findColumn('TX')
         assertNotNull state.findColumn('GA')
         assertNull state.findColumn('OH')
@@ -2140,6 +2141,163 @@ class TestDelta extends NCubeCleanupBaseTest
         assert 20 == ncube1.getCell([state: 'TX'])
     }
 
+    @Test
+    void testMergeDeltaAddTest()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData.size() == 1
+    }
+
+    @Test
+    void testMergeDeltaDeleteTest()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        producer.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert !consumer.testData
+    }
+
+    @Test
+    void testMergeDeltaAddCoord()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        Map<String, CellInfo> coord = test.coord
+        coord.testInput2 = new CellInfo('test2')
+        producer.testData = [new NCubeTest(test.name, coord, test.assertions)].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].coord.size() == 2
+    }
+
+    @Test
+    void testMergeDeltaRemoveCoord()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        Map<String, CellInfo> coord = test.coord
+        coord.remove('testInput')
+        producer.testData = [new NCubeTest(test.name, coord, test.assertions)].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].coord.size() == 0
+    }
+
+    @Test
+    void testMergeDeltaUpdateCoord()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        Map<String, CellInfo> coord = test.coord
+        coord.testInput = new CellInfo('test2')
+        producer.testData = [new NCubeTest(test.name, coord, test.assertions)].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].coord.testInput.value == 'test2'
+    }
+
+    @Test
+    void testMergeDeltaAddAssert()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        List<CellInfo> asserts = test.assertions.toList() as List<CellInfo>
+        asserts.add(new CellInfo('output2'))
+        producer.testData = [new NCubeTest(test.name, test.coord, asserts.toArray() as CellInfo[])].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].assertions.size() == 2
+    }
+
+    @Test
+    void testMergeDeltaRemoveAssert()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        producer.testData = [new NCubeTest(test.name, test.coord, [].toArray() as CellInfo[])].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].assertions.size() == 0
+    }
+
+    @Test
+    void testMergeDeltaUpdateAssert()
+    {
+        NCube producer = NCubeBuilder.discrete1D
+        NCube consumer = NCubeBuilder.discrete1D
+
+        addTestToCube(producer)
+        addTestToCube(consumer)
+
+        NCubeTest test = producer.testData[0]
+        List<CellInfo> asserts = test.assertions.toList() as List<CellInfo>
+        asserts[0].isUrl = true
+        producer.testData = [new NCubeTest(test.name, test.coord, asserts.toArray() as CellInfo[])].toArray()
+
+        List<Delta> deltas = DeltaProcessor.getDeltaDescription(producer, consumer)
+        assert deltas.size() == 1
+        consumer.mergeDeltas(deltas)
+        assert consumer.testData[0].assertions[0].isUrl
+    }
+
+    private static addTestToCube(NCube cube)
+    {
+        String testName = 'test'
+        Map<String, CellInfo> coord = [testInput: new CellInfo('test')]
+        CellInfo[] asserts = [new CellInfo('output')].toArray() as CellInfo[]
+        cube.testData = [new NCubeTest(testName, coord, asserts)].toArray()
+    }
+
     static void setupMetaPropertyTest()
     {
         NCube ncube = NCubeBuilder.discrete1D
@@ -2216,7 +2374,7 @@ class TestDelta extends NCubeCleanupBaseTest
         return appId
     }
 
-    static def getCellIgnoreRule(NCube ncube, Map coord)
+    static Object getCellIgnoreRule(NCube ncube, Map coord)
     {
         Set<Long> idCoord = ncube.getCoordinateKey(coord)
         return ncube.getCellById(idCoord, coord, [:])

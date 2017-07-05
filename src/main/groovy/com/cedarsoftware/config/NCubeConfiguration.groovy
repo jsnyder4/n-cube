@@ -46,13 +46,13 @@ class NCubeConfiguration
     @Value('${perm.cache.concurrency}') int concurrencyPermCache
 
     @Value('${ncube.allow.mutable.methods}') boolean allowMutableMethods
-    @Value('${server.scheme}') String scheme
-    @Value('${server.host}') String host
-    @Value('${server.port}') int port
-    @Value('${server.context}') String context
-    @Value('${server.username}') String username
-    @Value('${server.password}') String password
-    @Value('${server.numConnections}') int numConnections
+    @Value('${target.scheme}') String scheme
+    @Value('${target.host}') String host
+    @Value('${target.port}') int port
+    @Value('${target.context}') String context
+    @Value('${target.username}') String username
+    @Value('${target.password}') String password
+    @Value('${target.numConnections}') int numConnections
 
     @Bean(name = 'ncubeRemoval')
     NCubeRemoval getNCubeRemoval()

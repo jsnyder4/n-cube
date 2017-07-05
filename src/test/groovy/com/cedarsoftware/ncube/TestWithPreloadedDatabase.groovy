@@ -1235,7 +1235,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
 
         // create pull request with version 1.28.0
-        String prId = mutableClient.generatePullRequestHash(BRANCH1, mutableClient.getBranchChangesForHead(BRANCH1))
+        String prId = mutableClient.generatePullRequestHash(BRANCH1, mutableClient.getBranchChangesForHead(BRANCH1).toArray())
         Object[] prInfos = mutableClient.pullRequests
         assert 1 == prInfos.size()
         ApplicationID prAppId = (prInfos[0] as Map)[PR_APP] as ApplicationID
@@ -6284,6 +6284,17 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         try
         {
             mutableClient.commitBranch(snapshotAppId)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not performed', 'versions')
+        }
+
+        try
+        { // make sure going around commitBranch doesn't work (bugfix)
+            String prId = mutableClient.generatePullRequestHash(snapshotAppId, mutableClient.getBranchChangesForHead(snapshotAppId).toArray())
+            mutableClient.mergePullRequest(prId)
             fail()
         }
         catch(IllegalStateException e)

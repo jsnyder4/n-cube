@@ -331,6 +331,19 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         }
     }
 
+    @Test
+    void testMapReduce()
+    {
+        createCubeFromResource(BRANCH1, 'selectQueryTest.json')
+        Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'key', 'query', 'input.foo == \'AL\'', [:], [:], [] as Set, [] as Set]) as Map
+
+        assert queryResult.size() == 1
+
+        Map row = queryResult['A']
+        assert row['foo'] == 'AL'
+        assert row['bar'] == 123
+    }
+
     private static Object call(String methodName, List args)
     {
         if (NCubeAppContext.clientTest)

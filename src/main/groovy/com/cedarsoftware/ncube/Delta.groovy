@@ -45,7 +45,10 @@ class Delta implements Comparable
         COLUMN,
         COLUMN_META,
         CELL,
-        CELL_META
+        CELL_META,
+        TEST,
+        TEST_COORD,
+        TEST_ASSERT
     }
 
     enum Type
@@ -93,16 +96,29 @@ class Delta implements Comparable
         return type
     }
 
-    Object getLocId() {
+    Object getLocId()
+    {
         return locId
     }
 
-    Object getSourceVal() {
+    Object getSourceVal()
+    {
         return sourceVal
     }
 
-    Object getDestVal() {
+    Object getDestVal()
+    {
         return destVal
+    }
+
+    Object[] getSourceList()
+    {
+        return sourceList
+    }
+
+    Object[] getDestList()
+    {
+        return destList
     }
 
     String toString()

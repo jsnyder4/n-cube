@@ -107,24 +107,22 @@ class TestThreading extends NCubeCleanupBaseTest
         ncubeRuntime.addCube(cp)
 
         File genSourcesDir = new File('target/generated-sources')
-        if (!genSourcesDir.isDirectory()) {
-            assertFalse("${genSourcesDir.path} should be a directory",genSourcesDir.isDirectory())
+        if (!genSourcesDir.directory) {
             genSourcesDir.mkdirs()
         }
 
         File genClassesDir = new File('target/generated-classes')
-        if (!genClassesDir.isDirectory()) {
-            assertFalse("${genClassesDir.path} should be a directory",genClassesDir.isDirectory())
+        if (!genClassesDir.directory) {
             genClassesDir.mkdirs()
         }
 
         ncubeRuntime.clearSysParams()
         String srcDirPath = genSourcesDir.path
         String clsDirPath = genClassesDir.path
-        System.setProperty("NCUBE_PARAMS", "{\"${NCUBE_PARAMS_GENERATED_SOURCES_DIR}\":\"${srcDirPath}\",\"${NCUBE_PARAMS_GENERATED_CLASSES_DIR}\":\"${clsDirPath}\"}")
-        assertEquals(srcDirPath,ncubeRuntime.getSystemParams()[NCUBE_PARAMS_GENERATED_SOURCES_DIR])
-        assertEquals(clsDirPath,ncubeRuntime.getSystemParams()[NCUBE_PARAMS_GENERATED_CLASSES_DIR])
-        GroovyBase.setGeneratedSourcesDirectory(null)
+        System.setProperty("NCUBE_PARAMS", """{"${NCUBE_PARAMS_GENERATED_SOURCES_DIR}":"${srcDirPath.replace('\\', '\\\\')}","${NCUBE_PARAMS_GENERATED_CLASSES_DIR}":"${clsDirPath.replace('\\', '\\\\')}"}""")
+        assertEquals(srcDirPath,ncubeRuntime.systemParams[NCUBE_PARAMS_GENERATED_SOURCES_DIR])
+        assertEquals(clsDirPath,ncubeRuntime.systemParams[NCUBE_PARAMS_GENERATED_CLASSES_DIR])
+        GroovyBase.generatedSourcesDirectory = null
     }
 
     @After

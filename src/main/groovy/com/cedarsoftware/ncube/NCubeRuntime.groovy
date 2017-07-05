@@ -137,6 +137,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
+    Object[] getTests(Long cubeId)
+    {
+        Object[] result = bean.call(beanName, 'getTests', [cubeId]) as Object[]
+        return result
+    }
+
     String getUserId()
     {
         String userId = bean.call(beanName, 'getUserId', []) as String
@@ -399,14 +405,6 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         verifyAllowMutable('updateAxisMetaProperties')
         bean.call(beanName, 'updateAxisMetaProperties', [appId, cubeName, axisName, newMetaProperties])
         clearCubeFromCache(appId, cubeName)
-    }
-
-    Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
-    {
-        verifyAllowMutable('saveTests')
-        Boolean result = bean.call(beanName, 'saveTests', [appId, cubeName, tests]) as Boolean
-        clearCubeFromCache(appId, cubeName)
-        return result
     }
 
     Boolean updateNotes(ApplicationID appId, String cubeName, String notes)

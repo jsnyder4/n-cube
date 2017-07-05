@@ -2,7 +2,6 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
-import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
@@ -99,6 +98,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     {
         assertPermissions(appId, cubeName)
         return loadCubeInternal(appId, cubeName)
+    }
+
+    NCube loadCubeWithTestData(ApplicationID appId, String cubeName)
+    {
+        NCube cube = loadCube(appId, cubeName)
+        String s = persister.getTestData(appId, cubeName, getUserId())
+        cube.testData = NCubeTestReader.convert(s).toArray()
+        return cube
     }
 
     private NCube loadCubeInternal(ApplicationID appId, String cubeName)
@@ -381,7 +388,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      */
     NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
     {
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = loadCubeWithTestData(appId, cubeName)
         if (ncube == null)
         {
             throw new IllegalArgumentException("No ncube exists with the name: ${cubeName}, no changes will be merged, app: ${appId}")
@@ -635,26 +642,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return false
     }
 
-    Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
-    {
-        String testData = new NCubeTestWriter().format(tests)
-        ApplicationID.validateAppId(appId)
-        NCube.validateCubeName(cubeName)
-        assertPermissions(appId, cubeName, Action.UPDATE)
-        assertNotLockBlocked(appId)
-        List<NCube> cubes = cubeSearch(appId, cubeName, null, [(SEARCH_ACTIVE_RECORDS_ONLY):false])
-        if (!cubes) {
-            throw new IllegalArgumentException("Cannot update test data, cube: ${cubeName} does not exist in app: ${appId}")
-        }
-        NCube cube = cubes.first()
-        List<NCubeInfoDto> revs = persister.getRevisions(appId, cubeName, false, getUserId())
-        String date = CellInfo.dateTimeFormat.format(new Date())
-        cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, "rev ${revs.first().revision} - $date".toString())
-        cube.clearSha1()
-        updateCube(cube)
-        return persister.updateTestData(appId, cubeName, testData, getUserId())
-    }
-
     Map getAppTests(ApplicationID appId)
     {
         Map ret = [:]
@@ -676,6 +663,23 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         NCube.validateCubeName(cubeName)
         assertPermissions(appId, cubeName)
         String s = persister.getTestData(appId, cubeName, getUserId())
+        return convertTests(s)
+    }
+
+    Object[] getTests(Long cubeId)
+    {
+        NCube cube = loadCubeById(cubeId)
+        ApplicationID appId = cube.applicationID
+        String cubeName = cube.name
+        ApplicationID.validateAppId(appId)
+        NCube.validateCubeName(cubeName)
+        assertPermissions(appId, cubeName)
+        String s = persister.getTestData(cubeId, getUserId())
+        return convertTests(s)
+    }
+
+    private static Object[] convertTests(String s)
+    {
         if (StringUtilities.isEmpty(s))
         {
             return null
@@ -2277,7 +2281,6 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
      */
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
     {
-        validateReferenceAxesAppIds(appId, inputCubes as List<NCubeInfoDto>)
         String prId = generatePullRequestHash(appId, inputCubes)
         return mergePullRequest(prId)
     }
@@ -2412,6 +2415,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         ApplicationID.validateAppId(appId)
         appId.validateBranchIsNotHead()
         appId.validateStatusIsNotRelease()
+        validateReferenceAxesAppIds(appId, inputCubes as List<NCubeInfoDto>)
         assertNotLockBlocked(appId)
         if (!isMerge)
         {
@@ -2419,7 +2423,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         }
 
         List<NCubeInfoDto> newDtoList = getBranchChangesForHead(appId)
-        if (inputCubes == null)
+        if (!inputCubes)
         {
             return newDtoList
         }
@@ -2563,6 +2567,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         NCube headCube = persister.loadCubeById(headCubeId, getUserId())
         NCube baseCube, headBaseCube
         Map branchDelta, headDelta
+
+        String branchCubeTests = persister.getTestData(branchCubeId, getUserId())
+        String headCubeTests = persister.getTestData(headCubeId, getUserId())
+        branchCube.testData = NCubeTestReader.convert(branchCubeTests).toArray()
+        headCube.testData = NCubeTestReader.convert(headCubeTests).toArray()
 
         if (branchInfo.headSha1 != null)
         {   // Cube is based on a HEAD cube (not created new)
