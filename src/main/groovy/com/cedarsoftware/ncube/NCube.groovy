@@ -1108,13 +1108,42 @@ class NCube<T>
         return result
     }
 
-    Map mapReduce(String rowAxisName, String colAxisName, String where = 'true', Map output = [:], Map addlBindings = [:], Set columnsToSearch = null, Set columnsToReturn = null)
+    /**
+     * Filter rows of an n-cube.  Use this API to fetch a subset of an n-cube, similar to SQL SELECT.
+     * @param rowAxisName String name of axis acting as the ROW axis.
+     * @param colAxisName String name of axis acting as the COLUMN axis.
+     * @param where String groovy statement block (or expression) written as condition in terms of the columns on the colAxisName.
+     * Example: "(input.state == 'TX' || input.state == 'OH') && (input.attribute == 'fuzzy')".  This will only return rows
+     * where this condition is met ('state' and 'attribute' are two column values from the colAxisName).  The values for each
+     * row in the rowAxis is bound to the where expression for each row.  If the row passes the 'where' condition, it is
+     * included in the output.
+     * @param output Map the output Map use to write multiple return values to, just like getCell() or at().
+     * @param input Map the input Map just like it is used for getCell() or at().  Only needed when there are three (3)
+     * or more dimensions.  All values in the input map (excluding the axis specified by rowAxisName and colAxisName) are
+     * bound just as they are in getCell() or at().
+     * @param columnsToSearch Set which allows reducing the number of columns bound for use in the where clause.  If not
+     * specified, all columns on the colAxisName can be used.  For example, if you had an axis named 'attribute', and it
+     * has 10 columns on it, you could list just two (2) of the columns here, and only those columns would be placed into
+     * values accessible to the where clause via input.xxx == 'someValue'.
+     * @param columnsToReturn Set of values to indicate which columns to return.  If not specified, the entire 'row' is
+     * returned.  For example, if you had an axis named 'attribute', and it has 10 columns on it, you could list just
+     * two (2) of the columns here, in the returned Map of rows, only these two columns will be in the returned Map.
+     * The columnsToSearch and columnsToReturn can be completely different, overlap, or not be specified. The mapReduce()
+     * API runs faster when fewer columns are included in the columnsToSearch.
+     * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
+     * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
+     * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
+     * and exception will be thrown.  The 'value' associated to the key (column value or column name) is a Map record,
+     * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
+     * for each cell in the same column, for when the 'where' condition holds true (groovy true).
+     */
+    Map mapReduce(String rowAxisName, String colAxisName, String where = 'true', Map output = [:], Map input = [:], Set columnsToSearch = null, Set columnsToReturn = null)
     {
-        throwIf(!rowAxisName, new IllegalArgumentException('The key row axis cannot be null'))
-        throwIf(!colAxisName, new IllegalArgumentException('The query axis cannot be null'))
+        throwIf(!rowAxisName, new IllegalArgumentException('The row axis name cannot be null'))
+        throwIf(!colAxisName, new IllegalArgumentException('The column axis name cannot be null'))
         throwIf(!where, new IllegalArgumentException('The where clause cannot be null'))
 
-        Set<Long> boundColumns = hydrateBoundColumns(rowAxisName, colAxisName, addlBindings)
+        Set<Long> boundColumns = hydrateBoundColumns(rowAxisName, colAxisName, input)
 
         Axis rowAxis = axisList[rowAxisName]
         Axis colAxis = axisList[colAxisName]
@@ -1123,10 +1152,10 @@ class NCube<T>
 
         Map matchingRows = [:] as Map
         List<Column> whereColumns
-        if(columnsToSearch)
+        if (columnsToSearch)
         {
             whereColumns = []
-            for(columnToSearch in columnsToSearch)
+            for (columnToSearch in columnsToSearch)
             {
                 whereColumns << (isColNotDiscrete ? colAxis.findColumnByName(columnToSearch as String) : colAxis.findColumn(columnToSearch as Comparable))
             }
@@ -1138,8 +1167,8 @@ class NCube<T>
 
         GroovyExpression exp = new GroovyExpression(where, null, false)
         LongHashSet ids = new LongHashSet(boundColumns)
-        Map commandInput = new CaseInsensitiveMap(addlBindings)
-        for(column in rowAxis.columns)
+        Map commandInput = new CaseInsensitiveMap<>(input)
+        for (column in rowAxis.columns)
         {
             Map alreadyExecuted = [:] as Map
             Map queryMap = [:] as Map
@@ -1147,7 +1176,7 @@ class NCube<T>
 
             long colId = column.id
             ids << colId
-            for(whereColumn in whereColumns)
+            for (whereColumn in whereColumns)
             {
                 long whereId = whereColumn.id
                 ids << whereId
@@ -1157,7 +1186,7 @@ class NCube<T>
             }
 
             def result = executeExpression([input: queryMap, output: output, ncube: this] as Map, exp)
-            if(isTrue(result))
+            if (isTrue(result))
             {
                 setMapByAxisType(isRowNotDiscrete, rowAxis, column, buildMapReduceResult(colAxis, columnsToReturn, alreadyExecuted, ids, commandInput, output), matchingRows)
             }
@@ -2602,7 +2631,7 @@ class NCube<T>
         return ncube
     }
 
-    static void healUnamedRules(AxisType type, Object[] columns)
+    private static void healUnamedRules(AxisType type, Object[] columns)
     {
         if (type != AxisType.RULE)
         {
@@ -2630,7 +2659,7 @@ class NCube<T>
         }
     }
 
-    static MapEntry generateRuleName(Set<String> names, int count)
+    private static MapEntry generateRuleName(Set<String> names, int count)
     {
         String name
         while (names.contains(name = "BR${count++}"))
@@ -2754,7 +2783,10 @@ class NCube<T>
         return copy
     }
 
-    NCube createStubCube()
+    /**
+     * Create an 'empty' NCube that matches this NCube, but with no columns on it (same number of axes).
+     */
+    protected NCube createStubCube()
     {
         NCube stub = duplicate(name)
         stub.axes.each { Axis axis ->

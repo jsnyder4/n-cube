@@ -5154,7 +5154,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch(IllegalArgumentException ex)
         {
-            assert ex.message == 'The key row axis cannot be null'
+            assertContainsIgnoreCase(ex.message, 'row axis', 'cannot be null')
         }
     }
 
@@ -5169,7 +5169,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch(IllegalArgumentException ex)
         {
-            assert ex.message == 'The query axis cannot be null'
+            assertContainsIgnoreCase(ex.message, 'column axis', 'cannot be null')
         }
     }
 

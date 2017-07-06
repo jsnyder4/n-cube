@@ -39,6 +39,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     public static ApplicationID defaultSnapshotApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultReleaseApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.RELEASE.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultBootApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+    public static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, NCubeConstants.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
     private static Object[] createTests()
     {
@@ -1824,6 +1825,42 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testSystemIgnoresPermissions()
+    {
+        String origUser = mutableClient.userId
+        NCube ncube = createCubeFromResource('test.branch.1.json')
+        List<NCubeInfoDto> dtos = mutableClient.search(ApplicationID.testAppId, ncube.name, null, null)
+        String prId = mutableClient.generatePullRequestHash(ApplicationID.testAppId, dtos.toArray())
+        assert prId
+
+        // assert admin can read prcube
+        assert mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ.name())
+
+        // assert other user can't read prcube
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        manager.userId = 'otherUser'
+        assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ.name())
+
+        try
+        {   // make sure other user can still merge the pr (ignoring permissions)
+            Map map = mutableClient.mergePullRequest(prId)
+            assert (map.adds as List).size() == 1
+            assert (map.deletes as List).size() == 0
+            assert (map.updates as List).size() == 0
+            assert (map.restores as List).size() == 0
+            assert (map.rejects as List).size() == 0
+        }
+        catch(SecurityException ignore)
+        {   // should not get here
+            fail()
+        }
+        finally
+        {
+            manager.userId = origUser
+        }
+    }
+
+    @Test
     void testBranchPermissionsCubeCreatedOnNewBranch()
     {
         String userId = System.getProperty('user.name')
@@ -1968,7 +2005,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             assertTrue(e.message.contains(Action.UPDATE.name()))
             assertTrue(e.message.contains(testCube.name))
         }
-        manager.userId = origUser
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     @Test

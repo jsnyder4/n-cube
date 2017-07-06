@@ -208,12 +208,41 @@ class NCubeGroovyExpression
         return target.getCell(input, output, defaultValue)
     }
 
+    /**
+     * Filter rows of an n-cube.  Use this API to fetch a subset of an n-cube, similar to SQL SELECT.
+     * @param rowAxisName String name of axis acting as the ROW axis.
+     * @param colAxisName String name of axis acting as the COLUMN axis.
+     * @param where String groovy statement block (or expression) written as condition in terms of the columns on the colAxisName.
+     * Example: "(input.state == 'TX' || input.state == 'OH') && (input.attribute == 'fuzzy')".  This will only return rows
+     * where this condition is met ('state' and 'attribute' are two column values from the colAxisName).  The values for each
+     * row in the rowAxis is bound to the where expression for each row.  If the row passes the 'where' condition, it is
+     * included in the output.
+     * @param columnsToSearch Set which allows reducing the number of columns bound for use in the where clause.  If not
+     * specified, all columns on the colAxisName can be used.  For example, if you had an axis named 'attribute', and it
+     * has 10 columns on it, you could list just two (2) of the columns here, and only those columns would be placed into
+     * values accessible to the where clause via input.xxx == 'someValue'.
+     * @param columnsToReturn Set of values to indicate which columns to return.  If not specified, the entire 'row' is
+     * returned.  For example, if you had an axis named 'attribute', and it has 10 columns on it, you could list just
+     * two (2) of the columns here, in the returned Map of rows, only these two columns will be in the returned Map.
+     * The columnsToSearch and columnsToReturn can be completely different, overlap, or not be specified. The mapReduce()
+     * API runs faster when fewer columns are included in the columnsToSearch.
+     * @param cubeName String name of another cube (when the reference is to an n-cube other than 'this' n-cube).  If not
+     * specified, the mapReduce() is run against the cube containing 'this' cell.
+     * @param appId ApplicationID of another n-cube application.  If not specified, the appId of the n-cube containing
+     * 'this' cell is used.
+     * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
+     * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
+     * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
+     * and exception will be thrown.  The 'value' associated to the key (column value or column name) is a Map record,
+     * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
+     * for each cell in the same column, for when the 'where' condition holds true (groovy true).
+     */
     Map mapReduce(String rowAxisName, String colAxisName, String where = 'true', Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null)
     {
         NCube target
-        if(cubeName)
+        if (cubeName)
         {
-            appId = appId ?: getApplicationID()
+            appId = appId ?: applicationID
             target = ncubeRuntime.getCube(appId, cubeName)
         }
         else

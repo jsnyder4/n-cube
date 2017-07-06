@@ -66,6 +66,13 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         }
     }
 
+    private ThreadLocal<Boolean> isSystemRequest = new ThreadLocal<Boolean>() {
+        Boolean initialValue()
+        {
+            return false
+        }
+    }
+
     private static final List CUBE_MUTATE_ACTIONS = [Action.COMMIT, Action.UPDATE]
 
     NCubeManager(NCubePersister persister, CacheManager permCacheManager)
@@ -534,19 +541,21 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         Map prStatusCoord = [(PR_PROP):PR_STATUS]
         Date startDate = new Date() - 60
         List<NCube> prCubes = getPullRequestCubes(startDate, null)
-        for (NCube prCube : prCubes)
-        {
-            Object prAppIdObj = prCube.getCell(prAppIdCoord)
-            Object prStatus = prCube.getCell(prStatusCoord)
-            ApplicationID prAppId = prAppIdObj instanceof ApplicationID ? prAppIdObj as ApplicationID : ApplicationID.convert(prAppIdObj as String)
-            if (prStatus == PR_OPEN)
+        runSystemRequest {
+            for (NCube prCube : prCubes)
             {
-                boolean shouldChange = onlyCurrentBranch ? prAppId == appId : prAppId.equalsNotIncludingBranch(appId)
-                if (shouldChange)
+                Object prAppIdObj = prCube.getCell(prAppIdCoord)
+                Object prStatus = prCube.getCell(prStatusCoord)
+                ApplicationID prAppId = prAppIdObj instanceof ApplicationID ? prAppIdObj as ApplicationID : ApplicationID.convert(prAppIdObj as String)
+                if (prStatus == PR_OPEN)
                 {
-                    prAppId = prAppId.asVersion(newSnapVer)
-                    prCube.setCell(prAppId.toString(), prAppIdCoord)
-                    updateCube(prCube, true)
+                    boolean shouldChange = onlyCurrentBranch ? prAppId == appId : prAppId.equalsNotIncludingBranch(appId)
+                    if (shouldChange)
+                    {
+                        prAppId = prAppId.asVersion(newSnapVer)
+                        prCube.setCell(prAppId.toString(), prAppIdCoord)
+                        updateCube(prCube, true)
+                    }
                 }
             }
         }
@@ -767,7 +776,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         Map permInfo = getPermInfo(appId)
         List<NCubeInfoDto> cubes = persister.search(appId, cubeNamePattern, content, options, getUserId())
-        if (!permInfo.skipPermCheck)
+        if (!permInfo.skipPermCheck && !systemRequest)
         {
             cubes.removeAll { !fastCheckPermissions(appId, it.name, Action.READ, permInfo) }
         }
@@ -787,7 +796,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         Map permInfo = getPermInfo(appId)
         List<NCube> cubes = persister.cubeSearch(appId, cubeNamePattern, content, options, getUserId())
-        if (!permInfo.skipPermCheck)
+        if (!permInfo.skipPermCheck && !systemRequest)
         {
             cubes.removeAll { !fastCheckPermissions(appId, it.name, Action.READ, permInfo) }
         }
@@ -1052,7 +1061,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     Boolean assertPermissions(ApplicationID appId, String resource, Action action = Action.READ)
     {
         action = action ?: Action.READ
-        if (checkPermissions(appId, resource, action.name()))
+        if (systemRequest || checkPermissions(appId, resource, action.name()))
         {
             return true
         }
@@ -1515,6 +1524,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             return
         }
 
+        boolean isSysApp = appId.app == SYS_APP
+
         NCube appPermCube = new NCube(SYS_PERMISSIONS)
         appPermCube.applicationID = appId
         appPermCube.defaultCellValue = false
@@ -1524,6 +1535,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         resourceAxis.addColumn(SYS_USERGROUPS)
         resourceAxis.addColumn(SYS_BRANCH_PERMISSIONS)
         resourceAxis.addColumn(SYS_LOCK)
+        if (isSysApp)
+        {
+            resourceAxis.addColumn(SYS_TRANSACTIONS)
+        }
         appPermCube.addAxis(resourceAxis)
 
         Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.STRING, false)
@@ -1555,6 +1570,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.COMMIT.lower()])
         appPermCube.setCell(false, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
 
+        if (isSysApp)
+        {
+            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE.lower()])
+            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.UPDATE.lower()])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ.lower()])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.READ.lower()])
+        }
+
         persister.createCube(appPermCube, getUserId())
     }
 
@@ -1574,6 +1599,24 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     String getUserId()
     {
         return userId.get()
+    }
+
+    /**
+     * Set whether permissions should be checked on the current thread
+     * @param boolean isSystemRequest
+     */
+    void setSystemRequest(boolean isSystemRequest)
+    {
+        this.isSystemRequest.set(isSystemRequest)
+    }
+
+    /**
+     * Retrieve whether permissions should be checked on the current thread
+     * @return boolean
+     */
+    boolean isSystemRequest()
+    {
+        return isSystemRequest.get()
     }
 
     /**
@@ -2108,8 +2151,21 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         prCube.setCell(getUserId(), [(PR_PROP):PR_REQUESTER])
         prCube.setCell(new Date().format('M/d/yyyy HH:mm:ss'), [(PR_PROP):PR_REQUEST_TIME])
 
-        createCube(prCube)
+        runSystemRequest { createCube(prCube) }
         return sha1
+    }
+
+    private def runSystemRequest(Closure closure)
+    {
+        try
+        {
+            systemRequest = true
+            return closure()
+        }
+        finally
+        {
+            systemRequest = false
+        }
     }
 
     Map<String, Object> mergePullRequest(String prId)
@@ -2167,8 +2223,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         ret[PR_APP] = prAppId
         ret[PR_CUBE] = prCube
 
-        fillPullRequestUpdateInfo(prCube, PR_COMPLETE)
-        updateCube(prCube, true)
+        updatePullRequest(prId, null, null, PR_COMPLETE)
         return ret
     }
 
@@ -2214,7 +2269,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         NCube prCube = loadPullRequestCube(prId)
 
         String status = prCube.getCell([(PR_PROP):PR_STATUS])
-        if (exceptionTest(status))
+        if (exceptionTest && exceptionTest(status))
         {
             String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
             String appIdString = prCube.getCell([(PR_PROP):PR_APP])
@@ -2230,20 +2285,21 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             prCube.setCell(newAppId.toString(), [(PR_PROP):PR_APP])
         }
         fillPullRequestUpdateInfo(prCube, newStatus)
-        updateCube(prCube, true)
+        runSystemRequest { updateCube(prCube, true) }
         return prCube
     }
 
     private NCube loadPullRequestCube(String prId)
     {
-        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
-        List<NCubeInfoDto> dtos = search(sysAppId, "tx.${prId}", null, [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_EXACT_MATCH_NAME):true])
-        if (dtos.empty)
-        {
-            throw new IllegalArgumentException("Invalid pull request id: ${prId}")
-        }
-        NCube prCube = loadCubeById(dtos.first().id as long)
-        return prCube
+        runSystemRequest {
+            ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+            List<NCubeInfoDto> dtos = search(sysAppId, "tx.${prId}", null, [(SEARCH_ACTIVE_RECORDS_ONLY): true, (SEARCH_EXACT_MATCH_NAME): true])
+            if (dtos.empty) {
+                throw new IllegalArgumentException("Invalid pull request id: ${prId}")
+            }
+            NCube prCube = loadCubeById(dtos.first().id as long)
+            return prCube
+        } as NCube
     }
 
     Object[] getPullRequests(Date startDate = null, Date endDate = null)
@@ -2272,7 +2328,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     {
         ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
         Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_CREATE_DATE_START):startDate, (SEARCH_CREATE_DATE_END):endDate]
-        return cubeSearch(sysAppId, 'tx.*', null, options)
+        runSystemRequest { cubeSearch(sysAppId, 'tx.*', null, options) } as List<NCube>
     }
 
     /**

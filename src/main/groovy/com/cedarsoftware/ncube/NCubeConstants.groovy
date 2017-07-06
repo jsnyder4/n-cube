@@ -49,6 +49,7 @@ interface NCubeConstants
     final String SYS_USERGROUPS = 'sys.usergroups'
     final String SYS_LOCK = 'sys.lock'
     final String SYS_BRANCH_PERMISSIONS = 'sys.branch.permissions'
+    final String SYS_TRANSACTIONS = 'tx.*'
     final String CLASSPATH_CUBE = 'sys.classpath'
 
     final String ROLE_ADMIN = 'admin'
