@@ -220,12 +220,15 @@ class NCubeGroovyExpression
      * @param columnsToSearch Set which allows reducing the number of columns bound for use in the where clause.  If not
      * specified, all columns on the colAxisName can be used.  For example, if you had an axis named 'attribute', and it
      * has 10 columns on it, you could list just two (2) of the columns here, and only those columns would be placed into
-     * values accessible to the where clause via input.xxx == 'someValue'.
+     * values accessible to the where clause via input.xxx == 'someValue'.  The mapReduce() API runs faster when fewer
+     * columns are included in the columnsToSearch.
      * @param columnsToReturn Set of values to indicate which columns to return.  If not specified, the entire 'row' is
      * returned.  For example, if you had an axis named 'attribute', and it has 10 columns on it, you could list just
      * two (2) of the columns here, in the returned Map of rows, only these two columns will be in the returned Map.
-     * The columnsToSearch and columnsToReturn can be completely different, overlap, or not be specified. The mapReduce()
-     * API runs faster when fewer columns are included in the columnsToSearch.
+     * The columnsToSearch and columnsToReturn can be completely different, overlap, or not be specified.  This param
+     * is similar to the 'Select List' portion of the SQL SELECT statement.  It essentially defaults to '*', but you
+     * can have it return less column/value pairs in the returned Map if you add only the columns you want returned
+     * here.
      * @param cubeName String name of another cube (when the reference is to an n-cube other than 'this' n-cube).  If not
      * specified, the mapReduce() is run against the cube containing 'this' cell.
      * @param appId ApplicationID of another n-cube application.  If not specified, the appId of the n-cube containing
@@ -249,7 +252,7 @@ class NCubeGroovyExpression
         {
             target = ncube
         }
-        return target.mapReduce(rowAxisName, colAxisName, where, output, input, columnsToSearch, columnsToReturn)
+        return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
     }
 
     /**

@@ -47,7 +47,7 @@ abstract class UrlCommandCell implements CommandCell
         this.url = null
     }
 
-    UrlCommandCell(String cmd, String url, boolean cacheable)
+    UrlCommandCell(String cmd, String url = null, boolean cacheable = false)
     {
         this.url = url
         if (cmd == null && url == null)

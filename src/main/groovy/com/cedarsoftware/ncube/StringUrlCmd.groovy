@@ -22,12 +22,12 @@ import groovy.transform.CompileStatic;
  *         limitations under the License.
  */
 @CompileStatic
-public class StringUrlCmd extends ContentCmdCell
+class StringUrlCmd extends ContentCmdCell
 {
     //  Private constructor only for serialization.
     private StringUrlCmd() {}
 
-    public StringUrlCmd(String url, boolean cache)
+    StringUrlCmd(String url, boolean cache)
     {
          super(null, url, cache)
     }

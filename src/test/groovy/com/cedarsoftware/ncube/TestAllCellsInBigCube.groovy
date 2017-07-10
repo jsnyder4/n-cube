@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
 
+import java.security.SecureRandom
+
 import static org.junit.Assert.assertTrue
 
 /**
@@ -28,7 +30,7 @@ import static org.junit.Assert.assertTrue
  *         limitations under the License.
  */
 @CompileStatic
-class TestAllCellsInBigCube
+class TestAllCellsInBigCube extends NCubeBaseTest
 {
     @Test
     void testAllCellsInBigCube()
@@ -106,6 +108,82 @@ class TestAllCellsInBigCube
         }
     }
 
+    @Test
+    void testMapReduceLarge()
+    {
+        long start = System.nanoTime()
+        NCube ncube = new NCube("bigCube")
+        Axis rows = new Axis("row", AxisType.DISCRETE, AxisValueType.LONG, false)
+        ncube.addAxis(rows)
+        int max = 100000
+        for (int j = 0; j < max; j++)
+        {
+            ncube.addColumn("row", j)
+        }
+
+        Axis attributes = new Axis("attribute", AxisType.DISCRETE, AxisValueType.CISTRING, false)
+        ncube.addAxis(attributes)
+        ncube.addColumn('attribute', 'alpha')
+        ncube.addColumn('attribute','beta')
+        ncube.addColumn('attribute','charlie')
+        ncube.addColumn('attribute','delta')
+        ncube.addColumn('attribute','echo')
+        ncube.addColumn('attribute','foxtrot')
+        ncube.addColumn('attribute','golf')
+        ncube.addColumn('attribute','hotel')
+        ncube.addColumn('attribute','indigo')
+        ncube.addColumn('attribute','juliet')
+        ncube.addColumn('attribute','kilo')
+        ncube.addColumn('attribute','lima')
+        ncube.addColumn('attribute','mic')
+
+        Random random = new SecureRandom()
+
+        for (int i=0; i < max; i++)
+        {
+            setRandomValue(ncube, random, i, 'alpha')
+            setRandomValue(ncube, random, i, 'beta')
+            setRandomValue(ncube, random, i, 'charlie')
+            setRandomValue(ncube, random, i, 'delta')
+            setRandomValue(ncube, random, i, 'echo')
+            setRandomValue(ncube, random, i, 'foxtrot')
+            setRandomValue(ncube, random, i, 'golf')
+            setRandomValue(ncube, random, i, 'hotel')
+            setRandomValue(ncube, random, i, 'indigo')
+            setRandomValue(ncube, random, i, 'juliet')
+            setRandomValue(ncube, random, i, 'kilo')
+            setRandomValue(ncube, random, i, 'lima')
+            setRandomValue(ncube, random, i, 'mic')
+        }
+
+        println 'num Cells = ' + ncube.numCells
+        println 'num Potential Cells = ' + ncube.numPotentialCells
+        assert ncube.numCells == ncube.numPotentialCells
+        long stop = System.nanoTime()
+        double diff = (stop - start) / 1000000.0
+        println("time to setup mapReduce ncube = " + diff)
+
+        start = System.nanoTime()
+        ncube.mapReduce('row', 'attribute', "input.hotel == 50i", null, null, ['hotel'] as Set)
+        stop = System.nanoTime()
+        diff = (stop - start) / 1000000.0
+        println("mapReduce time 1 = " + diff)
+
+        for (int i=0; i < 2; i++)
+        {
+            start = System.nanoTime()
+            ncube.mapReduce('row', 'attribute', "input.hotel == 50i", null, null, ['hotel'] as Set)
+            stop = System.nanoTime()
+            diff = (stop - start) / 1000000.0
+            println("mapReduce time ${i + 2} = " + diff)
+        }
+    }
+
+    private Object setRandomValue(NCube ncube, Random random, int i, String colName)
+    {
+        ncube.setCell(random.nextInt() % 100, [row: i, attribute: colName])
+    }
+
     // Uncomment for memory size testing
     @Ignore
     void testLarge1D()
@@ -114,7 +192,7 @@ class TestAllCellsInBigCube
         NCube<Boolean> ncube = new NCube("bigCube")
         Axis axis = new Axis("axis", AxisType.DISCRETE, AxisValueType.LONG, false)
         ncube.addAxis(axis)
-        int max = 2000000
+        int max = 10000000        // 10M - largest tested thus far
         for (int j = 0; j < max; j++)
         {
             ncube.addColumn("axis", j)
@@ -156,7 +234,7 @@ class TestAllCellsInBigCube
         NCube<Boolean> ncube = new NCube("bigCube")
 
         int size = 10
-        int last = 1500    // 1300 = 13 million cells, 1400 = 14 million cells, ... 17M record on 1.5GB heap
+        int last = 2500    // 1300 = 13 million cells, 1400 = 14 million cells, ... 25M record on 1.5GB heap
 
         for (int i = 0; i < 4; i++)
         {

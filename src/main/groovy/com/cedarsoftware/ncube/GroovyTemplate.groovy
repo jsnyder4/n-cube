@@ -41,7 +41,7 @@ class GroovyTemplate extends ContentCmdCell
     //  Private constructor only for serialization.
     private GroovyTemplate() { }
 
-    GroovyTemplate(String cmd, String url, boolean cache)
+    GroovyTemplate(String cmd, String url = null, boolean cache = false)
     {
         super(cmd, url, cache)
     }

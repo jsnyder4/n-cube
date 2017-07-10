@@ -38,6 +38,8 @@ interface Regexes
     Pattern importPattern = ~/(?m)^(\s*import\s+[^;\n"'\/ ]+;?)/
     Pattern grapePattern = ~/(@Grapes\s*?\((?:.*?|\n)+\]\s*?\))/
     Pattern grabPattern = ~/(@(?:Grab|GrabConfig|GrabExclude|GrabResolver)\s*?\(.*?\))/
+    Pattern compileStaticPattern = ~/(@(?:CompileStatic)\s+?.*?)/
+    Pattern typeCheckPattern = ~/(@(?:TypeChecked)\s*?(?:\(.*?\)|))/
     Pattern inputVar = ~/(?i)([^a-zA-Z0-9_.]|^)input[?]?[.]([a-zA-Z0-9_]+)/
 
     Pattern scripletPattern = ~/<%(.*?)%>/

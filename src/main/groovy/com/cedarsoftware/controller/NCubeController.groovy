@@ -1,7 +1,6 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
-import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
@@ -337,12 +336,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return valuesToCellInfo(col.metaProperties)
     }
 
-    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map output = [:], Map addlBindings = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set)
+    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set)
     {
         verifyAllowExecute('mapReduce')
         appId = addTenant(appId)
         NCube ncube = loadCube(appId, cubeName)
-        return ncube.mapReduce(rowAxisName, colAxisName, where, output, addlBindings, columnsToSearch, columnsToReturn)
+        return ncube.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
     }
 
     private static Map<String, CellInfo> valuesToCellInfo(Map<String, Object> metaProps)

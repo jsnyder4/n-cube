@@ -5019,7 +5019,7 @@ class TestNCube extends NCubeBaseTest
     void testMapReduceWithOtherDimensions()
     {
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
-        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [bind: 'bindToAValue'])
+        Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [bind: 'bindToAValue'], [:])
 
         assert queryResult.size() == 1
 
@@ -5055,7 +5055,7 @@ class TestNCube extends NCubeBaseTest
 
         try
         {
-            ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [bind: 'invalid'])
+            ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [bind: 'invalid'], [:])
             fail 'Should have thrown a CoordinateNotFoundException'
         }
         catch (CoordinateNotFoundException ex)
@@ -5101,11 +5101,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch(IllegalStateException ex)
         {
-            String message = ex.message
-            assert message.contains('Axis [key]')
-            assert message.contains('cube [Test.Select.RowAxisRange.MissingNames]')
-            assert message.contains('not a discrete axis')
-            assert message.contains('must be named')
+            assertContainsIgnoreCase(ex.message, 'must have', 'name', 'Test.Select.RowAxisRange.MissingNames', 'key')
         }
     }
 
@@ -5131,15 +5127,11 @@ class TestNCube extends NCubeBaseTest
         try
         {
             ncube.mapReduce('key', 'query', 'true')
-            fail 'Should have thrown an IllegalStateException'
+            fail('Should have thrown an IllegalStateException')
         }
         catch(IllegalStateException ex)
         {
-            String message = ex.message
-            assert message.contains('Axis [query]')
-            assert message.contains('cube [Test.Select.ColumnAxisSet.MissingNames]')
-            assert message.contains('not a discrete axis')
-            assert message.contains('must be named')
+            assertContainsIgnoreCase(ex.message, 'must have', 'name', 'Test.Select.ColumnAxisSet.MissingNames', 'query')
         }
     }
 
@@ -5180,7 +5172,7 @@ class TestNCube extends NCubeBaseTest
 
         try
         {
-            ncube.mapReduce('key', 'query', null)
+            ncube.mapReduce('key', 'query', (String) null)
         }
         catch(IllegalArgumentException ex)
         {

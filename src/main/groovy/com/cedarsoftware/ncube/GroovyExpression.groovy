@@ -57,7 +57,7 @@ class GroovyExpression extends GroovyBase
     //  Private constructor only for serialization.
     private GroovyExpression() { }
 
-    GroovyExpression(String cmd, String url, boolean cache)
+    GroovyExpression(String cmd, String url = null, boolean cache = false)
     {
         super(cmd, url, cache)
     }
@@ -89,6 +89,9 @@ import com.cedarsoftware.ncube.proximity.*
 import com.cedarsoftware.ncube.util.*
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.*
+import groovy.transform.CompileStatic 
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 """)
 
         // Attempt to load sys.prototype cube
@@ -200,18 +203,19 @@ class ${className} extends ${expClassName}
         return null
     }
 
-    protected Object invokeRunMethod(NCubeGroovyExpression instance, Map<String, Object> ctx) throws Throwable
+    protected Object invokeRunMethod(NCubeGroovyExpression instance) throws Throwable
     {
         // If 'around' Advice has been added to n-cube, invoke it before calling Groovy expression's run() method
-        NCube ncube = getNCube(ctx)
-        Map input = getInput(ctx)
-        Map output = getOutput(ctx)
+        NCube ncube = instance.ncube
         List<Advice> advices = ncube.getAdvices('run')
-        for (Advice advice : advices)
+        if (!advices.empty)
         {
-            if (!advice.before(null, ncube, input, output))
+            for (Advice advice : advices)
             {
-                return null
+                if (!advice.before(null, ncube, instance.input, instance.output))
+                {
+                    return null
+                }
             }
         }
 
@@ -238,7 +242,7 @@ class ${className} extends ${expClassName}
             Advice advice = advices.get(i)
             try
             {
-                advice.after(null, ncube, input, output, ret, t)  // pass exception (t) to advice (or null)
+                advice.after(null, ncube, instance.input, instance.output, ret, t)  // pass exception (t) to advice (or null)
             }
             catch (ThreadDeath e)
             {
