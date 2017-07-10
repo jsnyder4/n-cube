@@ -148,20 +148,20 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCube cube = createCube()
         assertNotNull(cube)
 
-        Object[] expectedTests = createTests()
+        List<NCubeTest> expectedTests = createTests().toList() as List<NCubeTest>
 
         // reading from cache.
-        Object[] data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        List<NCubeTest> data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         assertTrue(DeepEquals.deepEquals(expectedTests, data))
 
         // reload from db
         ncubeRuntime.clearCache(defaultSnapshotApp)
-        data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         assertTrue(DeepEquals.deepEquals(expectedTests, data))
 
         //  update cube
         mutableClient.updateCube(cube)
-        data = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
+        data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         assertTrue(DeepEquals.deepEquals(expectedTests, data))
     }
 
@@ -476,8 +476,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.deleteCubes(defaultSnapshotApp, [ncube1.name].toArray())
         ncube1.testData = createTests()
         mutableClient.updateCube(ncube1)
-        Object[] testData = mutableClient.getTests(defaultSnapshotApp, ncube1.name)
-        Object[] expectedTests = createTests()
+        List<NCubeTest> testData = mutableClient.loadCube(defaultSnapshotApp, ncube1.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
+        List<NCubeTest> expectedTests = createTests().toList() as List<NCubeTest>
         assertTrue(DeepEquals.deepEquals(expectedTests, testData))
     }
 
@@ -554,19 +554,19 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         // Two cubes at the new 1.2.3 SNAPSHOT version.
         assert cubeList.length == 2
 
-        String notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        String notes1 = mutableClient.getNotes(next, cube1.name)
         assertContainsIgnoreCase(notes1, 'updated')
 
-        mutableClient.updateNotes(next, 'test.ValidTrailorConfigs', null)
-        notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        mutableClient.updateNotes(next, cube1.name, null)
+        notes1 = mutableClient.getNotes(next, cube1.name)
         assertTrue('' == notes1)
 
-        mutableClient.updateNotes(next, 'test.ValidTrailorConfigs', 'Trailer Config Notes')
-        notes1 = mutableClient.getNotes(next, 'test.ValidTrailorConfigs')
+        mutableClient.updateNotes(next, cube1.name, 'Trailer Config Notes')
+        notes1 = mutableClient.getNotes(next, cube1.name)
         assertTrue('Trailer Config Notes' == notes1)
 
-        String testData = mutableClient.getTests(next, 'test.ValidTrailorConfigs')
-        assertNull(testData)
+        List<NCubeTest> testData = mutableClient.loadCube(next, cube1.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
+        assert testData.size() == 0
     }
 
     @Test
@@ -883,43 +883,20 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testNCubeManagerTestData()
     {
-        try
-        {
-            mutableClient.getTests(defaultSnapshotApp, 'DashboardRoles')
-            fail('should not make it here')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertContainsIgnoreCase(e.message, 'could not fetch', 'test data')
-        }
-
         createCube()
-        Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
-        assertNotNull(testData)
-        assert testData.size() > 0
-
-        ApplicationID newId = defaultSnapshotApp.createNewSnapshotId('0.1.1')
-        try
-        {
-            mutableClient.getTests(newId, 'test.Age-Gender')
-            fail('Should not make it here')
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertContainsIgnoreCase(e.message, 'not fetch', 'test data', 'does not exist')
-        }
+        List<NCubeTest> testData = mutableClient.loadCube(defaultSnapshotApp, 'test.Age-Gender', [(SEARCH_INCLUDE_TEST_DATA):true]).testData
+        assert !testData.empty
     }
 
     @Test
     void testSaveTestsUpdatesSha1()
     {
         NCube cube = createCube()
-        Object[] testData = mutableClient.getTests(defaultSnapshotApp, 'test.Age-Gender')
-        assertNotNull(testData)
+        List<NCubeTest> testData = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         assert 1 == testData.size()
         mutableClient.commitBranch(defaultSnapshotApp)
 
-        NCubeTest newTest = new NCubeTest('bar', testData[0].coord as Map, testData[0].expected as CellInfo[])
+        NCubeTest newTest = new NCubeTest('bar', testData[0].coord, testData[0].assertions)
         cube.testData = [newTest].toArray()
         mutableClient.updateCube(cube)
         List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForHead(defaultSnapshotApp)

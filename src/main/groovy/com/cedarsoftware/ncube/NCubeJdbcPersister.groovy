@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.formatters.JsonFormatter
+import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -131,27 +132,41 @@ class NCubeJdbcPersister
         return json
     }
 
-    static NCube loadCube(Connection c, ApplicationID appId, String cubeName)
+    static NCube loadCube(Connection c, ApplicationID appId, String cubeName, Map options)
     {
-        Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
-                                       (SEARCH_INCLUDE_CUBE_DATA): true,
-                                       (SEARCH_EXACT_MATCH_NAME): true] as Map
+        if (!options)
+        {
+            options = [:]
+        }
+        if (!options.containsKey(SEARCH_ACTIVE_RECORDS_ONLY))
+        {
+            options[SEARCH_ACTIVE_RECORDS_ONLY] = true
+        }
+        if (!options.containsKey(SEARCH_INCLUDE_CUBE_DATA))
+        {
+            options[SEARCH_INCLUDE_CUBE_DATA] = true
+        }
+        if (!options.containsKey(SEARCH_EXACT_MATCH_NAME))
+        {
+            options[SEARCH_EXACT_MATCH_NAME] = true
+        }
 
         NCube cube = null
         options[METHOD_NAME] = 'loadCube'
-        runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row -> cube = buildCube(appId, row) })
+        runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row -> cube = buildCube(appId, row, options?.get(SEARCH_INCLUDE_TEST_DATA) as boolean) })
         return cube
     }
 
-    static NCube loadCubeById(Connection c, long cubeId)
+    static NCube loadCubeById(Connection c, long cubeId, Map options)
     {
+        String selectTestData = options?.get(SEARCH_INCLUDE_TEST_DATA) ? ",${TEST_DATA_BIN}" : ''
         Map map = [id: cubeId]
         Sql sql = getSql(c)
         sql.withStatement { Statement stmt -> stmt.fetchSize = 10 }
         NCube cube = null
         sql.eachRow(map, """\
 /* loadCubeById */
-SELECT tenant_cd, app_cd, version_no_cd, status_cd, branch_id, ${CUBE_VALUE_BIN}, sha1
+SELECT tenant_cd, app_cd, version_no_cd, status_cd, branch_id, ${CUBE_VALUE_BIN}, sha1 ${selectTestData}
 FROM n_cube
 WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
             String tenant = row.getString('tenant_cd')
@@ -160,7 +175,7 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
             String version = row.getString('version_no_cd')
             String branch = row.getString('branch_id')
             ApplicationID appId = new ApplicationID(tenant, app, version, status, branch)
-            cube = buildCube(appId, row)
+            cube = buildCube(appId, row, options?.get(SEARCH_INCLUDE_TEST_DATA) as boolean)
         })
         if (cube)
         {
@@ -173,7 +188,7 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
     {
         Map map = appId as Map
         map.cube = buildName(cubeName)
-        map.sha1 = sha1
+        map.sha1 = sha1.toUpperCase()
         map.tenant = padTenant(c, appId.tenant)
         NCube cube = null
         Sql sql = getSql(c)
@@ -181,7 +196,7 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
 /* loadCubeBySha1 */
 SELECT ${CUBE_VALUE_BIN}, sha1
 FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND UPPER(sha1) = UPPER(:sha1)""",
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1""",
                 0, 1, { ResultSet row ->
             cube = buildCube(appId, row)
         })
@@ -225,7 +240,7 @@ ORDER BY abs(revision_number) DESC
         List<NCubeInfoDto> records = []
         sql.eachRow(map, sqlStatement, { ResultSet row -> getCubeInfoRecords(appId, null, records, [:], row) })
 
-        if (records.isEmpty())
+        if (records.empty)
         {
             throw new IllegalArgumentException("Cannot fetch revision history for cube: ${cubeName} as it does not exist in app: ${appId}")
         }
@@ -571,7 +586,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
             if (updatedTestData)
             {
-                cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, "rev ${getMaxRevision(c, cube.applicationID, cube.name, 'updateCube') + 1}".toString())
+                cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
             }
         }
 
@@ -999,8 +1014,8 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
 SELECT h.revision_number FROM
 (SELECT revision_number, head_sha1, create_dt FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
-AND tenant_cd = :tenant AND branch_id = :branch AND UPPER(sha1) = UPPER(head_sha1)) b
-JOIN n_cube h ON UPPER(h.sha1) = UPPER(b.head_sha1)
+AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = head_sha1) b
+JOIN n_cube h ON h.sha1 = b.head_sha1
 WHERE h.app_cd = :app AND h.branch_id = 'HEAD' AND h.tenant_cd = :tenant AND h.create_dt <= b.create_dt
 ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { ResultSet row ->
             maxRev = row.getLong('revision_number')
@@ -1020,7 +1035,7 @@ ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { Re
 /* rollbackCubes.findRollbackRev */
 SELECT revision_number FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
-AND tenant_cd = :tenant AND branch_id = :branch AND revision_number >= 0 AND UPPER(sha1) = UPPER(head_sha1)
+AND tenant_cd = :tenant AND branch_id = :branch AND revision_number >= 0 AND sha1 = head_sha1
 ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             maxRev = row.getLong("revision_number")
         });
@@ -1375,7 +1390,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                     ON LOWER(x.n_cube_nm) = LOWER(y.n_cube_nm) AND ABS(x.revision_number) = y.max_rev
                             WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = :branch) m
         WHERE LOWER(m.n_cube_nm) = LOWER(n.n_cube_nm) AND n.app_cd = :app AND n.version_no_cd = :version AND n.status_cd = :status
-                AND n.branch_id = 'HEAD' AND UPPER(n.sha1) = UPPER(m.head_sha1) AND UPPER(m.head_sha1) <> UPPER(m.sha1)"""
+                AND n.branch_id = 'HEAD' AND n.sha1 = m.head_sha1 AND m.head_sha1 <> m.sha1"""
 
         int count = 0
         boolean autoCommit = c.autoCommit
@@ -1873,11 +1888,20 @@ ORDER BY abs(revision_number) DESC"""
         }
     }
 
-    protected static NCube buildCube(ApplicationID appId, ResultSet row)
+    protected static NCube buildCube(ApplicationID appId, ResultSet row, boolean includeTestData = false)
     {
         NCube ncube = NCube.createCubeFromStream(row.getBinaryStream(CUBE_VALUE_BIN))
         ncube.sha1 = row.getString('sha1')
         ncube.applicationID = appId
+        if (includeTestData)
+        {
+            byte[] testBytes = row.getBytes(TEST_DATA_BIN)
+            if (testBytes)
+            {
+                String s = new String(testBytes, "UTF-8")
+                ncube.testData = NCubeTestReader.convert(s).toArray()
+            }
+        }
         return ncube
     }
 

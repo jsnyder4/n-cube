@@ -828,12 +828,14 @@ class DeltaProcessor
      * @return List<Delta> object.  The Delta class contains a Location (loc) which describes the
      * part of an n-cube that differs (ncube, axis, column, or cell) and the Type (type) of difference
      * (ADD, UPDATE, or DELETE).  Finally, it includes an English description of the difference.
+     * NOTE: this will remove test data from the cube in order to not affect sha1 calculation.
      */
     static List<Delta> getDeltaDescription(NCube newCube, NCube oldCube)
     {
         List<Delta> changes = []
 
         changes.addAll(getTestDeltaList(newCube, oldCube))
+        // remove test data to not affect the cubes
         newCube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
         oldCube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
 

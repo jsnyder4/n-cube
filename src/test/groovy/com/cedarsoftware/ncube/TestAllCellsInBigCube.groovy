@@ -108,7 +108,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         }
     }
 
-    @Test
+    @Ignore
     void testMapReduceLarge()
     {
         long start = System.nanoTime()
@@ -169,7 +169,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         diff = (stop - start) / 1000000.0
         println("mapReduce time 1 = " + diff)
 
-        for (int i=0; i < 2; i++)
+        for (int i=0; i < 100; i++)
         {
             start = System.nanoTime()
             ncube.mapReduce('row', 'attribute', "input.hotel == 50i", null, null, ['hotel'] as Set)

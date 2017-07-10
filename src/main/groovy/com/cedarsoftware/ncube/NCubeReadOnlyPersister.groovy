@@ -28,17 +28,19 @@ interface NCubeReadOnlyPersister
     /**
      * Load n-cube by ID (specific n-cube)
      * @param id long id of n-cube to load
+     * @param options Map of additional option to include test data
      * @return NCube loaded from database
      * @throws IllegalArgumentException if there is no n-cube with the given id.
      */
-    NCube loadCubeById(long id, String username)
+    NCube loadCubeById(long id, Map options, String username)
 
     /**
      * Load n-cube by name (latest revision)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
+     * @param options Map of additional option to include test data
      */
-    NCube loadCube(ApplicationID appId, String name, String username)
+    NCube loadCube(ApplicationID appId, String name, Map options, String username)
 
     /**
      * Load n-cube by SHA-1 (latest revision with that SHA-1)

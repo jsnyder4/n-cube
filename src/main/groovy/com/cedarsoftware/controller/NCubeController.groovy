@@ -1021,7 +1021,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        return mutableClient.getTests(appId, cubeName)
+        NCube cube = mutableClient.loadCube(appId, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
+        return cube.testData.toArray()
     }
 
     Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
@@ -1649,33 +1650,22 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.mergeDeltas(appId, cubeName, deltaList)
     }
 
-    private List<Delta> getDeltaDescription(NCube newCube, NCube oldCube, Object[] newCubeTests, Object[] oldCubeTests)
-    {
-        newCube.testData = newCubeTests
-        oldCube.testData = oldCubeTests
-        return DeltaProcessor.getDeltaDescription(newCube, oldCube)
-    }
-
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
-        NCube newCube = mutableClient.loadCubeById(newCubeId)
-        NCube oldCube = mutableClient.loadCubeById(oldCubeId)
+        NCube newCube = mutableClient.loadCubeById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        NCube oldCube = mutableClient.loadCubeById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         addTenant(newCube.applicationID)
         addTenant(oldCube.applicationID)
-        Object[] newCubeTests = mutableClient.getTests(newCubeId)
-        Object[] oldCubeTests = mutableClient.getTests(oldCubeId)
-        return getDeltaDescription(newCube, oldCube, newCubeTests, oldCubeTests)
+        return DeltaProcessor.getDeltaDescription(newCube, oldCube)
     }
 
     List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
     {
         ApplicationID newAppId = new ApplicationID(tenant, newInfoDto.app, newInfoDto.version, newInfoDto.status, newInfoDto.branch)
         ApplicationID oldAppId = new ApplicationID(tenant, oldInfoDto.app, oldInfoDto.version, oldInfoDto.status, oldInfoDto.branch)
-        NCube newCube = loadCube(newAppId, newInfoDto.name)
-        NCube oldCube = loadCube(oldAppId, oldInfoDto.name)
-        Object[] newCubeTests = getTests(newAppId, newInfoDto.name)
-        Object[] oldCubeTests = getTests(oldAppId, oldInfoDto.name)
-        return getDeltaDescription(newCube, oldCube, newCubeTests, oldCubeTests)
+        NCube newCube = mutableClient.loadCube(newAppId, newInfoDto.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        NCube oldCube = mutableClient.loadCube(oldAppId, oldInfoDto.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        return DeltaProcessor.getDeltaDescription(newCube, oldCube)
     }
 
     Object[] getReferenceAxes(ApplicationID appId)

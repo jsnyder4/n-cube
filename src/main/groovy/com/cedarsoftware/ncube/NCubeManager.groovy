@@ -103,21 +103,18 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      */
     NCube loadCube(ApplicationID appId, String cubeName)
     {
+        return loadCube(appId, cubeName, null)
+    }
+
+    NCube loadCube(ApplicationID appId, String cubeName, Map options)
+    {
         assertPermissions(appId, cubeName)
-        return loadCubeInternal(appId, cubeName)
+        return loadCubeInternal(appId, cubeName, options)
     }
 
-    NCube loadCubeWithTestData(ApplicationID appId, String cubeName)
+    private NCube loadCubeInternal(ApplicationID appId, String cubeName, Map options = null)
     {
-        NCube cube = loadCube(appId, cubeName)
-        String s = persister.getTestData(appId, cubeName, getUserId())
-        cube.testData = NCubeTestReader.convert(s).toArray()
-        return cube
-    }
-
-    private NCube loadCubeInternal(ApplicationID appId, String cubeName)
-    {
-        NCube ncube = persister.loadCube(appId, cubeName, getUserId())
+        NCube ncube = persister.loadCube(appId, cubeName, options, getUserId())
         return ncube
     }
 
@@ -129,7 +126,12 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      */
     NCube loadCubeById(long id)
     {
-        NCube ncube = persister.loadCubeById(id, getUserId())
+        return loadCubeById(id, null)
+    }
+
+    NCube loadCubeById(long id, Map options)
+    {
+        NCube ncube = persister.loadCubeById(id, options, getUserId())
         assertPermissions(ncube.applicationID, ncube.name, Action.READ)
         return ncube
     }
@@ -395,7 +397,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      */
     NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
     {
-        NCube ncube = loadCubeWithTestData(appId, cubeName)
+        NCube ncube = loadCube(appId, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
         if (ncube == null)
         {
             throw new IllegalArgumentException("No ncube exists with the name: ${cubeName}, no changes will be merged, app: ${appId}")
@@ -675,18 +677,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return convertTests(s)
     }
 
-    Object[] getTests(Long cubeId)
-    {
-        NCube cube = loadCubeById(cubeId)
-        ApplicationID appId = cube.applicationID
-        String cubeName = cube.name
-        ApplicationID.validateAppId(appId)
-        NCube.validateCubeName(cubeName)
-        assertPermissions(appId, cubeName)
-        String s = persister.getTestData(cubeId, getUserId())
-        return convertTests(s)
-    }
-
     private static Object[] convertTests(String s)
     {
         if (StringUtilities.isEmpty(s))
@@ -956,7 +946,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             AxisRef axisRef = obj as AxisRef
             axisRef.with {
                 assertPermissions(srcAppId, srcCubeName, Action.UPDATE)
-                NCube ncube = persister.loadCube(srcAppId, srcCubeName, getUserId())
+                NCube ncube = persister.loadCube(srcAppId, srcCubeName, null, getUserId())
                 Axis axis = ncube.getAxis(srcAxisName)
 
                 axis.setMetaProperty(REF_APP, destApp)
@@ -968,7 +958,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 ApplicationID appId = new ApplicationID(srcAppId.tenant, destApp, destVersion, destStatus, destBranch)
                 assertPermissions(appId, null)
 
-                NCube target = persister.loadCube(appId, destCubeName, getUserId())
+                NCube target = persister.loadCube(appId, destCubeName, null, getUserId())
                 if (target == null)
                 {
                     throw new IllegalArgumentException("""\
@@ -995,7 +985,7 @@ target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
                 {   // If transformer cube reference supplied, verify that the cube exists
                     ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
                     assertPermissions(txAppId, null)
-                    NCube transformCube = persister.loadCube(txAppId, transformCubeName, getUserId())
+                    NCube transformCube = persister.loadCube(txAppId, transformCubeName, null, getUserId())
                     if (transformCube == null)
                     {
                         throw new IllegalArgumentException("""\
@@ -1270,7 +1260,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         }
 
         info.branch000 = bootVersion.asBranch(appId.branch)
-        info.branchPermCube = loadCubeInternal((ApplicationID)info.branch000, SYS_BRANCH_PERMISSIONS)
+        info.branchPermCube = loadCubeInternal((ApplicationID) info.branch000, SYS_BRANCH_PERMISSIONS)
         return info
     }
 
@@ -2619,8 +2609,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     {
         long branchCubeId = (long) Converter.convert(branchInfo.id, long.class)
         long headCubeId = (long) Converter.convert(headInfo.id, long.class)
-        NCube branchCube = persister.loadCubeById(branchCubeId, getUserId())
-        NCube headCube = persister.loadCubeById(headCubeId, getUserId())
+        NCube branchCube = persister.loadCubeById(branchCubeId, null, getUserId())
+        NCube headCube = persister.loadCubeById(headCubeId, null, getUserId())
         NCube baseCube, headBaseCube
         Map branchDelta, headDelta
 

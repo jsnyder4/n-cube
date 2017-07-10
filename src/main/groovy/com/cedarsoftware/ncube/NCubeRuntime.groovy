@@ -169,6 +169,20 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return ncube
     }
 
+    NCube loadCubeById(long id, Map options)
+    {
+        NCube ncube = bean.call(beanName, 'loadCubeById', [id, options]) as NCube
+        applyAdvices(ncube)
+        return ncube
+    }
+
+    NCube loadCube(ApplicationID appId, String cubeName, Map options)
+    {
+        NCube ncube = bean.call(beanName, 'loadCube', [appId, cubeName, options]) as NCube
+        applyAdvices(ncube)
+        return ncube
+    }
+
     void createCube(NCube ncube)
     {
         verifyAllowMutable('createCube')
@@ -990,7 +1004,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     private void applyAdvices(NCube ncube)
     {
-        if (adviceCacheManager instanceof GCacheManager)
+        if (ncube && adviceCacheManager instanceof GCacheManager)
         {
             ((GCacheManager)adviceCacheManager).applyToEntries(ncube.applicationID.cacheKey(), {String key, Object value ->
                 final Advice advice = value as Advice
