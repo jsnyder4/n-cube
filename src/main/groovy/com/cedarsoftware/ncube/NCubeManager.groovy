@@ -2299,14 +2299,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         for (NCube cube : cubes)
         {
             Map prInfo = cube.getMap([(PR_PROP):[] as Set])
-            if (prInfo[PR_APP] instanceof String)
-            {
-                prInfo[PR_APP] = ApplicationID.convert(prInfo[PR_APP] as String)
-            }
-            if (prInfo[PR_CUBES] instanceof String)
-            {
-                prInfo[PR_CUBES] = JsonReader.jsonToJava(prInfo[PR_CUBES] as String)
-            }
+            prInfo[PR_APP] = ApplicationID.convert(prInfo[PR_APP] as String)
+            prInfo[PR_CUBES] = JsonReader.jsonToJava(prInfo[PR_CUBES] as String)
             prInfo[PR_TXID] = cube.name.substring(3)
             results.add(prInfo)
         }
