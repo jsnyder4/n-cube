@@ -98,8 +98,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             user = System.getProperty('user.name')
         }
 
-        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-        manager.userId = user
+        if (NCubeAppContext.containsBean(MANAGER_BEAN))
+        {
+            NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+            manager.userId = user
+        }
         return user
     }
 
