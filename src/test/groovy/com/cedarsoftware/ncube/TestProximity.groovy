@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.Converter
 import org.junit.Test
 
@@ -228,18 +227,6 @@ class TestProximity
             }
         }
         assert map.size() > 95
-    }
-
-    @Test
-    void testLongHashSet()
-    {
-        Set codes = new HashSet()
-        for (int i=0; i < 10; i++)
-        {
-            codes.add(i as long)
-        }
-        LongHashSet set = new LongHashSet(codes)
-        assert set.size() == 10
     }
 
     @Test

@@ -1,7 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.formatters.NCubeTestReader
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.DeepEquals
@@ -244,7 +242,7 @@ class DeltaProcessor
         Map<Map<String, Object>, T> cellDelta = (Map<Map<String, Object>, T>) deltaSet[DELTA_CELLS]
         // Passed all cell conflict tests, update 'this' cube with the new cells from the other cube (merge)
         cellDelta.each { k, v ->
-            LongHashSet cols = deltaCoordToSetOfLong(mergeTarget, k)
+            Set<Long> cols = deltaCoordToSetOfLong(mergeTarget, k)
             if (cols != null && cols.size() > 0)
             {
                 T value = v
@@ -661,15 +659,15 @@ class DeltaProcessor
         Map<Map<String, Object>, T> delta = new HashMap<>()
         Set<Map<String, Object>> copyCells = new HashSet<>()
 
-        thisCube.cellMap.each { LongHashSet colIds, T value ->
+        thisCube.cellMap.each { Set<Long> colIds, T value ->
             copyCells.add(thisCube.getCoordinateFromIds(colIds))
         }
 
         // At this point, the cubes have the same number of axes and same axis types.
         // Now, compute cell deltas.
-        other.cellMap.each { LongHashSet colIds, T value ->
+        other.cellMap.each { Set<Long> colIds, T value ->
             Map<String, Object> deltaCoord = other.getCoordinateFromIds(colIds)
-            LongHashSet idKey = deltaCoordToSetOfLong(other, deltaCoord)
+            Set<Long> idKey = deltaCoordToSetOfLong(other, deltaCoord)
             if (idKey != null)
             {   // Was able to bind deltaCoord between cubes
                 T content = thisCube.getCellByIdNoExecute(idKey)
@@ -1060,9 +1058,9 @@ class DeltaProcessor
 
     private static void getCellChanges(NCube newCube, NCube oldCube, Map<Long, Long> idMap, List<Delta> changes)
     {
-        Map<LongHashSet, Object> cellMap = newCube.cellMap
-        cellMap.each { LongHashSet colIds, value ->
-            LongHashSet coord = adjustCoord(colIds, oldCube.cellMap, idMap)
+        Map<Set<Long>, Object> cellMap = newCube.cellMap
+        cellMap.each { Set<Long> colIds, value ->
+            Set<Long> coord = adjustCoord(colIds, oldCube.cellMap, idMap)
             if (oldCube.cellMap.containsKey(coord))
             {
                 Object oldCellValue = oldCube.cellMap[coord]
@@ -1081,9 +1079,9 @@ class DeltaProcessor
             }
         }
 
-        Map<LongHashSet, Object> srcCellMap = oldCube.cellMap
-        srcCellMap.each { LongHashSet colIds, value ->
-            LongHashSet coord = adjustCoord(colIds, newCube.cellMap, idMap)
+        Map<Set<Long>, Object> srcCellMap = oldCube.cellMap
+        srcCellMap.each { Set<Long> colIds, value ->
+            Set<Long> coord = adjustCoord(colIds, newCube.cellMap, idMap)
             if (!newCube.cellMap.containsKey(coord))
             {
                 boolean allColsStillExist = true
@@ -1130,7 +1128,7 @@ class DeltaProcessor
         }
     }
 
-    private static LongHashSet adjustCoord(LongHashSet colIds, Map cellMap, Map<Long, Long> idMap)
+    private static Set<Long> adjustCoord(Set<Long> colIds, Map cellMap, Map<Long, Long> idMap)
     {
         // 1st attempt - is it there with the exact same coordinate ids?
         if (cellMap.containsKey(colIds))
@@ -1139,7 +1137,7 @@ class DeltaProcessor
         }
 
         // Is it there with substituted coordinate ids (column was matched by value, so trying the id of THAT column)
-        LongHashSet coord = new LongHashSet()
+        Set<Long> coord = new LinkedHashSet<>()
         Iterator<Long> i = colIds.iterator()
         while (i.hasNext())
         {
@@ -1248,7 +1246,7 @@ class DeltaProcessor
      * @return Set<Long> that can be used with any n-cube API that binds by ID (getCellById, etc.) or null
      * if the deltaCoord could not bind to this n-cube.
      */
-    private static <T> LongHashSet deltaCoordToSetOfLong(NCube<T> target, final Map<String, Object> deltaCoord)
+    private static <T> Set<Long> deltaCoordToSetOfLong(NCube<T> target, final Map<String, Object> deltaCoord)
     {
         Set<Long> set = new TreeSet<>()
         for (final Axis axis : target.axes)
@@ -1261,6 +1259,6 @@ class DeltaProcessor
             }
             set.add(column.id)
         }
-        return new LongHashSet(set)
+        return new LinkedHashSet<>(set)
     }
 }

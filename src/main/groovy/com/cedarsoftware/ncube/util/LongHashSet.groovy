@@ -27,6 +27,7 @@ import groovy.transform.CompileStatic
 class LongHashSet implements Set<Long>
 {
     private long[] elems = (long[]) null
+    private Integer hash = null
 
     LongHashSet()
     { }
@@ -113,6 +114,7 @@ class LongHashSet implements Set<Long>
 
     boolean add(Long o)
     {
+        hash = null
         if (elems == null)
         {
             elems = new long[1]
@@ -136,6 +138,7 @@ class LongHashSet implements Set<Long>
 
     boolean remove(Object o)
     {
+        hash = null
         if (empty)
         {
             return false
@@ -158,6 +161,7 @@ class LongHashSet implements Set<Long>
 
     boolean addAll(Collection<? extends Long> col)
     {
+        hash = null
         int origSize = size()
         for (o in col)
         {
@@ -168,11 +172,13 @@ class LongHashSet implements Set<Long>
 
     void clear()
     {
+        hash = null
         elems = (long[])null
     }
 
     boolean removeAll(Collection col)
     {
+        hash = null
         int origSize = size()
         for (o in col)
         {
@@ -183,6 +189,7 @@ class LongHashSet implements Set<Long>
 
     boolean retainAll(Collection col)
     {
+        hash = null
         int origSize = size()
         Set<Long> keep = new LinkedHashSet<Long>()
         for (item in col)
@@ -220,7 +227,7 @@ class LongHashSet implements Set<Long>
 
     boolean equals(Object other)
     {
-        if (other == this)
+        if (this.is(other))
         {
             return true
         }
@@ -253,6 +260,10 @@ class LongHashSet implements Set<Long>
 
     int hashCode()
     {
+        if (hash != null)
+        {
+            return hash
+        }
         int h = 0
 
         // This must be an order insensitive hash
@@ -279,6 +290,6 @@ class LongHashSet implements Set<Long>
             x ^= x >> 47
             h += (int) x
         }
-        return h
+        return hash = h
     }
 }

@@ -1,0 +1,21 @@
+{
+    "ncube": "sys.classpath",
+    "axes": [
+        {
+            "name": "env",
+            "type": "DISCRETE",
+            "valueType": "STRING",
+            "preferredOrder": 1,
+            "hasDefault": true,
+            "columns": []
+        }
+    ],
+    "cells": [
+        {
+            "id": [],
+            "type": "exp",
+            "cache" : true,
+            "value": "GroovyClassLoader parent = new GroovyClassLoader(CdnClassLoader.class.classLoader)\nparent.addURL(new File('src/test/scripts').toURI().toURL())\nCdnClassLoader cdn = new CdnClassLoader(parent)\ncdn.addURL('http://files.cedarsoftware.com')\nreturn cdn"
+        }
+    ]
+}

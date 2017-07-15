@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
@@ -32,7 +31,7 @@ class Binding
     private final String cubeName
     private final int depth
     private final Map<String, Column> coord = new CaseInsensitiveMap<>()
-    private final LongHashSet idCoord = new LongHashSet()
+    private final Set<Long> idCoord = new LinkedHashSet<>()
     private Object value
     private static final String newLine = "\n"
 
@@ -73,7 +72,7 @@ class Binding
         return idCoord.size()
     }
 
-    LongHashSet getIdCoordinate()
+    Set<Long> getIdCoordinate()
     {
         return idCoord
     }

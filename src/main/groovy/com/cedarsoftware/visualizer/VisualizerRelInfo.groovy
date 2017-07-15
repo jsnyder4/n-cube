@@ -5,26 +5,11 @@ import com.cedarsoftware.ncube.Axis
 import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.NCubeRuntimeClient
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.visualizer.VisualizerConstants.SPACE
-import static com.cedarsoftware.visualizer.VisualizerConstants.BREAK
-import static com.cedarsoftware.visualizer.VisualizerConstants.DOUBLE_BREAK
-import static com.cedarsoftware.visualizer.VisualizerConstants.RULE_NCUBE
-import static com.cedarsoftware.visualizer.VisualizerConstants.NCUBE
-import static com.cedarsoftware.visualizer.VisualizerConstants.DEFAULT
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_DEFAULT_VALUE
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_CELL_VALUES
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_EXPAND_ALL
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_COLLAPSE_ALL
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_SCOPE_CLICK
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_SCOPE_INPUT
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_FORM_CONTROL
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_TOP_NODE
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_MISSING_VALUE
+import static com.cedarsoftware.visualizer.VisualizerConstants.*
 
 /**
  * Provides information to visualize a source cube, a target cube
@@ -133,8 +118,8 @@ class VisualizerRelInfo
 		cubeLoaded = true
 		if (showCellValues)
 		{
-			Map<LongHashSet, Object> cellMap = targetCube.cellMap
-			cellMap.each { LongHashSet ids, Object noExecuteCell ->
+			Map<Set<Long>, Object> cellMap = targetCube.cellMap
+			cellMap.each { Set<Long> ids, Object noExecuteCell ->
 				Map<String, Object> coordinate = availableTargetScope as CaseInsensitiveMap ?: new CaseInsensitiveMap()
 				coordinate.putAll(targetCube.getCoordinateFromIds(ids))
 				VisualizerCellInfo visCellInfo = new VisualizerCellInfo(runtimeClient, appId, String.valueOf(targetId), coordinate)

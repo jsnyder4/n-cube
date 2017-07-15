@@ -46,7 +46,7 @@ class CdnDefaultHandler extends NCubeGroovyExpression
         synchronized (fullName.intern())
         {
             Axis axis = ncube.getAxis(axisName)
-            if (axis.findColumn(logicalFileName) == axis.getDefaultColumn())
+            if (axis.findColumn(logicalFileName) == axis.defaultColumn)
             {
                 ncube.addColumn(axisName, logicalFileName)
                 ncube.setCell(exp, input)

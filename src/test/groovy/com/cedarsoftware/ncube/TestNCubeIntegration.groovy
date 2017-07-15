@@ -176,7 +176,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
         coord.put("method", "doIt")
         coord.put("age", 25)
         ncube.setCell(new GroovyMethod(
-                "package ncube.grv.method; class Junk extends NCubeGroovyController " +
+                "package ncube.grv.method; class JunkTwo extends NCubeGroovyController " +
                         "{\n" +
                         "def doIt() {\n" +
                         " int x = input.age * 10;" +
@@ -213,7 +213,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
         coord.put("age", 25)
         coord.put("method", "doIt")
         ncube.setCell(new GroovyMethod(
-                "package ncube.grv.method; class Junk extends NCubeGroovyController {" +
+                "package ncube.grv.method; class JunkTwoClass extends NCubeGroovyController {" +
                         "def doIt()" +
                         "{" +
                         " int x = input['age'] * 10;" +

@@ -4,7 +4,6 @@ import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.io.JsonWriter
@@ -15,7 +14,12 @@ import java.security.SecureRandom
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotEquals
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
+import static org.junit.Assert.fail
 
 /**
  * NCube Axis Tests
@@ -1337,14 +1341,14 @@ class TestAxis extends NCubeBaseTest
         Axis bu = cube.getAxis("BU")
         Column b = bu.findColumn("SHS")
 
-        LongHashSet longCoord = new LongHashSet()
+        Set<Long> longCoord = new LinkedHashSet<>()
         longCoord.add(t.id as Long)
         longCoord.add(v.id as Long)
         longCoord.add(b.id as Long)
 
         // Make sure all columns are bound correctly
         def coord = new CaseInsensitiveMap()
-        LongHashSet boundCols = cube.ensureFullCoordinate(longCoord)
+        Set<Long> boundCols = cube.ensureFullCoordinate(longCoord)
         for (Long colId : boundCols)
         {
             assertTrue(colId == t.id || colId == v.id || colId == b.id)

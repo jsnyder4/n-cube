@@ -5,6 +5,7 @@ import com.cedarsoftware.ncube.util.NCubeRemoval
 import com.cedarsoftware.util.HsqlSchemaCreator
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.config.MethodInvokingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -54,6 +55,9 @@ class NCubeConfiguration
     @Value('${target.password}') String password
     @Value('${target.numConnections}') int numConnections
 
+    @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
+    @Value('${ncube.classes.dir:#{null}}') String classesDirectory
+
     @Bean(name = 'ncubeRemoval')
     NCubeRemoval getNCubeRemoval()
     {
@@ -72,6 +76,22 @@ class NCubeConfiguration
     {
         GCacheManager cacheManager = new GCacheManager(getNCubeRemoval(), maxSizePermCache, typePermCache, durationPermCache, unitsPermCache, concurrencyPermCache)
         return cacheManager
+    }
+
+    @Bean(name = 'setSourcesDir')
+    public MethodInvokingBean setSourcesDir() {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean();
+        methodInvokingBean.setStaticMethod("com.cedarsoftware.ncube.GroovyBase.setGeneratedSourcesDirectory");
+        methodInvokingBean.setArguments([sourcesDirectory] as Object []);
+        return methodInvokingBean;
+    }
+
+    @Bean(name = 'setClassesDir')
+    public MethodInvokingBean setClassesDir() {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean();
+        methodInvokingBean.setStaticMethod("com.cedarsoftware.ncube.util.CdnClassLoader.setGeneratedClassesDirectory");
+        methodInvokingBean.setArguments([classesDirectory] as Object []);
+        return methodInvokingBean;
     }
 
     @Configuration

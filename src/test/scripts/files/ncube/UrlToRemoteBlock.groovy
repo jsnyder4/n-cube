@@ -1,0 +1,1 @@
+output.urlToRemoteBlock = this.class

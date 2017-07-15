@@ -169,7 +169,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         diff = (stop - start) / 1000000.0
         println("mapReduce time 1 = " + diff)
 
-        for (int i=0; i < 100; i++)
+        for (int i=0; i < 50; i++)
         {
             start = System.nanoTime()
             ncube.mapReduce('row', 'attribute', "input.hotel == 50i", null, null, ['hotel'] as Set)
@@ -234,7 +234,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         NCube<Boolean> ncube = new NCube("bigCube")
 
         int size = 10
-        int last = 2500    // 1300 = 13 million cells, 1400 = 14 million cells, ... 25M record on 1.5GB heap
+        int last = 2600    // 1300 = 13 million cells, 1400 = 14 million cells, ... 26M record thus far
 
         for (int i = 0; i < 4; i++)
         {

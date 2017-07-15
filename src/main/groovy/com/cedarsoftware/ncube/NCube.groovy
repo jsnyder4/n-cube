@@ -1,12 +1,25 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.*
+import com.cedarsoftware.ncube.exception.CommandCellException
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.ncube.exception.RuleJump
+import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
-import com.cedarsoftware.ncube.util.LongHashSet
-import com.cedarsoftware.util.*
+import com.cedarsoftware.ncube.util.CellMap
+import com.cedarsoftware.util.ArrayUtilities
+import com.cedarsoftware.util.ByteUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.MapUtilities
+import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -74,7 +87,7 @@ class NCube<T>
     private String sha1
     private final Map<String, Axis> axisList = new CaseInsensitiveMap<>()
     private final Map<Long, Axis> idToAxis = new HashMap<>(16, 0.8f)
-    protected final Map<LongHashSet, T> cells = new HashMap<>(128, 0.8f)
+    protected final Map<Set<Long>, T> cells = new CellMap<T>()
     private T defaultCellValue
     private final Map<String, Advice> advices = [:]
     private Map metaProps = new CaseInsensitiveMap<>()
@@ -269,10 +282,10 @@ class NCube<T>
      */
     protected void dropOrphans(Set<Long> columnIds, long axisId)
     {
-        Iterator<LongHashSet> i = cells.keySet().iterator()
+        Iterator<Set<Long>> i = cells.keySet().iterator()
         while (i.hasNext())
         {
-            LongHashSet cols = i.next()
+            Set<Long> cols = i.next()
             for (id in cols)
             {
                 Axis axis = getAxisFromColumnId(id, false)
@@ -450,7 +463,7 @@ class NCube<T>
     T removeCellById(final Set<Long> coordinate)
     {
         clearSha1()
-        LongHashSet ids = ensureFullCoordinate(coordinate)
+        Set<Long> ids = ensureFullCoordinate(coordinate)
         if (ids == null)
         {
             return null
@@ -473,7 +486,7 @@ class NCube<T>
      */
     boolean containsCell(final Map coordinate, boolean useDefault = false)
     {
-        LongHashSet cols
+        Set<Long> cols
         if (useDefault)
         {
             if (defaultCellValue != null)
@@ -504,7 +517,7 @@ class NCube<T>
      */
     boolean containsCellById(final Collection<Long> coordinate)
     {
-        LongHashSet ids = ensureFullCoordinate(coordinate)
+        Set<Long> ids = ensureFullCoordinate(coordinate)
         return cells.containsKey(ids)
     }
 
@@ -538,7 +551,7 @@ class NCube<T>
             throw new IllegalArgumentException("Cannot set a cell to be an array type directly (except byte[]). Instead use GroovyExpression.")
         }
         clearSha1()
-        LongHashSet ids = ensureFullCoordinate(coordinate)
+        Set<Long> ids = ensureFullCoordinate(coordinate)
         if (ids == null)
         {
             throw new InvalidCoordinateException("Unable to setCellById() into n-cube: ${name}, appId: ${appId} using coordinate: ${coordinate}. Add column(s) before assigning cells.", name)
@@ -554,7 +567,7 @@ class NCube<T>
      */
     def getCellByIdNoExecute(final Set<Long> coordinate)
     {
-        LongHashSet ids = ensureFullCoordinate(coordinate)
+        Set<Long> ids = ensureFullCoordinate(coordinate)
         return cells[ids]
     }
 
@@ -570,7 +583,7 @@ class NCube<T>
      */
     def getCellNoExecute(final Map coordinate)
     {
-        LongHashSet ids = getCoordinateKey(coordinate)
+        Set<Long> ids = getCoordinateKey(coordinate)
         return cells[ids]
     }
 
@@ -934,7 +947,7 @@ class NCube<T>
 //                LOG.info("  coord Map: " + coordinate)
 //            }
 
-            cellValue = cells.get(colIds)
+            cellValue = cells[colIds]
             if (cellValue == null && !cells.containsKey(colIds))
             {   // No cell, look for default
                 cellValue = (T) getColumnDefault(colIds)
@@ -974,30 +987,33 @@ class NCube<T>
     /**
      * Pre-compile command cells, meta-properties, and rule conditions that are expressions
      */
-    void compile()
+    CompileInfo compile()
     {
+        CompileInfo compileInfo = new CompileInfo()
+        compileInfo.setCubeName(this.name)
+
         cells.each { ids, cell ->
             if(cell instanceof GroovyBase) {
-                compileCell(getCoordinateFromIds(ids), cell as GroovyBase)
+                compileCell(getCoordinateFromIds(ids), cell as GroovyBase, compileInfo)
             }
         }
 
         metaProps.each { key, value ->
             if (value instanceof GroovyBase) {
-                compileCell([metaProp:key],value as GroovyBase)
+                compileCell([metaProp:key],value as GroovyBase, compileInfo)
             }
         }
 
         axisList.each { axisName, axis ->
             axis.columns.each { column ->
                 if (column.value instanceof GroovyBase) {
-                    compileCell([axis:axisName,column:column.columnName],column.value as GroovyBase)
+                    compileCell([axis:axisName,column:column.columnName],column.value as GroovyBase, compileInfo)
                 }
 
                 if (column.metaProps) {
                     column.metaProps.each { key, value ->
                         if (value instanceof GroovyBase) {
-                            compileCell([axis:axisName,column:column.columnName,metaProp:key],value as GroovyBase)
+                            compileCell([axis:axisName,column:column.columnName,metaProp:key],value as GroovyBase, compileInfo)
                         }
                     }
                 }
@@ -1006,21 +1022,24 @@ class NCube<T>
             if (axis.metaProps) {
                 axis.metaProps.each { key, value ->
                     if (value instanceof GroovyBase) {
-                        compileCell([axis:axisName,metaProp:key],value as GroovyBase)
+                        compileCell([axis:axisName,metaProp:key],value as GroovyBase, compileInfo)
                     }
                 }
             }
         }
+
+        return compileInfo
     }
 
-    private void compileCell(Map input, GroovyBase groovyBase) {
+    private void compileCell(Map input, GroovyBase groovyBase, CompileInfo compileInfo) {
         try
         {
             groovyBase.prepare(groovyBase.cmd ?: groovyBase.url, prepareExecutionContext(input,[:]))
         }
         catch (Exception e)
         {
-            LOG.warn("Failed to compile cell for cube:${this.name} with coords:${input.toString()}",e)
+            compileInfo.addException(input,e)
+            LOG.warn("Failed to compile cell for cube: ${name} with coords: ${input.toString()}", e)
         }
     }
 
@@ -1164,7 +1183,7 @@ class NCube<T>
         Collection<Column> whereColumns = selectColumns(colAxis, columnsToSearch)
 
         GroovyExpression exp = new GroovyExpression(where)
-        LongHashSet ids = new LongHashSet(boundColumns)
+        Set<Long> ids = new LinkedHashSet<>(boundColumns)
         Map commandInput = new CaseInsensitiveMap(input ?: [:])
         Map matchingRows = new CaseInsensitiveMap()
         
@@ -1173,7 +1192,7 @@ class NCube<T>
             Map resultRow = new CaseInsensitiveMap()
             commandInput[rowAxisName] = row.valueThatMatches
             long rowId = row.id
-            ids << rowId
+            ids.add(rowId)
             
             for (column in whereColumns)
             {
@@ -1287,7 +1306,7 @@ class NCube<T>
         return boundColumns
     }
 
-    private def getCellValue(LongHashSet ids, Map input, Map output)
+    private def getCellValue(Set<Long> ids, Map input, Map output)
     {
         def cellValue = cells[ids]
         if (cellValue instanceof CommandCell)
@@ -1297,7 +1316,7 @@ class NCube<T>
         return cellValue
     }
 
-    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map alreadyExecuted, LongHashSet ids, Map commandInput, Map output)
+    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map alreadyExecuted, Set<Long> ids, Map commandInput, Map output)
     {
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
@@ -1494,13 +1513,13 @@ class NCube<T>
      * @return Set<Long> that contains only the necessary coordinates from the passed in Collection.  If it cannot
      * bind, null is returned.
      */
-    protected LongHashSet ensureFullCoordinate(Collection<Long> coordinate)
+    protected Set<Long> ensureFullCoordinate(Collection<Long> coordinate)
     {
         if (coordinate == null)
         {
-            coordinate = new HashSet<>()
+            coordinate = new LinkedHashSet<>()
         }
-        Set<Long> ids = new TreeSet<>()
+        Set<Long> ids = new LinkedHashSet<>()
         for (axis in axisList.values())
         {
             Column bindColumn = null
@@ -1522,7 +1541,7 @@ class NCube<T>
             }
             ids.add(bindColumn.id)
         }
-        return new LongHashSet(ids)
+        return ids
     }
 
     /**
@@ -1667,7 +1686,7 @@ class NCube<T>
      * stored within in NCube.  The returned Set is the 'key' of NCube's cells Map, which
      * maps a coordinate (Set of column IDs) to the cell value.
      */
-    LongHashSet getCoordinateKey(final Map coordinate, Map output = new CaseInsensitiveMap())
+    Set<Long> getCoordinateKey(final Map coordinate, Map output = new CaseInsensitiveMap())
     {
         Map safeCoord
 
@@ -1692,7 +1711,7 @@ class NCube<T>
             safeCoord = (coordinate == null) ? new CaseInsensitiveMap<>() : new CaseInsensitiveMap<>(coordinate)
         }
 
-        LongHashSet ids = new LongHashSet()
+        Set<Long> ids = new LinkedHashSet<>()
         Iterator<Axis> i = axisList.values().iterator()
 
         while (i.hasNext())
@@ -1729,8 +1748,16 @@ class NCube<T>
         }
 
         // Duplicate input coordinate
-        final Map copy = new CaseInsensitiveMap<>()
-        copy.putAll(coordinate)
+        Map copy
+
+        if (coordinate instanceof CaseInsensitiveMap)
+        {
+            copy = coordinate
+        }
+        else
+        {
+            copy = new CaseInsensitiveMap<>(coordinate)
+        }
 
         // Ensure required scope is supplied within the input coordinate
         Set<String> requiredScope = getRequiredScope(coordinate, output)
@@ -1895,11 +1922,11 @@ class NCube<T>
         long colId = column.id
 
         // Remove all cells that reference the deleted column
-        final Iterator<LongHashSet> i = cells.keySet().iterator()
+        final Iterator<Set<Long>> i = cells.keySet().iterator()
 
         while (i.hasNext())
         {
-            final LongHashSet key = i.next()
+            final Set<Long> key = i.next()
             // Locate the uniquely identified column, regardless of axis order
             if (key.contains(colId))
             {
@@ -1969,10 +1996,10 @@ class NCube<T>
 
         if (!colsToDel.empty)
         {   // If there are columns to delete, then delete any cells referencing those columns
-            Iterator<LongHashSet> i = cells.keySet().iterator()
+            Iterator<Set<Long>> i = cells.keySet().iterator()
             while (i.hasNext())
             {
-                LongHashSet cols = i.next()
+                Set<Long> cols = i.next()
 
                 for (id in cols)
                 {
@@ -2003,7 +2030,7 @@ class NCube<T>
      */
     Axis getAxisFromColumnId(long id, boolean columnMustExist = true)
     {
-        Axis axis = idToAxis.get(id.intdiv(Axis.BASE_AXIS_ID).longValue())
+        Axis axis = idToAxis[id.intdiv(Axis.BASE_AXIS_ID).longValue()]
         if (axis == null)
         {
             return null
@@ -2044,7 +2071,7 @@ class NCube<T>
     /**
      * @return read-only copy of the n-cube cells.
      */
-    Map<LongHashSet, T> getCellMap()
+    Map<Set<Long>, T> getCellMap()
     {
         return Collections.unmodifiableMap(cells)
     }
@@ -2096,11 +2123,11 @@ class NCube<T>
         if (axis.hasDefaultColumn())
         {   // Add default column ID of the new axis to all populated cells, effectively shifting them to the
             // default column on the new axis.
-            Collection<Map.Entry<LongHashSet, T>> newCells = new ArrayDeque<>()
+            Collection<Map.Entry<Set<Long>, T>> newCells = new ArrayDeque<>()
             long defaultColumnId = axis.defaultColId
             for (cell in cells)
             {
-                LongHashSet cellKey = cell.key
+                Set<Long> cellKey = cell.key
                 cellKey.add(defaultColumnId)
                 newCells.add(cell)
             }
@@ -2300,7 +2327,7 @@ class NCube<T>
     {
         Map<Map, Set<String>> refs = new LinkedHashMap<>()
 
-        cells.each { LongHashSet ids, T cell ->
+        cells.each { Set<Long> ids, T cell ->
             if (cell instanceof CommandCell)
             {
                 Map<String, Object> coord = getDisplayCoordinateFromIds(ids)
@@ -2314,7 +2341,7 @@ class NCube<T>
             {
                 for (column in axis.columnsWithoutDefault)
                 {
-                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as LongHashSet)
+                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as Set<Long>)
                     getReferences(refs, coord, column.value as CommandCell)
                 }
             }
@@ -2324,7 +2351,7 @@ class NCube<T>
                 Object defaultValue = column.metaProperties[Column.DEFAULT_VALUE]
                 if (defaultValue instanceof CommandCell)
                 {
-                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as LongHashSet)
+                    Map<String, Object> coord = getDisplayCoordinateFromIds([column.id] as Set<Long>)
                     getReferences(refs, coord, defaultValue as CommandCell)
                 }
             }
@@ -2712,7 +2739,7 @@ class NCube<T>
 
                 if (ids instanceof Object[])
                 {   // If specified as ID array, build coordinate that way
-                    LongHashSet colIds = new LongHashSet()
+                    Set<Long> colIds = new LinkedHashSet<>()
                     for (id in (Object[])ids)
                     {
                         if (!userIdToUniqueId.containsKey(id))
@@ -2959,7 +2986,7 @@ class NCube<T>
         List<Map<String, T>> coords = []
         for (entry in cells.entrySet())
         {
-            LongHashSet colIds = entry.key
+            Set<Long> colIds = entry.key
             Map<String, T> coord = (Map<String, T>) getCoordinateFromIds(colIds)
             coords.add(coord)
         }

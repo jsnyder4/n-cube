@@ -1,0 +1,1 @@
+output.urlToBlock = this.class

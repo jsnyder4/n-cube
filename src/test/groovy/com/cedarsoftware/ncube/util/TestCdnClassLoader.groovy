@@ -4,8 +4,10 @@ import com.cedarsoftware.ncube.NCubeBaseTest
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
  *         <br/>
@@ -73,5 +75,22 @@ class TestCdnClassLoader extends NCubeBaseTest
         }
         catch (NoSuchElementException ignore)
         { }
+    }
+
+    @Test
+    void testGetResourcesMultipleTimes()
+    {
+        CdnClassLoader loader = new CdnClassLoader(TestCdnClassLoader.class.classLoader)
+
+        String resourceName = 'config/hsqldb-schema.sql'
+        Enumeration<URL> urls = loader.getResources(resourceName)
+        assertTrue(urls.hasMoreElements())
+        assertNotNull(urls.nextElement())
+        assertFalse(urls.hasMoreElements())
+
+        urls = loader.getResources(resourceName)
+        assertTrue(urls.hasMoreElements())
+        assertNotNull(urls.nextElement())
+        assertFalse(urls.hasMoreElements())
     }
 }

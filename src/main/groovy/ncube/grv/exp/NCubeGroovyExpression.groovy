@@ -1,6 +1,10 @@
 package ncube.grv.exp
 
-import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.Axis
+import com.cedarsoftware.ncube.Column
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeInfoDto
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -32,11 +36,22 @@ import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
  *         limitations under the License.
  */
 @CompileStatic
-class NCubeGroovyExpression
+class NCubeGroovyExpression extends Script
 {
-    public Map input
-    public Map output
-    public NCube ncube
+    Map getInput()
+    {
+        return binding.getVariable('input') as Map
+    }
+
+    Map getOutput()
+    {
+        return binding.getVariable('output') as Map
+    }
+
+    NCube getNcube()
+    {
+        return binding.getVariable('ncube') as NCube
+    }
 
     /**
      * Fetch the named n-cube from the NCubeRuntime.  It looks at the same

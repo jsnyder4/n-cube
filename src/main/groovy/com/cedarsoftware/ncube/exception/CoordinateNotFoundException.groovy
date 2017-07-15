@@ -22,54 +22,59 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class CoordinateNotFoundException extends RuntimeException
+class CoordinateNotFoundException extends RuntimeException
 {
-	private final String cubeName
-	private final Map coordinate
-	private final String axisName
-	private final Object value
+    private final String cubeName
+    private final Map coordinate
+    private final String axisName
+    private final Object value
 
-	public CoordinateNotFoundException(String msg, String cubeName = null, Map coordinate = null, String axisName = null, Object value = null ) {
-		super(msg)
-		this.cubeName = cubeName
-		this.coordinate = coordinate
-		this.axisName = axisName
-		this.value = value
-	}
+    CoordinateNotFoundException(String msg, String cubeName = null, Map coordinate = null, String axisName = null, Object value = null)
+    {
+        super(msg)
+        this.cubeName = cubeName
+        this.coordinate = coordinate
+        this.axisName = axisName
+        this.value = value
+    }
 
-	/**
-	 * Returns the cube name.
-	 *
-	 * @return  required cube name
-	 */
-	public String getCubeName() {
-		return cubeName;
-	}
+    /**
+     * Returns the cube name.
+     *
+     * @return required cube name
+     */
+    String getCubeName()
+    {
+        return cubeName
+    }
 
-	/**
-	 * Returns the coordinate.
-	 *
-	 * @return  coordinate
-	 */
-	public Map getCoordinate() {
-		return coordinate;
-	}
+    /**
+     * Returns the coordinate.
+     *
+     * @return coordinate
+     */
+    Map getCoordinate()
+    {
+        return coordinate
+    }
 
-	/**
-	 * Returns the name of the axis on which the value is not found.
-	 *
-	 * @return  axis name
-	 */
-	public String getAxisName() {
-		return axisName;
-	}
+    /**
+     * Returns the name of the axis on which the value is not found.
+     *
+     * @return axis name
+     */
+    String getAxisName()
+    {
+        return axisName
+    }
 
-	/**
-	 * Returns the value not found on the axis.
-	 *
-	 * @return  value not found
-	 */
-	public Object getValue() {
-		return value;
-	}
+    /**
+     * Returns the value not found on the axis.
+     *
+     * @return value not found
+     */
+    Object getValue()
+    {
+        return value
+    }
 }

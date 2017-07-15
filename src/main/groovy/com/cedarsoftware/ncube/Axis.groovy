@@ -4,8 +4,11 @@ import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.ncube.util.LongHashSet
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.MapUtilities
+import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
 import com.google.common.collect.TreeRangeMap
@@ -928,7 +931,7 @@ class Axis
             throw new IllegalStateException("You cannot update columns on a reference Axis, axis: ${name}")
         }
 
-        LongHashSet colsToDelete = new LongHashSet()
+        Set<Long> colsToDelete = new LinkedHashSet<>()
         Map<Long, Column> newColumnMap = [:]
 
         // Step 1. Map all columns from passed in Collection by ID
@@ -1579,7 +1582,7 @@ class Axis
 
         if (type == AxisType.DISCRETE)
         {
-            Column colToFind = valueToCol[promotedValue]
+            Column colToFind = valueToCol.get(promotedValue)
             return colToFind == null ? defaultCol : colToFind
         }
         else if (type == AxisType.RANGE || type == AxisType.SET)

@@ -63,12 +63,12 @@
         {
             "id": ["ncubeRef1"],
             "type": "exp",
-            "value": "NCube ncube = NCubeManager.getCube('Glock')"
+            "value": "NCube ncube = getCube('Glock')"
         },
         {
             "id": ["ncubeRef2"],
             "type": "exp",
-            "value": "NCube ncube = NCubeManager.getCube ( 'Car' )"
+            "value": "NCube ncube = getCube ( 'Car' )"
         },
         {
             "id": ["runRuleRef1"],
