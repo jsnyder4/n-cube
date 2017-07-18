@@ -36,22 +36,11 @@ import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
  *         limitations under the License.
  */
 @CompileStatic
-class NCubeGroovyExpression extends Script
+class NCubeGroovyExpression
 {
-    Map getInput()
-    {
-        return binding.getVariable('input') as Map
-    }
-
-    Map getOutput()
-    {
-        return binding.getVariable('output') as Map
-    }
-
-    NCube getNcube()
-    {
-        return binding.getVariable('ncube') as NCube
-    }
+    Map input
+    Map output
+    NCube ncube
 
     /**
      * Fetch the named n-cube from the NCubeRuntime.  It looks at the same
@@ -401,8 +390,8 @@ class NCubeGroovyExpression extends Script
         return (double) (end - begin) / 1000000.0d
     }
 
-    def run()
+    Object run()
     {
-        throw new IllegalStateException('run() should never be called on ' + getClass().name + '. This can occur for a cell marked GroovyExpression which should be set to GroovyMethod.')
+        throw new IllegalStateException("run() should never be called on ${getClass().name}. This can occur for a cell marked GroovyExpression which should be set to GroovyMethod. NCube: ${ncube.name}, input: ${input.toString()}")
     }
 }

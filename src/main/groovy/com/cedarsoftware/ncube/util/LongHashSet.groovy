@@ -57,10 +57,12 @@ class LongHashSet implements Set<Long>
             return false
         }
 
-        int len = elems.length
+        long[] local = elems
+        int len = local.length
+
         for (int i=0; i < len; i++)
         {
-            if (elems[i] == item)
+            if (local[i] == item)
             {
                 return true
             }
@@ -102,12 +104,13 @@ class LongHashSet implements Set<Long>
             return [] as Object[]
         }
 
-        final int len = elems.length
+        long[] local = elems
+        final int len = local.length
         Object[] array = new Object[len]
 
         for (int i=0; i < len; i++)
         {
-            array[i] = elems[i]
+            array[i] = local[i]
         }
         return array
     }
@@ -143,15 +146,17 @@ class LongHashSet implements Set<Long>
         {
             return false
         }
-        int len = elems.length
+
+        long[] local = elems
+        int len = local.length
 
         for (int i=0; i < len; i++)
         {
-            if (elems[i] == o)
+            if (local[i] == o)
             {
                 long[] newElems = new long[len - 1]
-                System.arraycopy(elems, i + 1, elems, i, len - i - 1)
-                System.arraycopy(elems, 0, newElems, 0, len - 1)
+                System.arraycopy(local, i + 1, local, i, len - i - 1)
+                System.arraycopy(local, 0, newElems, 0, len - 1)
                 elems = newElems
                 return true
             }
@@ -161,7 +166,6 @@ class LongHashSet implements Set<Long>
 
     boolean addAll(Collection<? extends Long> col)
     {
-        hash = null
         int origSize = size()
         for (o in col)
         {
@@ -178,7 +182,6 @@ class LongHashSet implements Set<Long>
 
     boolean removeAll(Collection col)
     {
-        hash = null
         int origSize = size()
         for (o in col)
         {
@@ -200,10 +203,11 @@ class LongHashSet implements Set<Long>
             }
         }
         elems = new long[keep.size()]
+        long[] local = elems
         int idx = 0
         for (item in keep)
         {
-            elems[idx++] = item.longValue()
+            local[idx++] = item
         }
         return size() != origSize
     }
@@ -227,15 +231,6 @@ class LongHashSet implements Set<Long>
 
     boolean equals(Object other)
     {
-        if (this.is(other))
-        {
-            return true
-        }
-        if (!(other instanceof Set))
-        {
-            return false
-        }
-
         Set that = other as Set
         if (that.size() != size())
         {
@@ -247,15 +242,7 @@ class LongHashSet implements Set<Long>
             return true
         }
 
-        int len = elems.length
-        for (int i=0; i < len; i++)
-        {
-            if (!that.contains(elems[i]))
-            {
-                return false
-            }
-        }
-        return true
+        return that.containsAll(this)
     }
 
     int hashCode()
@@ -264,31 +251,15 @@ class LongHashSet implements Set<Long>
         {
             return hash
         }
-        int h = 0
 
         // This must be an order insensitive hash
-        for (i in elems)
+        long[] local = elems
+        int len = local.length
+        int h = 0
+
+        for (int i=0; i < len; i++)
         {
-            // do not change the formula below.  It is been hand crafted and tested for performance.
-            // If this does not hash well, ncube breaks down in performance.  The BigCube tests are
-            // greatly slowed down as proper hashing is vital or cells will be really slow to access
-            // when there are a lot of them in the ncube.
-
-            // Original hash function  (John)
-//            h += (int)(x * 347 ^ (x >>> 32) * 7)
-
-            // Better (from Stack overflow)
-//            x = ((x >> 16) ^ x) * 0x45d9f3b
-//            x = ((x >> 16) ^ x) * 0x45d9f3b
-//            x = ((x >> 16) ^ x)
-//            h += (int) x
-
-            // Even better (from Google)
-            long x = i
-            x ^= x >> 23
-            x *= 0x2127599bf4325c37L
-            x ^= x >> 47
-            h += (int) x
+            h += local[i].hashCode()
         }
         return hash = h
     }

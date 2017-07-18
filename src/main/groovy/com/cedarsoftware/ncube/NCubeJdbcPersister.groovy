@@ -579,24 +579,25 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                        (METHOD_NAME) : 'updateCube'] as Map
         boolean rowFound = false
 
-        String updatedTestData
-        if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
-        {
-            updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
-            cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
-            if (updatedTestData)
-            {
-                cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
-            }
-        }
-
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             rowFound = true
             Long revision = row.getLong("revision_number")
             boolean cubeActive = revision >= 0
-            byte[] testData = updatedTestData ? updatedTestData.bytes : row.getBytes(TEST_DATA_BIN)
+            byte[] testData = row.getBytes(TEST_DATA_BIN)
             String headSha1 = row.getString('head_sha1')
             String oldSha1 = row.getString('sha1')
+
+            String updatedTestData
+            if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
+            {
+                updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
+                cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+                if (updatedTestData || testData)
+                {
+                    cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
+                    testData = updatedTestData.bytes
+                }
+            }
 
             if (cubeActive && StringUtilities.equalsIgnoreCase(oldSha1, cube.sha1()))
             {

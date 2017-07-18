@@ -6,6 +6,7 @@ import ncube.grv.exp.NCubeGroovyExpression
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.lang.reflect.InvocationTargetException
 import java.util.regex.Matcher
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -126,7 +127,7 @@ import groovy.transform.TypeCheckingMode
         groovy.append("""\
 class ${className} extends ${expClassName}
 {
-    def run()
+    Object run()
     {
     ${groovyCodeWithoutImportsAndAnnotations}
     }
@@ -203,11 +204,11 @@ class ${className} extends ${expClassName}
         return null
     }
 
-    protected Object invokeRunMethod(NCubeGroovyExpression instance) throws Throwable
+    protected Object invokeRunMethod(final NCubeGroovyExpression instance) throws Throwable
     {
         // If 'around' Advice has been added to n-cube, invoke it before calling Groovy expression's run() method
-        NCube ncube = instance.ncube
-        List<Advice> advices = ncube.getAdvices('run')
+        final NCube ncube = instance.ncube
+        final List<Advice> advices = ncube.getAdvices('run')
         if (!advices.empty)
         {
             for (Advice advice : advices)
@@ -230,6 +231,10 @@ class ${className} extends ${expClassName}
         {
             throw e
         }
+        catch (InvocationTargetException e)
+        {
+            t = e.targetException
+        }
         catch (Throwable e)
         {   // Save exception
             t = e
@@ -237,20 +242,24 @@ class ${className} extends ${expClassName}
 
         // If 'around' Advice has been added to n-cube, invoke it after calling Groovy expression's run() method
         final int len = advices.size()
-        for (int i = len - 1i; i >= 0i; i--)
+        if (len > 0)
         {
-            Advice advice = advices.get(i)
-            try
+            for (int i = len - 1i; i >= 0i; i--)
             {
-                advice.after(null, ncube, instance.input, instance.output, ret, t)  // pass exception (t) to advice (or null)
-            }
-            catch (ThreadDeath e)
-            {
-                throw e
-            }
-            catch (Throwable e)
-            {
-                LOG.error("An exception occurred calling 'after' advice: ${advice.name}", e)
+                Advice advice = advices.get(i)
+                try
+                {
+                    advice.after(null, ncube, instance.input, instance.output, ret, t)
+                    // pass exception (t) to advice (or null)
+                }
+                catch (ThreadDeath e)
+                {
+                    throw e
+                }
+                catch (Throwable e)
+                {
+                    LOG.error("An exception occurred calling 'after' advice: ${advice.name}", e)
+                }
             }
         }
         if (t == null)

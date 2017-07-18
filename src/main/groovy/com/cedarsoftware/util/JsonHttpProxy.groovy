@@ -22,6 +22,8 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.apache.http.util.EntityUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.PropertySource
 
 import javax.servlet.http.HttpServletRequest
 
@@ -46,8 +48,13 @@ import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
  */
 
 @CompileStatic
+@PropertySource(value='classpath:application.properties')
 class JsonHttpProxy implements CallableBean
 {
+
+    @Value("#{'\${ncube.proxy.headersToRemove}'.split(',')}")
+    private List<String> headersToRemove
+
     private final CloseableHttpClient httpClient
     private CredentialsProvider credsProvider
     private AuthCache authCache
@@ -164,8 +171,11 @@ class JsonHttpProxy implements CallableBean
             while (e.hasMoreElements())
             {
                 String headerName = e.nextElement()
-                String headerValue = servletRequest.getHeader(headerName)
-                proxyRequest.setHeader(headerName, headerValue)
+                if (!headersToRemove.contains(headerName.toLowerCase()))
+                {
+                    String headerValue = servletRequest.getHeader(headerName)
+                    proxyRequest.setHeader(headerName, headerValue)
+                }
             }
         }
     }

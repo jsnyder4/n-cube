@@ -205,4 +205,20 @@ class TestLongHashSet
         set.addAll([1, 2, 3, 3, 4, 5])
         assert set.size() == 5
     }
+
+    @Test
+    void testOrderDoesNotMatter()
+    {
+        Set set1 = new LongHashSet()
+        set1.add(1)
+        set1.add(2)
+        set1.add(3)
+        Set set2 = new LongHashSet()
+        set2.add(3)
+        set2.add(2)
+        set2.add(1)
+
+        assert set1.hashCode() == set2.hashCode()
+        assert set1 == set2
+    }
 }

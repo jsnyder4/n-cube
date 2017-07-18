@@ -4,12 +4,14 @@ import com.cedarsoftware.ncube.Advice
 import com.cedarsoftware.ncube.ApplicationID
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
-import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
  *
@@ -72,11 +74,11 @@ class NCubeGroovyController extends NCubeGroovyExpression
      *                  package and class name for two classes, but their source is different,
      *                  their methods will be keyed uniquely in the cache.
      */
-    def run(String signature) throws Throwable
+    Object run(String signature) throws Throwable
     {
         final String methodName = (String) input.method
-        final String methodKey = methodName + '.' + signature
-        final Map<String, Method> methodMap = getMethodCache(ncube.getApplicationID())
+        final String methodKey = "${methodName}.${signature}"
+        final Map<String, Method> methodMap = getMethodCache(ncube.applicationID)
         Method method = methodMap[methodKey]
 
         if (method == null)
@@ -85,14 +87,16 @@ class NCubeGroovyController extends NCubeGroovyExpression
             methodMap[methodKey] = method
         }
 
-        // If 'around' Advice has been added to n-cube, invoke it before calling Groovy method
-        // or expression
+        // If 'around' Advice has been added to n-cube, invoke it before calling Groovy method or expression
         final List<Advice> advices = ncube.getAdvices(methodName)
-        for (Advice advice : advices)
+        if (!advices.empty)
         {
-            if (!advice.before(method, ncube, input, output))
+            for (Advice advice : advices)
             {
-                return null
+                if (!advice.before(method, ncube, input, output))
+                {
+                    return null
+                }
             }
         }
 
@@ -108,6 +112,10 @@ class NCubeGroovyController extends NCubeGroovyExpression
         {
             throw e
         }
+        catch (InvocationTargetException e)
+        {
+            t = e.targetException
+        }
         catch (Throwable e)
         {
             t = e  // Save exception thrown by method call
@@ -116,20 +124,23 @@ class NCubeGroovyController extends NCubeGroovyExpression
         // If 'around' Advice has been added to n-cube, invoke it after calling Groovy method
         // or expression
         final int len = advices.size()
-        for (int i = len - 1; i >= 0; i--)
+        if (len > 0)
         {
-            final Advice advice = advices[i]
-            try
+            for (int i = len - 1; i >= 0; i--)
             {
-                advice.after(method, ncube, input, output, ret, t)  // pass exception (t) to advice (or null)
-            }
-            catch (ThreadDeath e)
-            {
-                throw e
-            }
-            catch (Throwable e)
-            {
-                LOG.error("An exception occurred calling 'after' advice: " + advice.getName() + " on method: " + method.getName(), e)
+                final Advice advice = advices[i]
+                try
+                {
+                    advice.after(method, ncube, input, output, ret, t)  // pass exception (t) to advice (or null)
+                }
+                catch (ThreadDeath e)
+                {
+                    throw e
+                }
+                catch (Throwable e)
+                {
+                    LOG.error("An exception occurred calling 'after' advice: ${advice.name} on method: ${method.name}", e)
+                }
             }
         }
         if (t == null)

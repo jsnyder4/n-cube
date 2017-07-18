@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
-import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.DeepEquals
 import org.junit.Test
@@ -163,6 +162,19 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
         data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         assertTrue(DeepEquals.deepEquals(expectedTests, data))
+    }
+
+    @Test
+    void testDeleteAllTestsRemovesTestData()
+    {
+        NCube cube = createCube()
+        mutableClient.updateCube(cube)
+        cube.testData = null
+        mutableClient.updateCube(cube)
+
+        cube = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        assert cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_UPDATED)
+        assert !cube.testData
     }
 
     @Test

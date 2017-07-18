@@ -11,11 +11,11 @@ import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
+import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.codehaus.groovy.tools.GroovyClass
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
@@ -92,10 +92,7 @@ abstract class GroovyBase extends UrlCommandCell
     protected Object fetchResult(Map<String, Object> ctx)
     {
         prepare(cmd ?: url, ctx)
-        clearSourceFromCache(ctx,L2CacheKey)
-
-        Object result = executeInternal(ctx)
-        return result
+        return executeInternal(ctx)
     }
 
     protected abstract String buildGroovy(Map<String, Object> ctx, String className, String theirGroovy)
@@ -122,26 +119,19 @@ abstract class GroovyBase extends UrlCommandCell
         return map
     }
 
-    protected Object executeInternal(Map<String, Object> ctx)
+    Object executeInternal(final Map<String, Object> ctx)
     {
-        try
+        final NCube ncube = getNCube(ctx)
+        Class code = runnableCode
+        if (code == null)
         {
-            NCube ncube = getNCube(ctx)
-            Class code = getRunnableCode()
-            if (code == null)
-            {
-                throw new IllegalStateException("Code cleared while cell was executing, n-cube: ${ncube.name}, app: ${ncube.applicationID}")
-            }
-            final NCubeGroovyExpression exp = (NCubeGroovyExpression) code.newInstance()
-            exp.setProperty('input', getInput(ctx))
-            exp.setProperty('output', getOutput(ctx))
-            exp.setProperty('ncube', ncube)
-            return invokeRunMethod(exp)
+            throw new IllegalStateException("Code cleared while cell was executing, n-cube: ${ncube.name}, app: ${ncube.applicationID}, input: ${getInput(ctx).toString()}")
         }
-        catch (InvocationTargetException e)
-        {
-            throw e.targetException
-        }
+        final NCubeGroovyExpression exp = DefaultGroovyMethods.newInstance(code)
+        exp.input = getInput(ctx)
+        exp.output = getOutput(ctx)
+        exp.ncube = ncube
+        return invokeRunMethod(exp)
     }
 
     /**
@@ -666,11 +656,6 @@ abstract class GroovyBase extends UrlCommandCell
     protected static void addSourceToCache(Map<String, Object> ctx, String cacheKey, String source)
     {
         ctx[cacheKey] =  source
-    }
-
-    protected static void clearSourceFromCache(Map<String, Object> ctx, String cacheKey)
-    {
-        ctx.remove(cacheKey)
     }
 
     protected static void getCubeNamesFromText(final Set<String> cubeNames, final String text)

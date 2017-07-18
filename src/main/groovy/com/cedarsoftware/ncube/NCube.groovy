@@ -1186,6 +1186,9 @@ class NCube<T>
         Set<Long> ids = new LinkedHashSet<>(boundColumns)
         Map commandInput = new CaseInsensitiveMap(input ?: [:])
         Map matchingRows = new CaseInsensitiveMap()
+        Map ctx = new LinkedHashMap<>()
+        ctx.output = output
+        ctx.ncube = this
         
         for (row in rowAxis.columns)
         {
@@ -1203,7 +1206,8 @@ class NCube<T>
                 ids.remove(whereId)
             }
 
-            def whereResult = executeExpression([input: resultRow, output: output, ncube: this] as Map, exp)
+            ctx.input = resultRow
+            def whereResult = executeExpression(ctx, exp)
             if (isTrue(whereResult))
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
