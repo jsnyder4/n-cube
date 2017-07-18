@@ -89,7 +89,7 @@ abstract class GroovyBase extends UrlCommandCell
         this.runnableCode = runnableCode
     }
 
-    protected Object fetchResult(Map<String, Object> ctx)
+    protected Object fetchResult(final Map<String, Object> ctx)
     {
         prepare(cmd ?: url, ctx)
         return executeInternal(ctx)

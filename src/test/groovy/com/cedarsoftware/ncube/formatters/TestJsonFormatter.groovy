@@ -220,7 +220,7 @@ class TestJsonFormatter extends NCubeBaseTest
         assert json.contains('":{"type":"string","value":"CA"}')
 
         json = ncube.toFormattedJson([indexFormat: false])
-        assert json.contains('"cells":[{"id":[1')
+        assert json.contains('"cells":[{"id":[')
         assert json.contains('],"type":"string","value":"1 10"}')
         assert json.contains('"axes":[{"id":1,"name":"Age"')
         assert json.contains('"columns":[{"id":2')

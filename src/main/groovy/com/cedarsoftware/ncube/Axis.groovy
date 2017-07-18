@@ -4,15 +4,10 @@ import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.MapUtilities
-import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
 import com.google.common.collect.TreeRangeMap
-import gnu.trove.map.hash.TLongObjectHashMap
 import groovy.transform.CompileStatic
 
 import java.security.SecureRandom
@@ -71,7 +66,7 @@ class Axis
     private boolean isRef
 
     // Internal indexes
-    private final transient TLongObjectHashMap<Column> idToCol = new TLongObjectHashMap<>(16, 0.8f)   // Setting load factor to 0.8 because trove uses 0.5 (uses too much memory)
+    private final transient Map<Long, Column> idToCol = new HashMap<>()
     private final transient Map<String, Column> colNameToCol = new CaseInsensitiveMap<>()
     private final transient SortedMap<Integer, Column> displayOrder = new TreeMap<>()
     private transient NavigableMap<Comparable, Column> valueToCol
