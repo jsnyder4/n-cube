@@ -40,20 +40,20 @@ class NCubeConfiguration
     @Value('${ncube.cache.evict.units}') String unitsNCubeCache
     @Value('${ncube.cache.concurrency}') int concurrencyNCubeCache
 
-    @Value('${perm.cache.max.size}') int maxSizePermCache
-    @Value('${perm.cache.evict.type}') String typePermCache
-    @Value('${perm.cache.evict.duration}') int durationPermCache
-    @Value('${perm.cache.evict.units}') String unitsPermCache
-    @Value('${perm.cache.concurrency}') int concurrencyPermCache
+    @Value('${ncube.perm.cache.max.size}') int maxSizePermCache
+    @Value('${ncube.perm.cache.evict.type}') String typePermCache
+    @Value('${ncube.perm.cache.evict.duration}') int durationPermCache
+    @Value('${ncube.perm.cache.evict.units}') String unitsPermCache
+    @Value('${ncube.perm.cache.concurrency}') int concurrencyPermCache
 
     @Value('${ncube.allow.mutable.methods}') boolean allowMutableMethods
-    @Value('${target.scheme}') String scheme
-    @Value('${target.host}') String host
-    @Value('${target.port}') int port
-    @Value('${target.context}') String context
-    @Value('${target.username}') String username
-    @Value('${target.password}') String password
-    @Value('${target.numConnections}') int numConnections
+    @Value('${ncube.target.scheme}') String scheme
+    @Value('${ncube.target.host}') String host
+    @Value('${ncube.target.port}') int port
+    @Value('${ncube.target.context}') String context
+    @Value('${ncube.target.username}') String username
+    @Value('${ncube.target.password}') String password
+    @Value('${ncube.target.numConnections}') int numConnections
 
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
@@ -79,19 +79,19 @@ class NCubeConfiguration
     }
 
     @Bean(name = 'setSourcesDir')
-    public MethodInvokingBean setSourcesDir() {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean();
-        methodInvokingBean.setStaticMethod("com.cedarsoftware.ncube.GroovyBase.setGeneratedSourcesDirectory");
-        methodInvokingBean.setArguments([sourcesDirectory] as Object []);
-        return methodInvokingBean;
+    MethodInvokingBean setSourcesDir() {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
+        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.GroovyBase.setGeneratedSourcesDirectory"
+        methodInvokingBean.arguments = [sourcesDirectory] as Object []
+        return methodInvokingBean
     }
 
     @Bean(name = 'setClassesDir')
-    public MethodInvokingBean setClassesDir() {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean();
-        methodInvokingBean.setStaticMethod("com.cedarsoftware.ncube.util.CdnClassLoader.setGeneratedClassesDirectory");
-        methodInvokingBean.setArguments([classesDirectory] as Object []);
-        return methodInvokingBean;
+    MethodInvokingBean setClassesDir() {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
+        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.util.CdnClassLoader.setGeneratedClassesDirectory"
+        methodInvokingBean.arguments = [classesDirectory] as Object []
+        return methodInvokingBean
     }
 
     @Configuration

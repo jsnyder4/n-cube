@@ -1,25 +1,12 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.CommandCellException
-import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
-import com.cedarsoftware.ncube.exception.InvalidCoordinateException
-import com.cedarsoftware.ncube.exception.RuleJump
-import com.cedarsoftware.ncube.exception.RuleStop
+import com.cedarsoftware.ncube.exception.*
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
-import com.cedarsoftware.util.ArrayUtilities
-import com.cedarsoftware.util.ByteUtilities
-import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.MapUtilities
-import com.cedarsoftware.util.ReflectionUtils
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.TrackingMap
+import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -1179,39 +1166,40 @@ class NCube<T>
         boolean isRowDiscrete = rowAxis.type == AxisType.DISCRETE
         boolean isColDiscrete = colAxis.type == AxisType.DISCRETE
 
-        Collection<Column> selectList = selectColumns(colAxis, columnsToReturn)
-        Collection<Column> whereColumns = selectColumns(colAxis, columnsToSearch)
-
-        GroovyExpression exp = new GroovyExpression(where)
-        Set<Long> ids = new LinkedHashSet<>(boundColumns)
-        Map commandInput = new CaseInsensitiveMap(input ?: [:])
-        Map matchingRows = new CaseInsensitiveMap()
-        Map ctx = new LinkedHashMap<>()
+        final Collection<Column> selectList = selectColumns(colAxis, columnsToReturn)
+        final Collection<Column> whereColumns = selectColumns(colAxis, columnsToSearch)
+        final GroovyExpression exp = new GroovyExpression(where)
+        final Set<Long> ids = new LinkedHashSet<>(boundColumns)
+        final Map commandInput = new CaseInsensitiveMap(input ?: [:])
+        final Map matchingRows = new CaseInsensitiveMap()
+        final Map ctx = [:]
+        final Map whereVars = new CaseInsensitiveMap()
         ctx.output = output
         ctx.ncube = this
-        
+
         for (row in rowAxis.columns)
         {
-            Map resultRow = new CaseInsensitiveMap()
+            whereVars.clear()
             commandInput[rowAxisName] = row.valueThatMatches
             long rowId = row.id
             ids.add(rowId)
-            
+
             for (column in whereColumns)
             {
                 long whereId = column.id
                 ids.add(whereId)
                 commandInput[colAxisName] = column.valueThatMatches
-                resultRow[isColDiscrete ? column.value : column.columnName] = getCellValue(ids, commandInput, output)
+                Object colKey = isColDiscrete ? column.value : column.columnName
+                whereVars[colKey] = getCellValue(ids, commandInput, output)
                 ids.remove(whereId)
             }
 
-            ctx.input = resultRow
+            ctx.input = whereVars
             def whereResult = executeExpression(ctx, exp)
             if (isTrue(whereResult))
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
-                matchingRows[key] = buildMapReduceResultRow(colAxis, selectList, resultRow, ids, commandInput, output)
+                matchingRows[key] = buildMapReduceResultRow(colAxis, selectList, whereVars, ids, commandInput, output)
             }
             ids.remove(rowId)
         }
@@ -1229,7 +1217,7 @@ class NCube<T>
         {
             if (StringUtilities.isEmpty(row.columnName))
             {
-                throw new IllegalStateException("Non-discrete axis columns must have a meta-property name set in order to use them for mapReduce().  Cube: ${name}, Axis: ${rowAxis.name}")
+                throw new IllegalStateException("Non-discrete axis columns must have a meta-property 'name' set in order to use them for mapReduce().  Cube: ${name}, Axis: ${rowAxis.name}")
             }
             key = row.columnName
         }
@@ -1315,12 +1303,12 @@ class NCube<T>
         def cellValue = cells[ids]
         if (cellValue instanceof CommandCell)
         {
-            cellValue = executeExpression([input: input, output: output, ncube: this] as Map, cellValue as CommandCell)
+            cellValue = executeExpression((Map) [input: input, output: output, ncube: this], (CommandCell) cellValue)
         }
         return cellValue
     }
 
-    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map alreadyExecuted, Set<Long> ids, Map commandInput, Map output)
+    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map whereVars, Set<Long> ids, Map commandInput, Map output)
     {
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
@@ -1329,9 +1317,9 @@ class NCube<T>
         for (Column column : selectList)
         {
             def colValue = isDiscrete ? column.value : column.columnName
-            if (alreadyExecuted.containsKey(colValue))
+            if (whereVars.containsKey(colValue))
             {
-                result[colValue] = alreadyExecuted[colValue]
+                result[colValue] = whereVars[colValue]
                 continue
             }
             commandInput[axisName] = column.valueThatMatches
@@ -1379,8 +1367,8 @@ class NCube<T>
         {
             boolean isZero = ((byte) 0) == ruleValue ||
                     ((short) 0) == ruleValue ||
-                    0 == ruleValue ||
-                    ((long) 0) == ruleValue ||
+                    0i == ruleValue ||
+                    0L == ruleValue ||
                     0.0d == ruleValue ||
                     0.0f == ruleValue ||
                     BigInteger.ZERO == ruleValue ||

@@ -6242,7 +6242,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testMultipleReferenceAxisVersionPerApp()
+    void testMultipleReferenceAxisVersionPerCommit()
     {
         ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
         ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
@@ -6294,6 +6294,73 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         try
         { // make sure going around commitBranch doesn't work (bugfix)
             String prId = mutableClient.generatePullRequestHash(snapshotAppId, mutableClient.getBranchChangesForHead(snapshotAppId).toArray())
+            mutableClient.mergePullRequest(prId)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not performed', 'versions')
+        }
+    }
+
+    @Test
+    void testMultipleReferenceAxisVersionPerApp()
+    {
+        ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
+        ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
+        ApplicationID snapshotAppId = ApplicationID.testAppId.asVersion('3.0.0')
+        NCube one = NCubeBuilder.discrete1DAlt
+        one.applicationID = firstReleaseAppId
+        mutableClient.createCube(one)
+        assert one.getAxis('state').size() == 2
+        mutableClient.commitBranch(firstReleaseAppId)
+        mutableClient.releaseCubes(firstReleaseAppId, secondReleaseAppId.version)
+        mutableClient.releaseCubes(secondReleaseAppId, snapshotAppId.version)
+
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = firstReleaseAppId.tenant
+        args[REF_APP] = firstReleaseAppId.app
+        args[REF_VERSION] = firstReleaseAppId.version
+        args[REF_STATUS] = ReleaseStatus.RELEASE.name()
+        args[REF_BRANCH] = ApplicationID.HEAD
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        NCube two = new NCube('Mongo')
+        two.applicationID = snapshotAppId
+        two.addAxis(axis)
+        mutableClient.createCube(two)
+        mutableClient.commitBranch(snapshotAppId)
+
+        NCube three = new NCube('Mongo2')
+        three.applicationID = snapshotAppId
+        args[REF_VERSION] = secondReleaseAppId.version
+        refAxisLoader = new ReferenceAxisLoader(three.name, 'stateSource2', args)
+        axis = new Axis('stateSource2', 1, false, refAxisLoader)
+        three.addAxis(axis)
+        mutableClient.createCube(three)
+
+        List<AxisRef> axisRefs = mutableClient.getReferenceAxes(snapshotAppId)
+        assert 2 == axisRefs.size()
+        assert axisRefs[0].destVersion != axisRefs[1].destVersion
+
+        try
+        {
+            mutableClient.commitBranch(snapshotAppId)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not performed', 'versions')
+        }
+
+        try
+        {
+            List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForHead(snapshotAppId)
+            assert 1 == dtos.size()
+            String prId = mutableClient.generatePullRequestHash(snapshotAppId, dtos.toArray())
             mutableClient.mergePullRequest(prId)
             fail()
         }

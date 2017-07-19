@@ -1,6 +1,9 @@
 ### Revision History
+* 4.0.16-SNAPSHOT
+  * --
 * 4.0.15
   * Bug fix: Updated version fetching code
+  * Updated n-cube related application properties to be prefixed with ncube.*
 * 4.0.14
   * Added n-cube version to NCubeController.heartBeat()
   * Bug fix: Removed "Content-Length" header in JsonHttpProxy. Added ncube.proxy.headersToRemove application.property in case other headers need to be removed.

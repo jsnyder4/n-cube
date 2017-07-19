@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>4.0.15-SNAPSHOT</version>
+	<version>4.0.16-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -222,6 +222,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.plugin.surefire}</version>
                 <configuration>
+                    <argLine>-Xmx1500m -XX:MaxPermSize=256m</argLine>
                     <forkCount>2</forkCount>
                     <includes>
                         <include>**/*Test*</include>

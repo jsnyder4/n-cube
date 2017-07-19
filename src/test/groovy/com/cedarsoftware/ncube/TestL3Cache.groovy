@@ -1,14 +1,9 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.CompilationFailedException
-import org.junit.After
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Ignore
-import org.junit.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.junit.*
 
 import java.lang.reflect.Field
 
@@ -32,6 +27,7 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestL3Cache extends NCubeCleanupBaseTest
 {
     private NCube cp
@@ -46,14 +42,12 @@ class TestL3Cache extends NCubeCleanupBaseTest
     private static File targetDir
     private static String savedSourcesDir
     private static String savedClassesDir
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestL3Cache.class)
-
+    
     @BeforeClass
     static void init()
     {
         targetDir = new File ('target')
-        assertTrue(targetDir.exists() && targetDir.isDirectory())
+        assertTrue(targetDir.exists() && targetDir.directory)
         savedSourcesDir = GroovyBase.generatedSourcesDirectory
         savedClassesDir = CdnClassLoader.generatedClassesDirectory
     }
@@ -111,7 +105,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
 
         assertFalse(sourcesDir.exists())
         assertFalse(classesDir.exists())
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
 
         Map output = [:]
         testCube.getCell([name:'simple'],output)
@@ -141,7 +135,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
 
         // clear the cache, but make sure l3 cache still exists
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
         // clear the source file in order to detect if a recompile occurs or class loaded from l3 cache
@@ -162,7 +156,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     void testCompile()
     {
         ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
-        reloadCubes('sys.classpath.L3Cache.json')
+        reloadCubes('sys.classpath.L3cache.json')
 
         CompileInfo compileInfo = testCube.compile()
         List<Map> exceptions = compileInfo.getExceptions()
@@ -208,7 +202,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         verifyFileExistence(classesDir,innerClassName,'class',true)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
         verifyFileExistence(classesDir,innerClassName,'class',true)
 
@@ -272,7 +266,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         innerClassFile.delete()
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
         verifyFileExistence(classesDir,innerClassName,'class',false)
 
@@ -297,7 +291,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
         output.clear()
@@ -327,7 +321,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertTrue(output.containsKey('customClass')) // still find first implementation
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
         // load customMatchingClass before customClass will load cached customClass still
@@ -351,7 +345,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
         output.clear()
@@ -376,7 +370,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(methodClass.name,findLoadedClass(methodClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(methodClass)
 
         output.clear()
@@ -401,7 +395,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
         output.clear()
@@ -426,7 +420,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(methodClass.name,findLoadedClass(methodClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
         verifyClassFileExistence(methodClass)
 
         output.clear()
@@ -449,7 +443,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToClass'],output)
@@ -471,7 +465,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
         reloadCubes()
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToBlock'],output)
@@ -485,7 +479,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testUrlToRemoteClass()
     {
-        reloadCubes('sys.classpath.L3Cache.json')
+        reloadCubes('sys.classpath.L3cache.json')
         Map output = [:]
         testCube.getCell([name:'urlToRemoteClass'],output)
 
@@ -493,8 +487,8 @@ class TestL3Cache extends NCubeCleanupBaseTest
         verifySourceAndClassFilesExistence(expClass,false)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
-        reloadCubes('sys.classpath.L3Cache.json')
-        assertTrue(getLoadedClasses().isEmpty())
+        reloadCubes('sys.classpath.L3cache.json')
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToRemoteClass'],output)
@@ -508,7 +502,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testUrlToRemoteStatementBlock()
     {
-        reloadCubes('sys.classpath.L3Cache.json')
+        reloadCubes('sys.classpath.L3cache.json')
         Map output = [:]
         testCube.getCell([name:'urlToRemoteBlock'],output)
 
@@ -516,8 +510,8 @@ class TestL3Cache extends NCubeCleanupBaseTest
         verifySourceAndClassFilesExistence(expClass,false)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
-        reloadCubes('sys.classpath.L3Cache.json')
-        assertTrue(getLoadedClasses().isEmpty())
+        reloadCubes('sys.classpath.L3cache.json')
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToRemoteBlock'],output)
@@ -531,7 +525,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testUrlToRemoteClassWithShortcuts()
     {
-        reloadCubes('sys.classpath.L3Cache.json')
+        reloadCubes('sys.classpath.L3cache.json')
         Map output = [:]
         testCube.getCell([name:'urlToShortcutClass'],output)
 
@@ -539,8 +533,8 @@ class TestL3Cache extends NCubeCleanupBaseTest
         verifySourceAndClassFilesExistence(expClass,false)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
-        reloadCubes('sys.classpath.L3Cache.json')
-        assertTrue(getLoadedClasses().isEmpty())
+        reloadCubes('sys.classpath.L3cache.json')
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToShortcutClass'],output)
@@ -554,7 +548,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testUrlToRemoteStatementBlockWithShortcuts()
     {
-        reloadCubes('sys.classpath.L3Cache.json')
+        reloadCubes('sys.classpath.L3cache.json')
         Map output = [:]
         testCube.getCell([name:'urlToShortcutBlock'],output)
 
@@ -562,8 +556,8 @@ class TestL3Cache extends NCubeCleanupBaseTest
         verifySourceAndClassFilesExistence(expClass,false)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
 
-        reloadCubes('sys.classpath.L3Cache.json')
-        assertTrue(getLoadedClasses().isEmpty())
+        reloadCubes('sys.classpath.L3cache.json')
+        assertTrue(loadedClasses.empty)
 
         output.clear()
         testCube.getCell([name:'urlToShortcutBlock'],output)
@@ -582,7 +576,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
 
         assertEquals(sourcesDir.path,GroovyBase.generatedSourcesDirectory)
         assertEquals(GroovyBase.generatedSourcesDirectory,CdnClassLoader.generatedClassesDirectory)
-        assertTrue(getLoadedClasses().isEmpty())
+        assertTrue(loadedClasses.empty)
 
         Map output = [:]
         testCube.getCell([name:'simple'],output)
@@ -673,7 +667,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     }
 
     private void reloadCubes(String sysClassPath = 'sys.classpath.tests.json') {
-        ncubeRuntime.clearCache()
+        ncubeRuntime.clearCache(ApplicationID.testAppId)
 
         cp = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId,sysClassPath)
         ncubeRuntime.addCube(cp)
@@ -695,20 +689,20 @@ class TestL3Cache extends NCubeCleanupBaseTest
         return testCube
     }
 
-    private boolean verifySourceAndClassFilesExistence(Class clazz, boolean exists=true) {
+    private void verifySourceAndClassFilesExistence(Class clazz, boolean exists=true) {
         verifySourceFileExistence(clazz,exists)
         verifyClassFileExistence(clazz,exists)
     }
 
-    private boolean verifySourceFileExistence(Class clazz, boolean exists=true) {
+    private void verifySourceFileExistence(Class clazz, boolean exists=true) {
         verifyFileExistence(sourcesDir,clazz.name,'groovy',exists)
     }
 
-    private boolean verifyClassFileExistence(Class clazz, boolean exists=true) {
+    private void verifyClassFileExistence(Class clazz, boolean exists=true) {
         verifyFileExistence(classesDir,clazz.name,'class',exists)
     }
 
-    private boolean verifyFileExistence(File dir, String className, String extension, boolean exists=true) {
+    private static void verifyFileExistence(File dir, String className, String extension, boolean exists=true) {
         String fileName = className.contains('.') ? "${className.replace('.',File.separator)}" : className
 
         File classFile = new File ("${dir.path}/${fileName}.${extension}")
@@ -717,25 +711,25 @@ class TestL3Cache extends NCubeCleanupBaseTest
 
     private Class findLoadedClass(Class clazz)
     {
-        return getLoadedClasses().find { it.name == clazz.name}
+        return loadedClasses.find { it.name == clazz.name}
     }
 
     private List<Class> getLoadedClasses()
     {
         ClassLoader classLoader = cp.getCell([:]) as GroovyClassLoader
         Field classesField = ClassLoader.class.getDeclaredField('classes')
-        classesField.setAccessible(true)
+        classesField.accessible = true
 
-        List<Class> classes = classesField.get(classLoader)
+        List<Class> classes = classesField.get(classLoader) as List
         while (classLoader != null)
         {
             if (!classLoader.toString().contains('Launcher'))
             {
                 if (classLoader instanceof GroovyClassLoader)
                 {
-                    classes.addAll((classLoader as GroovyClassLoader).getLoadedClasses())
+                    classes.addAll((classLoader as GroovyClassLoader).loadedClasses)
                 }
-                classes.addAll(classesField.get(classLoader))
+                classes.addAll(classesField.get(classLoader) as List)
             }
             classLoader=classLoader.parent
         }

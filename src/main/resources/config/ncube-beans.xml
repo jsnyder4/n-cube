@@ -22,13 +22,13 @@
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${target.scheme}"/>
-            <constructor-arg value="${target.host}"/>
-            <constructor-arg value="${target.port}"/>
-            <constructor-arg value="${target.context}"/>
-            <constructor-arg value="${target.username}"/>
-            <constructor-arg value="${target.password}"/>
-            <constructor-arg value="${target.numConnections}"/>
+            <constructor-arg value="${ncube.target.scheme}"/>
+            <constructor-arg value="${ncube.target.host}"/>
+            <constructor-arg value="${ncube.target.port}"/>
+            <constructor-arg value="${ncube.target.context}"/>
+            <constructor-arg value="${ncube.target.username}"/>
+            <constructor-arg value="${ncube.target.password}"/>
+            <constructor-arg value="${ncube.target.numConnections}"/>
         </bean>
 
     </beans>
@@ -70,12 +70,13 @@
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${target.scheme}"/>
-            <constructor-arg value="${target.host}"/>
-            <constructor-arg value="${target.port}"/>
-            <constructor-arg value="${target.context}"/>
-            <constructor-arg value="${target.username}"/>
-            <constructor-arg value="${target.password}"/>
+            <constructor-arg value="${ncube.target.scheme}"/>
+            <constructor-arg value="${ncube.target.host}"/>
+            <constructor-arg value="${ncube.target.port}"/>
+            <constructor-arg value="${ncube.target.context}"/>
+            <constructor-arg value="${ncube.target.username}"/>
+            <constructor-arg value="${ncube.target.password}"/>
+            <constructor-arg value="${ncube.target.numConnections}"/>
         </bean>
 
     </beans>

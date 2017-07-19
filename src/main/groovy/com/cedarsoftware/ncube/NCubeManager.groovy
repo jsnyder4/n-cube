@@ -929,6 +929,16 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 checklist[refAppId.app] = refAppId
             }
         }
+
+        Set<ApplicationID> committedAppIds = getReferenceAxesAppIds(allAxisRefs.toArray(), false)
+        for (ApplicationID refAppId : committedAppIds)
+        {
+            ApplicationID checkedApp = checklist[refAppId.app]
+            if (checkedApp && checkedApp != refAppId)
+            {
+                throw new IllegalStateException("Operation not performed. Axis references pointing to differing versions per app, referenced app: ${refAppId.app}")
+            }
+        }
     }
 
     void updateReferenceAxes(Object[] axisRefs)

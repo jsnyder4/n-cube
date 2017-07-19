@@ -253,13 +253,11 @@ class LongHashSet implements Set<Long>
         }
 
         // This must be an order insensitive hash
-        long[] local = elems
-        int len = local.length
         int h = 0
 
-        for (int i=0; i < len; i++)
+        for (i in elems)
         {
-            h += local[i].hashCode()
+            h += i.hashCode()
         }
         return hash = h
     }

@@ -1,6 +1,6 @@
 n-cube
 ======
-<!--[![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube)-->
+[![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube)
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.cedarsoftware/n-cube/badge.svg)](http://www.javadoc.io/doc/com.cedarsoftware/n-cube)
 
@@ -10,7 +10,7 @@ n-cube is a Rules Engine, Decision Table, Decision Tree, Templating Engine, and 
 <dependency>
   <groupId>com.cedarsoftware</groupId>
   <artifactId>n-cube</artifactId>
-  <version>4.0.14</version>
+  <version>4.0.15</version>
 </dependency>
 ```
 
