@@ -781,7 +781,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     /**
      * Add axis to an existing SNAPSHOT n-cube.
      */
-    void addAxis(ApplicationID appId, String cubeName, String axisName, String type, String valueType)
+    void addAxis(ApplicationID appId, String cubeName, String axisName, String type, String valueType, Map<String, Boolean> axisOpts = [hasDefault:true, isSorted:false, fireAll:false])
     {
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
@@ -803,7 +803,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
                 maxId = axis.id
             }
         }
-        Axis axis = new Axis(axisName, AxisType.valueOf(type), AxisValueType.valueOf(valueType), true, Axis.DISPLAY, maxId + 1)
+        int sortedVal = axisOpts.isSorted ? Axis.SORTED : Axis.DISPLAY
+        Axis axis = new Axis(axisName, AxisType.valueOf(type), AxisValueType.valueOf(valueType), axisOpts.hasDefault, sortedVal, maxId + 1, axisOpts.fireAll)
         ncube.addAxis(axis)
         mutableClient.updateCube(ncube)
     }
@@ -811,7 +812,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     /**
      * Add axis to an existing SNAPSHOT n-cube that is a reference to an axis in another cube.
      */
-    void addAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName, ApplicationID transformAppId, String transformCubeName)
+    void addAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName, ApplicationID transformAppId, String transformCubeName, Map<String, Boolean> axisOpts = [hasDefault:true])
     {
         appId = addTenant(appId)
         NCube nCube = loadCube(appId, cubeName)
@@ -850,7 +851,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, axisName, args)
 
-        Axis axis = new Axis(axisName, maxId + 1, true, refAxisLoader)
+        Axis axis = new Axis(axisName, maxId + 1, axisOpts.hasDefault, refAxisLoader)
         nCube.addAxis(axis)
         mutableClient.updateCube(nCube)
     }

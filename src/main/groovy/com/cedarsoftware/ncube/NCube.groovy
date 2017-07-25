@@ -3816,7 +3816,7 @@ class NCube<T>
      * @param value Object to intern (if possible)
      * @return interned instance (if internable) otherwise passed-in instance is returned.
      */
-    private Object internValue(Object value)
+    private static Object internValue(Object value)
     {
         if (value == null)
         {

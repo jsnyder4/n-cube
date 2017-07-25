@@ -52,7 +52,7 @@ class LongHashSet implements Set<Long>
 
     boolean contains(Object item)
     {
-        if (empty)
+        if (empty || item == null)
         {
             return false
         }
@@ -62,7 +62,7 @@ class LongHashSet implements Set<Long>
 
         for (int i=0; i < len; i++)
         {
-            if (local[i] == item)
+            if (item == local[i])
             {
                 return true
             }
@@ -105,7 +105,7 @@ class LongHashSet implements Set<Long>
         }
 
         long[] local = elems
-        final int len = local.length
+        int len = local.length
         Object[] array = new Object[len]
 
         for (int i=0; i < len; i++)
@@ -142,7 +142,7 @@ class LongHashSet implements Set<Long>
     boolean remove(Object o)
     {
         hash = null
-        if (empty)
+        if (empty || o == null)
         {
             return false
         }
@@ -152,7 +152,7 @@ class LongHashSet implements Set<Long>
 
         for (int i=0; i < len; i++)
         {
-            if (local[i] == o)
+            if (o == local[i])
             {
                 long[] newElems = new long[len - 1]
                 System.arraycopy(local, i + 1, local, i, len - i - 1)
@@ -231,15 +231,10 @@ class LongHashSet implements Set<Long>
 
     boolean equals(Object other)
     {
-        Set that = other as Set
+        Set<Long> that = other as Set<Long>
         if (that.size() != size())
         {
             return false
-        }
-
-        if (empty)
-        {
-            return true
         }
 
         return that.containsAll(this)

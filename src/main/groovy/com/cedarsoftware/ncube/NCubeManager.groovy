@@ -85,7 +85,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     {
         if (nCubePersister == null)
         {
-            throw new IllegalStateException('Persister not set into NCubeManager.')
+            throw new IllegalStateException("Persister not set into NCubeManager, user: ${getUserId()}")
         }
         return nCubePersister
     }
@@ -152,7 +152,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         NCube ncube = loadCube(appId, name)
         if (ncube == null)
         {
-            throw new IllegalArgumentException("Could not get referenced cube names, n-cube: ${name} does not exist in app: ${appId}")
+            throw new IllegalArgumentException("Could not get referenced cube names, cube: ${name} does not exist in app: ${appId}, user: ${getUserId()}")
         }
 
         Map<Map, Set<String>> subCubeRefs = ncube.referencedCubeNames
@@ -181,12 +181,12 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (appId.release)
         {
-            throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be restored, app: ${appId}")
+            throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be restored, app: ${appId}, user: ${getUserId()}")
         }
 
         if (ArrayUtilities.isEmpty(cubeNames))
         {
-            throw new IllegalArgumentException('Error, empty array of cube names passed in to be restored.')
+            throw new IllegalArgumentException("Error, empty array of cube names passed in to be restored, app: ${appId}, user: ${getUserId()}")
         }
 
         assertNotLockBlocked(appId)
@@ -307,7 +307,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (newAppId.release)
         {
-            throw new IllegalArgumentException("Cubes cannot be duplicated into a ${ReleaseStatus.RELEASE} version, cube: ${newName}, app: ${newAppId}")
+            throw new IllegalArgumentException("Cubes cannot be duplicated into a ${ReleaseStatus.RELEASE} version, cube: ${newName}, app: ${newAppId}, user: ${getUserId()}")
         }
 
         NCube.validateCubeName(oldName)
@@ -315,7 +315,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (oldName.equalsIgnoreCase(newName) && oldAppId == newAppId)
         {
-            throw new IllegalArgumentException("Could not duplicate, old name cannot be the same as the new name when oldAppId matches newAppId, name: ${oldName}, app: ${oldAppId}")
+            throw new IllegalArgumentException("Could not duplicate, old name cannot be the same as the new name when oldAppId matches newAppId, name: ${oldName}, app: ${oldAppId}, user: ${getUserId()}")
         }
 
         assertPermissions(oldAppId, oldName, Action.READ)
@@ -338,7 +338,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     {
         if (ncube == null)
         {
-            throw new IllegalArgumentException('NCube cannot be null')
+            throw new IllegalArgumentException("NCube cannot be null, user: ${getUserId()}")
         }
         ApplicationID appId = ncube.applicationID
         ApplicationID.validateAppId(appId)
@@ -346,7 +346,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (appId.release)
         {
-            throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be updated, cube: ${ncube.name}, app: ${appId}")
+            throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be updated, cube: ${ncube.name}, app: ${appId}, user: ${getUserId()}")
         }
 
         if (!updateHead)
@@ -377,7 +377,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         targetAppId.validateStatusIsNotRelease()
         if (!search(targetAppId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true]).empty)
         {
-            throw new IllegalArgumentException("A RELEASE version ${targetAppId.version} already exists, app: ${targetAppId}")
+            throw new IllegalArgumentException("A RELEASE version ${targetAppId.version} already exists, app: ${targetAppId}, user: ${getUserId()}")
         }
         assertNotLockBlocked(targetAppId)
         if (targetAppId.version != '0.0.0')
@@ -400,7 +400,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         NCube ncube = loadCube(appId, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
         if (ncube == null)
         {
-            throw new IllegalArgumentException("No ncube exists with the name: ${cubeName}, no changes will be merged, app: ${appId}")
+            throw new IllegalArgumentException("No n-cube exists with the name: ${cubeName}, no changes will be merged, app: ${appId}, user: ${getUserId()}")
         }
 
         assertPermissions(appId, cubeName, Action.UPDATE)
@@ -421,7 +421,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                         axisName = (delta.locId as Map<String, Object>).axis
                         break
                     default:
-                        throw new IllegalArgumentException("Invalid properties on delta, no changes will be merged, app: ${appId}, cube: ${cubeName}")
+                        throw new IllegalArgumentException("Invalid properties on delta, no changes will be merged, app: ${appId}, cube: ${cubeName}, user: ${getUserId()}")
                 }
                 assertPermissions(appId, cubeName + '/' + axisName, Action.UPDATE)
             }
@@ -443,15 +443,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         if (ApplicationID.HEAD == appId.branch)
         {
-            throw new IllegalArgumentException('Cannot move the HEAD branch')
+            throw new IllegalArgumentException("Cannot move the HEAD branch, app: ${appId}, user: ${getUserId()}")
         }
         if ('0.0.0' == appId.version)
         {
-            throw new IllegalStateException(ERROR_CANNOT_MOVE_000)
+            throw new IllegalStateException(ERROR_CANNOT_MOVE_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if ('0.0.0' == newSnapVer)
         {
-            throw new IllegalStateException(ERROR_CANNOT_MOVE_TO_000)
+            throw new IllegalStateException(ERROR_CANNOT_MOVE_TO_000 + "app: ${appId}, user: ${getUserId()}")
         }
         assertLockedByMe(appId)
         assertPermissions(appId, null, Action.RELEASE)
@@ -470,15 +470,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateVersion(newSnapVer)
         if ('0.0.0' == appId.version)
         {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000)
+            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if ('0.0.0' == newSnapVer)
         {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000)
+            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
-            throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}")
+            throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
 
         validateReferenceAxesAppIds(appId)
@@ -498,19 +498,19 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateVersion(newSnapVer)
         if ('0.0.0' == appId.version)
         {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000)
+            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if ('0.0.0' == newSnapVer)
         {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000)
+            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if (!search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
-            throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}")
+            throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
         if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
-            throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}")
+            throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
 
         validateReferenceAxesAppIds(appId)
@@ -569,7 +569,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (appId.release)
         {
-            throw new IllegalArgumentException("Cannot change the version of a ${ReleaseStatus.RELEASE.name()}, app: ${appId}")
+            throw new IllegalArgumentException("Cannot change the version of a ${ReleaseStatus.RELEASE.name()}, app: ${appId}, user: ${getUserId()}")
         }
         ApplicationID.validateVersion(newVersion)
         assertPermissions(appId, null, Action.RELEASE)
@@ -585,7 +585,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (appId.release)
         {
-            throw new IllegalArgumentException("Cannot rename a ${ReleaseStatus.RELEASE.name()} cube, cube: ${oldName}, app: ${appId}")
+            throw new IllegalArgumentException("Cannot rename a ${ReleaseStatus.RELEASE.name()} cube, cube: ${oldName}, app: ${appId}, user: ${getUserId()}")
         }
 
         assertNotLockBlocked(appId)
@@ -595,7 +595,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (oldName == newName)
         {
-            throw new IllegalArgumentException("Could not rename, old name cannot be the same as the new name, name: ${oldName}, app: ${appId}")
+            throw new IllegalArgumentException("Could not rename, old name cannot be the same as the new name, name: ${oldName}, app: ${appId}, user: ${getUserId()}")
         }
 
         assertPermissions(appId, oldName, Action.UPDATE)
@@ -636,7 +636,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             if (appId.release)
             {
-                throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be hard-deleted, app: ${appId}")
+                throw new IllegalArgumentException("${ReleaseStatus.RELEASE.name()} cubes cannot be hard-deleted, app: ${appId}, user: ${getUserId()}")
             }
         }
 
@@ -709,7 +709,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         if (infos.empty)
         {
-            throw new IllegalArgumentException("Could not fetch notes, no cube: ${cubeName} in app: ${appId}")
+            throw new IllegalArgumentException("Could not fetch notes, no cube: ${cubeName} in app: ${appId}, user: ${getUserId()}")
         }
         return infos[0].notes
     }
@@ -914,14 +914,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             if (refAppId.status == snapshot)
             {
-                throw new IllegalStateException("Operation not performed. Axis references pointing to snapshot version, referenced app: ${refAppId}")
+                throw new IllegalStateException("Operation not performed. Axis references pointing to snapshot version, referenced app: ${refAppId}, user: ${getUserId()}")
             }
             ApplicationID checkedApp = checklist[refAppId.app]
             if (checkedApp)
             {
                 if (checkedApp != refAppId)
                 {
-                    throw new IllegalStateException("Operation not performed. Axis references pointing to differing versions per app, referenced app: ${refAppId.app}")
+                    throw new IllegalStateException("Operation not performed. Axis references pointing to differing versions per app, referenced app: ${refAppId.app}, user: ${getUserId()}")
                 }
             }
             else
@@ -936,7 +936,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             ApplicationID checkedApp = checklist[refAppId.app]
             if (checkedApp && checkedApp != refAppId)
             {
-                throw new IllegalStateException("Operation not performed. Axis references pointing to differing versions per app, referenced app: ${refAppId.app}")
+                throw new IllegalStateException("Operation not performed. Axis references pointing to differing versions per app, referenced app: ${refAppId.app}, user: ${getUserId()}")
             }
         }
     }
@@ -974,7 +974,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                     throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing cube: ${destCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
-target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
+target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}, user: ${getUserId()}""")
                 }
 
                 if (target.getAxis(destAxisName) == null)
@@ -982,7 +982,7 @@ target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
                     throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing axis: ${destAxisName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
-target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
+target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}, user: ${getUserId()}""")
                 }
 
                 axis.setMetaProperty(TRANSFORM_APP, transformApp)
@@ -1001,7 +1001,7 @@ target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}""")
                         throw new IllegalArgumentException("""\
 Cannot point reference axis transformer to non-existing cube: ${transformCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
-target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
+target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user: ${getUserId()}""")
                     }
                 }
                 else
@@ -1040,7 +1040,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         }
         else
         {
-            throw new IllegalStateException('clearTestDatabase() is only available during testing.')
+            throw new IllegalStateException("clearTestDatabase() is only available during testing, user: ${getUserId()}")
         }
     }
 
@@ -1065,7 +1065,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         {
             return true
         }
-        throw new SecurityException("Operation not performed.  You do not have ${action} permission to ${resource}, app: ${appId}")
+        throw new SecurityException("Operation not performed.  You do not have ${action} permission to ${resource}, app: ${appId}, user: ${getUserId()}")
     }
 
     protected boolean assertNotLockBlocked(ApplicationID appId)
@@ -1075,7 +1075,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         {
             return true
         }
-        throw new SecurityException("Application is not locked by you, app: ${appId}")
+        throw new SecurityException("Application is not locked by you, app: ${appId}, user: ${getUserId()}")
     }
 
     private void assertLockedByMe(ApplicationID appId)
@@ -1088,7 +1088,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             {
                 return
             }
-            throw new SecurityException("Application is not locked by you, no sys.lock n-cube exists in app: ${appId}")
+            throw new SecurityException("Application is not locked by you, no sys.lock n-cube exists in app: ${appId}, user: ${getUserId()}")
         }
 
         final String lockOwner = getAppLockedBy(bootAppId)
@@ -1096,7 +1096,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         {
             return
         }
-        throw new SecurityException("Application is not locked by you, app: ${appId}")
+        throw new SecurityException("Application is not locked by you, app: ${appId}, user: ${getUserId()}")
     }
 
     private ApplicationID getBootAppId(ApplicationID appId)
@@ -1471,7 +1471,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             }
             if (lockOwner != null)
             {
-                throw new SecurityException("Application ${appId} already locked by ${lockOwner}")
+                throw new SecurityException("Application ${appId} already locked by ${lockOwner}, user: ${getUserId()}")
             }
             sysLockCube.setCell(userId, [(AXIS_SYSTEM):null])
         }
@@ -1480,7 +1480,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             String lockOwner = getAppLockedBy(appId)
             if (userId != lockOwner && !isAppAdmin(appId))
             {
-                throw new SecurityException("Application ${appId} locked by ${lockOwner}")
+                throw new SecurityException("Application ${appId} locked by ${lockOwner}, user: ${getUserId()}")
             }
             sysLockCube.removeCell([(AXIS_SYSTEM):null])
         }
@@ -2011,7 +2011,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
     {
         if (cubeDtos != null && cubeDtos.length == 0)
         {
-            throw new IllegalArgumentException('Nothing selected for update.')
+            throw new IllegalArgumentException("Nothing selected for update, app: ${appId}, user: ${getUserId()}")
         }
         ApplicationID.validateAppId(appId)
         appId.validateBranchIsNotHead()
@@ -2095,7 +2095,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                     rejects.add(updateCube)
                     break
                 default:
-                    throw new IllegalArgumentException('No change type on passed in cube to update.')
+                    throw new IllegalArgumentException("No change type on passed in cube to update. cube name: ${updateCube.name}, app: ${updateCube.applicationID}, user: ${getUserId()}")
             }
         }
         finalUpdates = persister.pullToBranch(appId, buildIdList(updates), getUserId(), txId)
@@ -2122,7 +2122,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
         if (commitRecords.empty)
         {
-            throw new IllegalArgumentException('A pull request cannot be created because there are no cubes to be committed.')
+            throw new IllegalArgumentException("A pull request cannot be created because there are no cubes to be committed, app: ${appId}")
         }
 
         commitRecords.sort(true, {Map it -> it.id})
@@ -2131,7 +2131,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
         if (getCube(sysAppId, 'tx.' + sha1))
         {
-            throw new IllegalArgumentException('A pull request already exists for this change set.')
+            throw new IllegalArgumentException("A pull request already exists for this change set, app: ${appId}, user: ${getUserId()}")
         }
 
         NCube prCube = new NCube("tx.${sha1}")
@@ -2180,11 +2180,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
 
         if (status.contains(PR_CLOSED) || status == PR_OBSOLETE)
         {
-            throw new IllegalStateException("Pull request already closed. Status: ${status}, Requested by: ${requestUser}, Committed by: ${commitUser}, ApplicationID: ${prAppId}")
+            throw new IllegalStateException("Pull request already closed. Status: ${status}, Requested by: ${requestUser}, Committed by: ${commitUser}, ApplicationID: ${prAppId}, user: ${getUserId()}")
         }
         else if (!persister.doCubesExist(prAppId, true, 'detectNewAppId', getUserId()))
         {
-            throw new IllegalStateException("Branch no longer exists; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}")
+            throw new IllegalStateException("Branch no longer exists; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, user: ${getUserId()}")
         }
 
         String prInfoJson = prCube.getCell([(PR_PROP):PR_CUBES]) as String
@@ -2203,7 +2203,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                         {
                             return info
                         }
-                        throw new IllegalStateException("Cube has been changed since request was made; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, Cube: ${dto.name}")
+                        throw new IllegalStateException("Cube has been changed since request was made; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, Cube: ${dto.name}, user: ${getUserId()}")
                     }
                 }
             }
@@ -2214,7 +2214,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                 }
                 if (!foundDto)
                 {
-                    throw new IllegalStateException("Cube no longer valid; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, Cube: ${info.name}")
+                    throw new IllegalStateException("Cube no longer valid; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, Cube: ${info.name}, user: ${getUserId()}")
                 }
             }
         }
@@ -2274,7 +2274,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
             String appIdString = prCube.getCell([(PR_PROP):PR_APP])
             ApplicationID prAppId = ApplicationID.convert(appIdString)
-            throw new IllegalArgumentException("${exceptionText} Status: ${status}, Requested by: ${requestUser}, ApplicationID: ${prAppId}")
+            throw new IllegalArgumentException("${exceptionText} Status: ${status}, Requested by: ${requestUser}, ApplicationID: ${prAppId}, user: ${getUserId()}")
         }
 
         if (bumpVersion)
@@ -2295,7 +2295,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
             ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
             List<NCubeInfoDto> dtos = search(sysAppId, "tx.${prId}", null, [(SEARCH_ACTIVE_RECORDS_ONLY): true, (SEARCH_EXACT_MATCH_NAME): true])
             if (dtos.empty) {
-                throw new IllegalArgumentException("Invalid pull request id: ${prId}")
+                throw new IllegalArgumentException("Invalid pull request id: ${prId}, user: ${getUserId()}")
             }
             NCube prCube = loadCubeById(dtos.first().id as long)
             return prCube
@@ -2399,7 +2399,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
                     rejects.add(updateCube)
                     break
                 default:
-                    throw new IllegalArgumentException('No change type on passed in cube to commit.')
+                    throw new IllegalArgumentException("No change type on passed in cube to commit, user: ${getUserId()}")
             }
         }
 
@@ -2415,7 +2415,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         if (!rejects.empty)
         {
             int rejectSize = rejects.size()
-            String errorMessage = "Unable to commit ${rejectSize} ${rejectSize == 1 ? 'cube' : 'cubes'}."
+            String errorMessage = "Unable to commit ${rejectSize} ${rejectSize == 1 ? 'cube' : 'cubes'}, user: ${getUserId()}"
             throw new BranchMergeException(errorMessage, ret)
         }
         return ret
@@ -2454,7 +2454,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         if (!rejects.empty)
         {
             int rejectSize = rejects.size()
-            String errorMessage = "Unable to commit ${rejectSize} ${rejectSize == 1 ? 'cube' : 'cubes'}."
+            String errorMessage = "Unable to commit ${rejectSize} ${rejectSize == 1 ? 'cube' : 'cubes'}, user: ${getUserId()}"
             throw new BranchMergeException(errorMessage, ret)
         }
         return commitRecords
@@ -2674,11 +2674,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}""")
         List<NCubeInfoDto> cubeDtos = search(appId, dto.name, null, [(SEARCH_EXACT_MATCH_NAME):true, (SEARCH_ACTIVE_RECORDS_ONLY):false])
         if (cubeDtos.empty)
         {
-            throw new IllegalStateException('Cube ' + dto.name + ' does not exist (' + dto + ')')
+            throw new IllegalStateException("Cube: ${dto} does not exist in app: ${appId}, user: ${getUserId()}")
         }
         if (cubeDtos.size() > 1)
         {
-            throw new IllegalStateException('More than one cube return when attempting to load ' + dto.name + ' (' + dto + ')')
+            throw new IllegalStateException("More than one cube returned when attempting to load cube: ${dto}, app: ${appId}, user: ${getUserId()}")
         }
         return cubeDtos.first()
     }

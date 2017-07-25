@@ -234,7 +234,6 @@ abstract class GroovyBase extends UrlCommandCell
     protected Class compile(GroovyClassLoader gcLoader, String groovySource, Map<String, Object> ctx)
     {
         CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
-        compilerConfiguration.scriptBaseClass = 'ncube.grv.exp.NCubeGroovyExpression'
         compilerConfiguration.targetBytecode = targetByteCodeVersion
         compilerConfiguration.debug = NCubeCodeGenDebug
         compilerConfiguration.defaultScriptExtension = '.groovy'

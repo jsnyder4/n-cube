@@ -19,7 +19,8 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_ACCEPTED_DOMAINS
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
- *  @author John DeRegnaucourt (jdereg@gmail.com)
+ *          Greg Morefield (morefigs@hotmail.com)
+ *          John DeRegnaucourt (jdereg@gmail.com)
  *         <br>
  *         Copyright (c) Cedar Software LLC
  *         <br><br>
@@ -80,7 +81,7 @@ class CdnClassLoader extends GroovyClassLoader
      * Injects URLClassLoader as parent to pickup generated classes directory, if configured
      */
     private static ClassLoader configureParentClassLoader(ClassLoader parent) {
-        String classesDir = getGeneratedClassesDirectory()
+        String classesDir = generatedClassesDirectory
         if (classesDir)
         {
             File classesFile = new File(classesDir)
@@ -109,7 +110,6 @@ class CdnClassLoader extends GroovyClassLoader
      * @param byteCode byte [] of raw Class bytes
      * @return generated Class definition
      */
-    @Override
     Class defineClass(String name, byte[] byteCode) {
         if (name && generatedClassesDir)
         {
@@ -129,7 +129,7 @@ class CdnClassLoader extends GroovyClassLoader
         try
         {
             classFile = new File("${generatedClassesDir}/${name.replace('.',File.separator)}.class")
-            if (ensureDirectoryExists(classFile.getParentFile()))
+            if (ensureDirectoryExists(classFile.parentFile))
             {
                 classFile.bytes = byteCode
             }
@@ -289,7 +289,7 @@ class CdnClassLoader extends GroovyClassLoader
         {
             if (isLocalOnlyResource(name))
             {
-                resourcesCache[name] = new ArrayList<>()
+                resourcesCache[name] = []
             }
             else
             {
@@ -354,7 +354,7 @@ class CdnClassLoader extends GroovyClassLoader
         {
             if (isLocalOnlyResource(name))
             {
-                resourcesCache[name] = new ArrayList<>()
+                resourcesCache[name] = []
             }
             else
             {
@@ -455,7 +455,7 @@ class CdnClassLoader extends GroovyClassLoader
         {
             dir.mkdirs()
         }
-        boolean valid = dir.isDirectory()
+        boolean valid = dir.directory
         if (!valid)
         {
             LOG.warn("Failed to locate or create generated classes directory with path=${dir.path}")
@@ -463,7 +463,7 @@ class CdnClassLoader extends GroovyClassLoader
         return valid
     }
 
-    public ClassNodeResolver getClassNodeResolver()
+    ClassNodeResolver getClassNodeResolver()
     {
         return classNodeResolver
     }
@@ -527,7 +527,7 @@ class CdnClassLoader extends GroovyClassLoader
          * @param name - the name of the class
          * @param res - the ClassNode for that name
          */
-        public void cacheClass(String name, ClassNode res) {
+        void cacheClass(String name, ClassNode res) {
             cachedClasses.put(name, res);
         }
 
@@ -536,7 +536,7 @@ class CdnClassLoader extends GroovyClassLoader
          * @param name - the name of the class
          * @return the result of the lookup, which may be null
          */
-        public ClassNode getFromClassCache(String name) {
+        ClassNode getFromClassCache(String name) {
             // We use here the class cache cachedClasses to prevent
             // calls to ClassLoader#loadClass. Disabling this cache will
             // cause a major performance hit.

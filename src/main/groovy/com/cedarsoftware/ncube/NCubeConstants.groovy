@@ -23,7 +23,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 interface NCubeConstants
 {
-    final String ERROR_CANNOT_MOVE_000 = 'Version 0.0.0 is for system configuration and cannot be move.'
+    final String ERROR_CANNOT_MOVE_000 = 'Version 0.0.0 is for system configuration and cannot be moved.'
     final String ERROR_CANNOT_MOVE_TO_000 = 'Version 0.0.0 is for system configuration and branch cannot be moved to it.'
     final String ERROR_CANNOT_RELEASE_000 = 'Version 0.0.0 is for system configuration and cannot be released.'
     final String ERROR_CANNOT_RELEASE_TO_000 = 'Version 0.0.0 is for system configuration and cannot be created from the release process.'

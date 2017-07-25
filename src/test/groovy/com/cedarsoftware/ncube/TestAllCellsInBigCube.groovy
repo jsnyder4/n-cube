@@ -182,7 +182,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
 
     private Object setRandomValue(NCube ncube, Random random, int i, String colName)
     {
-        ncube.setCell(random.nextInt() % 100, [row: i, attribute: colName])
+        ncube.setCell(random.nextInt() % 100i, [row: i, attribute: colName])
     }
 
     // Uncomment for memory size testing
@@ -194,7 +194,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         NCube<Boolean> ncube = new NCube("bigCube")
         Axis axis = new Axis("axis", AxisType.DISCRETE, AxisValueType.LONG, false)
         ncube.addAxis(axis)
-        int max = 9000000        // 10M - largest tested thus far
+        int max = 9000000        // 10M - largest tested thus far (using trove4j)
         for (int j = 0; j < max; j++)
         {
             ncube.addColumn("axis", j)
@@ -237,7 +237,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         NCube<Boolean> ncube = new NCube("bigCube")
 
         int size = 10
-        int last = 2400    // 1300 = 13 million cells, 1400 = 14 million cells, ... 26M record thus far
+        int last = 2400    // 1300 = 13 million cells, 1400 = 14 million cells, ... 26M record thus far (using trove4j)
 
         for (int i = 0; i < 4; i++)
         {

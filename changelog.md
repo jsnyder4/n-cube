@@ -1,6 +1,7 @@
 ### Revision History
 * 4.0.16-SNAPSHOT
-  * --
+  * Updated NCubeManager exception messages with more information
+  * Enhancement: Add default, sorted, and fireAll to addAxis
 * 4.0.15
   * Bug fix: Updated version fetching code
   * Updated n-cube related application properties to be prefixed with ncube.*

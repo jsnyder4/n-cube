@@ -292,7 +292,7 @@ class Column implements Comparable<Comparable>
      * @param value Object to intern (if possible)
      * @return interned instance (if internable) otherwise passed-in instance is returned.
      */
-    private Comparable internValue(Comparable value)
+    private static Comparable internValue(Comparable value)
     {
         if (value == null)
         {

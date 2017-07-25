@@ -54,7 +54,7 @@ class NCubeInfoDto
 	String toString()
 	{
         String br = branch == null ? ApplicationID.HEAD : branch
-		return tenant + '/' + app + '/' + version + '/' + status + '/' + br + '/' + name + '/' + sha1 + '/' + revision + '/' + createDate + '/' + createHid + '/' + notes
+		return "${tenant}/${app}/${version}/${status}/${br}/${name}/${sha1}/${revision}/${createDate}/${createHid}/${notes}"
 	}
 
     boolean isChanged()
