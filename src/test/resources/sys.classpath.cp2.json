@@ -15,7 +15,7 @@
             "id": [],
             "type": "exp",
             "cache": true,
-            "value": "new CdnClassLoader(['http://files.cedarsoftware.com/tests/ncube/cp2'])"
+            "value": "new CdnClassLoader(['${baseRemoteUrl}/tests/ncube/cp2'])"
         }
     ]
 }

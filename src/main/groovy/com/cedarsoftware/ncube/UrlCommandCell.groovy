@@ -1,10 +1,13 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.TimedSynchronize
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
@@ -29,15 +32,15 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 @CompileStatic
 abstract class UrlCommandCell implements CommandCell
 {
-    protected static NCubeRuntimeClient ncubeRuntimeClient
     private static final Logger LOG = LoggerFactory.getLogger(UrlCommandCell.class)
     private String cmd
     private volatile transient String errorMsg = null
     private final String url
     private int hash
     public static final char EXTENSION_SEPARATOR = '.'
-    private AtomicBoolean hasBeenCached = new AtomicBoolean(false)
+    private volatile boolean hasBeenCached = false
     protected def cache
+    private Lock hasBeenCachedLock = new ReentrantLock()
     // would prefer this was a final
     private boolean cacheable
 
@@ -75,44 +78,27 @@ abstract class UrlCommandCell implements CommandCell
         return cacheable
     }
 
-//    void clearClassLoaderCache()
-//    {
-//        // classpath case, lets clear all classes before setting to null.
-//        def localVar = cache
-//        if (localVar instanceof GroovyClassLoader)
-//        {
-//            (localVar as GroovyClassLoader).clearCache()
-//        }
-//        cache = null
-//    }
-
-    // When no L3, use this (also see GroovyBase)
     void clearClassLoaderCache()
     {
-        hasBeenCached.set(false)
-        if (cache == null)
-        {
-            return
-        }
+        TimedSynchronize.synchronize(hasBeenCachedLock, 200, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to clear ClassLoader cache.')
+        hasBeenCached = false
+        def localVar = cache
 
-        synchronized (lock)
+        try
         {
-            if (cache == null)
-            {
-                return
-            }
-
             // classpath case, lets clear all classes before setting to null.
-            if (cache instanceof GroovyClassLoader)
+            if (localVar instanceof GroovyClassLoader)
             {
-                ((GroovyClassLoader)cache).clearCache()
+                ((GroovyClassLoader)localVar).clearCache()
             }
             cache = null
         }
+        finally
+        {
+            hasBeenCachedLock.unlock();
+        }
     }
-
-    protected Object getLock() { return '' }
-
+    
     protected URL getActualUrl(Map<String, Object> ctx)
     {
         for (int i=0; i < 2; i++)
@@ -124,15 +110,15 @@ abstract class UrlCommandCell implements CommandCell
             catch(Exception e)
             {
                 NCube cube = getNCube(ctx)
+                String where = "url: ${getUrl()}, cube: ${cube.name}, app: ${cube.applicationID}"
                 if (i == 1)
                 {   // Note: Error is marked, it will not be retried in the future
-                    errorMessage = "Invalid URL in cell (malformed or cannot resolve given classpath): " + getUrl() + ", cube: " + cube.name + ", app: " + cube.applicationID
-                    LOG.warn(getClass().simpleName + ': failed 2nd attempt [will NOT retry in future] getActualUrl() - unable to resolve against sys.classpath, url: ' + getUrl() + ", cube: " + cube.name + ", app: " + cube.applicationID)
-                    throw new IllegalStateException(errorMessage, e)
+                    LOG.warn("${getClass().simpleName}: failed 2nd attempt [will NOT retry in future] getActualUrl() - unable to resolve against sys.classpath, ${where}")
+                    throw new IllegalStateException("Invalid URL in cell (unable to resolve against sys.classpath), ${where}", e)
                 }
                 else
                 {
-                    LOG.warn(getClass().simpleName + ': retrying getActualUrl() - unable to resolve against sys.classpath, url: ' + getUrl() + ", cube: " + cube.name + ", app: " + cube.applicationID)
+                    LOG.warn("${getClass().simpleName}: retrying getActualUrl() - unable to resolve against sys.classpath, ${where}")
                     Thread.sleep(100)
                 }
             }
@@ -193,13 +179,6 @@ abstract class UrlCommandCell implements CommandCell
         return url == null ? cmd : url
     }
 
-    void failOnErrors()
-    {
-        if (errorMsg != null)
-        {
-            throw new IllegalStateException(errorMsg)
-        }
-    }
 
     void setErrorMessage(String msg)
     {
@@ -238,21 +217,37 @@ abstract class UrlCommandCell implements CommandCell
 
     def execute(Map<String, Object> ctx)
     {
-        failOnErrors()
+        if (errorMsg != null)
+        {
+            throw new IllegalStateException(errorMsg)
+        }
 
-        if (!isCacheable())
+        if (!cacheable)
         {
             return fetchResult(ctx)
         }
 
-        if (hasBeenCached.get())
+        if (hasBeenCached)
         {
             return cache
         }
 
-        cache = fetchResult(ctx)
-        hasBeenCached.set(true)
-        return cache
+        TimedSynchronize.synchronize(hasBeenCachedLock, 100, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to execute cell')
+
+        try
+        {
+            if (hasBeenCached)
+            {
+                return cache
+            }
+            cache = fetchResult(ctx)
+            hasBeenCached = true
+            return cache
+        }
+        finally
+        {
+            hasBeenCachedLock.unlock();
+        }
     }
 
     protected abstract def fetchResult(Map<String, Object> ctx)

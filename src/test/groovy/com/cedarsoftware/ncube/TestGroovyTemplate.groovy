@@ -43,7 +43,7 @@ class TestGroovyTemplate extends NCubeBaseTest
     @Test
     void testTemplateThatUsesClasspath()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
         NCube template = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([loc:'web', testType:'templateTest'] as Map)
         assert text.contains('from the web')
@@ -57,7 +57,7 @@ class TestGroovyTemplate extends NCubeBaseTest
     @Test
     void testNCubeGroovyExpressionThatUsesClasspath()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'sys.classpath.cedar.json')
         NCube template = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'templateUsesClassPath.json')
         String text = template.getCell([testType:'expressionTest'] as Map)
         assert text.contains('Hello, world."')

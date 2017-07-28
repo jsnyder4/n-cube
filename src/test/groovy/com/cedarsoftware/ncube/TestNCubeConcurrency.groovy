@@ -77,7 +77,7 @@ class TestNCubeConcurrency extends NCubeBaseTest
         int numThreads = 8
         long timeToRun = 3000L
         final AtomicBoolean failed = new AtomicBoolean(false)
-        NCube n1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
+        NCube n1 = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
 
         final CountDownLatch startLatch = new CountDownLatch(1)
         final CountDownLatch finishedLatch = new CountDownLatch(numThreads)
@@ -128,7 +128,7 @@ class TestNCubeConcurrency extends NCubeBaseTest
     @Test
     void testCacheFlag() throws IOException
     {
-        NCube n1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
+        NCube n1 = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def items = new IdentityHashMap()
         def set = new LinkedHashSet()
 

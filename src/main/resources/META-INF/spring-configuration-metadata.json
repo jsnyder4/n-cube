@@ -1,0 +1,25 @@
+{
+  "groups": [
+    {
+      "name": "ncube",
+      "type": "com.cedarsoftware.config.NCubeConfiguration",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration"
+    }
+  ],
+  "properties": [
+    {
+      "name": "ncube.sources.dir",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Path to generated source files. If this path points to a valid directory, the source from cell values that are inline (non URL-based) Groovy expressions will be dumped as cells are compiled.",
+      "defaultValue": ""
+    },
+    {
+      "name": "ncube.classes.dir",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Path to generated class files. If this path points to a valid directory, the generated class files from cell values that are inline (non URL-based) Groovy expressions will be written as cells are compiled and then used for class caching.",
+      "defaultValue": ""
+    }
+  ]
+}

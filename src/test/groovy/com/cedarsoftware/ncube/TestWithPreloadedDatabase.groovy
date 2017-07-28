@@ -6047,7 +6047,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 	{
         preloadCubes(appId, "sys.classpath.system.params.user.overloaded.json", "sys.versions.2.json", "sys.resources.base.url.json")
 
-        // force reload of system params, you wouln't usually do this because it wouldn't be thread safe this way.
+        // force reload of system params, you wouldn't usually do this because it wouldn't be thread safe this way.
         testClient.clearSysParams()
 
         // Check DEV
@@ -6056,15 +6056,15 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty('NCUBE_PARAMS', '{"foo", "bar"}')
 
         CdnClassLoader devLoader = cube.getCell([env:"DEV"])
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/public/', devLoader.URLs[0].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/private/', devLoader.URLs[1].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/private/groovy/', devLoader.URLs[2].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/public/".toString(), devLoader.URLs[0].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/private/".toString(), devLoader.URLs[1].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/private/groovy/".toString(), devLoader.URLs[2].toString())
 
         // Check INT
         CdnClassLoader intLoader = cube.getCell([env:"INT"])
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/public/', intLoader.URLs[0].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/private/', intLoader.URLs[1].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.31.0-SNAPSHOT/private/groovy/', intLoader.URLs[2].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/public/".toString(), intLoader.URLs[0].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/private/".toString(), intLoader.URLs[1].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.31.0-SNAPSHOT/private/groovy/".toString(), intLoader.URLs[2].toString())
 
         // Check with overload
         cube = mutableClient.getCube(appId, "sys.classpath")
@@ -6102,9 +6102,9 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         System.setProperty("NCUBE_PARAMS", '{"version":"1.28.0"}')
         // SAND hasn't been loaded yet so it should give us updated values based on the system params.
         URLClassLoader loader = cube.getCell([env:"SAND"])
-        assertEquals('http://files.cedarsoftware.com/foo/1.28.0/public/', loader.URLs[0].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.28.0/private/', loader.URLs[1].toString())
-        assertEquals('http://files.cedarsoftware.com/foo/1.28.0/private/groovy/', loader.URLs[2].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.28.0/public/".toString(), loader.URLs[0].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.28.0/private/".toString(), loader.URLs[1].toString())
+        assertEquals("${baseRemoteUrl}/foo/1.28.0/private/groovy/".toString(), loader.URLs[2].toString())
     }
 
     @Test
@@ -6241,8 +6241,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         }
     }
 
-    @Test
-    void testMultipleReferenceAxisVersionPerCommit()
+    private void setUpReferenceCubeForAxisReferenceTests()
     {
         ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
         ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
@@ -6254,6 +6253,15 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.commitBranch(firstReleaseAppId)
         mutableClient.releaseCubes(firstReleaseAppId, secondReleaseAppId.version)
         mutableClient.releaseCubes(secondReleaseAppId, snapshotAppId.version)
+    }
+
+    @Test
+    void testMultipleReferenceAxisVersionPerCommit()
+    {
+        setUpReferenceCubeForAxisReferenceTests()
+        ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
+        ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
+        ApplicationID snapshotAppId = ApplicationID.testAppId.asVersion('3.0.0')
 
         Map<String, Object> args = [:]
         args[REF_TENANT] = firstReleaseAppId.tenant
@@ -6306,16 +6314,10 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testMultipleReferenceAxisVersionPerApp()
     {
+        setUpReferenceCubeForAxisReferenceTests()
         ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
         ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
         ApplicationID snapshotAppId = ApplicationID.testAppId.asVersion('3.0.0')
-        NCube one = NCubeBuilder.discrete1DAlt
-        one.applicationID = firstReleaseAppId
-        mutableClient.createCube(one)
-        assert one.getAxis('state').size() == 2
-        mutableClient.commitBranch(firstReleaseAppId)
-        mutableClient.releaseCubes(firstReleaseAppId, secondReleaseAppId.version)
-        mutableClient.releaseCubes(secondReleaseAppId, snapshotAppId.version)
 
         Map<String, Object> args = [:]
         args[REF_TENANT] = firstReleaseAppId.tenant
@@ -6361,6 +6363,55 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
             List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForHead(snapshotAppId)
             assert 1 == dtos.size()
             String prId = mutableClient.generatePullRequestHash(snapshotAppId, dtos.toArray())
+            mutableClient.mergePullRequest(prId)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'not performed', 'versions')
+        }
+    }
+
+    @Test
+    void testMergePRWithNewCubeWithDifferentReferenceVersion()
+    {
+        setUpReferenceCubeForAxisReferenceTests()
+        ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
+        ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')
+        ApplicationID snapshotAppId = ApplicationID.testAppId.asVersion('3.0.0')
+        ApplicationID otherAppId = snapshotAppId.asBranch('other')
+
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = firstReleaseAppId.tenant
+        args[REF_APP] = firstReleaseAppId.app
+        args[REF_VERSION] = firstReleaseAppId.version
+        args[REF_STATUS] = ReleaseStatus.RELEASE.name()
+        args[REF_BRANCH] = ApplicationID.HEAD
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        mutableClient.copyBranch(otherAppId.asHead(), otherAppId)
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('Mongo', 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        NCube two = new NCube('Mongo')
+        two.applicationID = otherAppId
+        two.addAxis(axis)
+        mutableClient.createCube(two)
+        mutableClient.commitBranch(otherAppId)
+
+        mutableClient.updateBranch(snapshotAppId)
+        NCube newCube = new NCube('MongoTest')
+        newCube.applicationID = snapshotAppId
+        newCube.addAxis(axis)
+        mutableClient.createCube(newCube)
+        String prId = mutableClient.generatePullRequestHash(snapshotAppId, mutableClient.getBranchChangesForHead(snapshotAppId).toArray())
+
+        args[REF_VERSION] = secondReleaseAppId.version
+        mutableClient.updateAxisMetaProperties(otherAppId, two.name, axis.name, args)
+        mutableClient.commitBranch(otherAppId)
+
+        try
+        {
             mutableClient.mergePullRequest(prId)
             fail()
         }

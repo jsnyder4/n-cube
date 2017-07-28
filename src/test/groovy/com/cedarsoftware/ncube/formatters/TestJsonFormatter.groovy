@@ -50,7 +50,7 @@ class TestJsonFormatter extends NCubeBaseTest
     @Test
     void testConvertArray()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'arrays.json')
         
         def coord = [Code:'longs']

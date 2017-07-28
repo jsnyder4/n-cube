@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TimedSynchronize
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
@@ -18,6 +19,9 @@ import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Matcher
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -52,6 +56,7 @@ abstract class GroovyBase extends UrlCommandCell
     protected transient String L2CacheKey  // in-memory cache of (SHA-1(source) || SHA-1(URL + classpath.urls)) to compiled class
     protected transient String fullClassName  // full name of compiled class
     private volatile transient Class runnableCode = null
+    private Lock compileLock = new ReentrantLock()
     /**
      * This cache is 'per ApplicationID'.  This allows different applications to define the same
      * class (URL to groovy), yet have different source code for that class.
@@ -91,7 +96,10 @@ abstract class GroovyBase extends UrlCommandCell
 
     protected Object fetchResult(final Map<String, Object> ctx)
     {
-        prepare(cmd ?: url, ctx)
+        if (runnableCode == null)
+        {
+            prepare(cmd ?: url, ctx)
+        }
         return executeInternal(ctx)
     }
 
@@ -121,13 +129,13 @@ abstract class GroovyBase extends UrlCommandCell
 
     Object executeInternal(final Map<String, Object> ctx)
     {
-        final NCube ncube = getNCube(ctx)
+        NCube ncube = getNCube(ctx)
         Class code = runnableCode
         if (code == null)
         {
             throw new IllegalStateException("Code cleared while cell was executing, n-cube: ${ncube.name}, app: ${ncube.applicationID}, input: ${getInput(ctx).toString()}")
         }
-        final NCubeGroovyExpression exp = DefaultGroovyMethods.newInstance(code)
+        NCubeGroovyExpression exp = DefaultGroovyMethods.newInstance(code)
         exp.input = getInput(ctx)
         exp.output = getOutput(ctx)
         exp.ncube = ncube
@@ -145,87 +153,59 @@ abstract class GroovyBase extends UrlCommandCell
      */
     void prepare(Object data, Map<String, Object> ctx)
     {
-        // check L1 cache
-        if (getRunnableCode() != null)
-        {   // If the code for the cell has already been compiled, do nothing.
-            return
-        }
+        TimedSynchronize.synchronize(compileLock, 100, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to compile cell')
+        ClassLoader originalClassLoader = null
 
-        if (!L2CacheKey) {
-            computeL2CacheKey(data, ctx)
-        }
-        Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
-
-        // check L2 cache
-        if (L2Cache.containsKey(L2CacheKey))
-        {   // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
-            setRunnableCode(L2Cache[L2CacheKey])
-            return
-        }
-
-        // Pre-compiled check (e.g. source code was pre-compiled and instrumented for coverage)
-        Map ret = getClassLoaderAndSource(ctx)
-        if (ret.gclass instanceof Class)
-        {   // Found class matching URL fileName.groovy already in JVM
-            setRunnableCode(ret.gclass as Class)
-            L2Cache[L2CacheKey] = ret.gclass as Class
-            return
-        }
-
-        GroovyClassLoader gcLoader = ret.loader as GroovyClassLoader
-        String groovySource = ret.source as String
-        compilePrep1(gcLoader, groovySource, ctx)
-    }
-
-    /**
-     * Ensure that the sys.classpath CdnClassLoader is used during compilation.  It has additional
-     * classpath entries that the application developers likely have added.
-     * @return Class the compile Class associated to the main class (root of source passed in)
-     */
-    protected Class compilePrep1(GroovyClassLoader gcLoader, String groovySource, Map<String, Object> ctx)
-    {
-        // Newly encountered source - compile the source and store it in L1, L2, and L3 caches
-        ClassLoader originalClassLoader = Thread.currentThread().contextClassLoader
         try
         {
+            // Double-check after lock obtained
+            if (runnableCode != null)
+            {
+                return
+            }
+
+            if (!L2CacheKey)
+            {
+                computeL2CacheKey(data, ctx)
+            }
+            Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
+
+            // check L2 cache
+            if (L2Cache.containsKey(L2CacheKey))
+            {
+                // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
+                setRunnableCode(L2Cache[L2CacheKey])
+                return
+            }
+
+            // Pre-compiled check (e.g. source code was pre-compiled and instrumented for coverage)
+            Map ret = getClassLoaderAndSource(ctx)
+            if (ret.gclass instanceof Class)
+            {   // Found class matching URL fileName.groovy already in JVM
+                setRunnableCode(ret.gclass as Class)
+                L2Cache[L2CacheKey] = ret.gclass as Class
+                return
+            }
+
+            GroovyClassLoader gcLoader = ret.loader as GroovyClassLoader
+            String groovySource = ret.source as String
+
             // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
             // correct class loader to use when inside a container.
+            originalClassLoader = Thread.currentThread().contextClassLoader
             Thread.currentThread().contextClassLoader = gcLoader
-            return compilePrep2(gcLoader, groovySource, ctx)
+            compile(gcLoader, groovySource, ctx)
         }
         finally
         {
-            Thread.currentThread().contextClassLoader = originalClassLoader
-        }
-    }
-
-    /**
-     * Ensure that the the exact same source class is compiled only one at a time.  The second+
-     * concurrent attempts will return the answer from the L2 cache.
-     * @return Class the compile Class associated to the main class (root of source passed in)
-     */
-    protected Class compilePrep2(GroovyClassLoader gcLoader, String groovySource, Map<String, Object> ctx)
-    {
-        Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
-        synchronized (lock)
-        {
-            Class clazz = L2Cache[L2CacheKey]
-            if (clazz != null)
-            {   // Another thread defined and persisted the class while this thread was blocked...
-                setRunnableCode(clazz)
-                return clazz
+            if (originalClassLoader != null)
+            {
+                Thread.currentThread().contextClassLoader = originalClassLoader
             }
-
-            clazz = compile(gcLoader, groovySource, ctx)
-            return clazz
+            compileLock.unlock()
         }
     }
-
-    protected Object getLock()
-    {
-        return L2CacheKey.intern()
-    }
-
+    
     /**
      * Ensure that the sys.classpath CdnClassLoader is used during compilation.  It has additional
      * classpath entries that the application developers likely have added.

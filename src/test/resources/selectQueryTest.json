@@ -89,7 +89,7 @@
         2001400108033
       ],
       "type":"exp",
-      "url":"com/acme/controllers/MapReduceController.groovy"
+      "url":"${baseRemoteUrl}/tests/ncube/MapReduceController.groovy"
     },
     {
       "id":[

@@ -14,7 +14,12 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static org.mockito.Mockito.*
+import static org.mockito.Matchers.anyString
+import static org.mockito.Mockito.doThrow
+import static org.mockito.Mockito.eq
+import static org.mockito.Mockito.times
+import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -84,7 +89,7 @@ class TestCdnRouter extends NCubeCleanupBaseTest
         CdnRouter router = new CdnRouter()
         router.route(request, response)
 
-        verify(response, times(1)).sendError(500, 'Invalid URL in cell (malformed or cannot resolve given classpath): tests/does/not/exist/index.html, cube: CdnRouterTest, app: NONE/DEFAULT_APP/999.99.9/SNAPSHOT/TEST/')
+        verify(response, times(1)).sendError(500, 'Invalid URL in cell (unable to resolve against sys.classpath), url: tests/does/not/exist/index.html, cube: CdnRouterTest, app: NONE/DEFAULT_APP/999.99.9/SNAPSHOT/TEST/')
     }
 
     @Test
@@ -158,12 +163,12 @@ class TestCdnRouter extends NCubeCleanupBaseTest
 
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, ApplicationID.DEFAULT_APP, ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
         ncubeRuntime.getUrlClassLoader(appId, [:])
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
 
         CdnRouter router = new CdnRouter()
         router.route(request, response)
 
-        verify(response, times(1)).sendError(404, 'Not Found')
+        verify(response, times(1)).sendError(eq(404), anyString())
     }
 
     @Test
@@ -390,7 +395,7 @@ class TestCdnRouter extends NCubeCleanupBaseTest
 
         setDefaultCdnRoutingProvider()
 
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'cdnRouterTest.json')
 
         CdnRouter router = new CdnRouter()
         router.route(request, response)

@@ -204,11 +204,11 @@ class ${className} extends ${expClassName}
         return null
     }
 
-    protected Object invokeRunMethod(final NCubeGroovyExpression instance) throws Throwable
+    protected Object invokeRunMethod(NCubeGroovyExpression instance) throws Throwable
     {
         // If 'around' Advice has been added to n-cube, invoke it before calling Groovy expression's run() method
-        final NCube ncube = instance.ncube
-        final List<Advice> advices = ncube.getAdvices('run')
+        NCube ncube = instance.ncube
+        List<Advice> advices = ncube.getAdvices('run')
         if (!advices.empty)
         {
             for (Advice advice : advices)
@@ -241,7 +241,7 @@ class ${className} extends ${expClassName}
         }
 
         // If 'around' Advice has been added to n-cube, invoke it after calling Groovy expression's run() method
-        final int len = advices.size()
+        int len = advices.size()
         if (len > 0)
         {
             for (int i = len - 1i; i >= 0i; i--)

@@ -152,6 +152,10 @@ class TestPullRequests extends NCubeCleanupBaseTest
     @Test
     void testMergePullRequestFromBranchWithoutPermissionsOnThatBranch()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         String origUser = manager.userId
 
@@ -230,6 +234,10 @@ class TestPullRequests extends NCubeCleanupBaseTest
     @Test
     void testMergePullRequestByOtherUser()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         String origUser = mutableClient.userId
         String otherUser = 'otherUser'
 

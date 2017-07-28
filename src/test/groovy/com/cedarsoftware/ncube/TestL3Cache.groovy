@@ -669,8 +669,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     private void reloadCubes(String sysClassPath = 'sys.classpath.tests.json') {
         ncubeRuntime.clearCache(ApplicationID.testAppId)
 
-        cp = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId,sysClassPath)
-        ncubeRuntime.addCube(cp)
+        cp = createRuntimeCubeFromResource(ApplicationID.testAppId,sysClassPath)
 
         proto = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId,'sys.prototype.json')
         ncubeRuntime.addCube(proto)

@@ -18,13 +18,13 @@
       "id": ["templateTest"],
       "type": "template",
       "cache": false,
-      "value": "This is from the ${input.loc}: <%=return url('/tests/ncube/hello.groovy')%>"
+      "value": "This is from the ${input.loc}: <%=return url('tests/ncube/hello.groovy')%>"
     },
     {
       "id": ["expressionTest"],
       "type": "exp",
       "cache": false,
-      "value": "return url('/tests/ncube/hello.groovy')"
+      "value": "return url('tests/ncube/hello.groovy')"
     }
   ]
 }

@@ -2291,7 +2291,7 @@ class TestNCube extends NCubeBaseTest
     {
         ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'template1.json')
         ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'template2.json')
-        NCube n1 = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
+        NCube n1 = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def coord = [:]
         coord.put("sites", "BinaryFromLocalUrl")
         byte[] localBinaryBytes = (byte[]) n1.getCell(coord)
@@ -3984,7 +3984,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testAbsoluteHttpUrlToGroovy()
     {
-        NCube cube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
+        NCube cube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlContent.json')
         def coord = [:]
         coord.put("sites", "AbsoluteHttpUrl")
         String s = (String) cube.getCell(coord)
@@ -4918,7 +4918,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithBasicQuery()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'NY\'')
 
         assert queryResult.size() == 2
@@ -4935,7 +4935,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithComplexQuery()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'IN\' || (input.bar instanceof Number && input.bar < 50)')
 
         assert queryResult.size() == 2
@@ -4952,7 +4952,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithContains()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.bar?.toString()?.contains(\'test contains\')')
 
         assert queryResult.size() == 2
@@ -4969,7 +4969,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithMultipleConditions()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'NY\' && input.bar?.contains(\'a string long enough\')')
 
         assert queryResult.size() == 1
@@ -4982,7 +4982,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceLookingForEmptyValue()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', '!input.bar')
 
         assert queryResult.size() == 1
@@ -4995,7 +4995,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceFindAllRows()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'true')
 
         assert queryResult.size() == 8
@@ -5005,7 +5005,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithCommandCell()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'')
 
         assert queryResult.size() == 1
@@ -5138,7 +5138,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithNoRowAxisName()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
 
         try
         {
@@ -5153,7 +5153,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithNoColumnAxisName()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
 
         try
         {
@@ -5168,7 +5168,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithNoWhereClause()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
 
         try
         {
@@ -5183,7 +5183,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithFilterAndReturnSets()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'TX\'', [:], [:], ['foo'] as Set, ['bar'] as Set)
 
         assert queryResult.size() == 1
@@ -5196,7 +5196,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithFilterAndReturnSetsColumnInBoth()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'TX\'', [:], [:], ['foo'] as Set, ['foo', 'bar'] as Set)
 
         assert queryResult.size() == 1
@@ -5223,7 +5223,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceWithFilterAndReturnSetsRunningCommandCell()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.mapReduce('key', 'query', 'input.foo == \'OH\'', [:], [:], ['foo'] as Set, ['bar'] as Set)
 
         assert queryResult.size() == 1
@@ -5236,7 +5236,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceFromGroovyExpression()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         Map queryResult = ncube.getCell([key: 'H', query: 'bar'])
 
         assert queryResult.size() == 1
@@ -5249,7 +5249,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testMapReduceFromGroovyExpressionAgainstAnotherCube()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
         NCube otherCube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')
         Map queryResult = ncube.getCell([key: 'H', query: 'bar', bind: 'bindToAValue', cubeName: 'Test.Select.MultiDimension'])
 

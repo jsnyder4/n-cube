@@ -7,7 +7,6 @@ import org.junit.Test
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
-import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 
 /**
@@ -54,8 +53,7 @@ class TestBinaryUrlCmd extends NCubeBaseTest
         }
         catch (IllegalStateException e)
         {
-            assertTrue(e.message.toLowerCase().contains("invalid url in cell"))
-            assertTrue(e.message.toLowerCase().contains("malformed"))
+            assertContainsIgnoreCase(e.message, 'invalid url', 'unable', 'sys.classpath', '/foo', 'test.Age-Gender')
         }
     }
 }

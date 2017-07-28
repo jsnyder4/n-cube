@@ -135,10 +135,27 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     // ============================================= Begin API =========================================================
 
-    Map checkPermissions(ApplicationID appId, String resource, Object[] actions)
+    String getUserId()
+    {
+        return mutableClient.userId
+    }
+
+    Boolean assertPermissions(ApplicationID appId, String resource, Action action)
     {
         appId = addTenant(appId)
-        return mutableClient.checkMultiplePermissions(appId, resource, actions as String[])
+        return mutableClient.assertPermissions(appId, resource, action)
+    }
+
+    Map checkMultiplePermissions(ApplicationID appId, String resource, Object[] actions)
+    {
+        appId = addTenant(appId)
+        return mutableClient.checkMultiplePermissions(appId, resource, actions)
+    }
+
+    Boolean checkPermissions(ApplicationID appId, String resource, String action)
+    {
+        appId = addTenant(appId)
+        return mutableClient.checkPermissions(appId, resource, action)
     }
 
     Boolean isAppAdmin(ApplicationID appId)
@@ -227,7 +244,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     String getHtml(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         // The Strings below are hints to n-cube to tell it which axis to place on top
         String html = toHtmlWithColumnHints(ncube)
         return html
@@ -243,12 +260,19 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return getJson(appId, cubeName, [mode:"json-index"])
     }
 
+    String getCubeRawJson(ApplicationID appId, String cubeName)
+    {
+        appId = addTenant(appId)
+        String rawJson = mutableClient.getCubeRawJson(appId, cubeName)
+        return rawJson
+    }
+
     String getJson(ApplicationID appId, String cubeName, Map options)
     {
         appId = addTenant(appId)
         try
         {
-            NCube ncube = loadCube(appId, cubeName)
+            NCube ncube = getCubeInternal(appId, cubeName)
             return formatCube(ncube, options)
         }
         catch(IllegalStateException e)
@@ -310,7 +334,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Boolean updateCubeMetaProperties(ApplicationID appId, String cubeName, Map<String, Object> newMetaProperties)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         ncube.clearMetaProperties()
         ncube.addMetaProperties(newMetaProperties)
         mutableClient.updateCube(ncube)
@@ -320,7 +344,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Map getCubeMetaProperties(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         return valuesToCellInfo(ncube.metaProperties)
     }
 
@@ -335,7 +359,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, null)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Axis axis = ncube.getAxis(axisName)
         return valuesToCellInfo(axis.metaProperties)
     }
@@ -345,7 +369,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Axis axis = ncube.getAxis(axisName)
         Column column = axis.getColumnById(colId)
         column.clearMetaProperties()
@@ -360,7 +384,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, null)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Axis axis = ncube.getAxis(axisName)
         Column col = axis.getColumnById(colId)
         return valuesToCellInfo(col.metaProperties)
@@ -370,7 +394,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute('mapReduce')
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         return ncube.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
     }
 
@@ -731,7 +755,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] getRequiredScope(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Set<String> refs = ncube.getRequiredScope([:], [:])
         Object[] scopeKeys = refs.toArray()
         caseInsensitiveSort(scopeKeys)
@@ -791,7 +815,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalArgumentException("Axis name cannot be empty.")
         }
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         long maxId = -1
         Iterator<Axis> i = ncube.axes.iterator()
@@ -815,7 +839,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     void addAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName, ApplicationID transformAppId, String transformCubeName, Map<String, Boolean> axisOpts = [hasDefault:true])
     {
         appId = addTenant(appId)
-        NCube nCube = loadCube(appId, cubeName)
+        NCube nCube = getCubeInternal(appId, cubeName)
 
         if (StringUtilities.isEmpty(axisName))
         {
@@ -872,7 +896,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, null)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Axis axis = ncube.getAxis(axisName)
         return convertAxis(axis)
     }
@@ -885,7 +909,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         if (ncube.numDimensions == 1)
         {
@@ -903,7 +927,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
         resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         // Rename axis
         if (!origAxisName.equalsIgnoreCase(axisName))
@@ -963,7 +987,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             }
         }
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         ncube.updateColumns(axisName, columns)
         mutableClient.updateCube(ncube)
     }
@@ -973,7 +997,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         // Update default column setting (if changed)
         ncube.breakAxisReference(axisName)
@@ -1056,10 +1080,17 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cube.testData.toArray()
     }
 
+    Map getAppTests(ApplicationID appId)
+    {
+        appId = addTenant(appId)
+        Map appTests = mutableClient.getAppTests(appId)
+        return appTests
+    }
+
     Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
     {
         appId = addTenant(appId)
-        NCube cube = loadCube(appId, cubeName)
+        NCube cube = getCubeInternal(appId, cubeName)
         cube.testData = tests
         return mutableClient.updateCube(cube)
     }
@@ -1067,7 +1098,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     NCubeTest createNewTest(ApplicationID appId, String cubeName, String testName)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         if (StringUtilities.isEmpty(testName))
         {
@@ -1108,7 +1139,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Boolean updateCell(ApplicationID appId, String cubeName, Object[] ids, CellInfo cellInfo)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Set<Long> colIds = getCoordinate(ids)
 
         if (cellInfo == null)
@@ -1126,7 +1157,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Boolean updateCellAt(ApplicationID appId, String cubeName, Map coordinate, CellInfo cellInfo)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         if (cellInfo == null)
         {
@@ -1144,7 +1175,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute('getCell')
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName) // Will check READ.
+        NCube ncube = getCubeInternal(appId, cubeName) // Will check READ.
         Map output = [:]
         // TODO: Check EXECUTE permission
 //        ncubeService.assertPermissions(appId, cubeName, Action.EXECUTE)
@@ -1155,7 +1186,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object getCellNoExecute(ApplicationID appId, String cubeName, Object[] ids)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Set<Long> colIds = getCoordinate(ids)
         Object cell = ncube.getCellByIdNoExecute(colIds)
 
@@ -1167,7 +1198,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object getCellNoExecuteByCoordinate(ApplicationID appId, String cubeName, Map coordinate)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Object cell = ncube.getCellNoExecute(coordinate)
         CellInfo cellInfo = new CellInfo(cell)
         cellInfo.collapseToUiSupportedTypes()
@@ -1199,7 +1230,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] getCellsNoExecute(ApplicationID appId, String cubeName, Object[] idArrays)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Object[] ret = new Object[idArrays.length]
         Set key = new HashSet()
         int idx = 0
@@ -1229,7 +1260,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Map getCellCoordinate(ApplicationID appId, String cubeName, Object[] ids)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         Set<Long> colIds = getCoordinate(ids)
         Map<String, Object> coord = ncube.getDisplayCoordinateFromIds(colIds)
         Map<String, Object> niceCoord = [:]
@@ -1248,7 +1279,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalArgumentException("No IDs of cells to cut/clear were given.")
         }
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         List<Object[]> cells = new ArrayList<>()
 
         for (Object id : ids)
@@ -1284,7 +1315,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalArgumentException("Could not paste cells, no data available on clipboard.")
         }
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         if (ncube == null)
         {
             throw new IllegalArgumentException("Could not paste cells, cube: ${cubeName} not found for app: ${appId}")
@@ -1328,7 +1359,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalArgumentException("Could not paste cells, values and coordinates must not be empty or length of 0.")
         }
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
 
         for (int i=0; i < coords.length; i++)
         {
@@ -1501,7 +1532,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
-    Object[] getPullRequests(Date startDate, Date endDate)
+    NCube obsoletePullRequest(String prId)
+    {
+        NCube result = mutableClient.obsoletePullRequest(prId)
+        return result
+    }
+
+    Object[] getPullRequests(Date startDate = null, Date endDate = null)
     {
         Object[] pullRequests = mutableClient.getPullRequests(startDate, endDate)
         return pullRequests
@@ -1517,7 +1554,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.commitBranch(appId, list.toArray())
     }
 
-    Object commitBranch(ApplicationID appId, Object[] infoDtos)
+    Object commitBranch(ApplicationID appId, Object[] infoDtos = null)
     {
         appId = addTenant(appId)
         return mutableClient.commitBranch(appId, infoDtos)
@@ -1540,7 +1577,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.updateBranch(appId, dto)
     }
 
-    Object updateBranch(ApplicationID appId, Object[] cubeDtos)
+    Object updateBranch(ApplicationID appId, Object[] cubeDtos = null)
     {
         appId = addTenant(appId)
         Map<String, Object> result = mutableClient.updateBranch(appId, cubeDtos)
@@ -1560,13 +1597,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
-    Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch)
+    Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
     {
         appId = addTenant(appId)
         return mutableClient.acceptTheirs(appId, cubeNames, sourceBranch)
     }
 
-    Integer acceptMine(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
+    Integer acceptMine(ApplicationID appId, Object[] cubeNames, String notNeeded = null)
     {
         appId = addTenant(appId)
         return mutableClient.acceptMine(appId, cubeNames)
@@ -1578,9 +1615,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return formatCube(ncube, [mode: mode])
     }
 
-    NCube loadCubeById(long id)
+    NCube loadCubeById(long id, Map options = null)
     {
-        NCube ncube = mutableClient.loadCubeById(id)
+        NCube ncube = mutableClient.loadCubeById(id, options)
+        return ncube
+    }
+
+    NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
+    {
+        appId = addTenant(appId)
+        NCube ncube = mutableClient.loadCube(appId, cubeName, options)
         return ncube
     }
 
@@ -1608,7 +1652,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         Map coordinate = ['method' : method, 'service': mutableClient]
         coordinate.putAll(args)
-        NCube cube = loadCube(appId, cubeName)
+        NCube cube = getCubeInternal(appId, cubeName)
         Map output = [:]
         cube.getCell(coordinate, output)    // return value is set on 'return' key of output Map
         return output
@@ -1623,7 +1667,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             NCube menuCube = mutableClient.getCube(appId.asVersion('0.0.0'), 'sys.menu')
             if (menuCube == null)
             {
-                menuCube = loadCube(appId.asVersion('0.0.0').asHead(), 'sys.menu')
+                menuCube = getCubeInternal(appId.asVersion('0.0.0').asHead(), 'sys.menu')
             }
             return menuCube.getCell([:])
         }
@@ -1646,7 +1690,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object getDefaultCell(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube menuCube = loadCube(appId, cubeName)
+        NCube menuCube = getCubeInternal(appId, cubeName)
         CellInfo cellInfo = new CellInfo(menuCube.defaultCellValue)
         cellInfo.collapseToUiSupportedTypes()
         return cellInfo
@@ -1655,7 +1699,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Boolean clearDefaultCell(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         ncube.defaultCellValue = null
         mutableClient.updateCube(ncube)
         return true
@@ -1668,7 +1712,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
                 CellInfo.parseJsonValue(null, cellInfo.value, cellInfo.dataType, cellInfo.isCached) :
                 CellInfo.parseJsonValue(cellInfo.value, null, cellInfo.dataType, cellInfo.isCached)
 
-        NCube ncube = loadCube(appId, cubeName)
+        NCube ncube = getCubeInternal(appId, cubeName)
         ncube.defaultCellValue = cellValue
         mutableClient.updateCube(ncube)
         return true
@@ -2011,7 +2055,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return colIds
     }
 
-    private NCube loadCube(ApplicationID appId, String ncubeName)
+    private NCube getCubeInternal(ApplicationID appId, String ncubeName)
     {
         NCube ncube = mutableClient.getCube(appId, ncubeName)
         if (ncube == null)

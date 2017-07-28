@@ -30,7 +30,7 @@ class TestGroovyMethodIntegration extends NCubeCleanupBaseTest
     {
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'GroovyMethodCP', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
 
-        NCube cpCube = ncubeRuntime.getNCubeFromResource(appId, 'sys.classpath.cp1.json')
+        NCube cpCube = createRuntimeCubeFromResource(appId, 'sys.classpath.cp1.json')
         mutableClient.createCube(cpCube)
 
         NCube cube = ncubeRuntime.getNCubeFromResource(appId, 'GroovyMethodClassPath1.json')
@@ -48,7 +48,7 @@ class TestGroovyMethodIntegration extends NCubeCleanupBaseTest
         x = cube.getCell([method:'bar'])
         assertEquals 'Bar', x
 
-        cpCube = ncubeRuntime.getNCubeFromResource(appId, 'sys.classpath.cp2.json')
+        cpCube = createRuntimeCubeFromResource(appId, 'sys.classpath.cp2.json')
         mutableClient.updateCube(cpCube)
 
         ncubeRuntime.clearCache(appId)
@@ -69,7 +69,7 @@ class TestGroovyMethodIntegration extends NCubeCleanupBaseTest
     {
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'GroovyMethodCP', ApplicationID.DEFAULT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
 
-        NCube cpCube = ncubeRuntime.getNCubeFromResource(appId, 'sys.classpath.cp1.json')
+        NCube cpCube = createRuntimeCubeFromResource(appId, 'sys.classpath.cp1.json')
         mutableClient.createCube(cpCube)
 
         NCube cube = ncubeRuntime.getNCubeFromResource(appId, 'GroovyMethodClassPath1.json')
@@ -87,7 +87,7 @@ class TestGroovyMethodIntegration extends NCubeCleanupBaseTest
         x = cube.getCell([method:'bar'])
         assertEquals('Bar', x)
 
-        cpCube = ncubeRuntime.getNCubeFromResource(appId, 'sys.classpath.cp2.json')
+        cpCube = createRuntimeCubeFromResource(appId, 'sys.classpath.cp2.json')
         mutableClient.updateCube(cpCube)
 
         ncubeRuntime.clearCache(appId)

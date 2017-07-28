@@ -29,6 +29,8 @@ interface NCubeClient
 
     NCube loadCubeById(long id, Map options)
 
+    NCube loadCube(ApplicationID appId, String cubeName)
+
     NCube loadCube(ApplicationID appId, String cubeName, Map options)
 
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String content, Map options)

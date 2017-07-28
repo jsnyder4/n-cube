@@ -34,10 +34,8 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
     @Before
     void setup()
     {
-        NCube cp = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sys.classpath.tests.json')
-        mutableClient.createCube(cp)
-        cp = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
-        mutableClient.createCube(cp)
+        NCube cp = createCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sys.classpath.tests.json')
+        cp = createCubeFromResource(ApplicationID.testAppId, 'sys.classpath.tests.json')
     }
 
     @After
@@ -48,9 +46,12 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
         testClient.clearSysParams()
     }
 
+    /**
+     * Loads ncube into the mutableClient, replacing references to ${baseRemoteUrl}, if found in the json
+     */
     NCube createCubeFromResource(ApplicationID appId = ApplicationID.testAppId, String fileName)
     {
-        String json = NCubeRuntime.getResourceAsString(fileName)
+        String json = NCubeRuntime.getResourceAsString(fileName).replaceAll('\\$\\{baseRemoteUrl\\}',baseRemoteUrl)
         NCube ncube = NCube.fromSimpleJson(json)
         ncube.applicationID = appId
         mutableClient.createCube(ncube)

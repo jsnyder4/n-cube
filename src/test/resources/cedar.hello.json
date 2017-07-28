@@ -14,7 +14,7 @@
     {
       "id": [],
       "type": "exp",
-      "url":"http://files.cedarsoftware.com/tests/ncube/cp1/hello.groovy"
+      "url":"${baseRemoteUrl}/tests/ncube/cp1/hello.groovy"
     }
   ]
 }

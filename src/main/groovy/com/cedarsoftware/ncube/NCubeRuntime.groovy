@@ -153,6 +153,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('updateCube')
         Boolean result = bean.call(beanName, 'updateCube', [ncube]) as Boolean
+        ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
 
         if (CLASSPATH_CUBE.equalsIgnoreCase(ncube.name))
         {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
@@ -162,21 +163,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    NCube loadCubeById(long id)
-    {
-        NCube ncube = bean.call(beanName, 'loadCubeById', [id]) as NCube
-        applyAdvices(ncube)
-        return ncube
-    }
-
-    NCube loadCubeById(long id, Map options)
+    NCube loadCubeById(long id, Map options = null)
     {
         NCube ncube = bean.call(beanName, 'loadCubeById', [id, options]) as NCube
         applyAdvices(ncube)
         return ncube
     }
 
-    NCube loadCube(ApplicationID appId, String cubeName, Map options)
+    NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
     {
         NCube ncube = bean.call(beanName, 'loadCube', [appId, cubeName, options]) as NCube
         applyAdvices(ncube)
@@ -187,6 +181,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('createCube')
         bean.call(beanName, 'createCube', [ncube])
+        ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
         prepareCube(ncube)
     }
 
@@ -204,7 +199,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Map checkMultiplePermissions(ApplicationID appId, String resource, String[] actions)
+    Map checkMultiplePermissions(ApplicationID appId, String resource, Object[] actions)
     {
         Map result = bean.call(beanName, 'checkMultiplePermissions', [appId, resource, actions]) as Map
         return result
@@ -478,14 +473,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         verifyAllowMutable('mergePullRequest')
         Map result = bean.call(beanName, 'mergePullRequest', [prId]) as Map
 
-        ApplicationID headAppId = (result[PR_APP] as ApplicationID).asHead()
+        ApplicationID prApp = result[PR_APP] as ApplicationID
+        ApplicationID headAppId = prApp.asHead()
         clearCache(headAppId)
-        result.remove(PR_APP)
-
-        NCube prCube = result[PR_CUBE] as NCube
-        clearCubeFromCache(prCube.applicationID, prCube.name)
-        result.remove(PR_CUBE)
-
+        String prCube = result[PR_CUBE] as String
+        clearCubeFromCache(prApp, prCube)
         return result
     }
 

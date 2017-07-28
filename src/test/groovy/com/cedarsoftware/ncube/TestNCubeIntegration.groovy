@@ -55,7 +55,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
     @Test
     void testClassLoader()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-class-loader-test.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'ncube-class-loader-test.json')
         def coord = [:]
 
         coord.put("code", "local")
@@ -68,7 +68,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
     @Test
     void testExpressionFromUrl()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
 
         def coord = [:]
@@ -249,7 +249,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
         cpCube.addAxis(axis)
 
         String base = System.getProperty("java.io.tmpdir")
-        cpCube.setCell(new GroovyExpression("new com.cedarsoftware.ncube.util.CdnClassLoader(['" + new File(base).toURI().toURL().toString() + "','http://files.cedarsoftware.com'])", null, false), new HashMap())
+        cpCube.setCell(new GroovyExpression("new com.cedarsoftware.ncube.util.CdnClassLoader(['" + new File(base).toURI().toURL().toString() + "','${baseRemoteUrl}'])", null, false), new HashMap())
         return cpCube
     }
 }

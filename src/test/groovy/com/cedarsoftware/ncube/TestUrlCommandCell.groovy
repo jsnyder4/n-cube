@@ -13,7 +13,12 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 import static org.mockito.Matchers.anyString
-import static org.mockito.Mockito.*
+import static org.mockito.Mockito.doThrow
+import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.never
+import static org.mockito.Mockito.times
+import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.when
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -149,8 +154,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         catch (Throwable e)
         {
             e = e.cause
-            assert e.message.toLowerCase().contains('invalid url in cell')
-            assert e.message.toLowerCase().contains('malformed')
+            assertContainsIgnoreCase(e.message, 'invalid url in cell', 'unable to resolve', 'sys.classpath', 'qtp://files/foo.html')
         }
 
         coord['content.name'] = 'badRelative'

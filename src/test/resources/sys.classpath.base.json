@@ -22,32 +22,32 @@
         {
             "id" : ["PROD"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         },
         {
             "id" : ["DEV"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         },
         {
             "id": ["SAND"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         },
         {
             "id": ["UAT"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         },
         {
             "id": ["INT"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         },
         {
             "id": ["CERT"],
             "type": "exp",
-            "value": "'http://files.cedarsoftware.com/' + @sys.versions[feature:'resources'] + '/'"
+            "value": "'${baseRemoteUrl}/' + @sys.versions[feature:'resources'] + '/'"
         }
     ]
 }

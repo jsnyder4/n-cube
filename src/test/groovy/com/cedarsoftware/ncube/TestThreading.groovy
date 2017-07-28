@@ -272,6 +272,8 @@ class TestThreading extends NCubeCleanupBaseTest
                 }
             }
 
+            validateRunnableCode(maxThreads,count,failures)
+
             long duration = System.currentTimeMillis()-start
             totalDuration += duration
             LOG.info "Loop ${i} took " + duration + "ms with failure rate of " + failures.size() + "/" + (maxThreads*count*loopCount*load)
@@ -283,6 +285,23 @@ class TestThreading extends NCubeCleanupBaseTest
         dumpFailures(allFailures)
         assertEquals(0,allFailures.size())
         return allFailures as List
+    }
+
+    private void validateRunnableCode(int maxThreads, int maxCount, Collection failures) {
+        NCube threadCube = ncubeRuntime.getCube(ApplicationID.testAppId, 'threadCount')
+        ClassLoader cdnLoader = ncubeRuntime.getCube(ApplicationID.testAppId,cp.name).getCell([:],[:])
+
+        maxThreads.times { int tid ->
+            maxCount.times { int cnt ->
+                GroovyBase cell = threadCube.getCellNoExecute(['tid':tid,'cnt':cnt,'sleep':0L]) as GroovyBase
+                ClassLoader cellLoader = cell.runnableCode.classLoader
+                if (cdnLoader != cellLoader && cdnLoader.parent != cellLoader) {
+                    def nm = "test-${tid}-${cnt}"
+                    failures.add( new IllegalStateException("ClassLoader did not match for cell"))
+                }
+            }
+        }
+
     }
 
     private static void dumpFailures(ConcurrentLinkedQueue<Exception> failures) {
@@ -328,7 +347,7 @@ class TestThreading extends NCubeCleanupBaseTest
 
         LOG.debug 'cells...'
         maxThreads.times { tid ->
-            threadCube.setCell(new GroovyExpression('1.times { i -> i }\n1.times { x -> x }\n@threadCount[:]', null, false), ['tid':tid])
+            threadCube.setCell(new GroovyExpression('@threadCount[:]', null, false), ['tid':tid])
             maxCount.times { cnt ->
 
                 GroovyExpression cell = null

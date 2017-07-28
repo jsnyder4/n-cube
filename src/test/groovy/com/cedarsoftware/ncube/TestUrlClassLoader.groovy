@@ -69,7 +69,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         URLClassLoader loader = ncubeRuntime.getUrlClassLoader(appId, input)
         assertEquals(1, loader.URLs.length)
         assertEquals(2, getCacheSize(appId))
-        assertEquals(new URL('http://files.cedarsoftware.com/tests/ncube/cp1/'), loader.URLs[0])
+        assertEquals(new URL("${baseRemoteUrl}/tests/ncube/cp1/"), loader.URLs[0])
 
         assertEquals(2, getCacheSize(appId))
 
@@ -106,7 +106,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         x = cube.getCell(input)
         assertEquals('Bar', x)
 
-        NCube sysClassPath2 = ncubeRuntime.getNCubeFromResource(appId, 'sys.classpath.cp2.json')
+        NCube sysClassPath2 = createRuntimeCubeFromResource(appId, 'sys.classpath.cp2.json')
         mutableClient.updateCube(sysClassPath2)
 
         //  clear cache so we get different answers this time.  classpath 2 has already been loaded in database.
@@ -224,7 +224,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
 
         // Test HtmlFormatter - that it properly handles the URLClassLoader in the sys.classpath cube
         String html = cp1.toHtml()
-        assert html.contains('http://files.cedarsoftware.com')
+        assert html.contains("${baseRemoteUrl}")
     }
 
     @Test

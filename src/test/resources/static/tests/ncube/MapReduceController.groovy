@@ -1,4 +1,4 @@
-package com.acme.controllers
+package tests.ncube
 
 import ncube.grv.exp.NCubeGroovyExpression
 

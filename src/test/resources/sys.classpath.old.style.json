@@ -15,7 +15,7 @@
       "id": [],
       "type": "exp",
       "cache": true,
-      "value": "['http://files.cedarsoftware.com/tests/ncube/cp1']"
+      "value": "['${baseRemoteUrl}/tests/ncube/cp1']"
     }
   ]
 }
