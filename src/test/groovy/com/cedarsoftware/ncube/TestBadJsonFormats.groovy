@@ -39,16 +39,22 @@ class TestBadJsonFormats extends NCubeBaseTest
         ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-column-not-array-error.json')
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test
     void testNCubeEmptyAxesParseError()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-empty-axes-error.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-empty-axes-error.json')
+        assert ncube.name == 'EmptyAxesTest'
+        assert ncube.numDimensions == 0
+        assert ncube.numCells == 0
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test
     void testNCubeMissingAxesParseError()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-missing-axes-error.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-missing-axes-error.json')
+        assert ncube.name == 'MissingAxesError'
+        assert ncube.numDimensions == 0
+        assert ncube.numCells == 0
     }
 
     @Test(expected=RuntimeException.class)

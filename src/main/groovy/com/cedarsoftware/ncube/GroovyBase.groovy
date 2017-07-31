@@ -6,6 +6,7 @@ import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.TimedSynchronize
 import com.cedarsoftware.util.UrlUtilities
+import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
 import org.codehaus.groovy.control.CompilationUnit
@@ -562,14 +563,7 @@ abstract class GroovyBase extends UrlCommandCell
         {   // specified via URL, add classLoader URL strings to URL for SHA-1 source.
             GroovyClassLoader gcLoader = getAppIdClassLoader(ctx)
             URL[] urls = gcLoader.URLs
-            StringBuilder s = new StringBuilder()
-            for (URL url : urls)
-            {
-                s.append(url.toString())
-                s.append('.')
-            }
-            s.append(url)
-            String content = s.toString()
+            String content = "${Joiner.on('|').join(urls)}.${url}"
             fullClassName = url - '.groovy'
             fullClassName = fullClassName.replace('/', '.')
             L2CacheKey = EncryptionUtilities.calculateSHA1Hash(StringUtilities.getUTF8Bytes(content))
@@ -691,16 +685,14 @@ abstract class GroovyBase extends UrlCommandCell
         }
     }
 
-    static Set<String> extractImportsAndAnnotations(String text, StringBuilder newGroovy)
+    static String extractImportsAndAnnotations(String text, Set<String> extractedLines)
     {
-        Set<String> extractedLines = new LinkedHashSet<>()
         String adjusted = extract(Regexes.importPattern.matcher(text), extractedLines)
         adjusted = extract(Regexes.grapePattern.matcher(adjusted), extractedLines)
         adjusted = extract(Regexes.grabPattern.matcher(adjusted), extractedLines)
         adjusted = extract(Regexes.compileStaticPattern.matcher(adjusted), extractedLines)
         adjusted = extract(Regexes.typeCheckPattern.matcher(adjusted), extractedLines)
-        newGroovy.append(adjusted)
-        return extractedLines
+        return adjusted
     }
 
     static String extract(Matcher matcher, Set<String> extractedLines)

@@ -1,12 +1,24 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.*
+import com.cedarsoftware.ncube.exception.CommandCellException
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.ncube.exception.RuleJump
+import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.ByteUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.MapUtilities
+import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -307,16 +319,13 @@ class NCube<T>
         String toString()
         {
             StringBuilder s = new StringBuilder()
-            s.append(cubeName)
-            s.append(':[')
-
+            s.append("${cubeName}:[")
             Iterator<Map.Entry<String, Object>> i = coord.entrySet().iterator()
+            
             while (i.hasNext())
             {
                 Map.Entry<String, Object> coordinate = i.next()
-                s.append(coordinate.key)
-                s.append(':')
-                s.append(coordinate.value)
+                s.append("${coordinate.key}:${coordinate.value}")
                 if (i.hasNext())
                 {
                     s.append(',')
@@ -1176,6 +1185,7 @@ class NCube<T>
         final Map whereVars = new CaseInsensitiveMap()
         ctx.output = output
         ctx.ncube = this
+        Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
 
         for (row in rowAxis.columns)
         {
@@ -1190,13 +1200,13 @@ class NCube<T>
                 ids.add(whereId)
                 commandInput[colAxisName] = column.valueThatMatches
                 Object colKey = isColDiscrete ? column.value : column.columnName
-                whereVars[colKey] = getCellValue(ids, commandInput, output)
+                whereVars[colKey] = getCellValue(cellz[ids], commandInput, output)
                 ids.remove(whereId)
             }
 
-            ctx.input = whereVars
+            ctx['input'] = whereVars
             def whereResult = executeExpression(ctx, exp)
-            if (isTrue(whereResult))
+            if (whereResult)
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
                 matchingRows[key] = buildMapReduceResultRow(colAxis, selectList, whereVars, ids, commandInput, output)
@@ -1263,7 +1273,7 @@ class NCube<T>
         return columns
     }
 
-    private void throwIf(boolean throwCondition, Exception ex)
+    private static void throwIf(boolean throwCondition, Exception ex)
     {
         if (throwCondition)
         {
@@ -1298,9 +1308,8 @@ class NCube<T>
         return boundColumns
     }
 
-    private def getCellValue(Set<Long> ids, Map input, Map output)
+    private def getCellValue(def cellValue, Map input, Map output)
     {
-        def cellValue = cells[ids]
         if (cellValue instanceof CommandCell)
         {
             cellValue = executeExpression((Map) [input: input, output: output, ncube: this], (CommandCell) cellValue)
@@ -1313,6 +1322,7 @@ class NCube<T>
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
         Map result = new CaseInsensitiveMap()
+        Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
 
         for (Column column : selectList)
         {
@@ -1325,7 +1335,7 @@ class NCube<T>
             commandInput[axisName] = column.valueThatMatches
             long colId = column.id
             ids.add(colId)
-            result[colValue] = getCellValue(ids, commandInput, output)
+            result[colValue] = getCellValue(cellz[ids], commandInput, output)
             ids.remove(colId)
         }
 
@@ -2486,17 +2496,12 @@ class NCube<T>
         String defUrl = jsonNCube.containsKey(DEFAULT_CELL_VALUE_URL) ? getString(jsonNCube, DEFAULT_CELL_VALUE_URL) : null
         boolean defCache = getBoolean(jsonNCube, DEFAULT_CELL_VALUE_CACHE)
         ncube.setDefaultCellValue(CellInfo.parseJsonValue(jsonNCube[DEFAULT_CELL_VALUE], defUrl, defType, defCache))
-
-        if (!jsonNCube.containsKey("axes"))
-        {
-            throw new IllegalArgumentException("Must specify a list of axes for the ncube, under the key 'axes' as [{axis 1}, {axis 2}, ... {axis n}], cube: ${cubeName}")
-        }
-
+        
         Object[] axes = jsonNCube.axes as Object[]
 
-        if (ArrayUtilities.isEmpty(axes))
+        if (axes == null)
         {
-            throw new IllegalArgumentException("Must be at least one axis defined in the JSON format, cube: ${cubeName}")
+            axes = [] as Object[]
         }
 
         Map<Object, Long> userIdToUniqueId = new CaseInsensitiveMap<>()

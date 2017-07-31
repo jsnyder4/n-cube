@@ -32,11 +32,13 @@ class LongHashSet implements Set<Long>
     LongHashSet()
     { }
 
-    LongHashSet(Collection<Long> col)
+    LongHashSet(Set<Long> col)
     {
+        elems = new long[col.size()]
+        int i = 0
         for (o in col)
         {
-            add(o)
+            elems[i++] = o
         }
     }
 
@@ -113,6 +115,11 @@ class LongHashSet implements Set<Long>
             array[i] = local[i]
         }
         return array
+    }
+
+    boolean add(int x)
+    {
+        add((long) x)
     }
 
     boolean add(Long o)

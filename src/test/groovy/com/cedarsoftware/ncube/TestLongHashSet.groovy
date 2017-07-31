@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.LongHashSet
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 /**
@@ -20,6 +21,7 @@ import org.junit.Test
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestLongHashSet
 {
     @Test
@@ -55,9 +57,9 @@ class TestLongHashSet
     void testRemoveFirst()
     {
         LongHashSet set = new LongHashSet()
-        set.add(7)
-        set.add(8)
-        set.add(9)
+        set.add(7L)
+        set.add(8L)
+        set.add(9L)
         assert !set.remove(10)
         set.remove(7)
 
@@ -118,7 +120,7 @@ class TestLongHashSet
         assert nums[1] == 8
         assert nums[2] == 9
 
-        int[] array = set.toArray([] as int[])
+        int[] array = set.toArray([] as int[]) as int[]
         assert array.length == 3
         assert array[0] == 7
         assert array[1] == 8
@@ -165,7 +167,7 @@ class TestLongHashSet
     void testAddRemoveAll()
     {
         LongHashSet set = new LongHashSet()
-        set.addAll([7, 8, 9])
+        set.addAll([7, 8, 9] as Set)
         assert set.size() == 3
         assert set.contains(7)
         assert set.contains(8)
@@ -174,14 +176,14 @@ class TestLongHashSet
         set.removeAll([8, 9])
         assert set.contains(7)
         set.removeAll([7])
-        assert set.isEmpty()
+        assert set.empty
     }
 
     @Test
     void testRetainsContainsAll()
     {
-        LongHashSet set1 = new LongHashSet([7, 8, 9])
-        LongHashSet set2 = new LongHashSet([5, 6, 7])
+        LongHashSet set1 = new LongHashSet([7, 8, 9] as Set)
+        LongHashSet set2 = new LongHashSet([5, 6, 7] as Set)
         assert set1.retainAll(set2)
         assert set1.size() == 1
         assert set1.contains(7)
@@ -198,11 +200,11 @@ class TestLongHashSet
         assert set.size() == 1
         assert set.contains(7)
 
-        set = new LongHashSet([1, 2, 3, 3, 4, 5])
+        set = new LongHashSet([1, 2, 3, 3, 4, 5] as Set)
         assert set.size() == 5
 
         set = new LongHashSet()
-        set.addAll([1, 2, 3, 3, 4, 5])
+        set.addAll([1, 2, 3, 3, 4, 5] as Set)
         assert set.size() == 5
     }
 

@@ -237,7 +237,7 @@ return ret
     @Test
     void testSysProtoErrorHandling3()
     {
-        GroovyExpression.addPrototypeExpImports(null, null, null)
+        GroovyExpression.addPrototypeExpImports(null,  null)
     }
 
     @Test

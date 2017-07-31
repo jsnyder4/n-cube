@@ -684,7 +684,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         if (newRevision != null && newRevision >= 0)
         {
-            throw new IllegalArgumentException("Unable to duplicate cube, cube already exists with the new name, app:  " + newAppId + ", name: " + newName)
+            throw new IllegalArgumentException("Unable to duplicate cube, cube already exists with the new name, app:  ${newAppId}, name: ${newName}")
         }
 
         boolean nameChanged = !StringUtilities.equalsIgnoreCase(oldName, newName)
@@ -700,7 +700,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             sha1 = ncube.sha1()
         }
 
-        String notes = 'Cube duplicated from app: ' + oldAppId + ', name: ' + oldName
+        String notes = "Cube duplicated from app: ${oldAppId}, name: ${oldName}"
         Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
         insertCube(c, newAppId, newName, rev, jsonBytes, oldTestData, notes, true, sha1, sameExceptBranch ? headSha1 : null, username, 'duplicateCube')
         return true
@@ -752,7 +752,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         })
 
         ncube.name = newName
-        String notes = "renamed: " + oldName + " -> " + newName
+        String notes = "renamed: ${oldName} -> ${newName}"
 
         if (oldName.equalsIgnoreCase(newName))
         {   // Changing case
@@ -782,7 +782,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             Long revision = row.getLong('revision_number')
             byte[] testData = row.getBytes(TEST_DATA_BIN)
             revision = revision < 0 ? revision - 1 : revision + 1
-            result = insertCube(c, appId, cube, revision, testData, 'merged to branch, txId: [' + txId + ']', changed, headSha1, username, 'commitMergedCubeToBranch')
+            result = insertCube(c, appId, cube, revision, testData, "merged to branch, txId: [${txId}]", changed, headSha1, username, 'commitMergedCubeToBranch')
         })
         return result
     }
@@ -822,7 +822,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] cubeData = cube.cubeAsGzipJsonBytes
             String sha1 = cube.sha1()
 
-            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, 'merged-committed to HEAD, txId: [' + txId + ']', false, sha1, null, username, methodName)
+            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}]", false, sha1, null, username, methodName)
             result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, 'merged', false, sha1, sha1, username,  methodName)
         })
         return result
@@ -1293,7 +1293,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
             sql.eachRow(map, select, 0, max, { ResultSet row ->
                 if (count > max)
                 {
-                    throw new IllegalStateException('More results returned than expected, expecting only ' + max)
+                    throw new IllegalStateException("More results returned than expected, expecting only ${max}")
                 }
                 count++
                 closure(row)
@@ -1910,7 +1910,7 @@ ORDER BY abs(revision_number) DESC"""
 
     protected static String createNote(String user, Date date, String notes)
     {
-        return DATE_TIME_FORMAT.format(date) + ' [' + user + '] ' + notes
+        return "${DATE_TIME_FORMAT.format(date)} [${user}] ${notes}"
     }
 
     protected static boolean toBoolean(Object value)

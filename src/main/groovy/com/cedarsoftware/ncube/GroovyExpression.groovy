@@ -71,18 +71,33 @@ class GroovyExpression extends GroovyBase
             return theirGroovy
         }
 
-        StringBuilder groovyCodeWithoutImportsAndAnnotations = new StringBuilder()
-        Set<String> lines = extractImportsAndAnnotations(theirGroovy, groovyCodeWithoutImportsAndAnnotations)
+        Set<String> extractedLines = new LinkedHashSet<>()
+        String meat = extractImportsAndAnnotations(theirGroovy, extractedLines)
 
-        // NOTE: CdnClassLoader needs to exclude the imports listed below with '*' (it will 'bike-lock' search these for
-        // all unexpected tokens in the source being compiled.
+        // NOTE: CdnClassLoader needs to exclude the imports listed below with '*' (GroovyClassLoader will
+        // 'bike-lock' search these for all unexpected tokens in the source being compiled.)
         NCube ncube = getNCube(ctx)
-        StringBuilder groovy = new StringBuilder("""\
+
+        // Attempt to load sys.prototype cube
+        // If loaded, add the import statement list from this cube to the list of imports for generated cells
+        String expClassName = 'ncube.grv.exp.NCubeGroovyExpression'
+        String addlImports = ''
+
+        if (!SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
+        {
+            NCube prototype = getSysPrototype(ncube.applicationID)
+
+            if (prototype != null)
+            {
+                addlImports = addPrototypeExpImports(ctx, prototype)
+
+                // Attempt to find class to inherit from
+                expClassName = getPrototypeExpClass(ctx, prototype) ?: expClassName
+            }
+        }
+
+        return """\
 package ncube
-/**
- * n-cube: ${ncube.name}
- * axes:   ${ncube.axisNames}
- */
 import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.exception.*
 import com.cedarsoftware.ncube.formatters.*
@@ -93,49 +108,19 @@ import com.cedarsoftware.util.io.*
 import groovy.transform.CompileStatic 
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-""")
-
-        // Attempt to load sys.prototype cube
-        // If loaded, add the import statement list from this cube to the list of imports for generated cells
-        String expClassName = null
-
-        if (!SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
-        {
-            NCube prototype = getSysPrototype(ncube.applicationID)
-
-            if (prototype != null)
-            {
-                addPrototypeExpImports(ctx, groovy, prototype)
-
-                // Attempt to find class to inherit from
-                expClassName = getPrototypeExpClass(ctx, prototype)
-            }
-        }
-
-        // Add in import and annotations extracted from the expression cell
-        for (String line : lines)
-        {
-            groovy.append(line)
-            groovy.append('\n')
-        }
-
-        if (StringUtilities.isEmpty(expClassName))
-        {
-            expClassName = "ncube.grv.exp.NCubeGroovyExpression"
-        }
-
-        groovy.append("""\
+${addlImports}
+${String.join('\n', extractedLines)}
 class ${className} extends ${expClassName}
 {
     Object run()
     {
-    ${groovyCodeWithoutImportsAndAnnotations}
+    ${meat}
     }
-}""")
-        return groovy.toString()
+}
+"""
     }
 
-    NCube getSysPrototype(ApplicationID appId)
+    static NCube getSysPrototype(ApplicationID appId)
     {
         try
         {
@@ -160,28 +145,31 @@ class ${className} extends ${expClassName}
         }
     }
 
-    protected static void addPrototypeExpImports(Map<String, Object> ctx, StringBuilder groovy, NCube prototype)
+    protected static String addPrototypeExpImports(Map<String, Object> ctx, NCube prototype)
     {
         try
         {
+            StringBuilder text = new StringBuilder()
             Map<String, Object> input = getInput(ctx)
             Map<String, Object> copy = new HashMap<>(input)
-            copy.put(SYS_PROPERTY, EXP_IMPORTS)
+            copy[SYS_PROPERTY] = EXP_IMPORTS
             Object importList = prototype.getCell(copy)
             if (importList instanceof Collection)
             {
                 Collection<String> impList = (Collection) importList
                 for (String importLine : impList)
                 {
-                    groovy.append("import ")
-                    groovy.append(importLine)
-                    groovy.append('\n')
+                    text.append('import ')
+                    text.append(importLine)
+                    text.append('\n')
                 }
             }
+            return text
         }
         catch (Exception e)
         {
             handleException(e, "Exception occurred fetching imports from ${SYS_PROTOTYPE}")
+            return ''
         }
     }
 

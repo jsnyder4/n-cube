@@ -10,8 +10,21 @@ import org.junit.Before
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
-import static org.junit.Assert.*
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNotEquals
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNotSame
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertSame
+import static org.junit.Assert.assertTrue
+import static org.junit.Assert.fail
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -6526,7 +6539,7 @@ return ints''', null, false)
 
         // Mark TestCube as red
         NCube testCube = mutableClient.getCube(appId, 'TestCube')
-        testCube.setMetaProperty("cube_tags", "red")
+        testCube.setMetaProperty(CUBE_TAGS, "red")
         mutableClient.updateCube(testCube)
 
         // Mark TestBranch as red & white
@@ -6551,12 +6564,12 @@ return ints''', null, false)
 
         // Mark TestCube as red
         NCube testCube = mutableClient.getCube(appId, 'TestCube')
-        testCube.setMetaProperty("cube_tags", "red")
+        testCube.setMetaProperty(CUBE_TAGS, "red")
         mutableClient.updateCube(testCube)
 
         // Mark TestBranch as red & white
         NCube testBranch = mutableClient.getCube(appId, 'TestBranch')
-        testBranch.setMetaProperty("cube_tags", "red , WHIte")
+        testBranch.setMetaProperty(CUBE_TAGS, "red , WHIte")
         mutableClient.updateCube(testBranch)
 
         List<NCubeInfoDto> list = mutableClient.search(appId, null, null, [(SEARCH_FILTER_EXCLUDE):['red', 'white']])

@@ -117,7 +117,7 @@ class GroovyTemplate extends ContentCmdCell
             String groovyClosures = new String(IOUtilities.inputStreamToBytes(inStream))
             IOUtilities.close(inStream)
 
-            cmd = '<% ' + groovyClosures + ' %>' + cmd
+            cmd = "<% ${groovyClosures} %>${cmd}"
 
             // Create Groovy Standard Template
             SimpleTemplateEngine engine = new SimpleTemplateEngine(urlLoader)

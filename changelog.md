@@ -1,39 +1,40 @@
 ### Revision History
-* 4.0.16-SNAPSHOT
-  * Added methods to NCubeController that were previously added to runtime and mutable interfaces. Added test to ensure that methods added to interfaces are also added to the controller in the future.
-  * Updated NCubeManager exception messages with more information
-  * Enhancement: Add default, sorted, and fireAll to addAxis
-  * Test Enhancement: Updated tests to use an embedded Tomcat container for remote urls, replacing files.cedarsoftware.com
+* 4.0.16-SNAPSHOT    
+  * Added methods to `NCubeController` that were previously added to runtime and mutable interfaces. Added test to ensure that methods added to interfaces are also added to the controller in the future.
+  * Updated `NCubeManager` exception messages with more information
+  * Enhancement: Add default, sorted, and fireAll to `addAxis`
+  * Test Enhancement: Updated tests to use an embedded Tomcat container for remote urls, replacing `files.cedarsoftware.com`
     * This allows tests to be executed without being connected to a network
     * If the entry `ncube.tests.baseRemoteUrl=http://remote.site.com` is set in `application.properties`, the tests will run against that site instead of the embedded container
   * Bug fix: Merging a pull request with a new cube with an axis reference after other references were updated in HEAD could cause reference version mismatch in HEAD.
+  * Performance: Compiling is slightly faster - code that builds class around user's statement block improved.  
 * 4.0.15
   * Bug fix: Updated version fetching code
   * Updated n-cube related application properties to be prefixed with ncube.*
 * 4.0.14
-  * Added n-cube version to NCubeController.heartBeat()
-  * Bug fix: Removed "Content-Length" header in JsonHttpProxy. Added ncube.proxy.headersToRemove application.property in case other headers need to be removed.
-  * Bug fix: Removing the last NCubeTest on an NCube would not save properly.
+  * Added n-cube version to `NCubeController.heartBeat()`
+  * Bug fix: Removed "Content-Length" header in `JsonHttpProxy`. Added `ncube.proxy.headersToRemove` application.property in case other headers need to be removed.
+  * Bug fix: Removing the last `NCubeTest` on an `NCube` would not save properly.
 * 4.0.13
   * L3 Cache support - dynamically compiled script classes are cached in an L3 cache. The L3 cache survives server restarts and allows the JVM to load already compiled classes without requiring the compilation step.
     * Usage: In the `application.properties` file, if the entry `ncube.classes.dir=/x/y/classes` is set, the L3 cache is activated and compiled scripts will be stored here.
     * If the entry `ncube.sources.dir=/x/y/source` is found, then the generated Groovy source will be written to the path specified.
     * In an upcoming release, the L3 CacheManager will overrideable, allowing alternative storage like Redis, SQL, etc.
 * 4.0.12
-  * Bug fix: Check for ncubeManager bean before trying to set userId on it
+  * Bug fix: Check for `ncubeManager` bean before trying to set userId on it
 * 4.0.11
   * Performance fix: removed Upper() from SQL statements on SHA-1 columns.
-  * Added NCube.mapReduce() API.  Filter rows of an n-cube.  Use this API to fetch a subset of an n-cube, similar to SQL SELECT.
+  * Added `NCube.mapReduce()` API.  Filter rows of an n-cube.  Use this API to fetch a subset of an n-cube, similar to `SQL SELECT`.
 * 4.0.10
-  * Separated out server.port property. Renamed server.* properties for JsonHttpProxy to target.*.
-  * Added NCubeTest as part of DeltaProcessor.
-  * Added loadCubeWithTests to get both the cube and its tests together.
-  * Removed saveTests from NCubeManager; this is now wrapped into updateCube in the persister.
+  * Separated out server.port property. Renamed server.* properties for `JsonHttpProxy` to target.*.
+  * Added `NCubeTest` as part of `DeltaProcessor`.
+  * Added `loadCubeWithTests` to get both the cube and its tests together.
+  * Removed `saveTests` from `NCubeManager`; this is now wrapped into `updateCube` in the persister.
   * Bug fix: Reference Axes not get checked properly on pull request merge vs straight commit branch.
-  * Added appId to a couple InvalidCoordinateExceptions for more clarity in logs
+  * Added appId to a couple `InvalidCoordinateExceptions` for more clarity in logs
   * Some system requests override user-based permissions, focused mainly around pull requests.
 * 4.0.9
-  * Bug fix: Separated checkPermissions() and checkMultiplePermissions() from overridden API to two distinct APIs.
+  * Bug fix: Separated `checkPermissions()` and `checkMultiplePermissions()` from overridden API to two distinct APIs.
 * 4.0.8
   * Bug fix: no longer need branch permissions to merge a pull request from that branch.
   * Bug fix: check permissions for multiple permissions now only makes one server call.
@@ -46,8 +47,8 @@
   * Removed explicit spring dependencies in pom.xml that are consumed transitively via spring-boot-starter-* dependencies
   * Changed log statements for method calls to include 125 (was 50) characters per argument
   * Changed log level from INFO to DEBUG when sys.menu is not found
-  * Enhancement: saveTests creates a new db record and uses the testUpdated NCube metaproperty.
-  * Updated NCube.duplicate() to include ApplicationID
+  * Enhancement: `saveTests` creates a new db record and uses the testUpdated `NCube` metaproperty.
+  * Updated `NCube.duplicate()` to include `ApplicationID`
   * Update hsqldb (2.4.0) and mysql (6.0.6) dependencies
 * 4.0.5
   * Support mode for json format when getting raw json (json-pretty, json)
@@ -55,30 +56,30 @@
 * 4.0.4
   * NCubeController.commitCube() was passing an incompatable argument to commitBranch. Fixed bug and added test coverage for commitCube. 
 * 4.0.3
-  * NCubeManager.getReferenceAxes() was incorrectly validating reference versions. 
+  * `NCubeManager.getReferenceAxes()` was incorrectly validating reference versions. 
 * 4.0.2
-  * Changed NCubeRuntime.getResourceAsString() to use Groovy APIs to get stream from Spring Boot executable jar, due to  zipfs execption using regular resource APIs.
+  * Changed `NCubeRuntime.getResourceAsString()` to use Groovy APIs to get stream from Spring Boot executable jar, due to  zipfs execption using regular resource APIs.
 * 4.0.1
   * Removed redundant executable flag in pom.xml related to making a spring boot executable jar.
-  * Added optional beanName to NCubeRuntime constructor
+  * Added optional beanName to `NCubeRuntime` constructor
   * Updated pom.xml to create executable jar
-  * Bug fix: Removed unnecessary URL encoding in JsonHttpProxy  
+  * Bug fix: Removed unnecessary URL encoding in `JsonHttpProxy`  
 * 4.0.0
   * Built as a Spring Boot application
-  * NCubeManager converted from having static APIs to being a Spring injected instance (accessible through interface)
+  * `NCubeManager` converted from having static APIs to being a Spring injected instance (accessible through interface)
   * Enhancement: Changed way pull request data is accessed for efficiency.
   * Enhancement: Added search options for start and end create date parameters to cut down on cubes searched.
-  * Bug fix: NCubeController - promoteRevision calls updateCube directly and saveJson loop
-  * Bug fix: Update n-cube changed flag during fast foward based on whether sha1 matches headSha1
+  * Bug fix: `NCubeController` - `promoteRevision` calls `updateCube` directly and `saveJson` loop
+  * Bug fix: Update n-cube changed flag during fast-forward based on whether sha1 matches headSha1
 * 3.6.17
-  * Bug fix: Update n-cube changed flag during fast foward based on whether sha1 matches headSha1
+  * Bug fix: Update n-cube changed flag during fast-forward based on whether sha1 matches headSha1
 * 3.6.16
   * Bug fix: Added delta processing for meta-properties on n-cube, axis, and column.
 * 3.6.15
   * Bug fix: Batch updating reference axes would remove transforms
 * 3.6.13/3.6.14
   * Enhancement: Updated reference axes transforms so they won't execute code on the server (support for transforms that execute code remains)
-  * Enhancement: Axis supports a new ValueType (CISTRING - case insenstive string)
+  * Enhancement: Axis supports a new ValueType (`CISTRING` - case insenstive string)
 * 3.6.12
   * Bug fix: Committing merged cube into branch was not resetting the change flag in the case when the n-cube SHA-1 was the same as the HEAD n-cube's SHA-1.
 * 3.6.11
@@ -95,13 +96,13 @@
     * Note: All database transactions use real user for a proper audit trail.
 * 3.6.7
   * Enhancement: Easily remove a transform from a reference axis
-  * Enhancement: NCube serialized through json-io now brings along ApplicationID
+  * Enhancement: `NCube` serialized through json-io now brings along `ApplicationID`
 * 3.6.6
-  * Enhancement: Added custom reader and writer for NCube when used with json-io.
+  * Enhancement: Added custom reader and writer for `NCube` when used with json-io.
 * 3.6.5
   * Enhancement: Rewrite copy branch in persister to allow a thin copy of branch instead of with full history.
 * 3.6.4
-  * Enhancement: Create NCubeConstants
+  * Enhancement: Create `NCubeConstants`
 * 3.6.3
   * Enhancement: Re-ordering of columns on a non-sorted axis are now handled in all cases, API: `DeltaProcessor.getDeltaDescription()` and `NCube.mergeDeltas()`.  Reorder column delta's only show up when there are no outstanding `ADD` or `DELETE` deltas for the same axis.
 * 3.6.2
@@ -113,7 +114,7 @@
   * Columns on a rule axis must have a name.  The name must be unique on the axis.  This is now enforced with an IllegalArgumentException.
   * When a new branch is created, sys.permissions is set to allow UPDATE action by default.  @tpollack 
   * Re-ordering support added for delta/merge.
-  * Bug fix: NCubeManager.updateAxisMetaProperties() was temporarily not working on a non-reference axis.  Fixed and test added.  @jsynder4 
+  * Bug fix: `NCubeManager.updateAxisMetaProperties()` was temporarily not working on a non-reference axis.  Fixed and test added.  @jsynder4 
 * 3.5.6
   * Bug fix: When merging updated reference axis, the cells from deleted columns were being attached to the default column if present.
   * Bug fix: When merging reference axis, the column meta-properties were being overwritten from the new column on the updated reference.  Now those properties are brought over, and then the existing meta-properties are overlaid.
