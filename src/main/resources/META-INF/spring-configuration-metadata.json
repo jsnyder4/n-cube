@@ -4,6 +4,22 @@
       "name": "ncube",
       "type": "com.cedarsoftware.config.NCubeConfiguration",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration"
+    },
+    {
+      "name": "ncube.target",
+      "description": "JsonHttpProxy properties."
+    },
+    {
+      "name": "ncube.cache",
+      "description": "NCube caching properties."
+    },
+    {
+      "name": "ncube.perm",
+      "description": "Permissions caching properties."
+    },
+    {
+      "name": "ncube.datascource",
+      "description": "NCube datasource properties."
     }
   ],
   "properties": [
@@ -20,6 +36,279 @@
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Path to generated class files. If this path points to a valid directory, the generated class files from cell values that are inline (non URL-based) Groovy expressions will be written as cells are compiled and then used for class caching.",
       "defaultValue": ""
+    },
+    {
+      "name": "ncube.proxy.headersToRemove",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.util.JsonHttpProxy",
+      "description": "Headers to remove in JsonHttpProxy when making proxy request (comma separated list, all lowercase).",
+      "defaultValue": "content-length"
+    },
+    {
+      "name": "ncube.allow.mutable.methods",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Allow NCubeRuntime to perform mutable methods.",
+      "defaultValue": "false"
+    },
+    {
+      "name": "ncube.target.scheme",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Scheme for JsonHttpProxy connection (http or https).",
+      "defaultValue": "http"
+    },
+    {
+      "name": "ncube.target.host",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Hostname for JsonHttpProxy connection (IP or DNS name).",
+      "defaultValue": "localhost"
+    },
+    {
+      "name": "ncube.target.port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Port for JsonHttpProxy connection.",
+      "defaultValue": "9000"
+    },
+    {
+      "name": "ncube.target.context",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Context for JsonHttpProxy connection.",
+      "defaultValue": "ncube"
+    },
+    {
+      "name": "ncube.target.username",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Username for JsonHttpProxy connection. If not set, headers will be passes along for authentication.",
+      "defaultValue": ""
+    },
+    {
+      "name": "ncube.target.password",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Password for JsonHttpProxy connection. If not set, headers will be passed along for authentication.",
+      "defaultValue": ""
+    },
+    {
+      "name": "ncube.target.numConnections",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Number of connections allowed through JsonHttpPoxy.",
+      "defaultValue": "10"
+    },
+    {
+      "name": "ncube.cache.max.size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
+      "defaultValue": "0"
+    },
+    {
+      "name": "ncube.cache.evict.type",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
+      "defaultValue": "expireAfterAccess"
+    },
+    {
+      "name": "ncube.cache.evict.duration",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
+      "defaultValue": "4"
+    },
+    {
+      "name": "ncube.cache.evict.units",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
+      "defaultValue": "hours"
+    },
+    {
+      "name": "ncube.cache.concurrency",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
+      "defaultValue": "16"
+    },
+    {
+      "name": "ncube.perm.cache.max.size",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
+      "defaultValue": "100000"
+    },
+    {
+      "name": "ncube.perm.cache.evict.type",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
+      "defaultValue": "expireAfterAccess"
+    },
+    {
+      "name": "ncube.perm.cache.evict.duration",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
+      "defaultValue": "2"
+    },
+    {
+      "name": "ncube.perm.cache.evict.units",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
+      "defaultValue": "minutes"
+    },
+    {
+      "name": "ncube.perm.cache.concurrency",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
+      "defaultValue": "16"
+    },
+    {
+      "name": "ncube.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "JDBC driver class name.",
+      "defaultValue": "org.hsqldb.jdbcDriver"
+    },
+    {
+      "name": "ncube.datasource.url",
+      "type": "java.lang.String",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "Datasource URL.",
+      "defaultValue": "jdbc:hsqldb:mem:testdb"
+    },
+    {
+      "name": "ncube.datasource.username",
+      "type": "java.lang.String",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "Datasource username.",
+      "defaultValue": "sa"
+    },
+    {
+      "name": "ncube.datasource.password",
+      "type": "",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "Datasource password.",
+      "defaultValue": ""
+    },
+    {
+      "name": "ncube.datasource.tomcat.validation-query",
+      "type": "java.lang.String",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "Datasource validation query.",
+      "defaultValue": "SELECT 1 FROM n_cube WHERE 1=0"
+    },
+    {
+      "name": "ncube.datasource.tomcat.jdbc-interceptors",
+      "type": "java.lang.String",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "com.cedarsoftware.util.PoolInterceptor"
+    },
+    {
+      "name": "ncube.datasource.tomcat.initial-size",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "5"
+    },
+    {
+      "name": "ncube.datasource.tomcat.min-idle",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "10"
+    },
+    {
+      "name": "ncube.datasource.tomcat.max-idle",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "10"
+    },
+    {
+      "name": "ncube.datasource.tomcat.max-active",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "100"
+    },
+    {
+      "name": "ncube.datasource.tomcat.max-wait",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "120000"
+    },
+    {
+      "name": "ncube.datasource.tomcat.jmx-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "true"
+    },
+    {
+      "name": "ncube.datasource.tomcat.remove-abandoned",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "true"
+    },
+    {
+      "name": "ncube.datasource.tomcat.remove-abandoned-timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "180"
+    },
+    {
+      "name": "ncube.datasource.tomcat.test-on-borrow",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "true"
+    },
+    {
+      "name": "ncube.datasource.tomcat.test-on-return",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "false"
+    },
+    {
+      "name": "ncube.datasource.tomcat.test-while-idle",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "false"
+    },
+    {
+      "name": "ncube.datasource.tomcat.time-between-eviction-runs-millis",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "30000"
+    },
+    {
+      "name": "ncube.datasource.tomcat.min-evictable-idle-time-millis",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "30000"
+    },
+    {
+      "name": "ncube.datasource.tomcat.validation-interval",
+      "type": "java.lang.Integer",
+      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "description": "",
+      "defaultValue": "60000"
     }
   ]
 }

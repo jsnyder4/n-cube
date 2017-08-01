@@ -29,8 +29,6 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 @Ignore
 class NCubeCleanupBaseTest extends NCubeBaseTest
 {
-    private static final String TEST_DB_ERROR = "You're not connected to the HSQLDB test database. Please check jdbc settings in application.properties and spring.profiles.active (use test-database)."
-
     @Before
     void setup()
     {

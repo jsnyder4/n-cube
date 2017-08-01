@@ -13,7 +13,7 @@
 
     <bean id="appContext" class="com.cedarsoftware.ncube.NCubeAppContext"/>
 
-    <beans profile="client">
+    <beans profile="ncube-client">
 
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>

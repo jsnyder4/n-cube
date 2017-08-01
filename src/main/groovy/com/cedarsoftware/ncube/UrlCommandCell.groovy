@@ -80,7 +80,7 @@ abstract class UrlCommandCell implements CommandCell
 
     void clearClassLoaderCache()
     {
-        TimedSynchronize.synchronize(hasBeenCachedLock, 200, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to clear ClassLoader cache.')
+        TimedSynchronize.synchronize(hasBeenCachedLock, 100, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to clear ClassLoader cache.')
         hasBeenCached = false
         def localVar = cache
 

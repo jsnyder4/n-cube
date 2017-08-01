@@ -34,26 +34,26 @@ import org.springframework.context.annotation.Profile
 @Configuration
 class NCubeConfiguration
 {
-    @Value('${ncube.cache.max.size}') int maxSizeNCubeCache
-    @Value('${ncube.cache.evict.type}') String typeNCubeCache
-    @Value('${ncube.cache.evict.duration}') int durationNCubeCache
-    @Value('${ncube.cache.evict.units}') String unitsNCubeCache
-    @Value('${ncube.cache.concurrency}') int concurrencyNCubeCache
+    @Value('${ncube.cache.max.size:0}') int maxSizeNCubeCache
+    @Value('${ncube.cache.evict.type:expireAfterAccess}') String typeNCubeCache
+    @Value('${ncube.cache.evict.duration:4}') int durationNCubeCache
+    @Value('${ncube.cache.evict.units:hours}') String unitsNCubeCache
+    @Value('${ncube.cache.concurrency:16}') int concurrencyNCubeCache
 
-    @Value('${ncube.perm.cache.max.size}') int maxSizePermCache
-    @Value('${ncube.perm.cache.evict.type}') String typePermCache
-    @Value('${ncube.perm.cache.evict.duration}') int durationPermCache
-    @Value('${ncube.perm.cache.evict.units}') String unitsPermCache
-    @Value('${ncube.perm.cache.concurrency}') int concurrencyPermCache
+    @Value('${ncube.perm.cache.max.size:100000}') int maxSizePermCache
+    @Value('${ncube.perm.cache.evict.type:expireAfterAccess}') String typePermCache
+    @Value('${ncube.perm.cache.evict.duration:2}') int durationPermCache
+    @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
+    @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
 
-    @Value('${ncube.allow.mutable.methods}') boolean allowMutableMethods
-    @Value('${ncube.target.scheme}') String scheme
-    @Value('${ncube.target.host}') String host
-    @Value('${ncube.target.port}') int port
-    @Value('${ncube.target.context}') String context
-    @Value('${ncube.target.username}') String username
-    @Value('${ncube.target.password}') String password
-    @Value('${ncube.target.numConnections}') int numConnections
+    @Value('${ncube.allow.mutable.methods:false}') boolean allowMutableMethods
+    @Value('${ncube.target.scheme:http}') String scheme
+    @Value('${ncube.target.host:localhost}') String host
+    @Value('${ncube.target.port:9000}') int port
+    @Value('${ncube.target.context:ncube}') String context
+    @Value('${ncube.target.username:#{null}}') String username
+    @Value('${ncube.target.password:#{null}}') String password
+    @Value('${ncube.target.numConnections:10}') int numConnections
 
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory

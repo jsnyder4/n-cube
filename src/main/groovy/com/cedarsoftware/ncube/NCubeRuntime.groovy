@@ -683,7 +683,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
     }
 
-    private String fetchRedirectedOutput()
+    private static String fetchRedirectedOutput()
     {
         OutputStream outputStream = System.out
         if (outputStream instanceof ThreadAwarePrintStream)
@@ -693,7 +693,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return ''
     }
 
-    private String fetchRedirectedErr()
+    private static String fetchRedirectedErr()
     {
         OutputStream outputStream = System.err
         if (outputStream instanceof ThreadAwarePrintStreamErr)
@@ -703,7 +703,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return ''
     }
 
-    private void redirectOutput(boolean redirect)
+    private static void redirectOutput(boolean redirect)
     {
         OutputStream outputStream = System.out
         if (outputStream instanceof ThreadAwarePrintStream)
@@ -817,7 +817,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
         for (StackTraceElement traceElement : stackTrace)
         {
-            if (element.equals(traceElement))
+            if (element == traceElement)
             {
                 return true
             }
@@ -964,7 +964,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
     }
 
-    private void addAdviceToMatchedCube(Advice advice, Pattern pattern, NCube ncube, Axis axis)
+    private static void addAdviceToMatchedCube(Advice advice, Pattern pattern, NCube ncube, Axis axis)
     {
         if (axis != null)
         {   // Controller methods
@@ -980,7 +980,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
 
         // Add support for run() method (inline GroovyExpressions)
-        String classMethod = ncube.name + '.run()'
+        String classMethod = "${ncube.name}.run()"
         if (pattern.matcher(classMethod).matches())
         {
             ncube.addAdvice(advice, 'run')
@@ -1110,7 +1110,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return gcl
     }
 
-    private boolean doesMapContainKey(Map map, String key)
+    private static boolean doesMapContainKey(Map map, String key)
     {
         if (map instanceof TrackingMap)
         {
@@ -1197,7 +1197,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     /**
      * Still used in getNCubesFromResource
      */
-    private Object[] getJsonObjectFromResource(String name) throws IOException
+    private static Object[] getJsonObjectFromResource(String name) throws IOException
     {
         JsonReader reader = null
         try
@@ -1246,7 +1246,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     //-- Validation ----------------------------------------------------------------------------------------------------
 
-    protected void validateCube(NCube cube)
+    protected static void validateCube(NCube cube)
     {
         if (cube == null)
         {
