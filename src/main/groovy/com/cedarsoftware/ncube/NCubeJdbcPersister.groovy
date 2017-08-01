@@ -587,11 +587,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             String headSha1 = row.getString('head_sha1')
             String oldSha1 = row.getString('sha1')
 
-            String updatedTestData
             if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
             {
-                updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
-                cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+                String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
                 if (updatedTestData || testData)
                 {
                     cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
@@ -624,11 +622,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                        (SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'createCube'] as Map
         boolean rowFound = false
-        String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
-        if (updatedTestData)
-        {
-            cube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
-        }
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             throw new IllegalArgumentException("Unable to create cube: ${cube.name} in app: ${appId}, cube already exists (it may need to be restored)")
@@ -637,6 +630,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
         if (!rowFound)
         {
+            String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
             insertCube(c, appId, cube, 0L, updatedTestData?.bytes, "created", true, null, username, 'createCube')
         }
     }

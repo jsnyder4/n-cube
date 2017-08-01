@@ -3010,7 +3010,9 @@ class NCube<T>
         sha1Digest.update(sep)
 
         deepSha1(sha1Digest, defaultCellValue, sep)
-        deepSha1(sha1Digest, new TreeMap<>(metaProperties), sep)
+        Map copy = new TreeMap(metaProperties)
+        copy.remove(METAPROPERTY_TEST_DATA)
+        deepSha1(sha1Digest, copy, sep)
 
         // Need deterministic ordering (sorted by Axis name will do that)
         Map<String, Axis> sortedAxes = new TreeMap<>(axisList)

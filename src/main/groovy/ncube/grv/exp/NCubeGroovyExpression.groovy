@@ -4,7 +4,10 @@ import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.Axis
 import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeAppContext
 import com.cedarsoftware.ncube.NCubeInfoDto
+import com.cedarsoftware.ncube.NCubeMutableClient
+import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -12,7 +15,7 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
 import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
 
 /**
@@ -369,6 +372,16 @@ class NCubeGroovyExpression
     {
         URL actualUrl = ncubeRuntime.getActualUrl(applicationID, url, input)
         return UrlUtilities.getContentFromUrl(actualUrl, true)
+    }
+
+    NCubeRuntimeClient getNcubeRuntime()
+    {
+        return NCubeAppContext.ncubeRuntime
+    }
+
+    NCubeMutableClient getMutableClient()
+    {
+        return NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeMutableClient
     }
 
     /**

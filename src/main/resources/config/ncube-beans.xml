@@ -18,17 +18,17 @@
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods}"/>
+            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${ncube.target.scheme}"/>
-            <constructor-arg value="${ncube.target.host}"/>
-            <constructor-arg value="${ncube.target.port}"/>
-            <constructor-arg value="${ncube.target.context}"/>
-            <constructor-arg value="${ncube.target.username}"/>
-            <constructor-arg value="${ncube.target.password}"/>
-            <constructor-arg value="${ncube.target.numConnections}"/>
+            <constructor-arg index="0" value="${ncube.target.scheme:#{'http'}}"/>
+            <constructor-arg index="1" value="${ncube.target.host:#{'localhost'}}"/>
+            <constructor-arg index="2" value="${ncube.target.port:#{9000}}"/>
+            <constructor-arg index="3" value="${ncube.target.context:#{'ncube'}}"/>
+            <constructor-arg index="4" value="${ncube.target.username:#{null}}"/>
+            <constructor-arg index="5" value="${ncube.target.password:#{null}}"/>
+            <constructor-arg index="6" value="${ncube.target.numConnections:#{6}}"/>
         </bean>
 
     </beans>
@@ -40,7 +40,7 @@
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods}"/>
+            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
@@ -70,13 +70,13 @@
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg value="${ncube.target.scheme}"/>
-            <constructor-arg value="${ncube.target.host}"/>
-            <constructor-arg value="${ncube.target.port}"/>
-            <constructor-arg value="${ncube.target.context}"/>
-            <constructor-arg value="${ncube.target.username}"/>
-            <constructor-arg value="${ncube.target.password}"/>
-            <constructor-arg value="${ncube.target.numConnections}"/>
+            <constructor-arg index="0" value="${ncube.target.scheme:#{'http'}}"/>
+            <constructor-arg index="1" value="${ncube.target.host:#{'localhost'}}"/>
+            <constructor-arg index="2" value="${ncube.target.port:#{9000}}"/>
+            <constructor-arg index="3" value="${ncube.target.context:#{'ncube'}}"/>
+            <constructor-arg index="4" value="${ncube.target.username:#{null}}"/>
+            <constructor-arg index="5" value="${ncube.target.password:#{null}}"/>
+            <constructor-arg index="6" value="${ncube.target.numConnections:#{6}}"/>
         </bean>
 
     </beans>

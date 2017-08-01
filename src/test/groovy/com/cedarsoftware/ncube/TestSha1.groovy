@@ -215,4 +215,18 @@ class TestSha1 extends NCubeBaseTest
         // assert same SHA-1 regardless of order.
         assert ncube1.sha1() != ncube2.sha1()
     }
+
+    @Test
+    void testKeysToSkip()
+    {
+        NCube ncube = new NCube('foo')
+        String sha1 = ncube.sha1()
+        ncube.setMetaProperty('foo', 'bar')
+        String sha1a = ncube.sha1()
+        ncube.setMetaProperty(NCube.METAPROPERTY_TEST_DATA, 'junk')
+        String sha1b = ncube.sha1()
+        assert sha1b == sha1a
+        ncube.removeMetaProperty('foo')
+        assert ncube.sha1() == sha1
+    }
 }

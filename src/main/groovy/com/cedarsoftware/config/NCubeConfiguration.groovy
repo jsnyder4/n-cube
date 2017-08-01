@@ -53,7 +53,7 @@ class NCubeConfiguration
     @Value('${ncube.target.context:ncube}') String context
     @Value('${ncube.target.username:#{null}}') String username
     @Value('${ncube.target.password:#{null}}') String password
-    @Value('${ncube.target.numConnections:10}') int numConnections
+    @Value('${ncube.target.numConnections:6}') int numConnections
 
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory

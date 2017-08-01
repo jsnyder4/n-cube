@@ -52,7 +52,7 @@ import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
 class JsonHttpProxy implements CallableBean
 {
 
-    @Value("#{'\${ncube.proxy.headersToRemove}'.split(','):#{'content-length'}")
+    @Value("#{\${ncube.proxy.headersToRemove:'content-length'}.split(',')}")
     private List<String> headersToRemove
 
     private final CloseableHttpClient httpClient
