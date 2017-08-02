@@ -59,6 +59,7 @@ class JsonHttpProxy implements CallableBean
     private CredentialsProvider credsProvider
     private AuthCache authCache
     private final HttpHost httpHost
+    private final HttpHost proxyHost
     private final String context
     private final String username
     private final String password
@@ -74,15 +75,20 @@ class JsonHttpProxy implements CallableBean
         this.numConnections = numConnections
         httpClient = createClient()
 
-        if (username && password)
-        {
-            credsProvider = new BasicCredentialsProvider()
-            AuthScope authScope = new AuthScope(httpHost.hostName, httpHost.port)
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password)
-            credsProvider.setCredentials(authScope, credentials)
-            authCache = new BasicAuthCache()
-            authCache.put(httpHost, new BasicScheme())
-        }
+        createAuthCache()
+    }
+
+    JsonHttpProxy(HttpHost httpHost, HttpHost proxyHost, String context, String username = null, String password = null, int numConnections = 6)
+    {
+        this.httpHost = httpHost
+        this.proxyHost = proxyHost
+        this.context = context
+        this.username = username
+        this.password = password
+        this.numConnections = numConnections
+        httpClient = createClient()
+
+        createAuthCache()
     }
 
     /**
@@ -100,6 +106,11 @@ class JsonHttpProxy implements CallableBean
         HttpClientBuilder builder = HttpClientBuilder.create()
         builder.connectionManager = cm
         builder.defaultCookieStore = new BasicCookieStore()
+
+        if(proxyHost){
+            builder.setProxy(proxyHost)
+        }
+
         CloseableHttpClient httpClient = builder.build()
         return httpClient
     }
@@ -177,6 +188,17 @@ class JsonHttpProxy implements CallableBean
                     proxyRequest.setHeader(headerName, headerValue)
                 }
             }
+        }
+    }
+
+    private void createAuthCache(){
+        if (username && password) {
+            credsProvider = new BasicCredentialsProvider()
+            AuthScope authScope = new AuthScope(httpHost.hostName, httpHost.port)
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password)
+            credsProvider.setCredentials(authScope, credentials)
+            authCache = new BasicAuthCache()
+            authCache.put(httpHost, new BasicScheme())
         }
     }
 }
