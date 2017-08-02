@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>4.0.17-SNAPSHOT</version>
+	<version>4.0.18-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -68,36 +68,33 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.3.RELEASE</version>
+        <version>1.5.6.RELEASE</version>  <!-- must be inlined, properties not allowed here -->
     </parent>
 
     <properties>
         <version.json-io>4.9.12</version.json-io>
-        <version.java-util>1.26.0</version.java-util>
+        <version.java-util>1.26.1</version.java-util>
         <version.json-command-servlet>1.5.3</version.json-command-servlet>
         <version.groovy>2.4.12</version.groovy>
         <version.guava>22.0</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
-        <version.spring>4.3.8.RELEASE</version.spring>
-        <version.springboot>1.5.3.RELEASE</version.springboot>
+        <version.spring>4.3.10.RELEASE</version.spring>
+        <version.springboot>1.5.6.RELEASE</version.springboot>
         <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
-        <version.tomcat.jdbc>8.0.41</version.tomcat.jdbc>
         <version.hsqldb>2.4.0</version.hsqldb>
-        <version.net.sf.trove4j>3.0.3</version.net.sf.trove4j>
         <version.apache.ivy>2.4.0</version.apache.ivy>
         <version.plugin.assembly>3.0.0</version.plugin.assembly>
-        <version.plugin.maven-compiler>3.6.1</version.plugin.maven-compiler>
+        <version.plugin.maven-compiler>3.6.2</version.plugin.maven-compiler>
         <version.plugin.gmavenplus>1.5</version.plugin.gmavenplus>
         <version.plugin.nexus>1.6.8</version.plugin.nexus>
         <version.plugin.source>3.0.1</version.plugin.source>
-        <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.surefire>2.20</version.plugin.surefire>
         <version.servlet.api>2.5</version.servlet.api>
         <version.servlet>3.1.0</version.servlet>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <tomcat.version>8.5.12</tomcat.version>
+        <tomcat.version>8.5.16</tomcat.version>
     </properties>
 
     <repositories>
@@ -234,23 +231,6 @@
                 </configuration>
             </plugin>
 
-            <!--<plugin>-->
-                <!--<groupId>org.springframework.boot</groupId>-->
-                <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
-                <!--<version>${version.springboot}</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<goals>-->
-                            <!--<goal>repackage</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<executable>true</executable>-->
-                            <!--<classifier>exec</classifier>-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
-
         </plugins>
     </build>
 
@@ -271,11 +251,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-
-        <!--<dependency>-->
-            <!--<groupId>org.springframework.boot</groupId>-->
-            <!--<artifactId>spring-boot-starter-security</artifactId>-->
-        <!--</dependency>-->
         
         <dependency>
             <groupId>org.springframework.boot</groupId>

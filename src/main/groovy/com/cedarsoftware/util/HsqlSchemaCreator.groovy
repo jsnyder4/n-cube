@@ -31,7 +31,7 @@ class HsqlSchemaCreator
 {
     HsqlSchemaCreator(String driverClassName, String databaseUrl, String username, String password, String schema)
     {
-        NCube.isTrue(null) // force NCube class to load for custom json reader and writer
+        NCube.DEFAULT_CELL_VALUE // force NCube class to load for custom json reader and writer
         TestingConnectionProvider provider = new TestingConnectionProvider(driverClassName, databaseUrl, username, password)
 
         URL url = getClass().getResource(schema)

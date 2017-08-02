@@ -448,51 +448,6 @@ class TestRuleEngine extends NCubeBaseTest
         ncube.getCell input, output
         RuleInfo ruleInfo = (RuleInfo) output[NCube.RULE_EXEC_INFO]
         assert 1L == ruleInfo.getNumberOfRulesExecuted()
-
-        // Groovy style false
-        assertFalse NCube.isTrue(null)
-        assertFalse NCube.isTrue(false)
-        assertFalse NCube.isTrue(Boolean.FALSE)
-        assertFalse NCube.isTrue(new Boolean(false))
-        assertFalse NCube.isTrue((byte) 0)
-        assertFalse NCube.isTrue((short) 0)
-        assertFalse NCube.isTrue((int) 0)
-        assertFalse NCube.isTrue((long) 0)
-        assertFalse NCube.isTrue(0f)
-        assertFalse NCube.isTrue(0d)
-        assertFalse NCube.isTrue(BigInteger.ZERO)
-        assertFalse NCube.isTrue(BigDecimal.ZERO)
-        assertFalse NCube.isTrue('')
-        assertFalse NCube.isTrue(new HashMap())
-        assertFalse NCube.isTrue(new HashMap().keySet().iterator())
-        assertFalse NCube.isTrue(new ArrayList())
-        assertFalse NCube.isTrue(new ArrayList().iterator())
-        assertFalse NCube.isTrue(new Vector().elements())
-
-        // Groovy style true
-        assert NCube.isTrue(new Date())
-        assert NCube.isTrue(true)
-        assert NCube.isTrue(Boolean.TRUE)
-        assert NCube.isTrue(new Boolean(true))
-        assert NCube.isTrue((byte) 1)
-        assert NCube.isTrue((short) 1)
-        assert NCube.isTrue((int) 1)
-        assert NCube.isTrue((long) 1)
-        assert NCube.isTrue(1f)
-        assert NCube.isTrue(1d)
-        assert NCube.isTrue(BigInteger.ONE)
-        assert NCube.isTrue(BigDecimal.ONE)
-        assert NCube.isTrue('Yo')
-        Map map = [foo: 'bar']
-        assert NCube.isTrue(map)
-        assert NCube.isTrue(map.keySet().iterator())
-        List list = new ArrayList()
-        list.add(new Date())
-        assert NCube.isTrue(list)
-        assert NCube.isTrue(list.iterator())
-        Vector v = new Vector()
-        v.add(9)
-        assert NCube.isTrue(v.elements())
     }
 
     @Test

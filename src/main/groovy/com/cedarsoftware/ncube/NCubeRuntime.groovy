@@ -3,15 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
-import com.cedarsoftware.util.ArrayUtilities
-import com.cedarsoftware.util.CallableBean
-import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.SystemUtilities
-import com.cedarsoftware.util.ThreadAwarePrintStream
-import com.cedarsoftware.util.ThreadAwarePrintStreamErr
-import com.cedarsoftware.util.TrackingMap
+import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -26,15 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
 
-import static com.cedarsoftware.ncube.NCubeConstants.CLASSPATH_CUBE
-import static com.cedarsoftware.ncube.NCubeConstants.CONTROLLER_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.MANAGER_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS
-import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BRANCH
-import static com.cedarsoftware.ncube.NCubeConstants.PROPERTY_CACHE
-import static com.cedarsoftware.ncube.NCubeConstants.PR_APP
-import static com.cedarsoftware.ncube.NCubeConstants.PR_CUBE
-import static com.cedarsoftware.ncube.NCubeConstants.SYS_BOOTSTRAP
+import static com.cedarsoftware.ncube.NCubeConstants.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -645,7 +629,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                     assertionOutput[(NCube.RULE_EXEC_INFO)] = ruleInfo
                     args.output = assertionOutput
                     redirectOutput(true)
-                    if (!NCube.isTrue(exp.execute(args)))
+                    if (!exp.execute(args))
                     {
                         errors.add("[assertion ${i} failed]: ${exp.cmd}".toString())
                         success = false

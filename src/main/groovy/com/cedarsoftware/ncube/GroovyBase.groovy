@@ -1,11 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.ReflectionUtils
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.TimedSynchronize
-import com.cedarsoftware.util.UrlUtilities
+import com.cedarsoftware.util.*
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
@@ -218,19 +214,7 @@ abstract class GroovyBase extends UrlCommandCell
         compilerConfiguration.targetBytecode = targetByteCodeVersion
         compilerConfiguration.debug = NCubeCodeGenDebug
         compilerConfiguration.defaultScriptExtension = '.groovy'
-
-        // TODO: Add this back when we are relying on Groovy to create the 'buns' around the script
-//        ImportCustomizer importCustomizer = new ImportCustomizer()
-//        importCustomizer.addStarImports('com.cedarsoftware.ncube',
-//                'com.cedarsoftware.ncube.exception',
-//                'com.cedarsoftware.ncube.formatters',
-//                'com.cedarsoftware.ncube.proximity',
-//                'com.cedarsoftware.ncube.util',
-//                'com.cedarsoftware.util',
-//                'com.cedarsoftware.util.io'
-//        )
-//        compilerConfiguration.addCompilationCustomizers(importCustomizer)
-
+        
         // TODO: Research when this can be safely turned on vs having to be turned off
 //        compilerConfiguration.optimizationOptions = [(CompilerConfiguration.INVOKEDYNAMIC): Boolean.TRUE]
 

@@ -1,7 +1,10 @@
 ### Revision History
-* 4.0.17-SNAPSHOT
+* 4.0.18-SNAPSHOT
+  * --
+* 4.0.17
   * Added getters for `NCubeRuntimeClient` and `NCubeMutableClient` on `NCubeGroovyExpression`
   * Bug fix: updated property defaults in Spring beans configuration
+  * NCube with METAPROPERTY_TEST_DATA now has same SHA-1 as with no test data.
 * 4.0.16    
   * Added methods to `NCubeController` that were previously added to runtime and mutable interfaces. Added test to ensure that methods added to interfaces are also added to the controller in the future.
   * Updated `NCubeManager` exception messages with more information

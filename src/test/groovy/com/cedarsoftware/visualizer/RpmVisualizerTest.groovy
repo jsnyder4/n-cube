@@ -1020,7 +1020,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
         try
         {
             //Change cube to have declared required scope
-            cube.setMetaProperty('requiredScopeKeys', ['dummyRequiredScopeKey'])
+            cube.setMetaProperty(REQUIRED_SCOPE, ['dummyRequiredScopeKey'])
 
             Map utilizedScope = [_effectiveVersion: TEST_APP_VERSION] as CaseInsensitiveMap
             Map availableScope = new CaseInsensitiveMap(utilizedScope)
@@ -1050,7 +1050,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
         try
         {
             //Change cube to have declared required scope
-            cube.setMetaProperty('requiredScopeKeys', ['dummyRequiredScopeKey'])
+            cube.setMetaProperty(REQUIRED_SCOPE, ['dummyRequiredScopeKey'])
 
             Map utilizedScope = [_effectiveVersion: TEST_APP_VERSION,
                                  risk             : 'WProductOps'] as CaseInsensitiveMap
@@ -1069,7 +1069,7 @@ class RpmVisualizerTest extends VisualizerBaseTest implements RpmVisualizerConst
         finally
         {
             //Reset cube
-            cube.removeMetaProperty('requiredScopeKeys')
+            cube.removeMetaProperty(REQUIRED_SCOPE)
         }
     }
 

@@ -72,6 +72,9 @@ interface NCubeConstants
     final String NCUBE_ACCEPTED_DOMAINS = 'acceptedDomains'
     final String NCUBE_PARAMS_BRANCH = 'branch'
 
+    final String REQUIRED_SCOPE = 'requiredScopeKeys'
+    final String OPTIONAL_SCOPE = 'optionalScopeKeys'
+
     final String PR_PROP = 'property'
     final String PR_STATUS = 'status'
     final String PR_APP = 'appId'
