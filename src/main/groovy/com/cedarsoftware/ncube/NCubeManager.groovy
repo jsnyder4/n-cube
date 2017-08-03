@@ -90,6 +90,32 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return nCubePersister
     }
 
+    void createReferenceFromAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
+    {
+        NCube cube = getCube(appId, cubeName)
+        Axis axis = cube.getAxis(axisName)
+
+        NCube refCube = getCube(refAppId, refCubeName)
+        if (refCube)
+        { // already exists
+            cube.createExistingAxisReference(axisName, refAppId, refCubeName, refAxisName)
+        }
+        else
+        { // create new
+            //copy axis for ref cube
+            Axis refAxis = new Axis(refAxisName, axis.type, axis.valueType, axis.hasDefaultColumn(), axis.columnOrder, axis.id, axis.fireAll)
+            refAxis.updateColumns(axis.columnsWithoutDefault, true)
+
+            refCube = new NCube(refCubeName)
+            refCube.applicationID = refAppId
+            refCube.addAxis(refAxis)
+            createCube(refCube)
+
+            cube.createNewAxisReference(axisName, refAppId, refCubeName, refAxisName)
+        }
+        updateCube(cube)
+    }
+
     NCube getCube(ApplicationID appId, String cubeName)
     {
         return loadCube(appId, cubeName)

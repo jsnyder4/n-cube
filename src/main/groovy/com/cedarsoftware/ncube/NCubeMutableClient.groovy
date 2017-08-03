@@ -129,4 +129,6 @@ interface NCubeMutableClient extends NCubeClient
     Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch)
 
     Boolean isCubeUpToDate(ApplicationID appId, String cubeName)
+
+    void createReferenceFromAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
 }

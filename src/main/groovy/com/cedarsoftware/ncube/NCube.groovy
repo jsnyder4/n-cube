@@ -2174,6 +2174,61 @@ class NCube<T>
         clearSha1()
     }
 
+    void createNewAxisReference(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
+    {
+        Axis axis = getAxis(axisName)
+        axis.createReference(refAppId, refCubeName, refAxisName)
+        clearSha1()
+    }
+
+    void createExistingAxisReference(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
+    {
+        // copy list of columns before axis changes
+        Axis axis = getAxis(axisName)
+        List<Column> oldColumns = axis.columns
+
+        // make copy of the cell map to reference after the axis changes
+        Map<Set<Long>, T> cellMapCopy = new CellMap(cellMap)
+
+        Map args = [:]
+        args[ReferenceAxisLoader.REF_TENANT] = refAppId.tenant
+        args[ReferenceAxisLoader.REF_APP] = refAppId.app
+        args[ReferenceAxisLoader.REF_VERSION] = refAppId.version
+        args[ReferenceAxisLoader.REF_STATUS] = refAppId.status
+        args[ReferenceAxisLoader.REF_BRANCH] = refAppId.branch
+        args[ReferenceAxisLoader.REF_CUBE_NAME] = refCubeName  // cube name of the holder of the referring (pointing) axis
+        args[ReferenceAxisLoader.REF_AXIS_NAME] = refAxisName    // axis name of the referring axis (the variable that you had missing earlier)
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(name, axisName, args)
+        Axis newAxis = new Axis(axisName, axis.id, axis.hasDefaultColumn(), refAxisLoader)
+        deleteAxis(axisName)
+        addAxis(newAxis)
+
+        List<Column> newColumns = newAxis.columns
+        Map<Long, Long> columnMap = [:]
+        for (Column oldCol : oldColumns)
+        { // 1:1 map of old column ids to new column ids
+            columnMap[oldCol.id] = newColumns.find { Column newCol ->
+                newCol.valueThatMatches == oldCol.valueThatMatches
+            }.id
+        }
+
+        // change cell ids and put back into cube
+        for (Map.Entry<Set<Long>, T> cellMapEntry : cellMapCopy)
+        {
+            Set<Long> coord = cellMapEntry.key
+            // change coord to have existing ref ax value
+            for (long oldCoordPart : coord)
+            {
+                Long newCoordPart = columnMap[oldCoordPart]
+                if (newCoordPart) {
+                    coord.remove(oldCoordPart)
+                    coord.add(newCoordPart)
+                }
+            }
+            cells[coord] = (T)internValue(cellMapEntry.value)
+        }
+    }
+
     /**
      * Remove transform from a reference axis.
      * @param axisName String name of reference axis.

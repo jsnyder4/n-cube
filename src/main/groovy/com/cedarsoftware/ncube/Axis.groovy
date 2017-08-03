@@ -347,6 +347,21 @@ class Axis
         removeTransform()
     }
 
+    void createReference(ApplicationID refAppId, String refCubeName, refAxisName)
+    {
+        isRef = true
+        Map args = [
+                (REF_TENANT): refAppId.tenant,
+                (REF_APP): refAppId.app,
+                (REF_VERSION): refAppId.version,
+                (REF_STATUS): refAppId.status,
+                (REF_BRANCH): refAppId.branch,
+                (REF_CUBE_NAME): refCubeName,
+                (REF_AXIS_NAME): refAxisName
+        ] as Map<String, Object>
+        addMetaProperties(args)
+    }
+
     /**
      * Remove transform from reference axis.
      */
