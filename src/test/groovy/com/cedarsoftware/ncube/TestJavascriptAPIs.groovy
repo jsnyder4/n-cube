@@ -88,7 +88,9 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         Set<String> allowedMutableMethods = [
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set)',
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set, boolean)',
-                'mergeDeltas(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.List)'
+                'mergeDeltas(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.List)',
+                'assertPermissions(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class com.cedarsoftware.ncube.Action)',
+                'checkPermissions(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class com.cedarsoftware.ncube.Action)'
         ] as Set
 
         Set<String> runtimeMethods = getMethods(NCubeRuntimeClient.class.methods)
@@ -410,7 +412,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         {
             createCubeFromResource(BRANCH1, 'sys.classpath.tests.json')
             createCubeFromResource(BRANCH1, 'selectQueryTest.json')
-            Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'key', 'query', 'input.foo == \'AL\'', [:], [:], [] as Set, [] as Set]) as Map
+            Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'key', 'query', "{ Map input -> input.foo == 'AL' }", [:], [:], [] as Set, [] as Set]) as Map
 
             assert queryResult.size() == 1
 

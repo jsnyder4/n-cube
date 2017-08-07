@@ -14,7 +14,6 @@ import org.apache.http.client.CredentialsProvider
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.conn.routing.HttpRoute
-import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.*
@@ -25,9 +24,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.PropertySource
 
+import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
+import static org.apache.http.HttpHeaders.ACCEPT
+import static org.apache.http.HttpHeaders.USER_AGENT
+import static org.apache.http.entity.ContentType.APPLICATION_JSON
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com), Josh Snyder (joshsnyder@gmail.com)
@@ -52,8 +55,8 @@ import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
 class JsonHttpProxy implements CallableBean
 {
 
-    @Value("#{\${ncube.proxy.headersToRemove:'content-length'}.split(',')}")
-    private List<String> headersToRemove
+    @Value("#{\${ncube.proxy.cookiesToInclude:'JSESSIONID'}.split(',')}")
+    private List<String> cookiesToInclude
 
     private final CloseableHttpClient httpClient
     private CredentialsProvider credsProvider
@@ -69,12 +72,12 @@ class JsonHttpProxy implements CallableBean
     JsonHttpProxy(String scheme, String hostname, int port, String context, String username = null, String password = null, int numConnections = 6)
     {
         httpHost = new HttpHost(hostname, port, scheme)
+        proxyHost = null
         this.context = context
         this.username = username
         this.password = password
         this.numConnections = numConnections
         httpClient = createClient()
-
         createAuthCache()
     }
 
@@ -87,7 +90,6 @@ class JsonHttpProxy implements CallableBean
         this.password = password
         this.numConnections = numConnections
         httpClient = createClient()
-
         createAuthCache()
     }
 
@@ -105,10 +107,11 @@ class JsonHttpProxy implements CallableBean
 
         HttpClientBuilder builder = HttpClientBuilder.create()
         builder.connectionManager = cm
-        builder.defaultCookieStore = new BasicCookieStore()
+        builder.disableCookieManagement()
 
-        if(proxyHost){
-            builder.setProxy(proxyHost)
+        if(proxyHost)
+        {
+            builder.proxy = proxyHost
         }
 
         CloseableHttpClient httpClient = builder.build()
@@ -134,10 +137,12 @@ class JsonHttpProxy implements CallableBean
         }
         else
         {
-            addHeaders(request)
+            assignCookieHeader(request)
         }
+        request.setHeader(USER_AGENT, 'ncube')
+        request.setHeader(ACCEPT, APPLICATION_JSON.mimeType)
+        request.entity = new StringEntity(jsonArgs, APPLICATION_JSON)
 
-        request.entity = new StringEntity(jsonArgs, ContentType.APPLICATION_JSON)
         HttpResponse response = httpClient.execute(request, clientContext)
         String json = EntityUtils.toString(response.entity)
         EntityUtils.consume(response.entity)
@@ -148,51 +153,73 @@ class JsonHttpProxy implements CallableBean
             LOG.debug("    ${Math.round((stop - start) / 1000000.0d)}ms - ${json}")
         }
 
-        Map envelope = JsonReader.jsonToJava(json) as Map
-        if (envelope.exception != null)
+        boolean parsedJsonOk = false
+        try
         {
-            throw envelope.exception
+            Map envelope = JsonReader.jsonToJava(json) as Map
+            parsedJsonOk = true
+            if (envelope.exception != null)
+            {
+                throw envelope.exception
+            }
+            if (envelope.status == false)
+            {
+                String msg
+                if (envelope.data instanceof String)
+                {
+                    msg = envelope.data
+                }
+                else if (envelope.data != null)
+                {
+                    msg = envelope.data.toString()
+                }
+                else
+                {
+                    msg = 'no extra info provided.'
+                }
+                throw new RuntimeException("REST call [${bean}.${methodName}] indicated failure on server: ${msg}")
+            }
+            return envelope.data
         }
-        if (envelope.status == false)
+        catch (Exception e)
         {
-            String msg
-            if (envelope.data instanceof String)
+            if (!parsedJsonOk)
             {
-                msg = envelope.data
+                LOG.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}, response: ${json}")
             }
-            else if (envelope.data != null)
-            {
-                msg = envelope.data.toString()
-            }
-            else
-            {
-                msg = 'no extra info provided.'
-            }
-            throw new RuntimeException("REST call [${bean}.${methodName}] indicated failure on server: ${msg}")
+            throw e
         }
-        return envelope.data
     }
 
-    private void addHeaders(HttpPost proxyRequest)
+    private void assignCookieHeader(HttpPost proxyRequest)
     {
         HttpServletRequest servletRequest = JsonCommandServlet.servletRequest.get()
         if (servletRequest instanceof HttpServletRequest)
         {
-            Enumeration<String> e = servletRequest.headerNames
-            while (e.hasMoreElements())
+            Cookie[] cookies = servletRequest.cookies
+            if (cookies == null)
             {
-                String headerName = e.nextElement()
-                if (!headersToRemove.contains(headerName.toLowerCase()))
+                return
+            }
+            StringJoiner joiner = new StringJoiner("; ")
+            for (Cookie cookie: cookies)
+            {
+                if (cookiesToInclude.contains(cookie.name))
                 {
-                    String headerValue = servletRequest.getHeader(headerName)
-                    proxyRequest.setHeader(headerName, headerValue)
+                    joiner.add("${cookie.name}=${cookie.value}")
                 }
+            }
+            if (joiner.length())
+            {
+                proxyRequest.setHeader('Cookie', joiner.toString())
             }
         }
     }
 
-    private void createAuthCache(){
-        if (username && password) {
+    private void createAuthCache()
+    {
+        if (username && password)
+        {
             credsProvider = new BasicCredentialsProvider()
             AuthScope authScope = new AuthScope(httpHost.hostName, httpHost.port)
             UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password)

@@ -95,6 +95,7 @@ interface NCubeConstants
     final String RUNTIME_BEAN = 'ncubeRuntime'
     final String MANAGER_BEAN = 'ncubeManager'
     final String CONTROLLER_BEAN = 'ncubeController'
+    final String NCUBE_CLIENT_BEAN = 'ncube-client'
 
     final int LOG_ARG_LENGTH = 125
 }

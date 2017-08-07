@@ -1301,6 +1301,20 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
         }
     }
 
+    private static String removePreviousNotesCopyMessage(byte[] notes)
+    {
+        if (notes)
+        {
+            String oldNotes = new String(notes, 'UTF-8')
+            int copyMsgIdx = oldNotes.lastIndexOf('copied from')
+            return copyMsgIdx > -1 ? oldNotes.substring(oldNotes.indexOf(' - ', copyMsgIdx) + 3) : oldNotes
+        }
+        else
+        {
+            return new String("".bytes, 'UTF-8')
+        }
+    }
+
     static int copyBranch(Connection c, ApplicationID srcAppId, ApplicationID targetAppId)
     {
         if (doCubesExist(c, targetAppId, true, 'copyBranch'))
@@ -1324,7 +1338,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             runSelectCubesStatement(c, srcAppId, null, options, { ResultSet row ->
                 byte[] notes = row.getBytes(NOTES_BIN)
-                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
+                String oldNotes = removePreviousNotesCopyMessage(notes)
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
@@ -1398,7 +1412,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             sql.eachRow(map, select, { ResultSet row ->
                 byte[] notes = row.getBytes(NOTES_BIN)
-                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
+                String oldNotes = removePreviousNotesCopyMessage(notes)
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
@@ -1456,7 +1470,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
             runSelectAllCubesInBranch(c, srcAppId, options, { ResultSet row ->
                 String sha1 = row.getString('sha1')
                 byte[] notes = row.getBytes(NOTES_BIN)
-                String oldNotes = new String(notes ?: "".bytes, 'UTF-8')
+                String oldNotes = removePreviousNotesCopyMessage(notes)
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))

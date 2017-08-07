@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContextAware
 
 import static com.cedarsoftware.ncube.NCubeConstants.MANAGER_BEAN
 import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
+import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_CLIENT_BEAN
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -63,7 +64,7 @@ class NCubeAppContext implements ApplicationContextAware
 
     static boolean isClientTest()
     {
-        return ctx.environment.activeProfiles.contains('client')
+        return ctx.environment.activeProfiles.contains(NCUBE_CLIENT_BEAN)
     }
 
     void setApplicationContext(ApplicationContext applicationContext)

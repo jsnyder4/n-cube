@@ -189,7 +189,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Boolean checkPermissions(ApplicationID appId, String resource, String action)
+    Boolean checkPermissions(ApplicationID appId, String resource, Action action)
     {
         Boolean result = bean.call(beanName, 'checkPermissions', [appId, resource, action]) as Boolean
         return result
@@ -548,10 +548,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
     }
 
-    void createReferenceFromAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
+    void createRefAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
     {
-        verifyAllowMutable('createReferenceFromAxis')
-        bean.call(beanName, 'createReferenceFromAxis', [appId, cubeName, axisName, refAppId, refCubeName, refAxisName])
+        verifyAllowMutable('createRefAxis')
+        bean.call(beanName, 'createRefAxis', [appId, cubeName, axisName, refAppId, refCubeName, refAxisName])
         clearCache(appId)
     }
 

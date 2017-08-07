@@ -46,7 +46,7 @@ class NCubeControllerAdvice
     def advise(ProceedingJoinPoint pjp)
     {
         // Place user on ThreadLocal
-        controller.userForDatabase
+        String username = controller.userForDatabase
 
         long start = System.nanoTime()
         // Execute method
@@ -59,7 +59,7 @@ class NCubeControllerAdvice
 
         if (time > 1000)
         {
-            LOG.info("[SLOW - ${time} ms] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            LOG.info("[SLOW - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         else if (LOG.debugEnabled)
         {

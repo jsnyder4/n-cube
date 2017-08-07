@@ -8,8 +8,8 @@ class MapReduceController extends NCubeGroovyExpression
     {
         if(input.cubeName)
         {
-            return mapReduce('key', 'query', "input.foo == 'OH'".toString(), ['foo'] as Set, null, input.cubeName as String)
+            return mapReduce('key', 'query', { Map input -> input.foo == 'OH'}, ['foo'] as Set, null, input.cubeName as String)
         }
-        return mapReduce('key', 'query', "input.foo == 'KY'".toString(), ['foo'] as Set)
+        return mapReduce('key', 'query', { Map input -> input.foo == 'KY' }, ['foo'] as Set)
     }
 }

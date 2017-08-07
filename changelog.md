@@ -1,6 +1,14 @@
 ### Revision History
-* 4.0.18-SNAPSHOT
-  * Enhancement: Can add a reference to an existing axis so as to not lose cell data.
+* 4.0.19
+  * Consumed json-command-servlet 1.5.4
+  * Enhancement: Handle non-json responses from REST calls via `JsonHttpProxy`
+  * Bug fix: Standardize argument types for permissions checking methods
+  * Bug fix: Update `NCube.mapReduce()` to copy input to the execution of the result row fetch 
+  * Bug fix: copy branch only records the most recent appId copied from
+  * `NCube.mapReduce()` updated to take a `Closure` instead of String for `where` clause.  `Closure` is passed a `Map` of the input and evaluates for each record.
+* 4.0.18
+  * Enhancement: Create a reference axis from an existing axis
+  * Enhancement: mapReduce() - the 'where' parameter (condition test) can be a Closure or a String.
 * 4.0.17
   * Added getters for `NCubeRuntimeClient` and `NCubeMutableClient` on `NCubeGroovyExpression`
   * Bug fix: updated property defaults in Spring beans configuration

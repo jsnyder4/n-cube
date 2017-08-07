@@ -42,7 +42,7 @@ interface NCubeMutableClient extends NCubeClient
 
     Map checkMultiplePermissions(ApplicationID appId, String resource, Object[] actions)
 
-    Boolean checkPermissions(ApplicationID appId, String resource, String action)
+    Boolean checkPermissions(ApplicationID appId, String resource, Action action)
 
     Boolean isAppAdmin(ApplicationID appId)
 
@@ -130,5 +130,5 @@ interface NCubeMutableClient extends NCubeClient
 
     Boolean isCubeUpToDate(ApplicationID appId, String cubeName)
 
-    void createReferenceFromAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
+    void createRefAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
 }

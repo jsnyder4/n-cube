@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue
 @TestPropertySource(properties = ['ncube.allow.mutable.methods=true','logging.level.root=INFO'])
 @ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@ActiveProfiles(profiles = ['client'])  // requires server running
+//@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
 @ActiveProfiles(profiles = ['combined-server','test-database'])
 @Ignore
 class NCubeBaseTest implements NCubeConstants

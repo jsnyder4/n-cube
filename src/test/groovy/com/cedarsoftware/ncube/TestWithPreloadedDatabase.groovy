@@ -10,21 +10,8 @@ import org.junit.Before
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_TENANT
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNotSame
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertSame
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static org.junit.Assert.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -6611,96 +6598,7 @@ return ints''', null, false)
         assert axis.size() == 4
         assert axis.findColumn('D') instanceof Column
     }
-
-    @Test
-    void createReferenceFromAxisNew()
-    {
-        String refCubeName = 'refTest'
-        String refAxisName = 'refAx'
-        NCube cube = new NCube('test')
-        Axis axis = new Axis('axis', AxisType.DISCRETE, AxisValueType.STRING, false)
-        axis.addColumn('A')
-        axis.addColumn('B')
-        axis.addColumn('C')
-        cube.addAxis(axis)
-        cube.setCell('Aval', [axis:'A'])
-        cube.setCell('Bval', [axis:'B'])
-        cube.setCell('Cval', [axis:'C'])
-        cube.applicationID = appId
-        mutableClient.createCube(cube)
-        mutableClient.createReferenceFromAxis(appId, cube.name, axis.name, appId, refCubeName, refAxisName)
-
-        cube = mutableClient.loadCube(appId, cube.name)
-        NCube refCube = mutableClient.loadCube(appId, refCubeName)
-
-        assert refCube
-        assert 1 == refCube.axes.size()
-        Axis refAxis = refCube.getAxis(refAxisName)
-        assert refAxis
-        List<Column> refCols = refAxis.columns
-        assert 3 == refCols.size()
-        assert 'A' == refCols.get(0).value
-        assert 'B' == refCols.get(1).value
-        assert 'C' == refCols.get(2).value
-
-        assert 1 == cube.axes.size()
-        axis = cube.getAxis(axis.name)
-        assert axis
-        Map metaProps = axis.metaProperties
-        assert axis.reference
-        assert appId.app == metaProps[REF_APP]
-        assert appId.version == metaProps[REF_VERSION]
-        assert appId.status == metaProps[REF_STATUS]
-        assert appId.branch == metaProps[REF_BRANCH]
-        assert refCubeName == metaProps[REF_CUBE_NAME]
-        assert refAxisName == metaProps[REF_AXIS_NAME]
-        assert 'Aval' == cube.getCell((axis.name):'A')
-        assert 'Bval' == cube.getCell((axis.name):'B')
-        assert 'Cval' == cube.getCell((axis.name):'C')
-    }
-
-    @Test
-    void createReferenceFromAxisExisting()
-    {
-        NCube refCube = new NCube('refTest')
-        Axis refAxis = new Axis('axis', AxisType.DISCRETE, AxisValueType.STRING, false)
-        refAxis.addColumn('A')
-        refAxis.addColumn('B')
-        refAxis.addColumn('C')
-        refCube.addAxis(refAxis)
-        refCube.applicationID = appId
-        mutableClient.createCube(refCube)
-
-        NCube cube = new NCube('test')
-        Axis axis = new Axis('axis', AxisType.DISCRETE, AxisValueType.STRING, false)
-        axis.addColumn('A')
-        axis.addColumn('B')
-        axis.addColumn('C')
-        cube.addAxis(axis)
-        cube.setCell('Aval', [axis:'A'])
-        cube.setCell('Bval', [axis:'B'])
-        cube.setCell('Cval', [axis:'C'])
-        cube.applicationID = appId
-        mutableClient.createCube(cube)
-        mutableClient.createReferenceFromAxis(appId, cube.name, axis.name, appId, refCube.name, refAxis.name)
-
-        cube = mutableClient.loadCube(appId, cube.name)
-        assert 1 == cube.axes.size()
-        axis = cube.getAxis(axis.name)
-        assert axis
-        Map metaProps = axis.metaProperties
-        assert axis.reference
-        assert appId.app == metaProps[REF_APP]
-        assert appId.version == metaProps[REF_VERSION]
-        assert appId.status == metaProps[REF_STATUS]
-        assert appId.branch == metaProps[REF_BRANCH]
-        assert refCube.name == metaProps[REF_CUBE_NAME]
-        assert refAxis.name == metaProps[REF_AXIS_NAME]
-        assert 'Aval' == cube.getCell((axis.name):'A')
-        assert 'Bval' == cube.getCell((axis.name):'B')
-        assert 'Cval' == cube.getCell((axis.name):'C')
-    }
-
+    
     /**
      * Get List<NCubeInfoDto> for the given ApplicationID, filtered by the pattern.  If using
      * JDBC, it will be used with a LIKE clause.  For Mongo...TBD.

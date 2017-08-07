@@ -347,7 +347,7 @@ class Axis
         removeTransform()
     }
 
-    void createReference(ApplicationID refAppId, String refCubeName, refAxisName)
+    void makeReference(ApplicationID refAppId, String refCubeName, refAxisName)
     {
         isRef = true
         Map args = [
@@ -360,6 +360,7 @@ class Axis
                 (REF_AXIS_NAME): refAxisName
         ] as Map<String, Object>
         addMetaProperties(args)
+        reloadReferenceAxis(refCubeName, args)
     }
 
     /**

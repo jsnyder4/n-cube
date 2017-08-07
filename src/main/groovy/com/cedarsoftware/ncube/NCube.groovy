@@ -1121,11 +1121,11 @@ class NCube<T>
      * Filter rows of an n-cube.  Use this API to fetch a subset of an n-cube, similar to SQL SELECT.
      * @param rowAxisName String name of axis acting as the ROW axis.
      * @param colAxisName String name of axis acting as the COLUMN axis.
-     * @param where String groovy statement block (or expression) written as condition in terms of the columns on the
-     * colAxisName. Example: "(input.state == 'TX' || input.state == 'OH') && (input.attribute == 'fuzzy')".  This will
-     * only return rows where this condition is met ('state' and 'attribute' are two column values from the colAxisName).
-     * The values for each row in the rowAxis is bound to the where expression for each row.  If the row passes the
-     * 'where' condition, it is included in the output.
+     * @param where Closure groovy closure.  Written as condition in terms of the columns on the colAxisName.
+     * Example: { Map input -> (input.state == 'TX' || input.state == 'OH') && (input.attribute == 'fuzzy')}.
+     * This will only return rows where this condition is true ('state' and 'attribute' are two column values from
+     * the colAxisName). The values for each row in the rowAxis is bound to the where expression for each row.  If
+     * the row passes the 'where' condition, it is included in the output.
      * @param output Map the output Map use to write multiple return values to, just like getCell() or at().
      * @param input Map the input Map just like it is used for getCell() or at().  Only needed when there are three (3)
      * or more dimensions.  All values in the input map (excluding the axis specified by rowAxisName and colAxisName) are
@@ -1149,7 +1149,7 @@ class NCube<T>
      * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
      * for each cell in the same column, for when the 'where' condition holds true (groovy true).
      */
-    Map mapReduce(String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = null, Set columnsToReturn = null)
+    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Map input = [:], Map output = [:], Set columnsToSearch = null, Set columnsToReturn = null)
     {
         throwIf(!rowAxisName, new IllegalArgumentException('The row axis name cannot be null'))
         throwIf(!colAxisName, new IllegalArgumentException('The column axis name cannot be null'))
@@ -1164,14 +1164,10 @@ class NCube<T>
 
         final Collection<Column> selectList = selectColumns(colAxis, columnsToReturn)
         final Collection<Column> whereColumns = selectColumns(colAxis, columnsToSearch)
-        final GroovyExpression exp = new GroovyExpression(where)
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
         final Map commandInput = new CaseInsensitiveMap(input ?: [:])
         final Map matchingRows = new CaseInsensitiveMap()
-        final Map ctx = [:]
         final Map whereVars = new CaseInsensitiveMap()
-        ctx.output = output
-        ctx.ncube = this
         Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
 
         for (row in rowAxis.columns)
@@ -1191,8 +1187,8 @@ class NCube<T>
                 ids.remove(whereId)
             }
 
-            ctx['input'] = whereVars
-            def whereResult = executeExpression(ctx, exp)
+            whereVars.putAll(input ?: [:])
+            def whereResult = where.call(whereVars)
             if (whereResult)
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
@@ -2174,17 +2170,25 @@ class NCube<T>
         clearSha1()
     }
 
-    void createNewAxisReference(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
+    protected void convertAxisToRefAxis(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
     {
         Axis axis = getAxis(axisName)
-        axis.createReference(refAppId, refCubeName, refAxisName)
+        if (axis.reference)
+        {
+            return
+        }
+        axis.makeReference(refAppId, refCubeName, refAxisName)
         clearSha1()
     }
 
-    void createExistingAxisReference(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
+    protected void convertExistingAxisToRefAxis(final String axisName, final ApplicationID refAppId, final String refCubeName, final String refAxisName)
     {
         // copy list of columns before axis changes
         Axis axis = getAxis(axisName)
+        if (axis.reference)
+        {
+            return
+        }
         List<Column> oldColumns = axis.columns
 
         // make copy of the cell map to reference after the axis changes
@@ -2200,33 +2204,61 @@ class NCube<T>
         args[ReferenceAxisLoader.REF_AXIS_NAME] = refAxisName    // axis name of the referring axis (the variable that you had missing earlier)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(name, axisName, args)
         Axis newAxis = new Axis(axisName, axis.id, axis.hasDefaultColumn(), refAxisLoader)
+
+        Map<Long, Long> oldToNewId = [:]
+        for (Column oldCol : oldColumns)
+        {   // Locate columns in O(1) to O(log n)
+            if (newAxis.type == AxisType.RULE)
+            {   // Rule columns are located by ID or rule name ('name' meta-property)
+                oldToNewId[oldCol.id] = newAxis.findColumn(oldCol.columnName).id
+            }
+            else
+            {   // Use value that exists on OLD column to locate NEW column
+                oldToNewId[oldCol.id] = newAxis.findColumn(oldCol.valueThatMatches).id
+            }
+        }
+
         deleteAxis(axisName)
         addAxis(newAxis)
 
-        List<Column> newColumns = newAxis.columns
-        Map<Long, Long> columnMap = [:]
-        for (Column oldCol : oldColumns)
-        { // 1:1 map of old column ids to new column ids
-            columnMap[oldCol.id] = newColumns.find { Column newCol ->
-                newCol.valueThatMatches == oldCol.valueThatMatches
-            }.id
-        }
-
+        cells.clear()
         // change cell ids and put back into cube
-        for (Map.Entry<Set<Long>, T> cellMapEntry : cellMapCopy)
+        for (Map.Entry<Set<Long>, T> entry : cellMapCopy)
         {
-            Set<Long> coord = cellMapEntry.key
+            Set<Long> coord = entry.key
             // change coord to have existing ref ax value
             for (long oldCoordPart : coord)
             {
-                Long newCoordPart = columnMap[oldCoordPart]
-                if (newCoordPart) {
+                Long newCoordPart = oldToNewId[oldCoordPart]
+                if (newCoordPart)
+                {
                     coord.remove(oldCoordPart)
                     coord.add(newCoordPart)
                 }
             }
-            cells[coord] = (T)internValue(cellMapEntry.value)
+            
+            cells[coord] = (T) internValue(entry.value)
         }
+
+        // Eliminate orphans, where source axis (A, B, C, D, E) pointed to existing ref axis (A, C, E).
+        // Cells in columns B & D must be dropped!
+        Iterator<Set<Long>> i = cells.keySet().iterator()
+        while (i.hasNext())
+        {
+            Set<Long> ids = i.next()
+            Iterator<Long> j = ids.iterator()
+
+            while (j.hasNext())
+            {
+                long id = j.next()
+                if (getAxisFromColumnId(id) == null)
+                {
+                    i.remove()
+                }
+            }
+        }
+
+        // clearSha1() // called by other APIs [deleteAxis(), addAxis()]
     }
 
     /**
