@@ -1422,11 +1422,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         branchPermCube.applicationID = permAppId
         branchPermCube.defaultCellValue = false
 
-        Axis resourceAxis = new Axis(AXIS_RESOURCE, AxisType.DISCRETE, AxisValueType.STRING, true)
+        Axis resourceAxis = new Axis(AXIS_RESOURCE, AxisType.DISCRETE, AxisValueType.CISTRING, true)
         resourceAxis.addColumn(SYS_BRANCH_PERMISSIONS)
         branchPermCube.addAxis(resourceAxis)
 
-        Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.STRING, true)
+        Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.CISTRING, true)
         userAxis.addColumn(userId)
         branchPermCube.addAxis(userAxis)
 
@@ -1455,7 +1455,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         NCube sysLockCube = new NCube(SYS_LOCK)
         sysLockCube.applicationID = appId
         sysLockCube.setMetaProperty(PROPERTY_CACHE, false)
-        sysLockCube.addAxis(new Axis(AXIS_SYSTEM, AxisType.DISCRETE, AxisValueType.STRING, true))
+        sysLockCube.addAxis(new Axis(AXIS_SYSTEM, AxisType.DISCRETE, AxisValueType.CISTRING, true))
         persister.createCube(sysLockCube, getUserId())
     }
 
@@ -1526,11 +1526,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         userGroupsCube.applicationID = appId
         userGroupsCube.defaultCellValue = false
 
-        Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.STRING, true)
+        Axis userAxis = new Axis(AXIS_USER, AxisType.DISCRETE, AxisValueType.CISTRING, true)
         userAxis.addColumn(userId)
         userGroupsCube.addAxis(userAxis)
 
-        Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.STRING, false)
+        Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.CISTRING, false)
         roleAxis.addColumn(ROLE_ADMIN)
         roleAxis.addColumn(ROLE_READONLY)
         roleAxis.addColumn(ROLE_USER)
@@ -1556,7 +1556,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         appPermCube.applicationID = appId
         appPermCube.defaultCellValue = false
 
-        Axis resourceAxis = new Axis(AXIS_RESOURCE, AxisType.DISCRETE, AxisValueType.STRING, true)
+        Axis resourceAxis = new Axis(AXIS_RESOURCE, AxisType.DISCRETE, AxisValueType.CISTRING, true)
         resourceAxis.addColumn(SYS_PERMISSIONS)
         resourceAxis.addColumn(SYS_USERGROUPS)
         resourceAxis.addColumn(SYS_BRANCH_PERMISSIONS)
@@ -1567,43 +1567,43 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
         appPermCube.addAxis(resourceAxis)
 
-        Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.STRING, false)
+        Axis roleAxis = new Axis(AXIS_ROLE, AxisType.DISCRETE, AxisValueType.CISTRING, false)
         roleAxis.addColumn(ROLE_ADMIN)
         roleAxis.addColumn(ROLE_READONLY)
         roleAxis.addColumn(ROLE_USER)
         appPermCube.addAxis(roleAxis)
 
-        Axis actionAxis = new Axis(AXIS_ACTION, AxisType.DISCRETE, AxisValueType.STRING, false)
-        actionAxis.addColumn(Action.UPDATE.lower(), null, null, [(Column.DEFAULT_VALUE):true as Object])
-        actionAxis.addColumn(Action.READ.lower(), null, null, [(Column.DEFAULT_VALUE):true as Object])
-        actionAxis.addColumn(Action.RELEASE.lower())
-        actionAxis.addColumn(Action.COMMIT.lower())
+        Axis actionAxis = new Axis(AXIS_ACTION, AxisType.DISCRETE, AxisValueType.CISTRING, false)
+        actionAxis.addColumn(Action.UPDATE, null, null, [(Column.DEFAULT_VALUE):true as Object])
+        actionAxis.addColumn(Action.READ, null, null, [(Column.DEFAULT_VALUE):true as Object])
+        actionAxis.addColumn(Action.RELEASE)
+        actionAxis.addColumn(Action.COMMIT)
         appPermCube.addAxis(actionAxis)
 
-        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
 
-        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_PERMISSIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT])
 
-        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_USERGROUPS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT])
 
-        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_LOCK, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT])
 
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
-        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.COMMIT.lower()])
-        appPermCube.setCell(false, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT])
+        appPermCube.setCell(true, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.COMMIT])
+        appPermCube.setCell(false, [(AXIS_RESOURCE):null, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
 
         if (isSysApp)
         {
-            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE.lower()])
-            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT.lower()])
-            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.UPDATE.lower()])
-            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ.lower()])
-            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE.lower()])
-            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.READ.lower()])
+            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.RELEASE])
+            appPermCube.setCell(true, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_ADMIN, (AXIS_ACTION):Action.COMMIT])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.UPDATE])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_USER, (AXIS_ACTION):Action.READ])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.UPDATE])
+            appPermCube.setCell(false, [(AXIS_RESOURCE):SYS_TRANSACTIONS, (AXIS_ROLE):ROLE_READONLY, (AXIS_ACTION):Action.READ])
         }
 
         persister.createCube(appPermCube, getUserId())
@@ -2162,7 +2162,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
         NCube prCube = new NCube("tx.${sha1}")
         prCube.applicationID = sysAppId
-        prCube.addAxis(new Axis(PR_PROP, AxisType.DISCRETE, AxisValueType.STRING, false, Axis.DISPLAY, 1))
+        prCube.addAxis(new Axis(PR_PROP, AxisType.DISCRETE, AxisValueType.CISTRING, false, Axis.DISPLAY, 1))
         prCube.addColumn(PR_PROP, PR_STATUS)
         prCube.addColumn(PR_PROP, PR_APP)
         prCube.addColumn(PR_PROP, PR_CUBES)

@@ -1194,8 +1194,7 @@ class Axis
         {
             return null
         }
-
-        if (type == AxisType.DISCRETE)
+        else if (type == AxisType.DISCRETE)
         {
             return promoteValue(valueType, value)
         }
