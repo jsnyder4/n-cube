@@ -74,7 +74,7 @@
     <properties>
         <version.json-io>4.9.12</version.json-io>
         <version.java-util>1.27.0</version.java-util>
-        <version.json-command-servlet>1.5.4</version.json-command-servlet>
+        <version.json-command-servlet>1.5.5</version.json-command-servlet>
         <version.groovy>2.4.12</version.groovy>
         <version.guava>22.0</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
