@@ -2167,6 +2167,122 @@ class TestNCube extends NCubeBaseTest
     }
 
     @Test
+    void testStackEntryCoordinateValueAbbreviated()
+    {
+        String failMessage = "should throw exception"
+        String cmdString = "throw new Exception('cell error')"
+
+        String size0 = ''
+        String size1 = 'b'
+        String size999 = 'b'.multiply(999)
+        String size1000 = 'b'.multiply(1000)
+        String size1001 = 'b'.multiply(1001)
+
+        NCube<CommandCell> cube = new NCube<CommandCell>("StackEntryTest")
+        Axis axis1 = new Axis("axis1", AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY)
+        cube.addAxis(axis1)
+        axis1.addColumn("a")
+
+        Axis axis2 = new Axis("axis2", AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY)
+        cube.addAxis(axis2)
+        axis2.addColumn(size0)
+        axis2.addColumn(size1)
+        axis2.addColumn(size999)
+        axis2.addColumn(size1000)
+        axis2.addColumn(size1001)
+
+        def coord = [axis1: 'a']
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+
+        coord.axis2 = size1001
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+        coord.axis2 = size1000
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+        coord.axis2 = size999
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+        coord.axis2 = size1
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+        coord.axis2 = size0
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+        coord.remove("axis2")
+        cube.setCell(new GroovyExpression(cmdString, null, false), coord)
+
+        ncubeRuntime.addCube(cube)
+
+        //Test coordinate value that gets abbreviated - size1001
+        coord.axis2 = size1001
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a,axis2:${size1000}...")
+        }
+
+        //Test coordinate value that does not get abbreviated - size1000 (same length as max length)
+        coord.axis2 = size1000
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a,axis2:${size1000}")
+        }
+
+        //Test coordinate value that does not get abbreviated - size999
+        coord.axis2 = size999
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a,axis2:${size999}")
+        }
+
+        //Test coordinate value that does not get abbreviated - size1
+        coord.axis2 = size1
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a,axis2:${size1}")
+        }
+
+        //Test coordinate value that does not get abbreviated - size0
+        coord.axis2 = size0
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a,axis2:")
+        }
+
+        //Test coordinate value that does not get abbreviated - column default
+        coord.remove("axis2")
+        try
+        {
+            cube.getCell(coord)
+            fail(failMessage)
+        }
+        catch (RuntimeException e)
+        {
+            assert e.message.toLowerCase().contains("error occurred in cube: stackentrytest\n-> cell:stackentrytest:[axis1:a]")
+        }
+    }
+
+    @Test
     void testRenameAxis()
     {
         NCube<String> ncube = new NCube('RenameAxisTest')

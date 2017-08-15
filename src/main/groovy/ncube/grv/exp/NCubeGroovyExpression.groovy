@@ -135,7 +135,7 @@ class NCubeGroovyExpression
      * @param cubeName String n-cube name.  This argument is optional and defaults
      * to the same cube as the cell currently executing.
      * @param defaultValue Object to return when no cell exists at the target coordinate
-     * and the cube does not have a cube-level default.  This argument is optional.
+     * and the cube does not have a cube-level default.
      * @param ApplicationID of a different application (reference data application for
      * example) from which the running cube exists.
      * @return executed cell contents at the given coordinate.
@@ -191,7 +191,7 @@ class NCubeGroovyExpression
      * @param cubeName String n-cube name.  This argument is optional and defaults
      * to the same cube as the cell currently executing.
      * @param defaultValue Object to return when no cell exists at the target coordinate
-     * and the cube does not have a cube-level default.  This argument is optional.
+     * and the cube does not have a cube-level default.
      * @param ApplicationID of a different application (reference data application for
      * example) from which the running cube exists.
      * @return executed cell contents at the current input location and specified n-cube,

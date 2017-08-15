@@ -1,4 +1,9 @@
 ### Revision History
+* 4.0.21-SNAPSHOT
+  * --
+* 4.0.20
+  * Bug fix: Updated `NCube.convertExistingAxisToRefAxis()` to not throw NPE when axis and axis to reference do not have any overlapping columns
+  * `NCube` stack traces, when listing the coordinate, only show the first 'n' characters of the value (default 1000 - can be overridden in `application.properties`). 
 * 4.0.19
   * Consumed json-command-servlet 1.5.4
   * Enhancement: Handle non-json responses from REST calls via `JsonHttpProxy`

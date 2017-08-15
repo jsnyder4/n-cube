@@ -58,6 +58,8 @@ class NCubeConfiguration
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
 
+    @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
+
     @Bean(name = 'ncubeRemoval')
     NCubeRemoval getNCubeRemoval()
     {
@@ -91,6 +93,14 @@ class NCubeConfiguration
         MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
         methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.util.CdnClassLoader.setGeneratedClassesDirectory"
         methodInvokingBean.arguments = [classesDirectory] as Object []
+        return methodInvokingBean
+    }
+
+    @Bean(name = 'setStackEntryCoordinateValueMaxSize')
+    MethodInvokingBean setStackEntryCoordinateValueMaxSize() {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
+        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.NCube.setStackEntryCoordinateValueMaxSize"
+        methodInvokingBean.arguments = [stackEntryCoordinateValueMaxSize] as Object []
         return methodInvokingBean
     }
 

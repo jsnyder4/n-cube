@@ -315,7 +315,13 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('deleteCubes')
         Boolean result = bean.call(beanName, 'deleteCubes', [appId, cubeNames]) as Boolean
-        clearCache(appId)
+        if (result)
+        {
+            for (Object cubeName : cubeNames)
+            {
+                clearCubeFromCache(appId, cubeName as String)
+            }
+        }
         return result
     }
 
@@ -552,7 +558,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('createRefAxis')
         bean.call(beanName, 'createRefAxis', [appId, cubeName, axisName, refAppId, refCubeName, refAxisName])
-        clearCache(appId)
+        clearCubeFromCache(appId, cubeName)
     }
 
     //-- Run Tests -------------------------------------------------------------------------------------------------
