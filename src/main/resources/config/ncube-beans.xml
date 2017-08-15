@@ -21,14 +21,18 @@
             <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
         </bean>
 
+        <bean id="ncubeHost" class="org.apache.http.HttpHost">
+            <constructor-arg value="${ncube.target.host:#{'localhost'}}"/>
+            <constructor-arg value="${ncube.target.port:#{9000}}"/>
+            <constructor-arg value="${ncube.target.scheme:#{'http'}}"/>
+        </bean>
+
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg index="0" value="${ncube.target.scheme:#{'http'}}"/>
-            <constructor-arg index="1" value="${ncube.target.host:#{'localhost'}}"/>
-            <constructor-arg index="2" value="${ncube.target.port:#{9000}}"/>
-            <constructor-arg index="3" value="${ncube.target.context:#{'ncube'}}"/>
-            <constructor-arg index="4" value="${ncube.target.username:#{null}}"/>
-            <constructor-arg index="5" value="${ncube.target.password:#{null}}"/>
-            <constructor-arg index="6" value="${ncube.target.numConnections:#{6}}"/>
+            <constructor-arg index="0" ref="ncubeHost"/>
+            <constructor-arg index="1" value="${ncube.target.context:#{'ncube'}}"/>
+            <constructor-arg index="2" value="${ncube.target.username:#{null}}"/>
+            <constructor-arg index="3" value="${ncube.target.password:#{null}}"/>
+            <constructor-arg index="4" value="${ncube.target.numConnections:#{6}}"/>
         </bean>
 
     </beans>
@@ -69,14 +73,18 @@
             <constructor-arg value="true"/>
         </bean>
 
+        <bean id="ncubeHost" class="org.apache.http.HttpHost">
+            <constructor-arg value="${ncube.target.host:#{'localhost'}}"/>
+            <constructor-arg value="${ncube.target.port:#{9000}}"/>
+            <constructor-arg value="${ncube.target.scheme:#{'http'}}"/>
+        </bean>
+
         <bean id="callableBean" class="com.cedarsoftware.util.JsonHttpProxy">
-            <constructor-arg index="0" value="${ncube.target.scheme:#{'http'}}"/>
-            <constructor-arg index="1" value="${ncube.target.host:#{'localhost'}}"/>
-            <constructor-arg index="2" value="${ncube.target.port:#{9000}}"/>
-            <constructor-arg index="3" value="${ncube.target.context:#{'ncube'}}"/>
-            <constructor-arg index="4" value="${ncube.target.username:#{null}}"/>
-            <constructor-arg index="5" value="${ncube.target.password:#{null}}"/>
-            <constructor-arg index="6" value="${ncube.target.numConnections:#{6}}"/>
+            <constructor-arg index="0" ref="ncubeHost"/>
+            <constructor-arg index="1" value="${ncube.target.context:#{'ncube'}}"/>
+            <constructor-arg index="2" value="${ncube.target.username:#{null}}"/>
+            <constructor-arg index="3" value="${ncube.target.password:#{null}}"/>
+            <constructor-arg index="4" value="${ncube.target.numConnections:#{6}}"/>
         </bean>
 
     </beans>
