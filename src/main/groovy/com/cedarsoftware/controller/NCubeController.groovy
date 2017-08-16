@@ -720,7 +720,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         addToAppCache(appId.tenant, appId.app)
         addToVersionsCache(appId)
-        addToVersionsCache(appId.asVersion('0.0.0'))
+        addToVersionsCache(appId.asVersion(SYS_BOOT_VERSION))
 
         mutableClient.createCube(ncube)
     }
@@ -1449,8 +1449,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         if (getBranchesFromCache(appId).size() != 0)
         {
             addBranchToCache(appId)
-            if (appId.version != '0.0.0') {
-                addBranchToCache(appId.asVersion('0.0.0'));
+            if (appId.version != SYS_BOOT_VERSION) {
+                addBranchToCache(appId.asVersion(SYS_BOOT_VERSION));
             }
         }
     }
@@ -1471,9 +1471,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         if (getBranchesFromCache(targetAppId).size() != 0)
         {
             addBranchToCache(targetAppId)
-            if (targetAppId.version != '0.0.0')
+            if (targetAppId.version != SYS_BOOT_VERSION)
             {
-                addBranchToCache(targetAppId.asVersion('0.0.0'));
+                addBranchToCache(targetAppId.asVersion(SYS_BOOT_VERSION));
             }
         }
         return rows
@@ -1612,7 +1612,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         Boolean result = mutableClient.deleteBranch(appId)
         removeBranchFromCache(appId)
-        ApplicationID bootAppId = appId.asVersion('0.0.0')
+        ApplicationID bootAppId = appId.asVersion(SYS_BOOT_VERSION)
         if (mutableClient.search(bootAppId, '*', null, null).empty)
         {
             removeBranchFromCache(bootAppId)
@@ -1687,10 +1687,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         try
         {   // Do not remove try-catch handler in favor of advice handler
             appId = addTenant(appId)
-            NCube menuCube = mutableClient.getCube(appId.asVersion('0.0.0'), 'sys.menu')
+            NCube menuCube = mutableClient.getCube(appId.asVersion(SYS_BOOT_VERSION), 'sys.menu')
             if (menuCube == null)
             {
-                menuCube = getCubeInternal(appId.asVersion('0.0.0').asHead(), 'sys.menu')
+                menuCube = getCubeInternal(appId.asVersion(SYS_BOOT_VERSION).asHead(), 'sys.menu')
             }
             return menuCube.getCell([:])
         }

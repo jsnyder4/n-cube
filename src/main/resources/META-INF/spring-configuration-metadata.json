@@ -143,6 +143,13 @@
       "defaultValue": "16"
     },
     {
+      "name": "ncube.cache.refresh.min",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.ncube.NCubeRuntime",
+      "description": "Frequency (in minutes) that non-evictable n-cubes are refreshed (Set to 1/3 or less of ncube.cache.evict.duration).",
+      "defaultValue": "75"
+    },
+    {
       "name": "ncube.perm.cache.max.size",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",

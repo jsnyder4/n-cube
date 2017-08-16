@@ -65,6 +65,7 @@ interface NCubeConstants
     final String PROPERTY_CACHE = 'cache'
 
     final String CUBE_TAGS = 'cube_tags'
+    final String CUBE_EVICT = 'evict'
 
     final String NCUBE_PARAMS = 'NCUBE_PARAMS'
     final String NCUBE_PARAMS_BYTE_CODE_DEBUG = 'byteCodeDebug'

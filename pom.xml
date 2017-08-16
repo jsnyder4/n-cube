@@ -153,6 +153,7 @@
                 <configuration>
                     <stubsOutputDirectory>${project.build.directory}/generated-sources/groovy-stubs</stubsOutputDirectory>
                     <testStubsOutputDirectory>${project.build.directory}/generated-sources/groovy-stubs</testStubsOutputDirectory>
+                    <scope>public</scope>
                 </configuration>
                 <executions>
                     <execution>

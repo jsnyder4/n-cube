@@ -1,9 +1,12 @@
 package com.cedarsoftware.ncube.util
 
+import com.cedarsoftware.ncube.NCube
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
 import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.guava.GuavaCache
@@ -32,6 +35,7 @@ import java.util.concurrent.TimeUnit
 @CompileStatic
 class GCacheManager implements CacheManager
 {
+    private static final Logger LOG = LoggerFactory.getLogger(GCacheManager.class)
     private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<>()
     private final int concurrencyLevel
     private final int maximumSize
@@ -40,9 +44,9 @@ class GCacheManager implements CacheManager
     private final String evictionType
     private final Closure removalClosure
 
-    GCacheManager(Closure removalClosure = {}, int maximumSize = 0, String evictionType = 'none', int evictionDuration = 0, String evictionTimeUnit = 'hours', int concurrencyLevel = 16)
+    GCacheManager(Closure removalClosure = null, int maximumSize = 0, String evictionType = 'none', int evictionDuration = 0, String evictionTimeUnit = 'hours', int concurrencyLevel = 16)
     {
-        this.removalClosure = removalClosure == null ? {} : removalClosure
+        this.removalClosure = removalClosure
         this.concurrencyLevel = concurrencyLevel
         this.maximumSize = maximumSize
         this.evictionType = evictionType
@@ -153,7 +157,19 @@ class GCacheManager implements CacheManager
 
         void onRemoval(RemovalNotification removalNotification)
         {
-            closure(removalNotification.value)
+            if (closure != null)
+            {
+                if (removalNotification.value instanceof NCube)
+                {
+                    NCube ncube = (NCube) removalNotification.value
+                    LOG.info("Cache eviction: n-cube: ${ncube.name}")
+                }
+                else
+                {
+                    LOG.info("Cache eviction: key=${removalNotification.key}, value=${removalNotification?.value?.toString()}")
+                }
+                closure(removalNotification.value)
+            }
         }
     }
 }

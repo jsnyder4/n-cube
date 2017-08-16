@@ -1,7 +1,8 @@
 package com.cedarsoftware.config
 
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.UrlCommandCell
 import com.cedarsoftware.ncube.util.GCacheManager
-import com.cedarsoftware.ncube.util.NCubeRemoval
 import com.cedarsoftware.util.HsqlSchemaCreator
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Value
@@ -61,22 +62,36 @@ class NCubeConfiguration
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
 
     @Bean(name = 'ncubeRemoval')
-    NCubeRemoval getNCubeRemoval()
+    Closure getNcubeRemoval()
     {
-        return new NCubeRemoval()
+        return { value ->
+            if (value instanceof NCube)
+            {
+                NCube ncube = value as NCube
+                for (Object cellValue : ncube.cellMap.values())
+                {
+                    if (cellValue instanceof UrlCommandCell)
+                    {
+                        UrlCommandCell cell = cellValue as UrlCommandCell
+                        cell.clearClassLoaderCache()
+                    }
+                }
+            }
+            return true
+        }
     }
 
     @Bean(name = "ncubeCacheManager")
     GCacheManager getNcubeCacheManager()
     {
-        GCacheManager cacheManager = new GCacheManager(getNCubeRemoval(), maxSizeNCubeCache, typeNCubeCache, durationNCubeCache, unitsNCubeCache, concurrencyNCubeCache)
+        GCacheManager cacheManager = new GCacheManager(ncubeRemoval, maxSizeNCubeCache, typeNCubeCache, durationNCubeCache, unitsNCubeCache, concurrencyNCubeCache)
         return cacheManager
     }
 
     @Bean(name = 'permCacheManager')
     GCacheManager getPermCacheManager()
     {
-        GCacheManager cacheManager = new GCacheManager(getNCubeRemoval(), maxSizePermCache, typePermCache, durationPermCache, unitsPermCache, concurrencyPermCache)
+        GCacheManager cacheManager = new GCacheManager(null, maxSizePermCache, typePermCache, durationPermCache, unitsPermCache, concurrencyPermCache)
         return cacheManager
     }
 

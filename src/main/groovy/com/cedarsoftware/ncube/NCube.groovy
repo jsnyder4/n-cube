@@ -202,6 +202,16 @@ class NCube<T>
     }
 
     /**
+     * Test for existence of a given meta-property key.
+     * @param key String name of key
+     * @return boolean true if the passed in meta-property key exists, false otherwise.
+     */
+    boolean containsMetaProperty(String key)
+    {
+        return metaProps.containsKey(key)
+    }
+    
+    /**
      * If a meta property value is fetched from an Axis or a Column, the value should be extracted
      * using this API, so as to allow executable values to be retrieved.
      * @param value Object value to be extracted.

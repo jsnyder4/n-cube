@@ -1782,11 +1782,18 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
+        String otherUser = 'garpley'
         ApplicationID branchBootAppId = defaultBootApp.asBranch(origUser)
         Map lockCoord = [(AXIS_SYSTEM): null]
 
         // create branch
         mutableClient.copyBranch(branchBootAppId.asHead(), branchBootAppId)
+
+        // give user branch permission
+        NCube branchPermCube = mutableClient.getCube(branchBootAppId, SYS_BRANCH_PERMISSIONS)
+        branchPermCube.addColumn(AXIS_USER, otherUser)
+        branchPermCube.setCell(true, [(AXIS_USER):otherUser, (AXIS_RESOURCE):null])
+        mutableClient.updateCube(branchPermCube)
 
         // update sys lock in branch
         NCube sysLockCube = mutableClient.getCube(branchBootAppId, SYS_LOCK)
@@ -1809,7 +1816,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.createCube(testCube)  // works without error because current user has the lock
 
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-        manager.userId = 'garpley'                   // change user
+        manager.userId = otherUser                   // change user
         try
         {
             mutableClient.updateCube(testCube)
@@ -1819,7 +1826,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         {
             assertTrue(e.message.contains('Application is not locked by you'))
         }
-        manager.userId = origUser
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     @Test
@@ -1879,6 +1889,15 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assert branchPermCube.getCell([(AXIS_USER):userId, (AXIS_RESOURCE):null]) as Boolean
         assert !(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):SYS_BRANCH_PERMISSIONS]) as Boolean)
         assert !(branchPermCube.getCell([(AXIS_USER):null, (AXIS_RESOURCE):null]) as Boolean)
+    }
+
+    @Test
+    void testBranchPermissionsCubeCreatedOnNewSysBootBranch()
+    {
+        ApplicationID branchBootAppId = defaultBootApp.asBranch('newBranch')
+        mutableClient.copyBranch(defaultBootApp, branchBootAppId)
+        NCube branchPermCube = mutableClient.getCube(branchBootAppId.asVersion('0.0.0'), SYS_BRANCH_PERMISSIONS)
+        assertNotNull(branchPermCube)
     }
 
     @Test

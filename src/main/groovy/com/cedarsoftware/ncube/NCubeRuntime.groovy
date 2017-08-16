@@ -11,6 +11,7 @@ import groovy.transform.CompileStatic
 import ncube.grv.method.NCubeGroovyController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
@@ -51,6 +52,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     protected final CallableBean bean
     private final boolean allowMutableMethods
     private final String beanName
+    @Value('${ncube.cache.refresh.min:75}') int cacheRefreshIntervalMin
 
     NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods, String beanName = null)
     {
@@ -66,6 +68,44 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
         }
+        
+        def refresh = {
+            while (true)
+            {
+                Thread.sleep(1000 * 60 * cacheRefreshIntervalMin)
+                GCacheManager cacheManager = (GCacheManager) ncubeCacheManager
+                Iterator<String> i = cacheManager.cacheNames.iterator()
+                
+                while (i.hasNext())
+                {
+                    String cacheName = i.next()
+                    Cache cache = cacheManager.getCache(cacheName)
+                    if (cache != null)
+                    {
+                        cacheManager.applyToEntries(cacheName, { key, value ->
+                            if (value instanceof NCube)
+                            {
+                                NCube cube = (NCube) value
+                                boolean evict = true
+                                if (cube.containsMetaProperty(CUBE_EVICT))
+                                {
+                                    evict = Converter.convert(cube.getMetaProperty(CUBE_EVICT), boolean.class)
+                                }
+
+                                if (cube.name == CLASSPATH_CUBE || !evict)
+                                {   // refresh last-accessed time
+                                    cache.get(key)
+                                }
+                            }
+                        })
+                    }
+                }
+            }
+        }
+        Thread t = new Thread(refresh)
+        t.name = 'NcubeCacheRefresher'
+        t.daemon = true
+        t.start()
     }
 
     /**
@@ -997,7 +1037,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             ((GCacheManager)adviceCacheManager).applyToEntries(ncube.applicationID.cacheKey(), {String key, Object value ->
                 final Advice advice = value as Advice
-                final String wildcard = key.replace(advice.name + '/', "")
+                final String wildcard = key.replace("${advice.name}/", "")
                 final String regex = StringUtilities.wildcardToRegexString(wildcard)
                 final Axis axis = ncube.getAxis('method')
                 addAdviceToMatchedCube(advice, Pattern.compile(regex), ncube, axis)

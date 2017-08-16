@@ -1,6 +1,8 @@
 ### Revision History
 * 4.0.21-SNAPSHOT
+  * Enhancement: `NCube` cache within `NCubeRuntime` is now refreshed such that cubes marked with `evict=false` (also `sys.classpath`) will no longer be evicted.  Set `application.properties` entry `ncube.cache.refresh.min=75`, for example, to refresh every 75 minutes.  The interval should be less than the duration (typically about 1/3 of the duration.) 
   * Updated `JsonHttpProxy` constructor to take `org.apache.http.HttpHost` parameter instead of individual hostname, port, scheme parameters in order to construct the `HttpHost`
+  * Bug fix: `sys.branch.permissions` not being created when creating branch in sys boot version.
 * 4.0.20
   * Bug fix: Updated `NCube.convertExistingAxisToRefAxis()` to not throw NPE when axis and axis to reference do not have any overlapping columns
   * `NCube` stack traces, when listing the coordinate, only show the first 'n' characters of the value (default 1000 - can be overridden in `application.properties`). 

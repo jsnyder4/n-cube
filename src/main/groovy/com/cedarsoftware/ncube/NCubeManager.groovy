@@ -163,7 +163,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     void createCube(NCube ncube)
     {
-        detectNewAppId(ncube.applicationID)
+        addPermissionsCubesIfNewAppId(ncube.applicationID)
         persister.createCube(ncube, getUserId())
     }
 
@@ -346,7 +346,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         assertPermissions(oldAppId, oldName, Action.READ)
         if (oldAppId != newAppId)
         {   // Only see if branch permissions are needed to be created when destination cube is in a different ApplicationID
-            detectNewAppId(newAppId)
+            addPermissionsCubesIfNewAppId(newAppId)
         }
         assertPermissions(newAppId, newName, Action.UPDATE)
         assertNotLockBlocked(newAppId)
@@ -405,11 +405,16 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             throw new IllegalArgumentException("A RELEASE version ${targetAppId.version} already exists, app: ${targetAppId}, user: ${getUserId()}")
         }
         assertNotLockBlocked(targetAppId)
-        if (targetAppId.version != '0.0.0')
+        boolean isTargetSysBootVersion = targetAppId.version == SYS_BOOT_VERSION
+        if (!isTargetSysBootVersion)
         {
-            detectNewAppId(targetAppId)
+            addPermissionsCubesIfNewAppId(targetAppId)
         }
         int rows = copyWithHistory ? persister.copyBranchWithHistory(srcAppId, targetAppId, getUserId()) : persister.copyBranch(srcAppId, targetAppId, getUserId())
+        if (isTargetSysBootVersion)
+        {
+            addPermissionsCubes(targetAppId)
+        }
         return rows
     }
 
@@ -1397,15 +1402,25 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): null]) || userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): getUserId()])
     }
 
-    protected void detectNewAppId(ApplicationID appId)
+    protected void addPermissionsCubesIfNewAppId(ApplicationID appId)
     {
-        if (!persister.doCubesExist(appId, true, 'detectNewAppId', getUserId()))
+        if (detectNewAppId(appId))
         {
-            addAppPermissionsCubes(appId)
-            if (!appId.head)
-            {
-                addBranchPermissionsCube(appId)
-            }
+            addPermissionsCubes(appId)
+        }
+    }
+
+    protected boolean detectNewAppId(ApplicationID appId)
+    {
+        return !persister.doCubesExist(appId, true, 'detectNewAppId', getUserId())
+    }
+
+    protected void addPermissionsCubes(ApplicationID appId)
+    {
+        addAppPermissionsCubes(appId)
+        if (!appId.head)
+        {
+            addBranchPermissionsCube(appId)
         }
     }
 
@@ -2208,7 +2223,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             throw new IllegalStateException("Pull request already closed. Status: ${status}, Requested by: ${requestUser}, Committed by: ${commitUser}, ApplicationID: ${prAppId}, user: ${getUserId()}")
         }
-        else if (!persister.doCubesExist(prAppId, true, 'detectNewAppId', getUserId()))
+        else if (detectNewAppId(prAppId))
         {
             throw new IllegalStateException("Branch no longer exists; pull request will be marked obsolete. Requested by: ${requestUser}, ApplicationID: ${prAppId}, user: ${getUserId()}")
         }
