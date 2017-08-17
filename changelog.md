@@ -1,5 +1,7 @@
 ### Revision History
-* 4.0.21-SNAPSHOT
+* 4.0.22-SNAPSHOT
+  * --
+* 4.0.21
   * Enhancement: Included n-cube-editor version number in `NCubeController.health()`
   * Enhancement: Release cubes and version no longer require a new SNAPSHOT to be made.
   * Enhancement: `NCube` cache within `NCubeRuntime` is now refreshed such that cubes marked with `evict=false` (also `sys.classpath`) will no longer be evicted.  Set `application.properties` entry `ncube.cache.refresh.min=75`, for example, to refresh every 75 minutes.  The interval should be less than the duration (typically about 1/3 of the duration.) 
