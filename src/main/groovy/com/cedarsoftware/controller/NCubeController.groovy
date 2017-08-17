@@ -70,7 +70,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private static final Map NO_CELL = [type:null, value:null]
     private static final String EXECUTE_ERROR = 'User code cannot be executed on this server. Attempted method: '
     private final boolean allowExecute
-    private final String versionNumber
+    private final Map versions
 
     NCubeController(NCubeMutableClient mutableClient, boolean allowExecute)
     {
@@ -78,11 +78,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         System.err = new ThreadAwarePrintStreamErr(System.err)
         this.mutableClient = mutableClient
         this.allowExecute = allowExecute
-        versionNumber = fetchVersionNumber()
+        versions = fetchVersionNumbers()
     }
 
-    private String fetchVersionNumber()
+    private Map fetchVersionNumbers()
     {
+        String local = 'Running local on class files'
+        Map versions = [ncube: local, nce: local]
         try
         {
             ClassLoader classLoader = this.class.classLoader
@@ -90,18 +92,26 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             for (url in urls)
             {
                 String location = url.toString()
-                Matcher m = Regexes.versionPattern.matcher(location)
+                Matcher m = Regexes.ncubeVersionPattern.matcher(location)
                 if (m.find())
                 {
-                    return m.group('version')
+                    versions.ncube = m.group('version')
+                }
+                m = Regexes.nceVersionPattern.matcher(location)
+                if (m.find())
+                {
+                    versions.nce = m.group('version')
                 }
             }
-            return 'Running local on class files'
+            return versions
         }
         catch (Exception e)
         {
             LOG.warn('Unable to get classpath', e)
-            return "Exception extracting version from classpath: ${e.message}"
+            versions.ncube = ''
+            versions.nce = ''
+            versions.exception = e.message
+            return versions
         }
     }
 
@@ -1815,7 +1825,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         {
             username = '--'
         }
-        putIfNotNull(serverStats, 'n-cube version', versionNumber)
+        if (versions.containsKey('exception'))
+        {
+            putIfNotNull(serverStats, 'Exception extracting version from classpath', versions.exception)
+        }
+        putIfNotNull(serverStats, 'n-cube-editor version', versions.nce)
+        putIfNotNull(serverStats, 'n-cube version', versions.ncube)
         putIfNotNull(serverStats, 'User ID', username)
         putIfNotNull(serverStats, 'Java version', getAttribute(mbs, 'JMImplementation:type=MBeanServerDelegate', 'ImplementationVersion'))
         putIfNotNull(serverStats, 'hostname, servlet', getServletHostname())

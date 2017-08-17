@@ -223,9 +223,8 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         Map health = call('heartBeat', [[:]]) as Map
         assert health
-        Map stats = health.serverStats as Map
-        assert stats.containsKey('User ID')
-        assert stats.containsKey('Java version')
+        Map stats = health.compareResults as Map
+        assert stats.isEmpty()
     }
 
     @Test

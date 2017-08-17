@@ -10,6 +10,7 @@ import org.springframework.beans.factory.config.MethodInvokingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer
 
 /**
  * This class defines allowable actions against persisted n-cubes
@@ -61,10 +62,16 @@ class NCubeConfiguration
 
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
 
+    @Bean
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer()
+    {
+        return new PropertySourcesPlaceholderConfigurer()
+    }
+
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
     {
-        return { value ->
+        return { Object value ->
             if (value instanceof NCube)
             {
                 NCube ncube = value as NCube
