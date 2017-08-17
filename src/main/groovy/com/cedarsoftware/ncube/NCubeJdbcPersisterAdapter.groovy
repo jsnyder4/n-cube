@@ -154,10 +154,10 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "moveBranch(${appId}, to version ${newSnapVer})", username)
     }
 
-    int releaseCubes(ApplicationID appId, String newSnapVer, String username)
+    int releaseCubes(ApplicationID appId, String username)
     {
-        return (int) jdbcOperation({ Connection c -> persister.releaseCubes(c, appId, newSnapVer) },
-                "releaseCubes(${appId}, new snap ver: ${newSnapVer})", username)
+        return (int) jdbcOperation({ Connection c -> persister.releaseCubes(c, appId) },
+                "releaseCubes(${appId})", username)
     }
 
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)

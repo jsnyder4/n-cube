@@ -50,7 +50,7 @@ interface NCubePersister extends NCubeReadOnlyPersister
     // Release Management
     int changeVersionValue(ApplicationID appId, String newVersion, String username)
     int moveBranch(ApplicationID appId, String newSnapVer, String username)
-    int releaseCubes(ApplicationID appId, String newSnapVer, String username)
+    int releaseCubes(ApplicationID appId, String username)
 
     // Testing
     boolean updateNotes(ApplicationID appId, String cubeName, String notes, String username)

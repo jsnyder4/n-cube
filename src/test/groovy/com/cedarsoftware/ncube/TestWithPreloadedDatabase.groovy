@@ -1221,6 +1221,14 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(release)
         testValuesOnBranch(newBranchSnapshot, "FOO")
+
+        // test release with no new version
+        mutableClient.releaseCubes(HEAD.asVersion('1.29.0'))
+        versions = ncubeRuntime.getVersions(HEAD.app)
+        assert 3 == versions.length
+        assert versions.contains('0.0.0-SNAPSHOT')
+        assert versions.contains('1.28.0-RELEASE')
+        assert versions.contains('1.29.0-RELEASE')
     }
 
     @Test
@@ -1260,6 +1268,34 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.mergePullRequest(prId)
         testValuesOnBranch(newBranchHead, 'FOO')
         testValuesOnBranch(newBranchSnapshot, 'FOO')
+    }
+
+    @Test
+    void testReleaseCubesWithOpenPullRequestsNoNewSnapshot()
+    {
+        // load cube with same name, but different structure in TEST branch
+        preloadCubes(HEAD, 'test.branch.1.json', 'test.branch.age.1.json')
+        assert 2 == mutableClient.copyBranch(HEAD, BRANCH1)
+
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        assertNotNull(cube)
+        mutableClient.updateCube(cube)
+
+        // create pull request with version 1.28.0
+        mutableClient.generatePullRequestHash(BRANCH1, mutableClient.getBranchChangesForHead(BRANCH1).toArray())
+        Object[] prInfos = mutableClient.pullRequests
+        assert 1 == prInfos.size()
+        ApplicationID prAppId = (prInfos[0] as Map)[PR_APP] as ApplicationID
+        assert HEAD.equalsNotIncludingBranch(prAppId)
+
+        // release 1.28.0 with no new snapshot version
+        assert 2 == mutableClient.releaseCubes(HEAD)
+
+        // test PR obsoleted
+        prInfos = mutableClient.pullRequests
+        assert 1 == prInfos.size()
+        String prStatus = (prInfos[0] as Map)[PR_STATUS] as String
+        assert PR_OBSOLETE == prStatus
     }
 
     @Test
@@ -5627,6 +5663,48 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testMergeNewColumnWithMetaPropertyOnBranch()
+    {
+        String cubeName = 'TestBranch'
+        String axisName = 'Code'
+        Integer colVal = 20
+        String cubeMetaKey = 'cubekey'
+        String cubeMetaVal = 'cubeval'
+        String colMetaKey = 'key'
+        String colMetaVal = 'val'
+
+        preloadCubes(BRANCH1, "test.branch.1.json")
+        mutableClient.commitBranch(BRANCH1)
+        mutableClient.deleteBranch(BRANCH1)
+        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH2))
+
+        NCube cube = mutableClient.getCube(BRANCH1, cubeName)
+        NCube cube2 = mutableClient.getCube(BRANCH2, cubeName)
+
+        // make changes
+        cube.addColumn(axisName, colVal)
+        Column column = cube.getAxis(axisName).findColumn(colVal)
+        column.addMetaProperties([(colMetaKey): colMetaVal as Object])
+        mutableClient.updateCube(cube)
+
+        // make change in other cube / head
+        cube2.addMetaProperties([(cubeMetaKey): cubeMetaVal as Object])
+        mutableClient.updateCube(cube2)
+        mutableClient.commitBranch(cube2.applicationID)
+
+        // update cube1 from head
+        mutableClient.updateBranch(cube.applicationID)
+        cube = mutableClient.getCube(cube.applicationID, cube.name)
+
+        // verify metaproperty on new column stays (bug fix)
+        Column newColumn = cube.getAxis(axisName).findColumn(colVal)
+        assert cubeMetaVal == cube.metaProperties[cubeMetaKey]
+        assert newColumn
+        assert colMetaVal == newColumn.metaProperties[colMetaKey]
+    }
+
+    @Test
     void testAddAxis()
     {
         preloadCubes(BRANCH1, "test.branch.1.json")
@@ -6241,7 +6319,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         }
     }
 
-    private void setUpReferenceCubeForAxisReferenceTests()
+    private static void setUpReferenceCubeForAxisReferenceTests()
     {
         ApplicationID firstReleaseAppId = ApplicationID.testAppId.asVersion('1.0.0')
         ApplicationID secondReleaseAppId = ApplicationID.testAppId.asVersion('2.0.0')

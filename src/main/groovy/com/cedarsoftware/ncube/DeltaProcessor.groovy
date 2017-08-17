@@ -210,6 +210,7 @@ class DeltaProcessor
                         if (findCol == null || (findCol.default && value != null))
                         {
                             mergeTarget.addColumn(axisName, column.value, column.columnName, column.id)
+                            mergeTarget.getAxis(axisName).getColumnById(column.id).addMetaProperties(column.metaProperties)
                         }
                     }
                     else if (DELTA_COLUMN_REMOVE == colDelta.changeType)

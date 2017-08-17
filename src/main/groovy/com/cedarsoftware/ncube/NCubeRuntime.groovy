@@ -262,7 +262,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Integer releaseVersion(ApplicationID appId, String newSnapVer)
+    Integer releaseVersion(ApplicationID appId, String newSnapVer = null)
     {
         verifyAllowMutable('releaseVersion')
         Integer result = bean.call(beanName, 'releaseVersion', [appId, newSnapVer]) as Integer
@@ -270,7 +270,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Integer releaseCubes(ApplicationID appId, String newSnapVer)
+    Integer releaseCubes(ApplicationID appId, String newSnapVer = null)
     {
         verifyAllowMutable('releaseCubes')
         Integer result = bean.call(beanName, 'releaseCubes', [appId, newSnapVer]) as Integer

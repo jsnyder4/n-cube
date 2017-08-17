@@ -475,11 +475,11 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             throw new IllegalArgumentException("Cannot move the HEAD branch, app: ${appId}, user: ${getUserId()}")
         }
-        if ('0.0.0' == appId.version)
+        if (SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalStateException(ERROR_CANNOT_MOVE_000 + " app: ${appId}, user: ${getUserId()}")
         }
-        if ('0.0.0' == newSnapVer)
+        if (SYS_BOOT_VERSION == newSnapVer)
         {
             throw new IllegalStateException(ERROR_CANNOT_MOVE_TO_000 + "app: ${appId}, user: ${getUserId()}")
         }
@@ -492,19 +492,22 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Perform release (SNAPSHOT to RELEASE) for the given ApplicationIDs n-cubes.
      */
-    Integer releaseVersion(ApplicationID appId, String newSnapVer)
+    Integer releaseVersion(ApplicationID appId, String newSnapVer = null)
     {
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null, Action.RELEASE)
         assertLockedByMe(appId)
-        ApplicationID.validateVersion(newSnapVer)
-        if ('0.0.0' == appId.version)
+        if (SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
-        if ('0.0.0' == newSnapVer)
+        if (newSnapVer)
         {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
+            ApplicationID.validateVersion(newSnapVer)
+            if (SYS_BOOT_VERSION == newSnapVer)
+            {
+                throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
+            }
         }
         if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
@@ -513,7 +516,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         validateReferenceAxesAppIds(appId)
 
-        int rows = persister.releaseCubes(appId, newSnapVer, getUserId())
+        int rows = persister.releaseCubes(appId, getUserId())
         updateOpenPullRequestVersions(appId, newSnapVer)
         return rows
     }
@@ -521,26 +524,30 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Perform release (SNAPSHOT to RELEASE) for the given ApplicationIDs n-cubes.
      */
-    Integer releaseCubes(ApplicationID appId, String newSnapVer)
+    Integer releaseCubes(ApplicationID appId, String newSnapVer = null)
     {
         assertPermissions(appId, null, Action.RELEASE)
         ApplicationID.validateAppId(appId)
-        ApplicationID.validateVersion(newSnapVer)
-        if ('0.0.0' == appId.version)
+
+        if (SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
-        }
-        if ('0.0.0' == newSnapVer)
-        {
-            throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
-        }
-        if (!search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
-        {
-            throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
         if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
         {
             throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
+        }
+        if (newSnapVer)
+        {
+            ApplicationID.validateVersion(newSnapVer)
+            if (SYS_BOOT_VERSION == newSnapVer)
+            {
+                throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
+            }
+            if (!search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
+            {
+                throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
+            }
         }
 
         validateReferenceAxesAppIds(appId)
@@ -557,11 +564,21 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             if (!ApplicationID.HEAD.equalsIgnoreCase(branch))
             {
                 ApplicationID branchAppId = appId.asBranch(branch)
-                moveBranch(branchAppId, newSnapVer)
+                if (newSnapVer)
+                {
+                    moveBranch(branchAppId, newSnapVer)
+                }
+                else
+                {
+                    deleteBranch(branchAppId)
+                }
             }
         }
-        int rows = persister.releaseCubes(appId, newSnapVer, getUserId())
-        persister.copyBranch(appId.asRelease(), appId.asSnapshot().asHead().asVersion(newSnapVer), getUserId())
+        int rows = persister.releaseCubes(appId, getUserId())
+        if (newSnapVer)
+        {
+            persister.copyBranch(appId.asRelease(), appId.asSnapshot().asHead().asVersion(newSnapVer), getUserId())
+        }
         updateOpenPullRequestVersions(appId, newSnapVer)
         lockApp(appId, false)
         return rows
@@ -584,8 +601,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                     boolean shouldChange = onlyCurrentBranch ? prAppId == appId : prAppId.equalsNotIncludingBranch(appId)
                     if (shouldChange)
                     {
-                        prAppId = prAppId.asVersion(newSnapVer)
-                        prCube.setCell(prAppId.toString(), prAppIdCoord)
+                        if (newSnapVer)
+                        {
+                            prAppId = prAppId.asVersion(newSnapVer)
+                            prCube.setCell(prAppId.toString(), prAppIdCoord)
+                        }
+                        else
+                        {
+                            prCube.setCell(PR_OBSOLETE, prStatusCoord)
+                        }
                         updateCube(prCube, true)
                     }
                 }
@@ -1078,7 +1102,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     // ---------------------- Broadcast APIs for notifying other services in cluster of cache changes ------------------
     protected void broadcast(ApplicationID appId)
     {
-        // Write to 'system' tenant, 'NCE' app, version '0.0.0', SNAPSHOT, cube: sys.cache
+        // Write to 'system' tenant, 'NCE' app, version SYS_BOOT_VERSION, SNAPSHOT, cube: sys.cache
         // Separate thread reads from this table every 1 second, for new commands, for
         // example, clear cache
         appId.toString()
@@ -1132,7 +1156,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private ApplicationID getBootAppId(ApplicationID appId)
     {
-        return new ApplicationID(appId.tenant, appId.app, '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        return new ApplicationID(appId.tenant, appId.app, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
     }
 
     private String getPermissionCacheKey(String resource, Action action)
@@ -1426,7 +1450,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private void addBranchPermissionsCube(ApplicationID appId)
     {
-        ApplicationID permAppId = appId.asVersion('0.0.0')
+        ApplicationID permAppId = appId.asVersion(SYS_BOOT_VERSION)
         if (loadCubeInternal(permAppId, SYS_BRANCH_PERMISSIONS) != null)
         {
             return

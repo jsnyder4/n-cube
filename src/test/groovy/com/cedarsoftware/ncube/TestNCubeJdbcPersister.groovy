@@ -183,7 +183,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
 
         try
         {
-            new NCubeJdbcPersister().releaseCubes(c, defaultSnapshotApp, "1.2.3")
+            new NCubeJdbcPersister().releaseCubes(c, defaultSnapshotApp)
             fail()
         }
         catch (NullPointerException e)

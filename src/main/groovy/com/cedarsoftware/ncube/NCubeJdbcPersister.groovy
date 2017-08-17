@@ -1566,13 +1566,11 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         return sql.executeUpdate(map, "/* moveBranch */ UPDATE n_cube SET version_no_cd = :newVer WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch")
     }
 
-    static int releaseCubes(Connection c, ApplicationID appId, String newSnapVer)
+    static int releaseCubes(Connection c, ApplicationID appId)
     {
         // Step 1: Release cubes where branch == HEAD (change their status from SNAPSHOT to RELEASE)
         Sql sql = getSql(c)
         Map map = appId as Map
-        map.newVer = newSnapVer
-        map.create_dt = nowAsTimestamp()
         map.tenant = padTenant(c, appId.tenant)
         return sql.executeUpdate(map, "/* releaseCubes */ UPDATE n_cube SET status_cd = 'RELEASE' WHERE app_cd = :app AND version_no_cd = :version AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = 'HEAD'")
     }

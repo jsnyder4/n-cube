@@ -199,7 +199,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.moveBranch(appId, newSnapVer)
     }
 
-    Integer releaseVersion(ApplicationID appId, String newSnapVer)
+    Integer releaseVersion(ApplicationID appId, String newSnapVer = null)
     {
         appId = addTenant(appId)
         int rowCount = mutableClient.releaseVersion(appId, newSnapVer)
@@ -800,7 +800,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * duplicate all the n-cubes in the release, creating new ones in SNAPSHOT status with
      * the version number set to the newSnapVer.
      */
-    Integer releaseCubes(ApplicationID appId, String newSnapVer)
+    Integer releaseCubes(ApplicationID appId, String newSnapVer = null)
     {
         appId = addTenant(appId)
         int rowCount = mutableClient.releaseCubes(appId, newSnapVer)
@@ -1687,10 +1687,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         try
         {   // Do not remove try-catch handler in favor of advice handler
             appId = addTenant(appId)
-            NCube menuCube = mutableClient.getCube(appId.asVersion(SYS_BOOT_VERSION), 'sys.menu')
+            ApplicationID bootVersionAppId = appId.asVersion(SYS_BOOT_VERSION).asSnapshot()
+            NCube menuCube = mutableClient.getCube(bootVersionAppId, 'sys.menu')
             if (menuCube == null)
             {
-                menuCube = getCubeInternal(appId.asVersion(SYS_BOOT_VERSION).asHead(), 'sys.menu')
+                menuCube = getCubeInternal(bootVersionAppId.asHead(), 'sys.menu')
             }
             return menuCube.getCell([:])
         }
@@ -1783,7 +1784,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         NCubeAppContext.testServer.clearTestDatabase()
     }
 
-    Map heartBeat(Map openCubes, boolean showAll = false)
+    Map getServerStats(boolean showAll = false)
     {
         // If remotely accessing server, use the following to get the MBeanServerConnection...
 //        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:/jmxrmi")
@@ -1820,7 +1821,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         putIfNotNull(serverStats, 'hostname, servlet', getServletHostname())
         putIfNotNull(serverStats, 'hostname, OS', getInetHostname())
         putIfNotNull(serverStats, 'Context', JsonCommandServlet.servletRequest.get().contextPath)
-        
+
         // OS
         putIfNotNull(serverStats, 'OS', getAttribute(mbs, 'java.lang:type=OperatingSystem', 'Name'))
         putIfNotNull(serverStats, 'OS version', getAttribute(mbs, 'java.lang:type=OperatingSystem', 'Version'))
@@ -1887,6 +1888,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
 
         putIfNotNull(results, 'serverStats', serverStats)
+        return results
+    }
+
+    Map heartBeat(Map openCubes)
+    {
+        Map results = [:]
         putIfNotNull(results, 'compareResults', [:])
         return results
     }
