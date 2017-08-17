@@ -1784,7 +1784,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         NCubeAppContext.testServer.clearTestDatabase()
     }
 
-    Map getServerStats(boolean showAll = false)
+    Map health(boolean showAll = false)
     {
         // If remotely accessing server, use the following to get the MBeanServerConnection...
 //        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://localhost:/jmxrmi")

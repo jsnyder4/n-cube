@@ -53,9 +53,11 @@ interface NCubeMutableClient extends NCubeClient
     Integer moveBranch(ApplicationID appId, String newSnapVer)
 
     Integer releaseVersion(ApplicationID appId)
+
     Integer releaseVersion(ApplicationID appId, String newSnapVer)
 
     Integer releaseCubes(ApplicationID appId)
+
     Integer releaseCubes(ApplicationID appId, String newSnapVer)
 
     Boolean restoreCubes(ApplicationID appId, Object[] cubeNames)
