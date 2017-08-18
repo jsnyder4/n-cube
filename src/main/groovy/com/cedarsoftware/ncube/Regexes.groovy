@@ -74,7 +74,4 @@ interface Regexes
     Pattern isHSQLDBPattern = ~/(?i)^.*HSQL Database Engine Driver.*$/
 
     Pattern rangePattern = ~/\s*([^,]+)[,](.*)\s*$/
-
-    Pattern ncubeVersionPattern = ~/^.*n-cube-(?<version>[0-9.]+[.-]?[a-zA-Z]*)\.jar.*$/
-    Pattern nceVersionPattern = ~/^.*n-cube-editor-(?<version>[0-9.]+[.-]?[a-zA-Z]*)\.jar.*$/
 }

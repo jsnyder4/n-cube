@@ -14,6 +14,7 @@ import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.actuate.endpoint.InfoEndpoint
 import org.springframework.boot.actuate.endpoint.MetricsEndpoint
 import org.springframework.web.bind.annotation.RestController
 
@@ -54,6 +55,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 {
     @Autowired
     private MetricsEndpoint metricsEndpoint
+    @Autowired
+    private InfoEndpoint infoEndpoint
+
     private static final Logger LOG = LoggerFactory.getLogger(NCubeController.class)
     private static final Pattern IS_NUMBER_REGEX = ~/^[\d,.e+-]+$/
     private static final Pattern NO_QUOTES_REGEX = ~/"/
@@ -70,7 +74,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private static final Map NO_CELL = [type:null, value:null]
     private static final String EXECUTE_ERROR = 'User code cannot be executed on this server. Attempted method: '
     private final boolean allowExecute
-    private final Map versions
 
     NCubeController(NCubeMutableClient mutableClient, boolean allowExecute)
     {
@@ -78,41 +81,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         System.err = new ThreadAwarePrintStreamErr(System.err)
         this.mutableClient = mutableClient
         this.allowExecute = allowExecute
-        versions = fetchVersionNumbers()
-    }
-
-    private Map fetchVersionNumbers()
-    {
-        String local = 'Running local on class files'
-        Map versions = [ncube: local, nce: local]
-        try
-        {
-            ClassLoader classLoader = this.class.classLoader
-            Object[] urls = classLoader.invokeMethod('getURLs', [] as Object[]) as Object[]
-            for (url in urls)
-            {
-                String location = url.toString()
-                Matcher m = Regexes.ncubeVersionPattern.matcher(location)
-                if (m.find())
-                {
-                    versions.ncube = m.group('version')
-                }
-                m = Regexes.nceVersionPattern.matcher(location)
-                if (m.find())
-                {
-                    versions.nce = m.group('version')
-                }
-            }
-            return versions
-        }
-        catch (Exception e)
-        {
-            LOG.warn('Unable to get classpath', e)
-            versions.ncube = ''
-            versions.nce = ''
-            versions.exception = e.message
-            return versions
-        }
     }
 
     protected String getUserForDatabase()
@@ -1825,12 +1793,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         {
             username = '--'
         }
-        if (versions.containsKey('exception'))
+
+        Map info = infoEndpoint.invoke()
+        Map buildInfo = info.build as Map
+        if (buildInfo)
         {
-            putIfNotNull(serverStats, 'Exception extracting version from classpath', versions.exception)
+            putIfNotNull(serverStats, 'n-cube-editor version', buildInfo.version)
+            putIfNotNull(serverStats, 'n-cube version', buildInfo.'ncube-version')
         }
-        putIfNotNull(serverStats, 'n-cube-editor version', versions.nce)
-        putIfNotNull(serverStats, 'n-cube version', versions.ncube)
         putIfNotNull(serverStats, 'User ID', username)
         putIfNotNull(serverStats, 'Java version', getAttribute(mbs, 'JMImplementation:type=MBeanServerDelegate', 'ImplementationVersion'))
         putIfNotNull(serverStats, 'hostname, servlet', getServletHostname())
