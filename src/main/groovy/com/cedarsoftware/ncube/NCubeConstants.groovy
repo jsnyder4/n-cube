@@ -50,7 +50,8 @@ interface NCubeConstants
     final String SYS_LOCK = 'sys.lock'
     final String SYS_BRANCH_PERMISSIONS = 'sys.branch.permissions'
     final String SYS_TRANSACTIONS = 'tx.*'
-    final String CLASSPATH_CUBE = 'sys.classpath'
+    final String SYS_CLASSPATH = 'sys.classpath'
+    final String SYS_INFO = 'sys.info'
 
     final String ROLE_ADMIN = 'admin'
     final String ROLE_USER = 'user'
@@ -61,6 +62,7 @@ interface NCubeConstants
     final String AXIS_RESOURCE = 'resource'
     final String AXIS_ACTION = 'action'
     final String AXIS_SYSTEM = 'system'
+    final String AXIS_ATTRIBUTE = 'attribute'
 
     final String PROPERTY_CACHE = 'cache'
 

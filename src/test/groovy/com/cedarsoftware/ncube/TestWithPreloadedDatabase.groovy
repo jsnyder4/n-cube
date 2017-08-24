@@ -139,11 +139,11 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         ApplicationID branch3 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.29.0', ReleaseStatus.SNAPSHOT.name(), 'someoneelse')
         ApplicationID branch4 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'someoneelse')
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, branch1))
-        assertEquals(2, mutableClient.copyBranch(HEAD, branch2))
+        assertEquals(3, mutableClient.copyBranch(HEAD, branch1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, branch2))
         // version doesn't match one in HEAD, nothing created.
         assertEquals(0, mutableClient.copyBranch(branch3.asHead(), branch3))
-        assertEquals(2, mutableClient.copyBranch(branch4.asHead(), branch4))
+        assertEquals(3, mutableClient.copyBranch(branch4.asHead(), branch4))
 
         assertTrue(mutableClient.appNames.contains('test'))
         assertTrue(mutableClient.appNames.contains('foo'))
@@ -441,7 +441,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
             assertNull(dto.headSha1)
         }
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         assertEquals(cube1Sha1, mutableClient.getCube(BRANCH1, "TestBranch").sha1())
         assertEquals(cube2Sha1, mutableClient.getCube(BRANCH1, "TestAge").sha1())
@@ -471,7 +471,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNull(mutableClient.getCube(HEAD, 'TestAge'))
 
         assertEquals(1, mutableClient.getRevisionHistory(HEAD, 'TestBranch').size())
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
 
         cube = mutableClient.getCube(HEAD, 'TestBranch')
         assertEquals('ABC', cube.getCell(['Code': -10]))
@@ -522,8 +522,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNull(mutableClient.getCube(BRANCH2, "TestAge"))
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH2))
 
         assertEquals(1, mutableClient.getRevisionHistory(HEAD, "TestBranch").size())
         assertEquals(1, mutableClient.getRevisionHistory(BRANCH1, "TestBranch").size())
@@ -602,7 +602,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         //  test values on branch
         testValuesOnBranch(BRANCH1)
@@ -678,7 +678,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         // pre-branch, cubes don't exist
         assertNull(mutableClient.getCube(BRANCH1, "TestAge"))
 
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
 
         assertEquals(1, mutableClient.getRevisionHistory(HEAD, "TestBranch").size())
         assertEquals(1, mutableClient.getRevisionHistory(BRANCH1, "TestBranch").size())
@@ -724,7 +724,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -773,7 +773,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         //  test values on branch
         testValuesOnBranch(BRANCH1)
@@ -852,7 +852,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         //  test values on branch
         testValuesOnBranch(BRANCH1)
@@ -914,7 +914,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         testValuesOnBranch(HEAD)
 
         //  delete and re-add these cubes.
-        assertEquals(4, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(5, mutableClient.copyBranch(HEAD, BRANCH1))
         mutableClient.deleteCubes(BRANCH1, 'TestBranch')
         mutableClient.deleteCubes(BRANCH1, 'TestAge')
 
@@ -1095,7 +1095,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         //  test values on branch
         testValuesOnBranch(BRANCH1)
@@ -1189,7 +1189,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1202,7 +1202,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         testValuesOnBranch(BRANCH1, "FOO")
 
         int rows = mutableClient.releaseCubes(HEAD, "1.29.0")
-        assertEquals(2, rows)
+        assertEquals(3, rows) // 2 + sys.info = 3
 
         Object[] versions = ncubeRuntime.getVersions(HEAD.app)
         assert versions.length == 3
@@ -1236,7 +1236,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     {
         // load cube with same name, but different structure in TEST branch
         preloadCubes(HEAD, 'test.branch.1.json', 'test.branch.age.1.json')
-        assert 2 == mutableClient.copyBranch(HEAD, BRANCH1)
+        assert 3 == mutableClient.copyBranch(HEAD, BRANCH1)
 
         NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         assertNotNull(cube)
@@ -1250,7 +1250,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert HEAD.equalsNotIncludingBranch(prAppId)
 
         // release 1.28.0
-        assert 2 == mutableClient.releaseCubes(HEAD, '1.29.0')
+        assert 3 == mutableClient.releaseCubes(HEAD, '1.29.0') // 2 + sys.info = 3
 
         // test 1.29.0 snapshot still has same values
         ApplicationID newBranchSnapshot = BRANCH1.asVersion('1.29.0')
@@ -1275,7 +1275,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     {
         // load cube with same name, but different structure in TEST branch
         preloadCubes(HEAD, 'test.branch.1.json', 'test.branch.age.1.json')
-        assert 2 == mutableClient.copyBranch(HEAD, BRANCH1)
+        assert 3 == mutableClient.copyBranch(HEAD, BRANCH1)
 
         NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         assertNotNull(cube)
@@ -1289,7 +1289,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert HEAD.equalsNotIncludingBranch(prAppId)
 
         // release 1.28.0 with no new snapshot version
-        assert 2 == mutableClient.releaseCubes(HEAD)
+        assert 3 == mutableClient.releaseCubes(HEAD) // 2 + sys.info = 3
 
         // test PR obsoleted
         prInfos = mutableClient.pullRequests
@@ -1306,7 +1306,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1337,7 +1337,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertNull(mutableClient.getCube(appId, "TestBranch"))
         assertNull(mutableClient.getCube(appId, "TestAge"))
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1359,7 +1359,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         // load cube with same name, but different structure in TEST branch
         preloadCubes(HEAD, "test.branch.1.json")
 
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
         assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch']))
 
         try
@@ -1379,7 +1379,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         // load cube with same name, but different structure in TEST branch
         preloadCubes(HEAD, "test.branch.1.json")
 
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
         assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch']))
 
         try
@@ -1401,7 +1401,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1427,7 +1427,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(head)
 
-        assertEquals(2, mutableClient.copyBranch(head, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(head, BRANCH1))
 
         testValuesOnBranch(head)
         testValuesOnBranch(BRANCH1)
@@ -1444,7 +1444,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(1, mutableClient.getRevisionHistory(HEAD, "TestAge").size())
         assertEquals(0, getDeletedCubesFromDatabase(HEAD, "*").size())
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         assertEquals(1, mutableClient.getRevisionHistory(BRANCH1, "TestBranch").size())
         assertEquals(1, mutableClient.getRevisionHistory(BRANCH1, "TestAge").size())
@@ -1580,7 +1580,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1609,7 +1609,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1637,7 +1637,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1671,7 +1671,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1702,7 +1702,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1763,7 +1763,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(head, "test.branch.1.json", "test.branch.age.1.json")
         testValuesOnBranch(head)
 
-        assertEquals(2, mutableClient.copyBranch(head, branch))
+        assertEquals(3, mutableClient.copyBranch(head, branch))
 
         testValuesOnBranch(head)
         testValuesOnBranch(branch)
@@ -1844,7 +1844,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json", "test.branch.age.1.json")
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -1921,7 +1921,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -2055,7 +2055,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         testValuesOnBranch(HEAD)
 
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         testValuesOnBranch(HEAD)
         testValuesOnBranch(BRANCH1)
@@ -2323,8 +2323,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         createCubeFromResource(BRANCH2, "test.branch.age.2.json")
 
@@ -2368,13 +2368,13 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5570,8 +5570,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH2))
 
         createCubeFromResource(BRANCH2, "test.branch.age.2.json")
 
@@ -5619,8 +5619,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(BRANCH1, "test.branch.1.json")
         mutableClient.commitBranch(BRANCH1)
         mutableClient.deleteBranch(BRANCH1)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH1, 'TestBranch')
         NCube cube2 = mutableClient.getCube(BRANCH2, 'TestBranch')
@@ -5676,8 +5676,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(BRANCH1, "test.branch.1.json")
         mutableClient.commitBranch(BRANCH1)
         mutableClient.deleteBranch(BRANCH1)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH1, cubeName)
         NCube cube2 = mutableClient.getCube(BRANCH2, cubeName)
@@ -5741,8 +5741,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.deleteBranch(BRANCH1)
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         createCubeFromResource(BRANCH2, "test.branch.age.2.json")
 
@@ -5774,8 +5774,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5812,8 +5812,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5849,8 +5849,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5893,8 +5893,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(1, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertEquals(1,  mutableClient.copyBranch(HEAD, BRANCH2))
+        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(2,  mutableClient.copyBranch(HEAD, BRANCH2))
 
         NCube cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5942,7 +5942,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assertEquals(3, cube.cellMap.size())
 
         //  create the branch (TestAge, TestBranch)
-        assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
 
         Object[] dtos = mutableClient.getBranchChangesForHead(BRANCH1)
         assertEquals(0, dtos.length)

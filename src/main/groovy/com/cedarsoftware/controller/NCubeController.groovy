@@ -1,6 +1,7 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
@@ -22,10 +23,6 @@ import javax.management.MBeanServer
 import javax.management.ObjectName
 import javax.servlet.http.HttpServletRequest
 import java.lang.management.ManagementFactory
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.ConcurrentSkipListSet
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
@@ -68,9 +65,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private static AtomicDouble processLoadPeak = new AtomicDouble(0.0d)
     private static AtomicDouble systemLoadPeak = new AtomicDouble(0.0d)
 
-    private static final ConcurrentMap<String, ConcurrentSkipListSet<String>> appCache = new ConcurrentHashMap<>()
-    private static final ConcurrentMap<String, ConcurrentSkipListSet<String>> appVersions = new ConcurrentHashMap<>()
-    private static final ConcurrentMap<String, ConcurrentSkipListSet<String>> appBranches = new ConcurrentHashMap<>()
     private static final Map NO_CELL = [type:null, value:null]
     private static final String EXECUTE_ERROR = 'User code cannot be executed on this server. Attempted method: '
     private final boolean allowExecute
@@ -181,7 +175,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         int rowCount = mutableClient.releaseVersion(appId, newSnapVer)
-        clearVersionCache(appId.app)
         return rowCount
     }
 
@@ -419,22 +412,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         // TODO: Snag tenant based on authentication
         String tenantName = tenant
         ApplicationID.validateTenant(tenantName)
-        Object[] apps = getCachedApps(tenantName)
 
-        if (apps.length > 0)
-        {
-            return apps
-        }
-
-        List<String> appNames = mutableClient.appNames
-        if (appNames.size() == 0)
+        Object[] appNames = mutableClient.appNames
+        if (appNames.length == 0)
         {
             ApplicationID defaultAppId = new ApplicationID(tenantName, ApplicationID.DEFAULT_APP, '1.0.0', ReleaseStatus.SNAPSHOT.name(), 'DEFAULT_BRANCH')
             createCube(defaultAppId, 'defaultNewAppCube')
-            clearVersionCache(defaultAppId.app)
         }
-        addAllToAppCache(tenantName, appNames)
-        return getCachedApps(tenantName)
+        return appNames
     }
 
     Object[] getAppVersions(String app)
@@ -466,189 +451,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     Object[] getVersions(String app)
     {
-        Object[] appVers = getCachedVersions(app)
-        if (appVers.length > 0)
-        {   // return from cache
-            return appVers
-        }
-
         Object[] versions = mutableClient.getVersions(app)
-        addAllToVersionCache(app, versions)
-        return getCachedVersions(app)
-    }
-
-    /**
-     * App cache Management
-     */
-    private Object[] getCachedApps(String tenant)
-    {
-        return getAppCache(tenant).toArray()
-    }
-
-    private void addToAppCache(String tenant, String appName)
-    {
-        getAppCache(tenant).add(appName)
-    }
-
-    private void addAllToAppCache(String tenant, List<String> appNames)
-    {
-        getAppCache(tenant).addAll(appNames)
-    }
-
-    private void clearAppCache(String tenant)
-    {
-        getAppCache(tenant).clear()
-    }
-
-    private Set<String> getAppCache(String tenant)
-    {
-        tenant = tenant.toLowerCase()
-        ConcurrentSkipListSet apps = new ConcurrentSkipListSet<>(new Comparator() {
-            int compare(Object o1, Object o2) {
-                return (o1 as String).compareToIgnoreCase(o2 as String)
-            }
-        })
-        ConcurrentSkipListSet appsRef = appCache.putIfAbsent(tenant, apps)
-        if (appsRef != null)
-        {
-            apps = appsRef
-        }
-        return apps
-    }
-
-    /**
-     * Versions Cache Management
-     */
-    private Object[] getCachedVersions(String app)
-    {
-        return getVersionsCache(app).toArray()
-    }
-
-    private static void clearVersionCache(String app)
-    {
-        getVersionsCache(app).clear()
-    }
-
-    private static void addToVersionsCache(ApplicationID appId)
-    {
-        getVersionsCache(appId.app).add(appId.version + '-' + appId.status)
-    }
-
-    private static void addAllToVersionCache(String app, Object[] versions)
-    {
-        Set<String> set = getVersionsCache(app)
-        for (String version : versions)
-        {
-            set.add(version)
-        }
-    }
-
-    private static Set<String> getVersionsCache(String app)
-    {
-        ConcurrentSkipListSet<String> versions = appVersions[app]
-        if (versions == null)
-        {
-            versions = new ConcurrentSkipListSet<>(new VersionComparator())
-            ConcurrentSkipListSet versionsRef = appVersions.putIfAbsent(app, versions)
-            if (versionsRef != null)
-            {
-                versions = versionsRef
-            }
-        }
         return versions
-    }
-
-    /**
-     * Version number Comparator that compares Strings with version number - status like
-     * 1.0.1-RELEASE to 1.2.0-SNAPSHOT.  The numeric portion takes priority, however, if
-     * the numeric portion is equal, then RELEASE comes before SNAPSHOT.
-     * The version number components are compared numerically, not alphabetically.
-     */
-    static class VersionComparator implements Comparator<String>
-    {
-        int compare(String s1, String s2)
-        {
-            long v1 = ApplicationID.getVersionValue(s1)
-            long v2 = ApplicationID.getVersionValue(s2)
-            long diff = v2 - v1    // Reverse order (high revisions will show first)
-            if (diff != 0)
-            {
-                return diff
-            }
-            return s1.compareToIgnoreCase(s2)
-        }
-    }
-
-    /**
-     * Branch cache management
-     */
-    private static Object[] getBranchesFromCache(ApplicationID appId)
-    {
-        return getBranchCache(getBranchCacheKey(appId)).toArray()
-    }
-
-    private static void addBranchToCache(ApplicationID appId)
-    {
-        getBranchCache(getBranchCacheKey(appId)).add(appId.branch)
-    }
-
-    private static void addBranchesToCache(ApplicationID appId, Collection<String> branches)
-    {
-        getBranchCache(getBranchCacheKey(appId)).addAll(branches)
-    }
-
-    private static void removeBranchFromCache(ApplicationID appId)
-    {
-        getBranchCache(getBranchCacheKey(appId)).remove(appId.branch)
-    }
-
-    private static clearBranchCache(ApplicationID appId)
-    {
-        getBranchCache(getBranchCacheKey(appId)).clear()
-    }
-
-    private static Set<String> getBranchCache(String key)
-    {
-        ConcurrentSkipListSet<String> set = appBranches[key]
-        if (set == null)
-        {
-            set = new ConcurrentSkipListSet<>(new BranchComparator())
-            ConcurrentSkipListSet setRef = appBranches.putIfAbsent(key, set)
-            if (setRef != null)
-            {
-                set = setRef
-            }
-        }
-        return set
-    }
-
-    private static String getBranchCacheKey(ApplicationID appId)
-    {
-        return "${appId.tenant}/${appId.app}/${appId.version}/${appId.status}"
-    }
-
-    /**
-     * Comparator for comparing branches, which places 'HEAD' always first.
-     */
-    static class BranchComparator implements Comparator<String>
-    {
-        int compare(String s1, String s2)
-        {
-            boolean s1IsHead = ApplicationID.HEAD.equalsIgnoreCase(s1)
-            boolean s2IsHead = ApplicationID.HEAD.equalsIgnoreCase(s2)
-            if (s1IsHead && !s2IsHead)
-                return -1
-            if (!s1IsHead && s2IsHead)
-                return 1
-            if (s1IsHead && s2IsHead)
-                return 0
-
-            if (s1.equalsIgnoreCase(s2))
-            {
-                return s1.compareTo(s2)
-            }
-            return s1.compareToIgnoreCase(s2)
-        }
     }
 
     /**
@@ -696,10 +500,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalArgumentException("New n-cube: ${ncube.name} must have an ApplicationID")
         }
         appId = addTenant(appId)
-        addToAppCache(appId.tenant, appId.app)
-        addToVersionsCache(appId)
-        addToVersionsCache(appId.asVersion(SYS_BOOT_VERSION))
-
+        ncube.applicationID = appId
         mutableClient.createCube(ncube)
     }
 
@@ -764,12 +565,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         destAppId = addTenant(destAppId)
-
-        addToAppCache(appId.tenant, appId.app)
-        addToAppCache(destAppId.tenant, destAppId.app)
-        addToVersionsCache(appId)
-        addToVersionsCache(destAppId)
-
         return mutableClient.duplicate(appId, destAppId, cubeName, newName)
     }
 
@@ -782,7 +577,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         int rowCount = mutableClient.releaseCubes(appId, newSnapVer)
-        clearVersionCache(appId.app)
         return rowCount
     }
 
@@ -793,7 +587,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         mutableClient.changeVersionValue(appId, newSnapVer)
-        clearVersionCache(appId.app)
     }
 
     /**
@@ -1410,9 +1203,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         if (isAppAdmin(appId))
         {
             runtime.clearCache(appId)
-            clearAppCache(appId.tenant)
-            clearVersionCache(appId.app)
-            clearBranchCache(appId)
         }
         else if (!appId.head)
         {
@@ -1424,13 +1214,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         mutableClient.copyBranch(appId.asHead(), appId)
-        if (getBranchesFromCache(appId).size() != 0)
-        {
-            addBranchToCache(appId)
-            if (appId.version != SYS_BOOT_VERSION) {
-                addBranchToCache(appId.asVersion(SYS_BOOT_VERSION));
-            }
-        }
     }
 
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, boolean copyWithHistory = false)
@@ -1438,38 +1221,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         srcAppId = addTenant(srcAppId)
         targetAppId = addTenant(targetAppId)
         Integer rows = mutableClient.copyBranch(srcAppId, targetAppId, copyWithHistory)
-        if (ArrayUtilities.size(getCachedApps(tenant)) > 0)
-        {
-            addToAppCache(targetAppId.tenant, targetAppId.app)
-        }
-        if (getVersionsCache(targetAppId.app).size() != 0)
-        {
-            addToVersionsCache(targetAppId)
-        }
-        if (getBranchesFromCache(targetAppId).size() != 0)
-        {
-            addBranchToCache(targetAppId)
-            if (targetAppId.version != SYS_BOOT_VERSION)
-            {
-                addBranchToCache(targetAppId.asVersion(SYS_BOOT_VERSION));
-            }
-        }
         return rows
     }
 
     Object[] getBranches(ApplicationID appId)
     {
         appId = addTenant(appId)
-        Object[] branches = getBranchesFromCache(appId)
-        if (branches.length > 0 && branches.find { it == ApplicationID.HEAD })
-        {
-            return branches
-        }
-
-        Set<String> realBranches = mutableClient.getBranches(appId)
-        clearBranchCache(appId)
-        addBranchesToCache(appId, realBranches)
-        return getBranchesFromCache(appId)
+        Object[] realBranches = mutableClient.getBranches(appId)
+        return realBranches
     }
 
     Integer getBranchCount(ApplicationID appId)
@@ -1589,12 +1348,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         Boolean result = mutableClient.deleteBranch(appId)
-        removeBranchFromCache(appId)
-        ApplicationID bootAppId = appId.asVersion(SYS_BOOT_VERSION)
-        if (mutableClient.search(bootAppId, '*', null, null).empty)
-        {
-            removeBranchFromCache(bootAppId)
-        }
         return result
     }
 

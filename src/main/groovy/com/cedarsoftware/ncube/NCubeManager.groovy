@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
+import com.cedarsoftware.ncube.util.BranchComparator
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
@@ -163,7 +164,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     void createCube(NCube ncube)
     {
-        addPermissionsCubesIfNewAppId(ncube.applicationID)
+        createPermissionsCubesIfNewAppId(ncube.applicationID)
         persister.createCube(ncube, getUserId())
     }
 
@@ -275,9 +276,16 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Return a List of Strings containing all unique App names for the given tenant.
      */
-    List<String> getAppNames()
+    Object[] getAppNames()
     {
-        return persister.getAppNames(tenant, getUserId())
+        List<String> appNames = persister.getAppNames(tenant, getUserId())
+        Collections.sort(appNames, new Comparator<String>() {
+            int compare(String o1, String o2)
+            {
+                return o1.compareToIgnoreCase(o2)
+            }
+        })
+        return appNames.toArray()
     }
 
     /**
@@ -287,7 +295,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     Object[] getVersions(String app)
     {
         ApplicationID.validateApp(app)
-        Set<String> versions = []
+        Set<String> versions = new TreeSet<>(new VersionComparator())
         Map<String, List<String>> versionMap = persister.getVersions(tenant, app, getUserId())
         versionMap.keySet().each {String status ->
             addVersions(versions, versionMap[status], status)
@@ -346,7 +354,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         assertPermissions(oldAppId, oldName, Action.READ)
         if (oldAppId != newAppId)
         {   // Only see if branch permissions are needed to be created when destination cube is in a different ApplicationID
-            addPermissionsCubesIfNewAppId(newAppId)
+            createPermissionsCubesIfNewAppId(newAppId)
         }
         assertPermissions(newAppId, newName, Action.UPDATE)
         assertNotLockBlocked(newAppId)
@@ -391,7 +399,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * Copy branch from one app id to another
      * @param srcAppId Branch copied from (source branch)
      * @param targetAppId Branch copied to (must not exist)
-     * @return int number of n-cubes in branch (number copied - revision depth is not copied)
+     * @return int number of n-cubes in branch (number copied - revision depth is not copied, will not include "hidden" n-cubes like sys.info)
      */
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, boolean copyWithHistory = false)
     {
@@ -408,12 +416,12 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         boolean isTargetSysBootVersion = targetAppId.version == SYS_BOOT_VERSION
         if (!isTargetSysBootVersion)
         {
-            addPermissionsCubesIfNewAppId(targetAppId)
+            createPermissionsCubesIfNewAppId(targetAppId)
         }
         int rows = copyWithHistory ? persister.copyBranchWithHistory(srcAppId, targetAppId, getUserId()) : persister.copyBranch(srcAppId, targetAppId, getUserId())
         if (isTargetSysBootVersion)
         {
-            addPermissionsCubes(targetAppId)
+            createPermissionsCubes(targetAppId)
         }
         return rows
     }
@@ -558,9 +566,10 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             sleep(10000)
         }
 
-        Set<String> branches = getBranches(appId)
-        for (String branch : branches)
+        Object[] branches = getBranches(appId)
+        for (Object branchObj : branches)
         {
+            String branch = branchObj as String
             if (!ApplicationID.HEAD.equalsIgnoreCase(branch))
             {
                 ApplicationID branchAppId = appId.asBranch(branch)
@@ -768,19 +777,21 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return infos[0].notes
     }
 
-    Set<String> getBranches(ApplicationID appId)
+    Object[] getBranches(ApplicationID appId)
     {
         appId.validate()
         assertPermissions(appId, null)
-        Set<String> realBranches = persister.getBranches(appId, getUserId())
+        Set<String> realBranches = new TreeSet<>(new BranchComparator())
+        Set<String> branches = persister.getBranches(appId, getUserId())
+        realBranches.addAll(branches)
         realBranches.add(ApplicationID.HEAD)
-        return realBranches
+        return realBranches.toArray()
     }
 
     Integer getBranchCount(ApplicationID appId)
     {
-        Set<String> branches = getBranches(appId)
-        return branches.size()
+        Object[] branches = getBranches(appId)
+        return branches.length
     }
 
     String getCubeRawJson(ApplicationID appId, String cubeName)
@@ -828,7 +839,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return cubes
     }
 
-    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String content, Map options = [:])
+    protected List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String content, Map options = [:])
     {
         ApplicationID.validateAppId(appId)
 
@@ -860,7 +871,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null)
 
-        // Step 1: Fetch all NCubeInfoDto's for the passed in ApplicationID
+        // Step 1: Fetch all NCubes for the passed in ApplicationID
         List<NCube> list = cubeSearch(appId, null, "*${REF_APP}*", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         List<AxisRef> refAxes = []
 
@@ -1426,11 +1437,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): null]) || userCube.getCell([(AXIS_ROLE): groupName, (AXIS_USER): getUserId()])
     }
 
-    protected void addPermissionsCubesIfNewAppId(ApplicationID appId)
+    protected void createPermissionsCubesIfNewAppId(ApplicationID appId)
     {
         if (detectNewAppId(appId))
         {
-            addPermissionsCubes(appId)
+            createPermissionsCubes(appId)
         }
     }
 
@@ -1439,16 +1450,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return !persister.doCubesExist(appId, true, 'detectNewAppId', getUserId())
     }
 
-    protected void addPermissionsCubes(ApplicationID appId)
+    protected void createPermissionsCubes(ApplicationID appId)
     {
-        addAppPermissionsCubes(appId)
+        createAppPermissionsCubes(appId)
         if (!appId.head)
         {
-            addBranchPermissionsCube(appId)
+            createBranchPermissionsCube(appId)
         }
     }
 
-    private void addBranchPermissionsCube(ApplicationID appId)
+    private void createBranchPermissionsCube(ApplicationID appId)
     {
         ApplicationID permAppId = appId.asVersion(SYS_BOOT_VERSION)
         if (loadCubeInternal(permAppId, SYS_BRANCH_PERMISSIONS) != null)
@@ -1476,15 +1487,15 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         updateBranch(permAppId)
     }
 
-    private void addAppPermissionsCubes(ApplicationID appId)
+    private void createAppPermissionsCubes(ApplicationID appId)
     {
         ApplicationID permAppId = getBootAppId(appId)
-        addAppUserGroupsCube(permAppId)
-        addAppPermissionsCube(permAppId)
-        addSysLockingCube(permAppId)
+        createAppUserGroupsCube(permAppId)
+        createAppPermissionsCube(permAppId)
+        createSysLockingCube(permAppId)
     }
 
-    private void addSysLockingCube(ApplicationID appId)
+    private void createSysLockingCube(ApplicationID appId)
     {
         if (loadCubeInternal(appId, SYS_LOCK) != null)
         {
@@ -1553,7 +1564,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return true
     }
 
-    private void addAppUserGroupsCube(ApplicationID appId)
+    private void createAppUserGroupsCube(ApplicationID appId)
     {
         if (loadCubeInternal(appId, SYS_USERGROUPS) != null)
         {
@@ -1582,7 +1593,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         persister.createCube(userGroupsCube, getUserId())
     }
 
-    private void addAppPermissionsCube(ApplicationID appId)
+    private void createAppPermissionsCube(ApplicationID appId)
     {
         if (loadCubeInternal(appId, SYS_PERMISSIONS))
         {
@@ -2220,7 +2231,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return sha1
     }
 
-    private def runSystemRequest(Closure closure)
+    protected def runSystemRequest(Closure closure)
     {
         try
         {

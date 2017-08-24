@@ -411,14 +411,17 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                            (SEARCH_EXACT_MATCH_NAME)   : true,
                                            (METHOD_NAME) : 'deleteCubes'] as Map
             cubeNames.each { String cubeName ->
-                Long revision = null
-                runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
-                    revision = row.getLong('revision_number')
-                    addBatchInsert(stmt, row, appId, cubeName, -(revision + 1i), "deleted, txId: [${txId}]", username, ++count)
-                })
-                if (revision == null)
+                if (!SYS_INFO.equalsIgnoreCase(cubeName))
                 {
-                    throw new IllegalArgumentException("Cannot delete cube: ${cubeName} as it does not exist in app: ${appId}")
+                    Long revision = null
+                    runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
+                        revision = row.getLong('revision_number')
+                        addBatchInsert(stmt, row, appId, cubeName, -(revision + 1i), "deleted, txId: [${txId}]", username, ++count)
+                    })
+                    if (revision == null)
+                    {
+                        throw new IllegalArgumentException("Cannot delete cube: ${cubeName} as it does not exist in app: ${appId}")
+                    }
                 }
             }
             if (count % EXECUTE_BATCH_CONSTANT != 0)
@@ -632,6 +635,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         {
             String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
             insertCube(c, appId, cube, 0L, updatedTestData?.bytes, "created", true, null, username, 'createCube')
+            createSysInfoCube(c, appId, username)
         }
     }
 
@@ -697,6 +701,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         String notes = "Cube duplicated from app: ${oldAppId}, name: ${oldName}"
         Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L
         insertCube(c, newAppId, newName, rev, jsonBytes, oldTestData, notes, true, sha1, sameExceptBranch ? headSha1 : null, username, 'duplicateCube')
+        createSysInfoCube(c, newAppId, username)
         return true
     }
 
@@ -898,7 +903,25 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 }
             })
         }
+        createSysInfoCube(c, headAppId, username)
         return infoRecs
+    }
+
+    /**
+     * Create sys.info if it doesn't exist.
+     */
+    private static void createSysInfoCube(Connection c, ApplicationID appId, String username)
+    {
+        NCube sysInfo = loadCube(c, appId, SYS_INFO, null)
+        if (sysInfo != null)
+        {
+            return
+        }
+        sysInfo = new NCube(SYS_INFO)
+        Axis attribute = new Axis(AXIS_ATTRIBUTE, AxisType.DISCRETE, AxisValueType.CISTRING, true)
+        sysInfo.addAxis(attribute)
+        sysInfo.applicationID = appId
+        createCube(c, sysInfo, username)
     }
 
     /**
@@ -1319,7 +1342,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
     {
         if (doCubesExist(c, targetAppId, true, 'copyBranch'))
         {
-            throw new IllegalStateException("Branch '" + targetAppId.branch + "' already exists, app: " + targetAppId)
+            throw new IllegalStateException("Branch '${targetAppId.branch}' already exists, app: ${targetAppId}")
         }
 
         int headCount = srcAppId.head ? 0 : copyBranchInitialRevisions(c, srcAppId, targetAppId)
@@ -1688,11 +1711,11 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         {
             throw new IllegalArgumentException("error calling getAppVersions(), tenant cannot be null or empty")
         }
-        Map map = [tenant: padTenant(c, tenant)]
+        Map map = [tenant: padTenant(c, tenant), sysinfo: SYS_INFO]
         Sql sql = getSql(c)
         List<String> apps = []
 
-        sql.eachRow("/* getAppNames */ SELECT DISTINCT app_cd FROM n_cube WHERE tenant_cd = :tenant", map, { ResultSet row ->
+        sql.eachRow("/* getAppNames */ SELECT DISTINCT app_cd FROM n_cube WHERE tenant_cd = :tenant AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
             apps.add(row.getString('app_cd'))
         })
         return apps
@@ -1705,12 +1728,12 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
             throw new IllegalArgumentException("error calling getAppVersions() tenant: ${tenant} or app: ${app} cannot be null or empty")
         }
         Sql sql = getSql(c)
-        Map map = [tenant: padTenant(c, tenant), app:app]
+        Map map = [tenant: padTenant(c, tenant), app:app, sysinfo: SYS_INFO]
         List<String> releaseVersions = []
         List<String> snapshotVersions = []
         Map<String, List<String>> versions = [:]
 
-        sql.eachRow("/* getVersions */ SELECT DISTINCT version_no_cd, status_cd FROM n_cube WHERE app_cd = :app AND tenant_cd = :tenant", map, { ResultSet row ->
+        sql.eachRow("/* getVersions */ SELECT DISTINCT version_no_cd, status_cd FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
             String version = row.getString('version_no_cd')
             if (ReleaseStatus.RELEASE.name() == row.getString('status_cd'))
             {
@@ -1730,10 +1753,11 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
     {
         Map map = appId as Map
         map.tenant = padTenant(c, appId.tenant)
+        map.sysinfo = SYS_INFO
         Sql sql = getSql(c)
         Set<String> branches = new HashSet<>()
 
-        sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant", map, { ResultSet row ->
+        sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
             branches.add(row.getString('branch_id'))
         })
         return branches
@@ -1882,7 +1906,10 @@ ORDER BY abs(revision_number) DESC"""
         dto.changed = row.getBoolean(CHANGED)
         dto.sha1 = row.getString('sha1')
         dto.headSha1 = row.getString('head_sha1')
-        list.add(dto)
+        if (SYS_INFO != dto.name)
+        {
+            list.add(dto)
+        }
         return dto
     }
 

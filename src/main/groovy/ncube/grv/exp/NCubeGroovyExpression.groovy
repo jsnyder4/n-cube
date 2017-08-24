@@ -8,8 +8,7 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
+import static com.cedarsoftware.ncube.NCubeConstants.*
 
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.

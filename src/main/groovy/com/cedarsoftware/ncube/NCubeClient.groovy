@@ -41,11 +41,11 @@ interface NCubeClient
 
     String getNotes(ApplicationID appId, String cubeName)
 
-    List<String> getAppNames()
+    Object[] getAppNames()
 
     Object[] getVersions(String app)
 
-    Set<String> getBranches(ApplicationID appId)
+    Object[] getBranches(ApplicationID appId)
 
     String getCubeRawJson(ApplicationID appId, String cubeName)
 }

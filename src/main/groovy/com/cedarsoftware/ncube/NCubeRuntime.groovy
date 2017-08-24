@@ -92,7 +92,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                                     evict = Converter.convert(cube.getMetaProperty(CUBE_EVICT), boolean.class)
                                 }
 
-                                if (cube.name == CLASSPATH_CUBE || !evict)
+                                if (cube.name == SYS_CLASSPATH || !evict)
                                 {   // refresh last-accessed time
                                     cache.get(key)
                                 }
@@ -179,7 +179,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         Boolean result = bean.call(beanName, 'updateCube', [ncube]) as Boolean
         ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
 
-        if (CLASSPATH_CUBE.equalsIgnoreCase(ncube.name))
+        if (SYS_CLASSPATH.equalsIgnoreCase(ncube.name))
         {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
             clearCache(ncube.applicationID)
         }
@@ -297,9 +297,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    List<String> getAppNames()
+    Object[] getAppNames()
     {
-        List<String> result = bean.call(beanName, 'getAppNames', []) as List
+        Object[] result = bean.call(beanName, 'getAppNames', []) as Object[]
         return result
     }
 
@@ -317,9 +317,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Set<String> getBranches(ApplicationID appId)
+    Object[] getBranches(ApplicationID appId)
     {
-        Set<String> result = bean.call(beanName, 'getBranches', [appId]) as Set
+        Object[] result = bean.call(beanName, 'getBranches', [appId]) as Object[]
         return result
     }
 
@@ -1101,7 +1101,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     URLClassLoader getUrlClassLoader(ApplicationID appId, Map input)
     {
-        NCube cpCube = getCube(appId, CLASSPATH_CUBE)
+        NCube cpCube = getCube(appId, SYS_CLASSPATH)
 
         if (cpCube == null)
         {   // No sys.classpath cube exists, just create regular GroovyClassLoader with no URLs set into it.
