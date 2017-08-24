@@ -1,14 +1,23 @@
 package ncube.grv.exp
 
-import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.Axis
+import com.cedarsoftware.ncube.Column
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeAppContext
+import com.cedarsoftware.ncube.NCubeInfoDto
+import com.cedarsoftware.ncube.NCubeMutableClient
+import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
+import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
+import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
 
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
@@ -205,6 +214,52 @@ class NCubeGroovyExpression
         }
         input.putAll(coord)
         return target.getCell(input, output, defaultValue)
+    }
+
+    /**
+     * Fetch the cell at location 'altInput', but execute with the current cell location (input).  This
+     * API allows you to create reference cells and execute them from anywhere, with the context (input
+     * coordinate) of the calling cell.
+     * @param altInput Map coordinate of reference cell (often a cell on a default column, e.g [businessUnit:null] as input)
+     * The original input is implied, so all that is typically added to altInput, is the necessary changes to input
+     * to have it point to another cell.
+     * @param cubeName String name of a cube (optional), when pointing to a cell in another n-cube.
+     * @param defaultValue Object to return when no cell exists at the target coordinate
+     * and the cube does not have a cube-level default.
+     * @return value from executing the cell identified by current input map + modifications from altInput.
+     */
+    def use(Map altInput, String cubeName = ncube.name, def defaultValue = null)
+    {
+        Map origInput = new CaseInsensitiveMap(input)
+        input.putAll(altInput)
+        NCube cube = StringUtilities.equalsIgnoreCase(cubeName, ncube.name) ? ncube : getCube(cubeName)
+        return cube.use(input, origInput, output, defaultValue)
+    }
+
+    /**
+     * Fetch the cell at location 'altInput', but execute with the current cell location (input).  This
+     * API allows you to create reference cells and execute them from anywhere, with the context (input
+     * coordinate) of the calling cell.
+     * @param altInput Map coordinate of reference cell (often a cell on a default column, e.g [businessUnit:null] as input)
+     * The original input is implied, so all that is typically added to altInput, is the necessary changes to input
+     * to have it point to another cell.
+     * @param cubeName String name of a cube (optional), when pointing to a cell in another n-cube.
+     * @param defaultValue Object to return when no cell exists at the target coordinate
+     * and the cube does not have a cube-level default.
+     * @param ApplicationID of a different application, needed only if reference cell resides in another app, for
+     * example, an n-cube full of reference cells by design.
+     * @return value from executing the cell identified by current input map + modifications from altInput.
+     */
+    def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
+    {
+        NCube target = ncubeRuntime.getCube(appId, cubeName)
+        if (target == null)
+        {
+            throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
+        }
+        Map origInput = new CaseInsensitiveMap(input)
+        input.putAll(altInput)
+        return getCube(cubeName).use(input, origInput, output, defaultValue)
     }
 
     /**

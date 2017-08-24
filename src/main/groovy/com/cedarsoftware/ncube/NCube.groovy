@@ -1,12 +1,24 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.*
+import com.cedarsoftware.ncube.exception.CommandCellException
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.ncube.exception.RuleJump
+import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.ByteUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.MapUtilities
+import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -610,6 +622,14 @@ class NCube<T>
     T at(final Map coordinate, final Map output = [:], Object defaultValue = null)
     {
         return getCell(coordinate, output, defaultValue)
+    }
+
+    /**
+     * Grab the cell located at altInput, then run it in terms of the input.
+     */
+    T use(Map altInput, Map input, Map output, def defaultCellValue)
+    {
+        return getCellById(getCoordinateKey(altInput, output), input, output, defaultCellValue)
     }
 
     /**
@@ -1307,7 +1327,7 @@ class NCube<T>
         return boundColumns
     }
 
-    private def getCellValue(def cellValue, Map input, Map output)
+    protected def getCellValue(def cellValue, Map input, Map output)
     {
         if (cellValue instanceof CommandCell)
         {

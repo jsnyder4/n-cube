@@ -162,7 +162,7 @@ class GCacheManager implements CacheManager
                 if (removalNotification.value instanceof NCube)
                 {
                     NCube ncube = (NCube) removalNotification.value
-                    LOG.info("Cache eviction: n-cube: ${ncube.name}")
+                    LOG.info("Cache eviction: n-cube: ${ncube.name}, app: ${ncube.applicationID}")
                 }
                 else
                 {

@@ -12,7 +12,13 @@ import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotEquals
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
+import static org.junit.Assert.fail
 
 /**
  * NCube tests.
@@ -5403,6 +5409,26 @@ class TestNCube extends NCubeBaseTest
         Map row = queryResult['A']
         assert row['foo'] == 'OH'
         assert row['bar'] == 'Ohio'
+    }
+
+    @Test
+    void testUse()
+    {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'useRef.json')
+        def x = ncube.at([column:'a', row:1])
+        assert 'A3' == x
+
+        x = ncube.at([column:'a', row:2])
+        assert 'C2' == x
+
+        x = ncube.at([column:'b', row:1])
+        assert 'B3' == x
+
+        x = ncube.at([column:'b', row:2])
+        assert 'C2' == x
+
+        x = ncube.at([column:'c', row:3])
+        assert 'foo' == x
     }
 
     // ---------------------------------------------------------------------------------
