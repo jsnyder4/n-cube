@@ -31,6 +31,6 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class RuleStop extends RuntimeException
+class RuleStop extends RuntimeException
 {
 }

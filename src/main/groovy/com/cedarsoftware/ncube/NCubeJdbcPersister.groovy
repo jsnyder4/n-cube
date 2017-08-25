@@ -1817,6 +1817,32 @@ ORDER BY abs(revision_number) DESC"""
             byte[] bytes = IOUtilities.uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
             String cubeData = StringUtilities.createUtf8String(bytes)
 
+            if (includeFilter || excludeFilter)
+            {
+                Map jsonNCube = (Map) JsonReader.jsonToJava(cubeData, [(JsonReader.USE_MAPS):true] as Map)
+                Set<String> cubeTags = getFilter(jsonNCube[CUBE_TAGS])
+                Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
+
+                if (includeFilter)
+                {   // User is filtering by one or more tokens
+                    copyTags.retainAll(includeFilter)
+                    if (copyTags.empty)
+                    {   // Skip this n-cube : the user passed in TAGs to match, and none did.
+                        return null
+                    }
+                }
+
+                copyTags = new CaseInsensitiveSet<String>(cubeTags)
+                if (excludeFilter)
+                {   // User is excluding by one or more tokens
+                    copyTags.retainAll(excludeFilter)
+                    if (!copyTags.empty)
+                    {   // cube had 1 or more cube_tags that matched a tag in the exclusion list.
+                        return null
+                    }
+                }
+            }
+
             if (hasSearchPattern)
             {
                 if (!searchPattern.matcher(cubeData.substring(cubeData.indexOf(','))).find()) // don't search name of cube
@@ -1826,7 +1852,16 @@ ORDER BY abs(revision_number) DESC"""
                     if (REF_APP_SEARCH_PATTERN.matcher(cubeData).find())
                     {
                         boolean foundInRefAxColumn = false
-                        NCube cube = NCube.fromSimpleJson(cubeData)
+                        NCube cube
+                        try
+                        {   // cube will fail to load if a reference axis is in an invalid state
+                            cube = NCube.fromSimpleJson(cubeData)
+                        }
+                        catch (IllegalStateException e)
+                        {   // log the error, but keep searching
+                            LOG.error(e.message, e)
+                            return null
+                        }
                         for (Axis axis : cube.axes)
                         {
                             if (axis.reference)
@@ -1853,32 +1888,6 @@ ORDER BY abs(revision_number) DESC"""
                     }
                     else
                     {
-                        return null
-                    }
-                }
-            }
-
-            if (includeFilter || excludeFilter)
-            {
-                Map jsonNCube = (Map) JsonReader.jsonToJava(StringUtilities.createUtf8String(bytes), [(JsonReader.USE_MAPS):true] as Map)
-                Set<String> cubeTags = getFilter(jsonNCube[CUBE_TAGS])
-                Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
-
-                if (includeFilter)
-                {   // User is filtering by one or more tokens
-                    copyTags.retainAll(includeFilter)
-                    if (copyTags.empty)
-                    {   // Skip this n-cube : the user passed in TAGs to match, and none did.
-                        return null
-                    }
-                }
-
-                copyTags = new CaseInsensitiveSet<String>(cubeTags)
-                if (excludeFilter)
-                {   // User is excluding by one or more tokens
-                    copyTags.retainAll(excludeFilter)
-                    if (!copyTags.empty)
-                    {   // cube had 1 or more cube_tags that matched a tag in the exclusion list.
                         return null
                     }
                 }

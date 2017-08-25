@@ -22,13 +22,14 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class InvalidCoordinateException extends IllegalArgumentException
+class InvalidCoordinateException extends IllegalArgumentException
 {
 	private final String cubeName
 	private final Set coordinateKeys
 	private final Set requiredKeys
 
-	public InvalidCoordinateException(String msg, String cubeName = null, Set coordinateKeys = null, Set requiredKeys = null) {
+	InvalidCoordinateException(String msg, String cubeName = null, Set coordinateKeys = null, Set requiredKeys = null)
+	{
 		super(msg)
 		this.cubeName = cubeName
 		this.coordinateKeys = coordinateKeys
@@ -40,8 +41,9 @@ public class InvalidCoordinateException extends IllegalArgumentException
 	 *
 	 * @return  required cube name
 	 */
-	public String getCubeName() {
-		return cubeName;
+	String getCubeName()
+	{
+		return cubeName
 	}
 
 	/**
@@ -49,8 +51,9 @@ public class InvalidCoordinateException extends IllegalArgumentException
 	 *
 	 * @return  coordinate keys
 	 */
-	public Set getCoordinateKeys() {
-		return coordinateKeys;
+	Set getCoordinateKeys()
+	{
+		return coordinateKeys
 	}
 
 	/**
@@ -58,7 +61,8 @@ public class InvalidCoordinateException extends IllegalArgumentException
 	 *
 	 * @return  required keys
 	 */
-	public Set getRequiredKeys() {
-		return requiredKeys;
+	Set getRequiredKeys()
+	{
+		return requiredKeys
 	}
 }

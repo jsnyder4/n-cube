@@ -22,7 +22,7 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class AxisOverlapException extends RuntimeException
+class AxisOverlapException extends RuntimeException
 {
-	public AxisOverlapException(String msg) { super(msg) }
+	AxisOverlapException(String msg) { super(msg) }
 }

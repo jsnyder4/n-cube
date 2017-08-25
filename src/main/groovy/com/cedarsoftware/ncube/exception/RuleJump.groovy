@@ -28,16 +28,16 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class RuleJump extends RuntimeException
+class RuleJump extends RuntimeException
 {
     private final Map coord
 
-    public RuleJump(Map coordinate)
+    RuleJump(Map coordinate)
     {
         coord = coordinate
     }
 
-    public Map<String, Object> getCoord()
+    Map<String, Object> getCoord()
     {
         return coord
     }

@@ -22,18 +22,18 @@ import groovy.transform.CompileStatic
  *         limitations under the License.
  */
 @CompileStatic
-public class BranchMergeException extends RuntimeException
+class BranchMergeException extends RuntimeException
 {
     private final Map<String, Object> errors
 
     // placeholder later for change log or something like that.
-    public BranchMergeException(String message, Map<String, Object> errors)
+    BranchMergeException(String message, Map<String, Object> errors)
     {
         super(message)
         this.errors = errors
     }
 
-    public Map<String, Object> getErrors()
+    Map<String, Object> getErrors()
     {
         return errors
     }

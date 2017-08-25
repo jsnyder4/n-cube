@@ -5431,6 +5431,15 @@ class TestNCube extends NCubeBaseTest
         assert 'foo' == x
     }
 
+    @Test
+    void testUseAcrossCubes()
+    {
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'useRef.json')
+        NCube ncube2 = createRuntimeCubeFromResource(ApplicationID.testAppId, 'useRef1.json')
+        def x = ncube2.getCell([column:'a', row:1])
+        assert 'C1' == x
+    }
+
     // ---------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------
 

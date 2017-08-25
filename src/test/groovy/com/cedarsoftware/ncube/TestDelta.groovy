@@ -10,6 +10,7 @@ import org.junit.Test
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXIS_REF_CHANGE
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.*
 
 /**
@@ -1676,6 +1677,120 @@ class TestDelta extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testGetAndUpdateReferenceAxesWithInvalidState()
+    {
+        String snapVer = '1.0.3'
+        String nextSnapVer = '1.0.4'
+        String cubeName = 'States'
+
+        setupLibrary()
+        setupLibraryReference()
+        ApplicationID branch1 = setupBranch('branch1', '1.0.0')
+        testClient.clearCache()
+
+        AxisRef axisRef = mutableClient.getReferenceAxes(branch1)[0]
+        axisRef.destVersion = snapVer
+        axisRef.destStatus = ReleaseStatus.SNAPSHOT.name()
+        mutableClient.updateReferenceAxes([axisRef].toArray())
+
+        NCube ncube1 = mutableClient.getCube(branch1, cubeName)
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = branch1.tenant
+        args[REF_APP] = ApplicationID.DEFAULT_APP
+        args[REF_VERSION] = snapVer
+        args[REF_STATUS] = ReleaseStatus.SNAPSHOT.name()
+        args[REF_BRANCH] = ApplicationID.HEAD
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        ncube1.addAxis(axis)
+        mutableClient.updateCube(ncube1)
+
+        // make ref axes invalid by releasing library
+        mutableClient.releaseCubes(branch1.asVersion(snapVer).asHead(), nextSnapVer)
+
+        try
+        { // make sure we can't load cube
+            mutableClient.loadCube(branch1, cubeName)
+            fail()
+        }
+        catch(IllegalStateException e)
+        {
+            assertContainsIgnoreCase(e.message, 'error reading cube from stream')
+        }
+
+        // update to new version to make cube valid
+        List<AxisRef> axisRefs = mutableClient.getReferenceAxes(branch1)
+        assert 2 == axisRefs.size()
+        axisRefs[0].destVersion = nextSnapVer
+        axisRefs[1].destVersion = nextSnapVer
+        mutableClient.updateReferenceAxes(axisRefs.toArray())
+
+        // make sure ref axes were updated successfully
+        axisRefs = mutableClient.getReferenceAxes(branch1)
+        assert 2 == axisRefs.size()
+        assert nextSnapVer == axisRefs[0].destVersion
+        assert nextSnapVer == axisRefs[1].destVersion
+
+        // make sure we can load cube again
+        assertNotNull(mutableClient.loadCube(branch1, cubeName))
+    }
+
+    @Test
+    void testSearchWithInvalidReferenceAxisState()
+    {
+        String snapVer = '1.0.3'
+        String cubeName = 'States'
+
+        setupLibrary()
+        setupLibraryReference()
+        ApplicationID branch1 = setupBranch('branch1', '1.0.0')
+        testClient.clearCache()
+
+        AxisRef axisRef = mutableClient.getReferenceAxes(branch1)[0]
+        axisRef.destVersion = snapVer
+        axisRef.destStatus = ReleaseStatus.SNAPSHOT.name()
+        mutableClient.updateReferenceAxes([axisRef].toArray())
+
+        NCube ncube1 = mutableClient.getCube(branch1, cubeName)
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = branch1.tenant
+        args[REF_APP] = ApplicationID.DEFAULT_APP
+        args[REF_VERSION] = snapVer
+        args[REF_STATUS] = ReleaseStatus.SNAPSHOT.name()
+        args[REF_BRANCH] = ApplicationID.HEAD
+        args[REF_CUBE_NAME] = 'SimpleDiscrete'
+        args[REF_AXIS_NAME] = 'state'
+
+        ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, 'stateSource1', args)
+        Axis axis = new Axis('stateSource1', 1, false, refAxisLoader)
+        ncube1.addAxis(axis)
+        mutableClient.updateCube(ncube1)
+
+        // make ref axes invalid by releasing library
+        mutableClient.releaseCubes(branch1.asVersion(snapVer).asHead())
+
+        // can also search if there's an invalid reference
+        NCube newStates = NCubeBuilder.stateReferrer
+        newStates.name = 'newStates'
+        newStates.applicationID = branch1
+        mutableClient.createCube(newStates)
+
+        try
+        {
+            List<NCubeInfoDto> searchDtos = mutableClient.search(branch1, null, 'OH', [:])
+            assert 1 == searchDtos.size() // should return only the cube that is valid
+            assert newStates.name == searchDtos[0].name
+        }
+        catch(IllegalStateException ignore)
+        {   // bug fix should have taken care of this
+            fail('Search failed to handle invalid reference axis.')
+        }
+    }
+
+    @Test
     void testColumnMetaBranchesUpdateToDifferentValue()
     {
         setupMetaPropertyTest()
@@ -2366,7 +2481,7 @@ class TestDelta extends NCubeCleanupBaseTest
     {
         NCube<String> states = (NCube<String>) NCubeBuilder.stateReferrer
         Axis state = states.getAxis('state')
-        state.setMetaProperty(ReferenceAxisLoader.REF_VERSION, refVer)
+        state.setMetaProperty(REF_VERSION, refVer)
         ApplicationID appId = ApplicationID.testAppId.asBranch(branch).asSnapshot().asVersion('2.0.0')
         states.applicationID = appId
         mutableClient.copyBranch(appId.asHead(), appId, false)

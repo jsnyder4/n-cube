@@ -1,6 +1,10 @@
 ### Revision History
-* 4.0.24-SNAPSHOT
+* 4.0.25-SNAPSHOT
   * --
+* 4.0.24
+  * Added `use()` API to `NCube` and `NCubeGroovyExpression`.  This API allows the user to point a cell to another cell, which is then fetched, but executed in the input context of the calling cell.  This allows creating reference cells that can be re-used.  Often these are placed on Default columns, or an `NCube` can be created with reference cells in it, and other cells can `use()` these reference cells (again their input will be used when calling the other cell).
+  * Bug fix: getReferenceAxes and updateReferenceAxes would fail when cubes could not be loaded due to invalid references.
+  * Bug fix: contains search would not return anything if an invalid reference axis was encountered.
 * 4.0.23
   * Introduced hidden sys.info n-cube in all n-cube applications. This n-cube will help speed up queries used by `NCubeController` methods `getAppNames()`, `getVersions()` and `getBranches()`. 
 * 4.0.22

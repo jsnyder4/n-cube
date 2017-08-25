@@ -871,48 +871,42 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null)
 
-        // Step 1: Fetch all NCubes for the passed in ApplicationID
-        List<NCube> list = cubeSearch(appId, null, "*${REF_APP}*", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List<NCubeInfoDto> list = search(appId, null, "*${REF_APP}*", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         List<AxisRef> refAxes = []
 
-        for (NCube source : list)
+        for (NCubeInfoDto source : list)
         {
-            try
+            String json = getCubeRawJson(appId, source.name)
+            Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
+            Object[] axes = jsonNCube.axes as Object[]
+            for (Object axisEntry : axes)
             {
-                for (Axis axis : source.axes)
+                Map axis = axisEntry as Map
+                if (axis.containsKey(REF_APP))
                 {
-                    if (axis.reference)
+                    AxisRef ref = new AxisRef()
+                    ref.srcAppId = appId
+                    ref.srcCubeName = source.name
+                    ref.srcAxisName = axis.name
+
+                    ref.destApp = axis[REF_APP]
+                    ref.destVersion = axis[REF_VERSION]
+                    ref.destStatus = axis[REF_STATUS]
+                    ref.destBranch = axis[REF_BRANCH]
+                    ref.destCubeName = axis[REF_CUBE_NAME]
+                    ref.destAxisName = axis[REF_AXIS_NAME]
+
+                    if (axis[TRANSFORM_APP])
                     {
-                        AxisRef ref = new AxisRef()
-                        ref.srcAppId = appId
-                        ref.srcCubeName = source.name
-                        ref.srcAxisName = axis.name
-
-                        ApplicationID refAppId = axis.referencedApp
-                        ref.destApp = refAppId.app
-                        ref.destVersion = refAppId.version
-                        ref.destStatus = refAppId.status
-                        ref.destBranch = refAppId.branch
-                        ref.destCubeName = axis.getMetaProperty(REF_CUBE_NAME)
-                        ref.destAxisName = axis.getMetaProperty(REF_AXIS_NAME)
-
-                        ApplicationID transformAppId = axis.transformApp
-                        if (transformAppId)
-                        {
-                            ref.transformApp = transformAppId.app
-                            ref.transformVersion = transformAppId.version
-                            ref.transformStatus = transformAppId.status
-                            ref.transformBranch = transformAppId.branch
-                            ref.transformCubeName = axis.getMetaProperty(TRANSFORM_CUBE_NAME)
-                        }
-
-                        refAxes.add(ref)
+                        ref.transformApp = axis[TRANSFORM_APP]
+                        ref.transformVersion = axis[TRANSFORM_VERSION]
+                        ref.transformStatus = axis[TRANSFORM_STATUS]
+                        ref.transformBranch = axis[TRANSFORM_BRANCH]
+                        ref.transformCubeName = axis[TRANSFORM_CUBE_NAME]
                     }
+
+                    refAxes.add(ref)
                 }
-            }
-            catch (Exception e)
-            {
-                LOG.warn("Unable to load cube: ${source.name}, app: ${source.applicationID}", e)
             }
         }
         return refAxes
@@ -1009,73 +1003,101 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     void updateReferenceAxes(Object[] axisRefs)
     {
-        Set<ApplicationID> uniqueAppIds = getReferenceAxesAppIds(axisRefs, true)
-        for (ApplicationID appId : uniqueAppIds)
-        {
-            assertPermissions(appId, null, Action.UPDATE)
-            // Make sure we are not lock blocked on any of the appId's that are being updated.
-            assertNotLockBlocked(appId)
-        }
-
+        Map<ApplicationID, Map<String, Set<AxisRef>>> appIdCubeNames = [:]
         for (Object obj : axisRefs)
         {
             AxisRef axisRef = obj as AxisRef
-            axisRef.with {
-                assertPermissions(srcAppId, srcCubeName, Action.UPDATE)
-                NCube ncube = persister.loadCube(srcAppId, srcCubeName, null, getUserId())
-                Axis axis = ncube.getAxis(srcAxisName)
+            ApplicationID appId = axisRef.srcAppId
+            String cubeName = axisRef.srcCubeName
+            if (!appIdCubeNames.containsKey(appId))
+            {
+                appIdCubeNames[appId] = [:]
+            }
+            if (!appIdCubeNames[appId].containsKey(cubeName))
+            {
+                appIdCubeNames[appId][cubeName] = new HashSet<AxisRef>()
+            }
+            appIdCubeNames[appId][cubeName].add(axisRef)
+        }
 
-                axis.setMetaProperty(REF_APP, destApp)
-                axis.setMetaProperty(REF_VERSION, destVersion)
-                axis.setMetaProperty(REF_STATUS, destStatus)
-                axis.setMetaProperty(REF_BRANCH, destBranch)
-                axis.setMetaProperty(REF_CUBE_NAME, destCubeName)
-                axis.setMetaProperty(REF_AXIS_NAME, destAxisName)
-                ApplicationID appId = new ApplicationID(srcAppId.tenant, destApp, destVersion, destStatus, destBranch)
-                assertPermissions(appId, null)
+        for (Map.Entry<ApplicationID, Map<String, Set<AxisRef>>> appIdCubeNameEntry : appIdCubeNames) {
+            ApplicationID appId = appIdCubeNameEntry.key
+            assertNotLockBlocked(appId)
+            assertPermissions(appId, null, Action.UPDATE)
 
-                NCube target = persister.loadCube(appId, destCubeName, null, getUserId())
-                if (target == null)
-                {
-                    throw new IllegalArgumentException("""\
+            for (Map.Entry<String, Set<AxisRef>> cubeNameRefAxEntry : appIdCubeNameEntry.value) {
+                String cubeName = cubeNameRefAxEntry.key
+                assertPermissions(appId, cubeName, Action.UPDATE)
+
+                String json = getCubeRawJson(appId, cubeName)
+                Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
+                Object[] axes = jsonNCube.axes as Object[]
+
+                for (AxisRef axisRef : cubeNameRefAxEntry.value) {
+                    axisRef.with {
+                        ApplicationID destAppId = new ApplicationID(srcAppId.tenant, destApp, destVersion, destStatus, destBranch)
+                        assertPermissions(destAppId, null)
+
+                        NCube target = persister.loadCube(destAppId, destCubeName, null, getUserId())
+                        if (target == null)
+                        {
+                            throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing cube: ${destCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}, user: ${getUserId()}""")
-                }
+                        }
 
-                if (target.getAxis(destAxisName) == null)
-                {
-                    throw new IllegalArgumentException("""\
+                        if (target.getAxis(destAxisName) == null)
+                        {
+                            throw new IllegalArgumentException("""\
 Cannot point reference axis to non-existing axis: ${destAxisName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}, user: ${getUserId()}""")
-                }
+                        }
 
-                axis.setMetaProperty(TRANSFORM_APP, transformApp)
-                axis.setMetaProperty(TRANSFORM_VERSION, transformVersion)
-                axis.setMetaProperty(TRANSFORM_STATUS, transformStatus)
-                axis.setMetaProperty(TRANSFORM_BRANCH, transformBranch)
-                axis.setMetaProperty(TRANSFORM_CUBE_NAME, transformCubeName)
-
-                if (transformApp && transformVersion && transformStatus && transformBranch && transformCubeName)
-                {   // If transformer cube reference supplied, verify that the cube exists
-                    ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
-                    assertPermissions(txAppId, null)
-                    NCube transformCube = persister.loadCube(txAppId, transformCubeName, null, getUserId())
-                    if (transformCube == null)
-                    {
-                        throw new IllegalArgumentException("""\
+                        boolean hasTransform = transformApp && transformVersion && transformStatus && transformBranch && transformCubeName
+                        if (hasTransform) {   // If transformer cube reference supplied, verify that the cube exists
+                            ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
+                            assertPermissions(txAppId, null)
+                            NCube transformCube = persister.loadCube(txAppId, transformCubeName, null, getUserId())
+                            if (transformCube == null)
+                            {
+                                throw new IllegalArgumentException("""\
 Cannot point reference axis transformer to non-existing cube: ${transformCubeName}. \
 Source axis: ${srcAppId.cacheKey(srcCubeName)}.${srcAxisName}, \
 target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user: ${getUserId()}""")
+                            }
+                        }
+
+                        Map axis = axes.find { return (it as Map).name == srcAxisName } as Map
+                        axis[REF_APP] = destApp
+                        axis[REF_VERSION] = destVersion
+                        axis[REF_STATUS] = destStatus
+                        axis[REF_BRANCH] = destBranch
+                        axis[REF_CUBE_NAME] = destCubeName
+                        axis[REF_AXIS_NAME] = destAxisName
+                        if (hasTransform)
+                        {
+                            axis[TRANSFORM_APP] = transformApp
+                            axis[TRANSFORM_VERSION] = transformVersion
+                            axis[TRANSFORM_STATUS] = transformStatus
+                            axis[TRANSFORM_BRANCH] = transformBranch
+                            axis[TRANSFORM_CUBE_NAME] = transformCubeName
+                        }
+                        else
+                        {
+                            axis.remove(TRANSFORM_APP)
+                            axis.remove(TRANSFORM_VERSION)
+                            axis.remove(TRANSFORM_STATUS)
+                            axis.remove(TRANSFORM_BRANCH)
+                            axis.remove(TRANSFORM_CUBE_NAME)
+                        }
                     }
                 }
-                else
-                {
-                    axis.removeTransform()
-                }
 
-                ncube.clearSha1()   // changing meta properties does not clear SHA-1 for recalculation.
+                String updatedJson = JsonWriter.objectToJson(jsonNCube, [(JsonWriter.TYPE):false] as Map)
+                NCube ncube = NCube.fromSimpleJson(updatedJson)
+                ncube.applicationID = appId
                 persister.updateCube(ncube, getUserId())
             }
         }

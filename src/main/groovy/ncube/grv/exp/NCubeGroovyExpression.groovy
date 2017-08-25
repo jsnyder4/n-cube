@@ -16,8 +16,7 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
+import static com.cedarsoftware.ncube.NCubeConstants.*
 
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
@@ -63,7 +62,7 @@ class NCubeGroovyExpression
         NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
         if (cube == null && !quiet)
         {
-            throw new IllegalArgumentException('n-cube: ' + name + ' not found.')
+            throw new IllegalArgumentException("n-cube: ${name} not found.")
         }
         return cube
     }
@@ -153,7 +152,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
+            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
         return target.getCell(coord, output, defaultValue)
     }
@@ -210,7 +209,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
+            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
         input.putAll(coord)
         return target.getCell(input, output, defaultValue)
@@ -232,8 +231,7 @@ class NCubeGroovyExpression
     {
         Map origInput = new CaseInsensitiveMap(input)
         input.putAll(altInput)
-        NCube cube = StringUtilities.equalsIgnoreCase(cubeName, ncube.name) ? ncube : getCube(cubeName)
-        return cube.use(input, origInput, output, defaultValue)
+        return getCube(cubeName).use(input, origInput, output, defaultValue)
     }
 
     /**
@@ -255,7 +253,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException('n-cube: ' + cubeName + ' not found, app: ' + appId)
+            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
         Map origInput = new CaseInsensitiveMap(input)
         input.putAll(altInput)
@@ -367,7 +365,7 @@ class NCubeGroovyExpression
         Axis axis = (Axis) ncube[axisName]
         if (axis == null)
         {
-            throw new IllegalArgumentException("Axis '" + axisName + "' does not exist on n-cube: " + ncube.name)
+            throw new IllegalArgumentException("Axis: ${axisName} does not exist on n-cube: ${ncube.name}")
         }
 
         return axis
@@ -385,7 +383,7 @@ class NCubeGroovyExpression
         Axis axis = (Axis) getCube(cubeName)[axisName]
         if (axis == null)
         {
-            throw new IllegalArgumentException("Axis '" + axisName + "' does not exist on n-cube: " + cubeName)
+            throw new IllegalArgumentException("Axis: ${axisName} does not exist on n-cube: ${cubeName}")
         }
 
         return axis

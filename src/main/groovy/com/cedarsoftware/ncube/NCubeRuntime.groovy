@@ -782,9 +782,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         for (int i=0; i < len; i++)
         {
             Map<String, Object> map = stacks[i]
-            s.append('<b style="color:darkred">')
-            s.append(map.msg)
-            s.append('</b><br>')
+            s.append("""<b style="color:darkred">${map.msg}</b><br>""")
 
             if (i != len - 1i)
             {
@@ -799,7 +797,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             }
         }
 
-        return '<pre>' + s + '</pre>'
+        return "<pre>${s}</pre>"
     }
 
     private static String trace(StackTraceElement[] stackTrace, StackTraceElement[] nextStrackTrace)
@@ -817,10 +815,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             }
             else
             {
-                s.append(element.className)
-                s.append('.')
-                s.append(element.methodName)
-                s.append('()&nbsp;<small><b class="pull-right">')
+                s.append("""${element.className}.${element.methodName}()&nbsp;<small><b class="pull-right">""")
+
                 if (element.nativeMethod)
                 {
                     s.append('Native Method')
@@ -829,9 +825,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                 {
                     if (element.fileName)
                     {
-                        s.append(element.fileName)
-                        s.append(':')
-                        s.append(element.lineNumber)
+                        s.append("""${element.fileName}:${element.lineNumber}""")
                     }
                     else
                     {
