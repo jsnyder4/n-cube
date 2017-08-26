@@ -25,7 +25,7 @@ import groovy.transform.CompileStatic
 enum AxisType
 {
     DISCRETE,       // Single Comparable
-    RANGE,          // Deprecated, use SET
+    RANGE,          // value >= LOW and value < HIGH
     SET,            // Comparable, Comparable, Range, Comparable, etc.
     NEAREST,        // Choose column closest to passed in value (long, date, big decimal, string, comparable + distance)
     RULE            // Rule axis, where each column is an expression (condition) and when true, the resolved cell is fired.

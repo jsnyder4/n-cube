@@ -1,6 +1,9 @@
 ### Revision History
-* 4.0.25-SNAPSHOT
+* 4.1.1-SNAPSHOT
   * --
+* 4.1.0
+  * The `NCube` cache in the `NCubeRuntime` environment only caches a cube if it has never been added (in the current session). Before, if a cube was loaded subsequently, the cache entry was updated.  From a runtime client point of view, they should not be working with n-cubes that are changing.  If they need to accept updates or changes, then the client can call the `NCubeRuntime.clearCache()` API.
+  * Increased the time the execution thread will wait to obtain the per-cell lock before it can dynamically compile a cell.  Value increased from 10 seconds to 60 seconds.
 * 4.0.24
   * Added `use()` API to `NCube` and `NCubeGroovyExpression`.  This API allows the user to point a cell to another cell, which is then fetched, but executed in the input context of the calling cell.  This allows creating reference cells that can be re-used.  Often these are placed on Default columns, or an `NCube` can be created with reference cells in it, and other cells can `use()` these reference cells (again their input will be used when calling the other cell).
   * Bug fix: getReferenceAxes and updateReferenceAxes would fail when cubes could not be loaded due to invalid references.

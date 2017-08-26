@@ -150,7 +150,7 @@ abstract class GroovyBase extends UrlCommandCell
      */
     void prepare(Object data, Map<String, Object> ctx)
     {
-        TimedSynchronize.synchronize(compileLock, 100, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to compile cell')
+        TimedSynchronize.synchronize(compileLock, 250, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to compile cell', 240)
         ClassLoader originalClassLoader = null
 
         try
@@ -169,8 +169,7 @@ abstract class GroovyBase extends UrlCommandCell
 
             // check L2 cache
             if (L2Cache.containsKey(L2CacheKey))
-            {
-                // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
+            {   // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
                 setRunnableCode(L2Cache[L2CacheKey])
                 return
             }

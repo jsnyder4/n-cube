@@ -347,7 +347,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('mergeDeltas')
         NCube ncube = bean.call(beanName, 'mergeDeltas', [appId, cubeName, deltas]) as NCube
-        cacheCube(ncube)
+        ncube = cacheCube(ncube)
         return ncube
     }
 
@@ -923,16 +923,39 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         ApplicationID appId = ncube.applicationID
         ApplicationID.validateAppId(appId)
         validateCube(ncube)
-        prepareCube(ncube)
+        prepareCube(ncube, true)
     }
 
-    private void cacheCube(NCube ncube)
+    private NCube cacheCube(NCube ncube, boolean force = false)
     {
         if (!ncube.metaProperties.containsKey(PROPERTY_CACHE) || Boolean.TRUE == ncube.getMetaProperty(PROPERTY_CACHE))
         {
             Cache cubeCache = ncubeCacheManager.getCache(ncube.applicationID.cacheKey())
-            cubeCache.put(ncube.name.toLowerCase(), ncube)
+            String loName = ncube.name.toLowerCase()
+
+            if (allowMutableMethods || force)
+            {
+                cubeCache.put(loName, ncube)
+            }
+            else
+            {
+                Cache.ValueWrapper wrapper = cubeCache.putIfAbsent(loName, ncube)
+                if (wrapper != null)
+                {
+                    def value = wrapper.get()
+                    if (value instanceof NCube)
+                    {
+                        ncube = (NCube)value
+                    }
+                    else
+                    {
+                        LOG.info('Updating n-cube cache entry on an non-existing cube (cached = false) to an n-cube.')
+                        cubeCache.put(loName, ncube)
+                    }
+                }
+            }
         }
+        return ncube
     }
 
     private NCube getCubeInternal(ApplicationID appId, String cubeName)
@@ -960,11 +983,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return prepareCube(ncube)
     }
 
-    private NCube prepareCube(NCube cube)
+    private NCube prepareCube(NCube ncube, boolean force = false)
     {
-        applyAdvices(cube)
-        cacheCube(cube)
-        return cube
+        NCube cachedCube = cacheCube(ncube, force)
+        if (cachedCube.is(ncube))
+        {
+            applyAdvices(ncube)
+        }
+        return ncube
     }
 
     //-- Advice --------------------------------------------------------------------------------------------------------
@@ -1208,7 +1234,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             NCube ncube = NCube.fromSimpleJson(json)
             ncube.applicationID = appId
             ncube.sha1()
-            prepareCube(ncube)
+            prepareCube(ncube, true)
             return ncube
         }
         catch (NullPointerException e)
@@ -1260,7 +1286,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                 NCube nCube = NCube.fromSimpleJson(json)
                 nCube.applicationID = appId
                 nCube.sha1()
-                prepareCube(nCube)
+                prepareCube(nCube, true)
                 lastSuccessful = nCube.name
                 cubeList.add(nCube)
             }
