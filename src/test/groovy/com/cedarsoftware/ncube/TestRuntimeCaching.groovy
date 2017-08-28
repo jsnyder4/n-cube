@@ -34,7 +34,7 @@ import java.lang.reflect.Method
  *         limitations under the License.
  */
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = ['ncube.allow.mutable.methods=false','logging.level.root=INFO'])
+@TestPropertySource(properties = ['ncube.allow.mutable.methods=false'])
 @ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
 @ActiveProfiles(profiles = ['ncube-client'])
 @CompileStatic

@@ -33,7 +33,6 @@ import static org.junit.Assert.assertTrue
  */
 @CompileStatic
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = ['ncube.allow.mutable.methods=true','logging.level.root=INFO'])
 @ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 //@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
