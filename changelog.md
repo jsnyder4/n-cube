@@ -1,6 +1,7 @@
 ### Revision History
-* 4.1.1-SNAPSHOT
-  * --
+* 4.1.1
+  * Enhancement: Cube filter search uses regex instead of converting JSON to map.
+  * Consumed json-command-servlet 1.6.3
 * 4.1.0
   * The `NCube` cache in the `NCubeRuntime` environment only caches a cube if it has never been added (in the current session). Before, if a cube was loaded subsequently, the cache entry was updated.  From a runtime client point of view, they should not be working with n-cubes that are changing.  If they need to accept updates or changes, then the client can call the `NCubeRuntime.clearCache()` API.
   * Increased the time the execution thread will wait to obtain the per-cell lock before it can dynamically compile a cell.  Value increased from 10 seconds to 60 seconds.

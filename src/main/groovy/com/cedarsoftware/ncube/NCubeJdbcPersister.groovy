@@ -26,6 +26,7 @@ import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Timestamp
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.zip.GZIPOutputStream
 
@@ -1816,30 +1817,23 @@ ORDER BY abs(revision_number) DESC"""
         {   // Only read CUBE_VALUE_BIN if needed (searching content or filtering by cube_tags)
             byte[] bytes = IOUtilities.uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
             String cubeData = StringUtilities.createUtf8String(bytes)
+            bytes = null // Clear out early (memory friendly for giant NCubes)
 
             if (includeFilter || excludeFilter)
             {
-                Map jsonNCube = (Map) JsonReader.jsonToJava(cubeData, [(JsonReader.USE_MAPS):true] as Map)
-                Set<String> cubeTags = getFilter(jsonNCube[CUBE_TAGS])
-                Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
+                Matcher tagMatcher = cubeData =~ /.*"$CUBE_TAGS"\s*:\s*(?:"|\{.*?value":")?(?<tags>.*?)".*/
+                Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new HashSet<String>()
 
-                if (includeFilter)
-                {   // User is filtering by one or more tokens
-                    copyTags.retainAll(includeFilter)
-                    if (copyTags.empty)
-                    {   // Skip this n-cube : the user passed in TAGs to match, and none did.
-                        return null
-                    }
+                Closure tagsMatchFilter = { Set<String> filter ->
+                    Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
+                    copyTags.retainAll(filter)
+                    return !copyTags.empty
                 }
 
-                copyTags = new CaseInsensitiveSet<String>(cubeTags)
-                if (excludeFilter)
-                {   // User is excluding by one or more tokens
-                    copyTags.retainAll(excludeFilter)
-                    if (!copyTags.empty)
-                    {   // cube had 1 or more cube_tags that matched a tag in the exclusion list.
-                        return null
-                    }
+                if ((includeFilter && !tagsMatchFilter(includeFilter)) // search by include tag but doesn't match
+                    || (excludeFilter && tagsMatchFilter(excludeFilter))) // search by exclude tag and matches
+                {   // exclude cube from search
+                    return null
                 }
             }
 

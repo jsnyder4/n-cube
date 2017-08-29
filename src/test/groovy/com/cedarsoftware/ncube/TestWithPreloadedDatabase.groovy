@@ -6614,8 +6614,8 @@ return ints''', null, false)
 
         List<NCubeInfoDto> list = mutableClient.search(appId, null, null, [(SEARCH_FILTER_INCLUDE):['red', 'white']])
         assert list.size() == 2
-        assert 'TestCube' == list[0].name || 'TestBranch' == list[0].name
-        assert 'TestCube' == list[1].name || 'TestBranch' == list[1].name
+        assert list.name.contains('TestCube')
+        assert list.name.contains('TestBranch')
 
         list = mutableClient.search(appId, null, null, [(SEARCH_FILTER_INCLUDE):['red', 'white'], (SEARCH_FILTER_EXCLUDE):['white', 'blue']])
         assert list.size() == 1
