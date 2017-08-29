@@ -14,7 +14,7 @@ import org.apache.http.client.CredentialsProvider
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.conn.routing.HttpRoute
-import org.apache.http.entity.StringEntity
+import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.BasicAuthCache
 import org.apache.http.impl.client.BasicCredentialsProvider
@@ -31,8 +31,7 @@ import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
-import static org.apache.http.HttpHeaders.ACCEPT
-import static org.apache.http.HttpHeaders.USER_AGENT
+import static org.apache.http.HttpHeaders.*
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 
 /**
@@ -122,12 +121,18 @@ class JsonHttpProxy implements CallableBean
 
     Object call(String bean, String methodName, List args)
     {
-        String jsonArgs = JsonWriter.objectToJson(args.toArray())
+        Object[] params = args.toArray()
+        args = null
+        String jsonArgs = JsonWriter.objectToJson(params)
 
         if (LOG.debugEnabled)
         {
-            LOG.debug("${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}")
+            LOG.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
         }
+
+        params = null
+        byte[] compressedBytes = IOUtilities.compressBytes(StringUtilities.getUTF8Bytes(jsonArgs))
+        jsonArgs = null
         long start = System.nanoTime()
 
         HttpClientContext clientContext = HttpClientContext.create()
@@ -143,9 +148,14 @@ class JsonHttpProxy implements CallableBean
         }
         request.setHeader(USER_AGENT, 'ncube')
         request.setHeader(ACCEPT, APPLICATION_JSON.mimeType)
-        request.entity = new StringEntity(jsonArgs, APPLICATION_JSON)
+        request.setHeader(ACCEPT_ENCODING, 'gzip, deflate')
+        request.setHeader(CONTENT_TYPE, "application/json; charset=UTF-8")
+        request.setHeader(CONTENT_ENCODING, 'gzip')
+        request.entity = new ByteArrayEntity(compressedBytes)
+        compressedBytes = null
 
         HttpResponse response = httpClient.execute(request, clientContext)
+        request.entity = null
         String json = EntityUtils.toString(response.entity)
         EntityUtils.consume(response.entity)
 

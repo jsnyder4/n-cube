@@ -1,6 +1,7 @@
 ### Revision History
-* 4.1.2-SNAPSHOT
-  * --
+* 4.1.2
+  * Enhancement: Added support for compressed HTTP POST data
+  * Consumed json-command-servlet 1.6.4
 * 4.1.1
   * Enhancement: Cube filter search uses regex instead of converting JSON to map.
   * Consumed json-command-servlet 1.6.3
