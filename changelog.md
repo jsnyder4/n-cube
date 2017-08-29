@@ -1,4 +1,6 @@
 ### Revision History
+* 4.1.2-SNAPSHOT
+  * --
 * 4.1.1
   * Enhancement: Cube filter search uses regex instead of converting JSON to map.
   * Consumed json-command-servlet 1.6.3
