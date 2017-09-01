@@ -1,5 +1,7 @@
 package com.cedarsoftware.util
 
+import org.springframework.util.FastByteArrayOutputStream
+
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -29,6 +31,7 @@ import org.springframework.context.annotation.PropertySource
 
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
+import java.util.zip.GZIPOutputStream
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
 import static org.apache.http.HttpHeaders.*
@@ -122,17 +125,17 @@ class JsonHttpProxy implements CallableBean
     Object call(String bean, String methodName, List args)
     {
         Object[] params = args.toArray()
-        args = null
-        String jsonArgs = JsonWriter.objectToJson(params)
+        FastByteArrayOutputStream stream = new FastByteArrayOutputStream(1024)
+        JsonWriter writer = new JsonWriter(new GZIPOutputStream(stream))
+        writer.write(params)
+        writer.flush()
+        writer.close()
 
         if (LOG.debugEnabled)
         {
             LOG.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
         }
 
-        params = null
-        byte[] compressedBytes = IOUtilities.compressBytes(StringUtilities.getUTF8Bytes(jsonArgs))
-        jsonArgs = null
         long start = System.nanoTime()
 
         HttpClientContext clientContext = HttpClientContext.create()
@@ -151,8 +154,7 @@ class JsonHttpProxy implements CallableBean
         request.setHeader(ACCEPT_ENCODING, 'gzip, deflate')
         request.setHeader(CONTENT_TYPE, "application/json; charset=UTF-8")
         request.setHeader(CONTENT_ENCODING, 'gzip')
-        request.entity = new ByteArrayEntity(compressedBytes)
-        compressedBytes = null
+        request.entity = new ByteArrayEntity(stream.toByteArrayUnsafe(), 0, stream.size())
 
         HttpResponse response = httpClient.execute(request, clientContext)
         request.entity = null

@@ -4748,7 +4748,7 @@ class TestNCube extends NCubeBaseTest
             NCube.fromSimpleJson((InputStream)null)
             fail()
         }
-        catch (NullPointerException ignored)
+        catch (Exception ignored)
         {
         }
 

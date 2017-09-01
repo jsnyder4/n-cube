@@ -6,6 +6,7 @@ import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+import org.springframework.util.FastByteArrayOutputStream
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -278,7 +279,7 @@ abstract class ContentCmdCell extends UrlCommandCell
 
     static class CachingInputStream extends FilterInputStream
     {
-        ByteArrayOutputStream streamCache = new ByteArrayOutputStream()
+        FastByteArrayOutputStream streamCache = new FastByteArrayOutputStream()
 
         /**
          * Creates a {@code FilterInputStream}
@@ -293,7 +294,7 @@ abstract class ContentCmdCell extends UrlCommandCell
             super(input)
         }
 
-        public int read(byte[] b, int off, int len) throws IOException
+        int read(byte[] b, int off, int len) throws IOException
         {
             int count = super.read(b, off, len)
             if (count != -1)
@@ -303,7 +304,7 @@ abstract class ContentCmdCell extends UrlCommandCell
             return count
         }
 
-        public int read() throws IOException
+        int read() throws IOException
         {
             int result = super.read()
             if (result != -1)
@@ -313,9 +314,9 @@ abstract class ContentCmdCell extends UrlCommandCell
             return result
         }
 
-        public byte[] getStreamCache()
+        byte[] getStreamCache()
         {
-            return streamCache.toByteArray()
+            return streamCache.toByteArrayUnsafe()
         }
     }
 }

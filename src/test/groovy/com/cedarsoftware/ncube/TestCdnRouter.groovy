@@ -5,6 +5,7 @@ import com.cedarsoftware.ncube.util.CdnRoutingProvider
 import groovy.transform.CompileStatic
 import org.junit.Test
 import org.mockito.Mockito
+import org.springframework.util.FastByteArrayOutputStream
 
 import javax.servlet.ReadListener
 import javax.servlet.ServletInputStream
@@ -538,7 +539,7 @@ class TestCdnRouter extends NCubeCleanupBaseTest
 
     static class DumboOutputStream extends ServletOutputStream
     {
-        ByteArrayOutputStream bao = new ByteArrayOutputStream()
+        FastByteArrayOutputStream bao = new FastByteArrayOutputStream()
 
         byte[] getBytes()
         {
@@ -549,7 +550,7 @@ class TestCdnRouter extends NCubeCleanupBaseTest
             catch (IOException ignored)
             {
             }
-            return bao.toByteArray()
+            return bao.toByteArrayUnsafe()
         }
 
         void write(int b) throws IOException

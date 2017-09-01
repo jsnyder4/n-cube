@@ -262,7 +262,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             {
                 LOG.error(e.message, e)
                 String json = mutableClient.getCubeRawJson(appId, cubeName)
-                if (options.mode == 'json-pretty')
+                if ('json-pretty' == options.mode)
                 {
                     return JsonWriter.formatJson(json)
                 }

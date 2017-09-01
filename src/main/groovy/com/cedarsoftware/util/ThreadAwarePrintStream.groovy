@@ -2,6 +2,8 @@ package com.cedarsoftware.util
 
 import groovy.transform.CompileStatic
 
+import org.springframework.util.FastByteArrayOutputStream
+
 /**
  * Thread-aware PrintStream.  Use to separate different threads' output
  * to System.output, System.err so that this output can be captured per
@@ -35,10 +37,10 @@ class ThreadAwarePrintStream extends PrintStream
         }
     }
 
-    private static final ThreadLocal<ByteArrayOutputStream> output = new ThreadLocal<ByteArrayOutputStream>() {
-        ByteArrayOutputStream initialValue()
+    private static final ThreadLocal<FastByteArrayOutputStream> output = new ThreadLocal<FastByteArrayOutputStream>() {
+        FastByteArrayOutputStream initialValue()
         {
-            return new ByteArrayOutputStream()
+            return new FastByteArrayOutputStream()
         }
     }
 
@@ -79,7 +81,7 @@ class ThreadAwarePrintStream extends PrintStream
 
     static String getContent()
     {
-        byte[] contents = output.get().toByteArray()
+        byte[] contents = output.get().toByteArrayUnsafe()
         output.get().reset()
         return StringUtilities.createString(contents, "UTF-8")
     }

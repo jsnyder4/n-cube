@@ -6,6 +6,7 @@ import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
+import org.springframework.util.FastByteArrayOutputStream
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
@@ -160,7 +161,7 @@ class TestJsonFormatter extends NCubeBaseTest
     @Test
     void testTryingToUseFormatToWriteToStream()
     {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream()
+        FastByteArrayOutputStream stream = new FastByteArrayOutputStream()
         JsonFormatter formatter = new JsonFormatter(stream)
         try
         {
