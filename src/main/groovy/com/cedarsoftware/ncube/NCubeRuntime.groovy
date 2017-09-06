@@ -175,15 +175,26 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     Boolean updateCube(NCube ncube)
     {
-        verifyAllowMutable('updateCube')
-        Boolean result = bean.call(beanName, 'updateCube', [ncube]) as Boolean
-        ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
-
-        if (SYS_CLASSPATH.equalsIgnoreCase(ncube.name))
-        {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
-            clearCache(ncube.applicationID)
+        if (ncube == null)
+        {
+            throw new IllegalArgumentException('Cannot pass null to updateCube.')
         }
-        clearCubeFromCache(ncube.applicationID, ncube.name)
+        verifyAllowMutable('updateCube')
+        Boolean result = updateCube(ncube.applicationID, ncube.name, ncube.cubeAsGzipJsonBytes)
+        ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+        return result
+    }
+
+    Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        verifyAllowMutable('updateCube')
+        Boolean result = bean.call(beanName, 'updateCube', [appId, cubeName, cubeBytes]) as Boolean
+
+        if (SYS_CLASSPATH.equalsIgnoreCase(cubeName))
+        {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
+            clearCache(appId)
+        }
+        clearCubeFromCache(appId, cubeName)
         return result
     }
 

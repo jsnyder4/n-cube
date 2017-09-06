@@ -801,7 +801,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         }
         catch (IllegalArgumentException e)
         {
-            assertContainsIgnoreCase(e.message, 'cannot be null')
+            assertContainsIgnoreCase(e.message, 'null')
         }
     }
 

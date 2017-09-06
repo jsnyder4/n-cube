@@ -395,6 +395,18 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return true
     }
 
+    Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        if (cubeBytes == null)
+        {
+            throw new IllegalArgumentException("Attemping to updateCube(), cubeBytes cannot be null, user: ${getUserId()}")
+        }
+        NCube ncube = NCube.createCubeFromBytes(cubeBytes)
+        ncube.applicationID = appId
+        ncube.name = cubeName
+        return updateCube(ncube)
+    }
+
     /**
      * Copy branch from one app id to another
      * @param srcAppId Branch copied from (source branch)

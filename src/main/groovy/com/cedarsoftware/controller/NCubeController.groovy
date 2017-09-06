@@ -515,9 +515,15 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.createCube(ncube)
     }
 
+    @Deprecated
     Boolean updateCube(NCube ncube)
     {
         return mutableClient.updateCube(ncube)
+    }
+
+    Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        return mutableClient.updateCube(appId, cubeName, cubeBytes)
     }
 
     /**

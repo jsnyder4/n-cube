@@ -34,6 +34,8 @@ interface NCubeMutableClient extends NCubeClient
 
     Boolean updateCube(NCube ncube)
 
+    Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+
     void createCube(NCube ncube)
 
     Boolean duplicate(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName)
