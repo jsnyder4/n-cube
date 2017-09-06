@@ -403,15 +403,20 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      */
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, boolean copyWithHistory = false)
     {
-        assertPermissions(srcAppId, null, Action.READ)
-        assertPermissions(targetAppId, null, Action.UPDATE)
-        ApplicationID.validateAppId(srcAppId)
-        ApplicationID.validateAppId(targetAppId)
-        targetAppId.validateStatusIsNotRelease()
-        if (!search(targetAppId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true]).empty)
-        {
-            throw new IllegalArgumentException("A RELEASE version ${targetAppId.version} already exists, app: ${targetAppId}, user: ${getUserId()}")
+        Closure checkForExistingCubes = { ApplicationID appId, String message ->
+            if (persister.doCubesExist(appId, false, 'copyBranch', getUserId()))
+            {
+                throw new IllegalArgumentException("${message}, app: ${targetAppId}, user: ${getUserId()}")
+            }
         }
+        ApplicationID.validateAppId(srcAppId)
+        assertPermissions(srcAppId, null, Action.READ)
+        ApplicationID.validateAppId(targetAppId)
+        targetAppId.validateBranchIsNotHead()
+        targetAppId.validateStatusIsNotRelease()
+        checkForExistingCubes(targetAppId.asRelease(), "A RELEASE version ${targetAppId.version} already exists")
+        checkForExistingCubes(targetAppId, "Branch ${targetAppId.branch} already exists")
+        assertPermissions(targetAppId, null, Action.UPDATE)
         assertNotLockBlocked(targetAppId)
         boolean isTargetSysBootVersion = targetAppId.version == SYS_BOOT_VERSION
         if (!isTargetSysBootVersion)
@@ -798,6 +803,12 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     {
         assertPermissions(appId, cubeName)
         return persister.loadCubeRawJson(appId, cubeName, getUserId())
+    }
+
+    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
+    {
+        assertPermissions(appId, cubeName)
+        return persister.loadCubeRawJsonBytes(appId, cubeName, getUserId())
     }
 
     /**

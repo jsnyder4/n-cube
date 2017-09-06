@@ -39,13 +39,20 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
 
     Object jdbcOperation(Closure closure, String msg, String username = 'no user set')
     {
+        long start = System.nanoTime()
         Connection c = connectionProvider.connection
+        long end = System.nanoTime()
+        long time = Math.round((end - start) / 1000000.0d)
+        if (time > 1000)
+        {
+            LOG.info("    [SLOW getting DB connection - ${time} ms] [${username}] ${msg}")
+        }
         try
         {
-            long start = System.nanoTime()
+            start = System.nanoTime()
             Object ret = closure(c)
-            long end = System.nanoTime()
-            long time = Math.round((end - start) / 1000000.0d)
+            end = System.nanoTime()
+            time = Math.round((end - start) / 1000000.0d)
             if (time > 1000)
             {
                 LOG.info("    [SLOW DB - ${time} ms] [${username}] ${msg}")
@@ -74,6 +81,12 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
     {
         return (String) jdbcOperation({ Connection c -> persister.loadCubeRawJson(c, appId, name) },
                 "loadCubeRawJson(${appId.cacheKey(name)})", username)
+    }
+
+    byte[] loadCubeRawJsonBytes(ApplicationID appId, String name, String username)
+    {
+        return (byte[]) jdbcOperation({ Connection c -> persister.loadCubeRawJsonBytes(c, appId, name) },
+                "loadCubeRawJsonBytes(${appId.cacheKey(name)})", username)
     }
 
     NCube loadCubeById(long cubeId, Map options, String username)

@@ -133,6 +133,20 @@ class NCubeJdbcPersister
         return json
     }
 
+    static byte[] loadCubeRawJsonBytes(Connection c, ApplicationID appId, String cubeName)
+    {
+        Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
+                                       (SEARCH_INCLUDE_CUBE_DATA): true,
+                                       (SEARCH_EXACT_MATCH_NAME): true] as Map
+
+        byte[] bytes = null
+        options[METHOD_NAME] = 'loadCubeRawJsonBytes'
+        runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
+            bytes = row.getBytes(CUBE_VALUE_BIN)
+        })
+        return bytes
+    }
+    
     static NCube loadCube(Connection c, ApplicationID appId, String cubeName, Map options)
     {
         if (!options)
@@ -1343,7 +1357,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
     {
         if (doCubesExist(c, targetAppId, true, 'copyBranch'))
         {
-            throw new IllegalStateException("Branch '${targetAppId.branch}' already exists, app: ${targetAppId}")
+            throw new IllegalArgumentException("Branch '${targetAppId.branch}' already exists, app: ${targetAppId}")
         }
 
         int headCount = srcAppId.head ? 0 : copyBranchInitialRevisions(c, srcAppId, targetAppId)
@@ -1414,7 +1428,14 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
         Sql sql = getSql(c)
         String select = """SELECT n.n_cube_id, n.n_cube_nm, n.app_cd, n.notes_bin, n.cube_value_bin, n.test_data_bin,
                 n.version_no_cd, n.status_cd, n.create_dt, n.create_hid, n.revision_number, n.branch_id, n.changed, n.sha1
-        FROM n_cube n,
+        FROM (SELECT x.n_cube_id, x.n_cube_nm, x.app_cd, x.notes_bin, x.cube_value_bin, x.test_data_bin,
+                x.version_no_cd, x.status_cd, x.create_dt, x.create_hid, x.revision_number, x.branch_id, x.changed, x.sha1
+            FROM n_cube x
+            JOIN (SELECT n_cube_nm, MAX(ABS(revision_number)) AS max_rev
+                            FROM n_cube
+                            WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = 'HEAD' GROUP BY n_cube_nm) y
+                    ON LOWER(x.n_cube_nm) = LOWER(y.n_cube_nm) AND ABS(x.revision_number) = y.max_rev
+                            WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND branch_id = 'HEAD') n,
         (SELECT x.n_cube_nm, x.head_sha1, x.sha1
             FROM n_cube x
             JOIN (SELECT n_cube_nm, MAX(ABS(revision_number)) AS max_rev
@@ -1437,6 +1458,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
             sql.eachRow(map, select, { ResultSet row ->
                 byte[] notes = row.getBytes(NOTES_BIN)
                 String oldNotes = removePreviousNotesCopyMessage(notes)
+                String sha1 = row.getString('sha1')
                 insert.setLong(1, UniqueIdGenerator.uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
@@ -1451,8 +1473,8 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
                 insert.setBoolean(14, targetAppId.head ? false : (boolean)row.getBoolean(CHANGED))
-                insert.setString(15, row.getString('sha1'))
-                insert.setString(16, null)
+                insert.setString(15, sha1)
+                insert.setString(16, targetAppId.head ? null : sha1)
 
                 insert.addBatch()
                 count++

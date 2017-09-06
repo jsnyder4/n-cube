@@ -15,6 +15,7 @@ import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.actuate.endpoint.InfoEndpoint
 import org.springframework.boot.actuate.endpoint.MetricsEndpoint
 import org.springframework.web.bind.annotation.RestController
@@ -54,6 +55,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private MetricsEndpoint metricsEndpoint
     @Autowired
     private InfoEndpoint infoEndpoint
+
+    @Value('${server.tomcat.max-connections:1000}') int tomcatMaxConnections
+    @Value('${server.tomcat.max-threads:200}') int tomcatMaxThreads
 
     private static final Logger LOG = LoggerFactory.getLogger(NCubeController.class)
     private static final Pattern IS_NUMBER_REGEX = ~/^[\d,.e+-]+$/
@@ -246,6 +250,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         appId = addTenant(appId)
         String rawJson = mutableClient.getCubeRawJson(appId, cubeName)
         return rawJson
+    }
+
+    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
+    {
+        appId = addTenant(appId)
+        byte[] bytes = mutableClient.getCubeRawJsonBytes(appId, cubeName)
+        return bytes
     }
 
     String getJson(ApplicationID appId, String cubeName, Map options)
@@ -1601,6 +1612,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         putIfNotNull(serverStats, 'JDBC Pool size', PoolInterceptor.size.get())
         putIfNotNull(serverStats, 'JDBC Pool active', PoolInterceptor.active.get())
         putIfNotNull(serverStats, 'JDBC Pool idle', PoolInterceptor.idle.get())
+
+        putIfNotNull(serverStats, 'Tomcat Max Connections', tomcatMaxConnections)
+        putIfNotNull(serverStats, 'Tomcat Max Threads', tomcatMaxThreads)
 
         serverStats['----------'] = ''
         Map metrics = metricsEndpoint.invoke()

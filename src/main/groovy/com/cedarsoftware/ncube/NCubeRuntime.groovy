@@ -331,8 +331,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     String getCubeRawJson(ApplicationID appId, String cubeName)
     {
-        String result = bean.call(beanName, 'getCubeRawJson', [appId, cubeName]) as String
-        return result
+        String json = bean.call(beanName, 'getCubeRawJson', [appId, cubeName]) as String
+        return json
+    }
+
+    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
+    {
+        byte[] bytes = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName]) as byte[]
+        return bytes
     }
 
     Boolean deleteBranch(ApplicationID appId)
@@ -974,12 +980,16 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         // and normal app processing doesn't do two queries anymore.
         // used to do getCubeInfoRecords() -> dto
         // and then dto -> loadCube(id)
-        NCube ncube = bean.call(beanName, 'getCube', [appId, cubeName]) as NCube
-        if (ncube == null)
+        byte[] bytes = getCubeRawJsonBytes(appId, cubeName)
+
+        if (ArrayUtilities.isEmpty(bytes))
         {
             cubeCache.put(lowerCubeName, false)
             return null
         }
+
+        NCube ncube = NCube.createCubeFromBytes(bytes)
+        ncube.applicationID = appId
         return prepareCube(ncube)
     }
 

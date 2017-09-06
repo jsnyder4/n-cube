@@ -1172,7 +1172,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
             mutableClient.copyBranch(HEAD, BRANCH1)
             fail()
         }
-        catch (IllegalStateException e)
+        catch (IllegalArgumentException e)
         {
             assertContainsIgnoreCase(e.message, 'already exists')
         }

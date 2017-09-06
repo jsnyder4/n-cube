@@ -48,4 +48,6 @@ interface NCubeClient
     Object[] getBranches(ApplicationID appId)
 
     String getCubeRawJson(ApplicationID appId, String cubeName)
+
+    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
 }

@@ -320,7 +320,7 @@ class ApplicationID
 
     boolean isHead()
     {
-        return HEAD == branch
+        return HEAD.equalsIgnoreCase(branch)
     }
 
     void validateBranchIsNotHead()
