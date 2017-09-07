@@ -1,8 +1,10 @@
 ### Revision History
-* 4.1.7-SNAPSHOT
+* 4.1.8-SNAPSHOT
   * --
+* 4.1.7
+  * Performance: createCube() / updateCube() now pass gzipped byte[] to storage server.
 * 4.1.6
-  * Enhancement: The `NCube` storage server now ships `NCubes` to the NCE server in compressed `byte[]` form. Reduces CPU load on `NCube` storage servers.
+  * Performance: The `NCube` storage server now ships `NCubes` to the NCE server in compressed `byte[]` form. Reduces CPU load on `NCube` storage servers.
 * 4.1.5
   * Enhancement: Added better logging around jdbc connections and more jdbc connection information to `NCubeController.health()`
   * Bug fix: Shallow branch copy failed when cube was changed then changed back in a later revision.

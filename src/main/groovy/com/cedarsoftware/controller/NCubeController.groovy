@@ -515,14 +515,26 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.createCube(ncube)
     }
 
+    void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        if (!appId)
+        {
+            throw new IllegalArgumentException("New n-cube: ${cubeName} must have an ApplicationID")
+        }
+        appId = addTenant(appId)
+        mutableClient.createCube(appId, cubeName, cubeBytes)
+    }
+
     @Deprecated
     Boolean updateCube(NCube ncube)
     {
+        ncube.applicationID = addTenant(ncube.applicationID)
         return mutableClient.updateCube(ncube)
     }
 
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
+        addTenant(appId)
         return mutableClient.updateCube(appId, cubeName, cubeBytes)
     }
 

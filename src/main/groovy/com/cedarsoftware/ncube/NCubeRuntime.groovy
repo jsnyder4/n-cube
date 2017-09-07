@@ -180,22 +180,19 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             throw new IllegalArgumentException('Cannot pass null to updateCube.')
         }
         verifyAllowMutable('updateCube')
-        Boolean result = updateCube(ncube.applicationID, ncube.name, ncube.cubeAsGzipJsonBytes)
+        Boolean result = bean.call(beanName, 'updateCube', [ncube.applicationID, ncube.name, ncube.cubeAsGzipJsonBytes]) as Boolean
+        if (SYS_CLASSPATH.equalsIgnoreCase(ncube.name))
+        {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
+            clearCache(ncube.applicationID)
+        }
+        clearCubeFromCache(ncube.applicationID, ncube.name)
         ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
         return result
     }
 
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
-        verifyAllowMutable('updateCube')
-        Boolean result = bean.call(beanName, 'updateCube', [appId, cubeName, cubeBytes]) as Boolean
-
-        if (SYS_CLASSPATH.equalsIgnoreCase(cubeName))
-        {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
-            clearCache(appId)
-        }
-        clearCubeFromCache(appId, cubeName)
-        return result
+        throw new IllegalStateException('This should never be called. Call updateCube(NCube) instead.')
     }
 
     NCube loadCubeById(long id, Map options = null)
@@ -215,9 +212,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     void createCube(NCube ncube)
     {
         verifyAllowMutable('createCube')
-        bean.call(beanName, 'createCube', [ncube])
+        bean.call(beanName, 'createCube', [ncube.applicationID, ncube.name, ncube.cubeAsGzipJsonBytes])
         ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
         prepareCube(ncube)
+    }
+
+    void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        throw new IllegalStateException('This should never be called. Call createCube(NCube) instead.')
     }
 
     Boolean duplicate(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName)

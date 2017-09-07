@@ -168,6 +168,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         persister.createCube(ncube, getUserId())
     }
 
+    void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    {
+        NCube ncube = NCube.createCubeFromBytes(cubeBytes)
+        ncube.applicationID = appId
+        ncube.name = cubeName
+        createPermissionsCubesIfNewAppId(ncube.applicationID)
+        persister.createCube(ncube, getUserId())
+    }
+
     /**
      * Retrieve all cube names that are deeply referenced by ApplicationID + n-cube name.
      */
