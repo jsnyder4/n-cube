@@ -1,6 +1,11 @@
 ### Revision History
-* 4.1.8-SNAPSHOT
+* 4.1.9-SNAPSHOT
   * --
+* 4.1.8
+  * NCE timeout to NCUBE updated to wait 420 seconds max, instead of the default 30 seconds.
+  * JDBC Query Timeout changed to 300 seconds, up from default of no timeout.
+  * NCubeRuntimeClient.getJson() now calls the backend getCubeRawJsonBytes() API.
+  * Updated ncube-beans.xml to order parameters of JsonHttpProxy correctly.
 * 4.1.7
   * Performance: createCube() / updateCube() now pass gzipped byte[] to storage server.
 * 4.1.6

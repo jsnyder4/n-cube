@@ -113,7 +113,7 @@ class JsonHttpProxy implements CallableBean
         RequestConfig.Builder configBuilder = RequestConfig.custom()
         configBuilder.connectTimeout = 10 * 1000
         configBuilder.connectionRequestTimeout = 10 * 1000
-        configBuilder.socketTimeout = 150 * 1000
+        configBuilder.socketTimeout = 420 * 1000
         RequestConfig config = configBuilder.build()
 
         HttpClientBuilder builder = HttpClientBuilder.create()
