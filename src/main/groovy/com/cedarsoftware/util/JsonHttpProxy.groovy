@@ -1,5 +1,6 @@
 package com.cedarsoftware.util
 
+import org.apache.http.client.config.RequestConfig
 import org.springframework.util.FastByteArrayOutputStream
 
 import com.cedarsoftware.servlet.JsonCommandServlet
@@ -100,7 +101,7 @@ class JsonHttpProxy implements CallableBean
     /**
      * Creates the client object with the proxy and cookie store for later use.
      *
-     * @return A {@link CloseableHttpClient} with the GAIG proxy
+     * @return A {@link CloseableHttpClient} 
      */
     protected CloseableHttpClient createClient()
     {
@@ -109,11 +110,18 @@ class JsonHttpProxy implements CallableBean
         cm.defaultMaxPerRoute = numConnections // Default max connection per route
         cm.setMaxPerRoute(new HttpRoute(httpHost), numConnections) // Max connections per route
 
+        RequestConfig.Builder configBuilder = RequestConfig.custom()
+        configBuilder.connectTimeout = 10 * 1000
+        configBuilder.connectionRequestTimeout = 10 * 1000
+        configBuilder.socketTimeout = 150 * 1000
+        RequestConfig config = configBuilder.build()
+
         HttpClientBuilder builder = HttpClientBuilder.create()
+        builder.defaultRequestConfig = config
         builder.connectionManager = cm
         builder.disableCookieManagement()
 
-        if(proxyHost)
+        if (proxyHost)
         {
             builder.proxy = proxyHost
         }

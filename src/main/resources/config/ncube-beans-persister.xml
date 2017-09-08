@@ -52,7 +52,7 @@
           p:url="${ncube.datasource.url:#{'jdbc:hsqldb:mem:testdb'}}"
           p:username="${ncube.datasource.username:#{'sa'}}"
           p:password="${ncube.datasource.password:#{''}}"
-          p:jdbcInterceptors="${ncube.datasource.tomcat.jdbc-interceptors:#{'com.cedarsoftware.util.PoolInterceptor'}}"
+          p:jdbcInterceptors="${ncube.datasource.tomcat.jdbc-interceptors:#{'com.cedarsoftware.util.PoolInterceptor;org.apache.tomcat.jdbc.pool.interceptor.QueryTimeoutInterceptor(queryTimeout=300000)'}}"
           p:initialSize="${ncube.datasource.tomcat.initial-size:#{5}}"
           p:minIdle="${ncube.datasource.tomcat.min-idle:#{5}}"
           p:maxIdle="${ncube.datasource.tomcat.max-idle:#{10}}"

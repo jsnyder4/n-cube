@@ -344,8 +344,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     String getCubeRawJson(ApplicationID appId, String cubeName)
     {
-        String json = bean.call(beanName, 'getCubeRawJson', [appId, cubeName]) as String
-        return json
+        byte[] bytes = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName]) as byte[]
+        return new String(IOUtilities.uncompressBytes(bytes), "UTF-8")
     }
 
     byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
