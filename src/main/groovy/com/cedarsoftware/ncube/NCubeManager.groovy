@@ -433,7 +433,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(srcAppId)
         assertPermissions(srcAppId, null, Action.READ)
         ApplicationID.validateAppId(targetAppId)
-        targetAppId.validateBranchIsNotHead()
         targetAppId.validateStatusIsNotRelease()
         checkForExistingCubes(targetAppId.asRelease(), "A RELEASE version ${targetAppId.version} already exists")
         checkForExistingCubes(targetAppId, "Branch ${targetAppId.branch} already exists")
@@ -2746,15 +2745,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     {
         long branchCubeId = (long) Converter.convert(branchInfo.id, long.class)
         long headCubeId = (long) Converter.convert(headInfo.id, long.class)
-        NCube branchCube = persister.loadCubeById(branchCubeId, null, getUserId())
-        NCube headCube = persister.loadCubeById(headCubeId, null, getUserId())
+        NCube branchCube = persister.loadCubeById(branchCubeId, [(SEARCH_INCLUDE_TEST_DATA):true], getUserId())
+        NCube headCube = persister.loadCubeById(headCubeId, [(SEARCH_INCLUDE_TEST_DATA):true], getUserId())
         NCube baseCube, headBaseCube
         Map branchDelta, headDelta
-
-        String branchCubeTests = persister.getTestData(branchCubeId, getUserId())
-        String headCubeTests = persister.getTestData(headCubeId, getUserId())
-        branchCube.testData = NCubeTestReader.convert(branchCubeTests).toArray()
-        headCube.testData = NCubeTestReader.convert(headCubeTests).toArray()
 
         if (branchInfo.headSha1 != null)
         {   // Cube is based on a HEAD cube (not created new)

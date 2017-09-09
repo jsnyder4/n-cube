@@ -1232,6 +1232,68 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testIndividualCallsCanReplaceReleaseCubes()
+    {
+        // load cube with same name, but different structure in TEST branch
+        preloadCubes(HEAD, "test.branch.1.json", "test.branch.age.1.json")
+        assertNull(mutableClient.getCube(BRANCH1, "TestBranch"))
+        assertNull(mutableClient.getCube(BRANCH1, "TestAge"))
+        testValuesOnBranch(HEAD)
+        assertEquals(3, mutableClient.copyBranch(HEAD, BRANCH1))
+        testValuesOnBranch(HEAD)
+        testValuesOnBranch(BRANCH1)
+
+        NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
+        assertNotNull(cube)
+        mutableClient.updateCube(cube)
+
+        assertEquals(2, mutableClient.getRevisionHistory(BRANCH1, "TestBranch").size())
+        testValuesOnBranch(BRANCH1, "FOO")
+
+        // lock app
+        mutableClient.lockApp(HEAD, true)
+
+        // change versions on existing branches
+        Object[] branches = mutableClient.getBranches(HEAD)
+        for (Object branchObj : branches)
+        {
+            String branch = branchObj as String
+            if (!ApplicationID.HEAD.equalsIgnoreCase(branch))
+            {
+                ApplicationID branchAppId = HEAD.asBranch(branch)
+                mutableClient.moveBranch(branchAppId, '1.29.0')
+            }
+        }
+
+        // release version
+        mutableClient.releaseVersion(HEAD, '1.29.0')
+
+        // copy head forward
+        mutableClient.copyBranch(HEAD, HEAD.asVersion('1.29.0'))
+
+        // unlock app
+        mutableClient.lockApp(HEAD, false)
+
+        Object[] versions = ncubeRuntime.getVersions(HEAD.app)
+        assert versions.length == 3
+        assert versions.contains('0.0.0-SNAPSHOT')
+        assert versions.contains('1.29.0-SNAPSHOT')
+        assert versions.contains('1.28.0-RELEASE')
+
+        assertNull(mutableClient.getCube(BRANCH1, "TestAge"))
+        assertNull(mutableClient.getCube(BRANCH1, "TestBranch"))
+        assertNull(mutableClient.getCube(HEAD, "TestAge"))
+        assertNull(mutableClient.getCube(HEAD, "TestBranch"))
+
+        ApplicationID newBranchSnapshot = BRANCH1.createNewSnapshotId("1.29.0")
+
+        ApplicationID release = HEAD.asRelease()
+
+        testValuesOnBranch(release)
+        testValuesOnBranch(newBranchSnapshot, "FOO")
+    }
+
+    @Test
     void testReleaseCubesWithOpenPullRequests()
     {
         // load cube with same name, but different structure in TEST branch

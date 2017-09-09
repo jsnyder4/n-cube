@@ -203,7 +203,11 @@ class JsonHttpProxy implements CallableBean
             }
             return envelope.data
         }
-        catch (Exception e)
+        catch (ThreadDeath t)
+        {
+            throw t
+        }
+        catch (Throwable e)
         {
             if (!parsedJsonOk)
             {

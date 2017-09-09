@@ -1557,9 +1557,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
         Map results = [:]
 
-        // Force session creation / update (only for statistics - we do NOT want to use a session - must...remain...stateless)
-        JsonCommandServlet.servletRequest.get().session
-
         // Snag the platform mbean server (singleton)
         MBeanServer mbs = ManagementFactory.platformMBeanServer
 

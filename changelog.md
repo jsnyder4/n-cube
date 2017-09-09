@@ -1,11 +1,14 @@
 ### Revision History
 * 4.1.9-SNAPSHOT
-  * --
+  * To reduce memory usage, removed code that created servlet session.  It was doing this only to track connected users, not store session data.
+  * Added 'LOG' to NCubeGroovyExpression.
 * 4.1.8
   * NCE timeout to NCUBE updated to wait 420 seconds max, instead of the default 30 seconds.
   * JDBC Query Timeout changed to 300 seconds, up from default of no timeout.
-  * NCubeRuntimeClient.getJson() now calls the backend getCubeRawJsonBytes() API.
-  * Updated ncube-beans.xml to order parameters of JsonHttpProxy correctly.
+  * `NCubeRuntimeClient.getJson()` now calls the backend `getCubeRawJsonBytes()` API.
+  * Updated `ncube-beans.xml` to order parameters of `JsonHttpProxy` correctly.
+  * Performance: Remove superfluous persister calls in `mergeCubesIfPossible`
+  * Bug fix: Release process inhibited by `copyBranch()` not allowing HEAD for target
 * 4.1.7
   * Performance: createCube() / updateCube() now pass gzipped byte[] to storage server.
 * 4.1.6
