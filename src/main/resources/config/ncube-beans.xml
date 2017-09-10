@@ -32,7 +32,7 @@
             <constructor-arg index="1" type="java.lang.String" value="${ncube.target.context:#{'ncube'}}"/>
             <constructor-arg index="2" type="java.lang.String" value="${ncube.target.username:#{null}}"/>
             <constructor-arg index="3" type="java.lang.String" value="${ncube.target.password:#{null}}"/>
-            <constructor-arg index="4" type="int" value="${ncube.target.numConnections:#{6}}"/>
+            <constructor-arg index="4" type="int" value="${ncube.target.numConnections:#{100}}"/>
         </bean>
 
     </beans>
@@ -84,7 +84,7 @@
             <constructor-arg index="1" type="java.lang.String" value="${ncube.target.context:#{'ncube'}}"/>
             <constructor-arg index="2" type="java.lang.String" value="${ncube.target.username:#{null}}"/>
             <constructor-arg index="3" type="java.lang.String" value="${ncube.target.password:#{null}}"/>
-            <constructor-arg index="4" type="int" value="${ncube.target.numConnections:#{6}}"/>
+            <constructor-arg index="4" type="int" value="${ncube.target.numConnections:#{100}}"/>
         </bean>
 
     </beans>

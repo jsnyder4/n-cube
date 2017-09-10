@@ -1,6 +1,7 @@
 package com.cedarsoftware.util
 
 import org.apache.http.client.config.RequestConfig
+import org.apache.http.impl.client.StandardHttpRequestRetryHandler
 import org.springframework.util.FastByteArrayOutputStream
 
 import com.cedarsoftware.servlet.JsonCommandServlet
@@ -74,7 +75,7 @@ class JsonHttpProxy implements CallableBean
     private final int numConnections
     private static final Logger LOG = LoggerFactory.getLogger(JsonHttpProxy.class)
 
-    JsonHttpProxy(HttpHost httpHost, String context, String username = null, String password = null, int numConnections = 6)
+    JsonHttpProxy(HttpHost httpHost, String context, String username = null, String password = null, int numConnections = 100)
     {
         this.httpHost = httpHost
         proxyHost = null
@@ -86,7 +87,7 @@ class JsonHttpProxy implements CallableBean
         createAuthCache()
     }
 
-    JsonHttpProxy(HttpHost httpHost, HttpHost proxyHost, String context, String username = null, String password = null, int numConnections = 6)
+    JsonHttpProxy(HttpHost httpHost, HttpHost proxyHost, String context, String username = null, String password = null, int numConnections = 100)
     {
         this.httpHost = httpHost
         this.proxyHost = proxyHost
@@ -120,6 +121,7 @@ class JsonHttpProxy implements CallableBean
         builder.defaultRequestConfig = config
         builder.connectionManager = cm
         builder.disableCookieManagement()
+        builder.retryHandler = new StandardHttpRequestRetryHandler(5, true)
 
         if (proxyHost)
         {
