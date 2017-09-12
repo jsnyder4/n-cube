@@ -108,6 +108,8 @@ import com.cedarsoftware.util.io.*
 import groovy.transform.CompileStatic 
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 ${addlImports}
 ${String.join('\n', extractedLines)}
 class ${className} extends ${expClassName}

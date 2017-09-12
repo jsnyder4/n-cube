@@ -1,6 +1,8 @@
 ### Revision History
-* 4.1.10-SNAPSHOT
-  * --
+* 4.1.11
+  * Updated to consume json-command-servlet 1.7.0
+* 4.1.10
+  * Removed `LOG` static member from `NCubeGroovyExpression` as it conflicts with existing, derived classes.
 * 4.1.9
   * Added `StandardHttpRequestRetryHandler` to `JsonHttpProxy` to handle retrying `HttpNoResponseException` due to client connection being stale.
   * Increased default value from 6 to 100 for client side HTTP connection pool used by `JsonHttpProxy`.

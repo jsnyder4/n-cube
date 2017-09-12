@@ -3,7 +3,6 @@ package ncube.grv.exp
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.Axis
 import com.cedarsoftware.ncube.Column
-import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.NCubeAppContext
 import com.cedarsoftware.ncube.NCubeInfoDto
@@ -16,8 +15,6 @@ import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
 
@@ -44,7 +41,6 @@ import static com.cedarsoftware.ncube.NCubeConstants.*
 @CompileStatic
 class NCubeGroovyExpression
 {
-    protected static final Logger LOG = LoggerFactory.getLogger(NCubeGroovyExpression.class)
     public Map input
     public Map output
     public NCube ncube
