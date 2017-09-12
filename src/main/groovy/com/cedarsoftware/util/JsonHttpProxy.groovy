@@ -33,7 +33,7 @@ import org.springframework.context.annotation.PropertySource
 
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
-import java.util.zip.GZIPOutputStream
+import java.util.zip.Deflater
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
 import static org.apache.http.HttpHeaders.*
@@ -136,7 +136,7 @@ class JsonHttpProxy implements CallableBean
     {
         Object[] params = args.toArray()
         FastByteArrayOutputStream stream = new FastByteArrayOutputStream(1024)
-        JsonWriter writer = new JsonWriter(new GZIPOutputStream(stream))
+        JsonWriter writer = new JsonWriter(new AdjustableGZIPOutputStream(stream, Deflater.BEST_SPEED))
         writer.write(params)
         writer.flush()
         writer.close()

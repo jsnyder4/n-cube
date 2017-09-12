@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
+import com.cedarsoftware.util.AdjustableGZIPOutputStream
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -10,7 +11,6 @@ import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
-import com.cedarsoftware.util.io.JsonReader
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
@@ -28,7 +28,7 @@ import java.sql.Timestamp
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-import java.util.zip.GZIPOutputStream
+import java.util.zip.Deflater
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
@@ -330,7 +330,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         Timestamp now = nowAsTimestamp()
         final Blob blob = c.createBlob()
         OutputStream out = blob.setBinaryStream(1L)
-        OutputStream stream = new GZIPOutputStream(out, 8192)
+        OutputStream stream = new AdjustableGZIPOutputStream(out, 8192, Deflater.BEST_SPEED)
         new JsonFormatter(stream).formatCube(cube, null)
         PreparedStatement s = null
 

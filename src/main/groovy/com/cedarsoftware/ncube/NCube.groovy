@@ -10,6 +10,7 @@ import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
+import com.cedarsoftware.util.AdjustableGZIPOutputStream
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -34,8 +35,8 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
+import java.util.zip.Deflater
 import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 /**
  * Implements an n-cube.  This is a hyper (n-dimensional) cube
@@ -3908,7 +3909,7 @@ class NCube<T>
 
         try
         {
-            gzipOut = new GZIPOutputStream(byteOut, 8192)
+            gzipOut = new AdjustableGZIPOutputStream(byteOut, 8192, Deflater.BEST_SPEED)
             new JsonFormatter(gzipOut).formatCube(this, null)
         }
         catch (Exception e)
