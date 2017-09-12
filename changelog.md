@@ -1,4 +1,8 @@
 ### Revision History
+* 4.1.13-SNAPSHOT
+  * --
+* 4.1.12
+  * Updated tp consume json-command-servlet 1.7.1
 * 4.1.11
   * Updated to consume json-command-servlet 1.7.0
 * 4.1.10
