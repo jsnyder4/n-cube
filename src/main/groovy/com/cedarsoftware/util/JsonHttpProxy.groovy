@@ -146,8 +146,6 @@ class JsonHttpProxy implements CallableBean
             LOG.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
         }
 
-        long start = System.nanoTime()
-
         HttpClientContext clientContext = HttpClientContext.create()
         HttpPost request = new HttpPost("${httpHost.toURI()}/${context}/cmd/${bean}/${methodName}")
         if (username && password)
@@ -168,20 +166,14 @@ class JsonHttpProxy implements CallableBean
 
         HttpResponse response = httpClient.execute(request, clientContext)
         request.entity = null
-        String json = EntityUtils.toString(response.entity)
-        EntityUtils.consume(response.entity)
-
-        long stop = System.nanoTime()
-        if (LOG.debugEnabled)
-        {
-            LOG.debug("    ${Math.round((stop - start) / 1000000.0d)}ms - ${json}")
-        }
-
         boolean parsedJsonOk = false
         try
         {
-            Map envelope = JsonReader.jsonToJava(json) as Map
+            JsonReader reader = new JsonReader(new BufferedInputStream(response.entity.content))
+            Map envelope = reader.readObject() as Map
+            reader.close()
             parsedJsonOk = true
+            
             if (envelope.exception != null)
             {
                 throw envelope.exception
@@ -213,7 +205,7 @@ class JsonHttpProxy implements CallableBean
         {
             if (!parsedJsonOk)
             {
-                LOG.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}, response: ${json}")
+                LOG.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}")
             }
             throw e
         }

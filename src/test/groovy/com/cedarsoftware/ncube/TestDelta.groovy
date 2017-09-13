@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
-import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
 

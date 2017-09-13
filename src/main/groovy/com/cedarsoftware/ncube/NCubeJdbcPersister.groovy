@@ -538,7 +538,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         {
             return infoRecs
         }
-
+        createSysInfoCube(c, appId, username)
         String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, ${CUBE_VALUE_BIN}, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = ?"
         PreparedStatement stmt = null
         try
@@ -1797,8 +1797,9 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
     {
         Map map = appId as Map
         map.tenant = padTenant(c, appId.tenant)
+        map.sysinfo = SYS_INFO
         Sql sql = getSql(c)
-        String statement = "/* ${methodName}.doCubesExist */ SELECT DISTINCT n_cube_id FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch"
+        String statement = "/* ${methodName}.doCubesExist */ SELECT DISTINCT n_cube_id FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch AND LOWER(n_cube_nm) = LOWER(:sysinfo)"
 
         if (!ignoreStatus)
         {

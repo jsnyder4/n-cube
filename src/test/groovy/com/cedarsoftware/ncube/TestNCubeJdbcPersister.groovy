@@ -203,22 +203,6 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testUpdateBranchThatIsNotFound()
-    {
-        Connection c = mock(Connection.class)
-        PreparedStatement ps = mock(PreparedStatement.class)
-        ResultSet rs = mock(ResultSet.class)
-        when(c.prepareStatement(anyString())).thenReturn(ps).thenReturn(ps).thenReturn(ps)
-        when(ps.executeQuery()).thenReturn(rs).thenReturn(rs)
-        when(rs.next()).thenReturn(false)
-        when(rs.getLong(1)).thenReturn(5L)
-        when(rs.getDate(anyString())).thenReturn(new java.sql.Date(System.currentTimeMillis()))
-
-        Object[] ids = [0] as Object[]
-        assert new NCubeJdbcPersister().pullToBranch(c, defaultSnapshotApp, ids, USER_ID, UniqueIdGenerator.uniqueId).empty
-    }
-
-    @Test
     void testReleaseCubesWithRuntimeExceptionWhileCreatingNewSnapshot()
     {
         Connection c = mock(Connection.class)
