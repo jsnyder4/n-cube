@@ -38,7 +38,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     public static ApplicationID defaultSnapshotApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultReleaseApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '1.0.0', ReleaseStatus.RELEASE.name(), ApplicationID.TEST_BRANCH)
     public static ApplicationID defaultBootApp = new ApplicationID(ApplicationID.DEFAULT_TENANT, APP_ID, '0.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
-    public static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, NCubeConstants.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+    public static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
     private static Object[] createTests()
     {
@@ -151,17 +151,30 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // reading from cache.
         List<NCubeTest> data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
-        assertTrue(DeepEquals.deepEquals(expectedTests, data))
+        assert DeepEquals.deepEquals(expectedTests, data)
 
         // reload from db
         ncubeRuntime.clearCache(defaultSnapshotApp)
         data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
-        assertTrue(DeepEquals.deepEquals(expectedTests, data))
+        assert DeepEquals.deepEquals(expectedTests, data)
 
         //  update cube
+        cube.testData = [new NCubeTest('different test', [:], [] as CellInfo[])]
         mutableClient.updateCube(cube)
-        data = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
-        assertTrue(DeepEquals.deepEquals(expectedTests, data))
+        cube = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        data = cube.testData
+        assert !DeepEquals.deepEquals(expectedTests, data)
+        assert cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_UPDATED)
+        String testUpdated = cube.metaProperties[NCube.METAPROPERTY_TEST_UPDATED]
+
+        //  make sure NOT changing tests will NOT update test metaproperty
+        cube.setCell(1.1d, [gender:'male', age:47])
+        mutableClient.updateCube(cube)
+        cube = mutableClient.loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        List<NCubeTest> newData = cube.testData
+        String newTestUpdated = cube.metaProperties[NCube.METAPROPERTY_TEST_UPDATED]
+        assert DeepEquals.deepEquals(data, newData)
+        assert testUpdated == newTestUpdated
     }
 
     @Test
@@ -1783,7 +1796,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assert 1 == attribute.size()
         assert attribute.hasDefaultColumn()
 
-        NCube sysInfo000 = mutableClient.getCube(ApplicationID.testAppId.asVersion(SYS_BOOT_VERSION), SYS_INFO)
+        NCube sysInfo000 = mutableClient.getCube(ApplicationID.testAppId.asBootVersion(), SYS_INFO)
         assert 1 == sysInfo000.numDimensions
         Axis attribute000 = sysInfo000.getAxis(AXIS_ATTRIBUTE)
         assert 1 == attribute000.size()
@@ -1822,13 +1835,13 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         ApplicationID headApp = ApplicationID.testAppId.asHead()
         NCube headSysInfo = mutableClient.getCube(headApp, SYS_INFO)
-        NCube headSysInfo000 = mutableClient.getCube(headApp.asVersion(SYS_BOOT_VERSION), SYS_INFO)
+        NCube headSysInfo000 = mutableClient.getCube(headApp.asBootVersion(), SYS_INFO)
         assert headSysInfo == null
         assert headSysInfo000 != null // sys.info is created in 0.0.0 HEAD when permissions n-cubes are created
 
         mutableClient.commitBranch(ApplicationID.testAppId)
         headSysInfo = mutableClient.getCube(headApp, SYS_INFO)
-        headSysInfo000 = mutableClient.getCube(headApp.asVersion(SYS_BOOT_VERSION), SYS_INFO)
+        headSysInfo000 = mutableClient.getCube(headApp.asBootVersion(), SYS_INFO)
         assert headSysInfo != null
         assert headSysInfo000 != null
     }

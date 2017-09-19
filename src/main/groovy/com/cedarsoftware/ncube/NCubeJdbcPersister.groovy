@@ -607,11 +607,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
             {
-                String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
-                if (updatedTestData || testData)
+                byte[] updatedTestData = StringUtilities.getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
+                if ((updatedTestData || testData) && updatedTestData != testData)
                 {
                     cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
-                    testData = updatedTestData.bytes
+                    testData = updatedTestData
                 }
             }
 

@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
@@ -30,7 +31,7 @@ import static org.junit.Assert.fail
 class TestPullRequests extends NCubeCleanupBaseTest
 {
     private static ApplicationID appId = ApplicationID.testAppId
-    private static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, NCubeConstants.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+    private static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
 
     @Test
     void testGeneratePullRequestLink()
@@ -64,6 +65,34 @@ class TestPullRequests extends NCubeCleanupBaseTest
         catch (IllegalArgumentException e)
         {
             assertContainsIgnoreCase(e.message, 'request', 'exists')
+        }
+    }
+
+    @Test
+    void testGeneratePullRequestLinkWithoutPermissions()
+    {
+        createCubeFromResource('test.branch.1.json')
+
+        NCube branchPermCube = mutableClient.getCube(appId.asVersion('0.0.0'), SYS_BRANCH_PERMISSIONS)
+        branchPermCube.defaultCellValue = true
+        mutableClient.updateCube(branchPermCube)
+
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        String origUser = manager.userId
+        manager.userId = UniqueIdGenerator.uniqueId as String
+        try
+        {
+            mutableClient.commitBranch(appId)
+            Object[] pullRequests = mutableClient.pullRequests
+            assert 1 == pullRequests.length
+        }
+        catch (SecurityException ignore)
+        {
+            fail()
+        }
+        finally
+        {
+            manager.userId = origUser
         }
     }
 
@@ -167,7 +196,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
         String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
 
         // test permissions for other user
-        manager.userId = 'noob'
+        manager.userId = UniqueIdGenerator.uniqueId as String
         try
         {
             mutableClient.assertPermissions(appId, null, Action.COMMIT)
@@ -239,7 +268,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = 'otherUser'
+        String otherUser = UniqueIdGenerator.uniqueId as String
 
         // give other user branch permissions
         ApplicationID tripZero = appId.asVersion('0.0.0')

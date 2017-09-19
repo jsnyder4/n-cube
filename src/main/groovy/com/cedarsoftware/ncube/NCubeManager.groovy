@@ -438,7 +438,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         checkForExistingCubes(targetAppId, "Branch ${targetAppId.branch} already exists")
         assertPermissions(targetAppId, null, Action.UPDATE)
         assertNotLockBlocked(targetAppId)
-        boolean isTargetSysBootVersion = targetAppId.version == SYS_BOOT_VERSION
+        boolean isTargetSysBootVersion = targetAppId.version == ApplicationID.SYS_BOOT_VERSION
         if (!isTargetSysBootVersion)
         {
             createPermissionsCubesIfNewAppId(targetAppId)
@@ -508,11 +508,11 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             throw new IllegalArgumentException("Cannot move the HEAD branch, app: ${appId}, user: ${getUserId()}")
         }
-        if (SYS_BOOT_VERSION == appId.version)
+        if (ApplicationID.SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalStateException(ERROR_CANNOT_MOVE_000 + " app: ${appId}, user: ${getUserId()}")
         }
-        if (SYS_BOOT_VERSION == newSnapVer)
+        if (ApplicationID.SYS_BOOT_VERSION == newSnapVer)
         {
             throw new IllegalStateException(ERROR_CANNOT_MOVE_TO_000 + "app: ${appId}, user: ${getUserId()}")
         }
@@ -530,14 +530,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null, Action.RELEASE)
         assertLockedByMe(appId)
-        if (SYS_BOOT_VERSION == appId.version)
+        if (ApplicationID.SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
         if (newSnapVer)
         {
             ApplicationID.validateVersion(newSnapVer)
-            if (SYS_BOOT_VERSION == newSnapVer)
+            if (ApplicationID.SYS_BOOT_VERSION == newSnapVer)
             {
                 throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
             }
@@ -562,7 +562,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         assertPermissions(appId, null, Action.RELEASE)
         ApplicationID.validateAppId(appId)
 
-        if (SYS_BOOT_VERSION == appId.version)
+        if (ApplicationID.SYS_BOOT_VERSION == appId.version)
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
@@ -573,7 +573,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         if (newSnapVer)
         {
             ApplicationID.validateVersion(newSnapVer)
-            if (SYS_BOOT_VERSION == newSnapVer)
+            if (ApplicationID.SYS_BOOT_VERSION == newSnapVer)
             {
                 throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
             }
@@ -1166,7 +1166,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     // ---------------------- Broadcast APIs for notifying other services in cluster of cache changes ------------------
     protected void broadcast(ApplicationID appId)
     {
-        // Write to 'system' tenant, 'NCE' app, version SYS_BOOT_VERSION, SNAPSHOT, cube: sys.cache
+        // Write to 'system' tenant, 'NCE' app, version 0.0.0, SNAPSHOT, cube: sys.cache
         // Separate thread reads from this table every 1 second, for new commands, for
         // example, clear cache
         appId.toString()
@@ -1220,7 +1220,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private ApplicationID getBootAppId(ApplicationID appId)
     {
-        return new ApplicationID(appId.tenant, appId.app, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        return new ApplicationID(appId.tenant, appId.app, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
     }
 
     private String getPermissionCacheKey(String resource, Action action)
@@ -1495,6 +1495,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         if (detectNewAppId(appId))
         {
             createPermissionsCubes(appId)
+            createSysAppIfNotExists(appId.tenant)
+        }
+    }
+
+    protected void createSysAppIfNotExists(String tenant)
+    {
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        if (detectNewAppId(sysAppId))
+        {
+            createPermissionsCubes(sysAppId)
         }
     }
 
@@ -1514,7 +1524,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private void createBranchPermissionsCube(ApplicationID appId)
     {
-        ApplicationID permAppId = appId.asVersion(SYS_BOOT_VERSION)
+        ApplicationID permAppId = appId.asBootVersion()
         if (loadCubeInternal(permAppId, SYS_BRANCH_PERMISSIONS) != null)
         {
             return
@@ -2246,7 +2256,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
     {
-        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
         List<Map<String, String>> commitRecords = getCommitRecords(appId, infoDtos)
 
         if (commitRecords.empty)
@@ -2258,7 +2268,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         String prInfoJson = JsonWriter.objectToJson(commitRecords)
         String sha1 = EncryptionUtilities.calculateSHA1Hash(prInfoJson.getBytes('UTF-8'))
 
-        if (getCube(sysAppId, 'tx.' + sha1))
+        if (runSystemRequest {getCube(sysAppId, 'tx.' + sha1) })
         {
             throw new IllegalArgumentException("A pull request already exists for this change set, app: ${appId}, user: ${getUserId()}")
         }
@@ -2422,7 +2432,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     private NCube loadPullRequestCube(String prId)
     {
         runSystemRequest {
-            ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+            ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
             List<NCubeInfoDto> dtos = search(sysAppId, "tx.${prId}", null, [(SEARCH_ACTIVE_RECORDS_ONLY): true, (SEARCH_EXACT_MATCH_NAME): true])
             if (dtos.empty) {
                 throw new IllegalArgumentException("Invalid pull request id: ${prId}, user: ${getUserId()}")
@@ -2450,7 +2460,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private List<NCube> getPullRequestCubes(Date startDate, Date endDate)
     {
-        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
         Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_CREATE_DATE_START):startDate, (SEARCH_CREATE_DATE_END):endDate]
         runSystemRequest { cubeSearch(sysAppId, 'tx.*', null, options) } as List<NCube>
     }

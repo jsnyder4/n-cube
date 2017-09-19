@@ -1,6 +1,9 @@
 ### Revision History
 * 4.1.14-SNAPSHOT
-  * --
+  * Enhancement: Added `asBootVersion()` to `ApplicationID` to avoid repetition.
+  * Bug fix: On non-combined server, `mergePullRequest()` now throws `PullRequestException` when marking PR obsolete.
+  * Bug fix: Test updated metaproperty was changing even when test data was not updated.
+  * Bug fix: `generatePullRequestHash` was not using `runSystemRequest` for one of its calls, forcing a failure when making tx cubes unreadable.
 * 4.1.13
   * Enhancement: `JsonHttpProxy` connects the `HttpClient's` inputStream directly to `JsonReader` so that construction of objects from JSON begins immediately as data arrives.
   * Enhancement: Improved performance of `NCubeJdbcPersister.doCubesExist()` by including sys.info in where clause
@@ -16,13 +19,13 @@
   * Increased default value from 6 to 100 for client side HTTP connection pool used by `JsonHttpProxy`.
   * To reduce memory usage, removed code that created servlet session.  It was doing this only to track connected users, not store session data.
   * Added `LOG` to `NCubeGroovyExpression`.
+  * Bug fix: Release process inhibited by `copyBranch()` not allowing HEAD for target
 * 4.1.8
   * NCE timeout to NCUBE updated to wait 420 seconds max, instead of the default 30 seconds.
   * JDBC Query Timeout changed to 300 seconds, up from default of no timeout.
   * `NCubeRuntimeClient.getJson()` now calls the backend `getCubeRawJsonBytes()` API.
   * Updated `ncube-beans.xml` to order parameters of `JsonHttpProxy` correctly.
   * Performance: Remove superfluous persister calls in `mergeCubesIfPossible`
-  * Bug fix: Release process inhibited by `copyBranch()` not allowing HEAD for target
 * 4.1.7
   * Performance: createCube() / updateCube() now pass gzipped byte[] to storage server.
 * 4.1.6

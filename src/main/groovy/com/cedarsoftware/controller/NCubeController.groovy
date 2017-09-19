@@ -1,6 +1,7 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.exception.PullRequestException
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -1305,7 +1306,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         catch (IllegalStateException e)
         {
             mutableClient.obsoletePullRequest(prId)
-            throw e
+            throw new PullRequestException(e.message)
         }
     }
 
@@ -1447,7 +1448,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         try
         {   // Do not remove try-catch handler in favor of advice handler
             appId = addTenant(appId)
-            ApplicationID bootVersionAppId = appId.asVersion(SYS_BOOT_VERSION).asSnapshot()
+            ApplicationID bootVersionAppId = appId.asBootVersion().asSnapshot()
             NCube menuCube = mutableClient.getCube(bootVersionAppId, 'sys.menu')
             if (menuCube == null)
             {
@@ -1658,7 +1659,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return results
     }
 
-    Map heartBeat(Map openCubes)
+    Map heartBeat(Map openCubes = null)
     {
         Map results = [:]
         putIfNotNull(results, 'compareResults', [:])
