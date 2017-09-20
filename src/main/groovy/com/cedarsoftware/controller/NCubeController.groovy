@@ -1521,10 +1521,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
     {
-        ApplicationID newAppId = new ApplicationID(tenant, newInfoDto.app, newInfoDto.version, newInfoDto.status, newInfoDto.branch)
-        ApplicationID oldAppId = new ApplicationID(tenant, oldInfoDto.app, oldInfoDto.version, oldInfoDto.status, oldInfoDto.branch)
-        NCube newCube = mutableClient.loadCube(newAppId, newInfoDto.name, [(SEARCH_INCLUDE_TEST_DATA):true])
-        NCube oldCube = mutableClient.loadCube(oldAppId, oldInfoDto.name, [(SEARCH_INCLUDE_TEST_DATA):true])
+        Map options = [(SEARCH_INCLUDE_TEST_DATA):true]
+        NCube newCube = getCubeFromDto(newInfoDto, options)
+        NCube oldCube = getCubeFromDto(oldInfoDto, options)
         return DeltaProcessor.getDeltaDescription(newCube, oldCube)
     }
 
@@ -1625,9 +1624,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         putIfNotNull(serverStats, 'Used memory', (usedMem.round(1)) + ' MB')
         putIfNotNull(serverStats, 'Free memory', (freeMem.round(1)) + ' MB')
 
-        putIfNotNull(serverStats, 'JDBC Pool size', PoolInterceptor.size.get())
-        putIfNotNull(serverStats, 'JDBC Pool active', PoolInterceptor.active.get())
-        putIfNotNull(serverStats, 'JDBC Pool idle', PoolInterceptor.idle.get())
+        if (PoolInterceptor.size.get() < 1)
+        {
+            putIfNotNull(serverStats, 'JDBC Pool', 'n/a')
+        }
+        else
+        {
+            putIfNotNull(serverStats, 'JDBC Pool size', PoolInterceptor.size.get())
+            putIfNotNull(serverStats, 'JDBC Pool active', PoolInterceptor.active.get())
+            putIfNotNull(serverStats, 'JDBC Pool idle', PoolInterceptor.idle.get())
+        }
 
         putIfNotNull(serverStats, 'Tomcat Max Connections', tomcatMaxConnections)
         putIfNotNull(serverStats, 'Tomcat Max Threads', tomcatMaxThreads)
@@ -1860,6 +1866,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             colIds.add((Long)Converter.convert(id, Long.class))
         }
         return colIds
+    }
+
+    private NCube getCubeFromDto(NCubeInfoDto dto, Map options = null)
+    {
+        ApplicationID appId = new ApplicationID(tenant, dto.app, dto.version, dto.status, dto.branch)
+        return mutableClient.loadCube(appId, dto.name, options)
     }
 
     private NCube getCubeInternal(ApplicationID appId, String ncubeName)

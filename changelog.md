@@ -1,5 +1,6 @@
 ### Revision History
 * 4.1.14-SNAPSHOT
+  * Enhancement: Improved error handling when comparing a cube against a branch where it does not exist.
   * Enhancement: Added `asBootVersion()` to `ApplicationID` to avoid repetition.
   * Bug fix: On non-combined server, `mergePullRequest()` now throws `PullRequestException` when marking PR obsolete.
   * Bug fix: Test updated metaproperty was changing even when test data was not updated.

@@ -25,7 +25,7 @@ innovative and intelligent tools for profiling Java and .NET applications.
 <a href="https://www.jetbrains.com/idea/"><img alt="Intellij IDEA from JetBrains" src="https://s-media-cache-ak0.pinimg.com/236x/bd/f4/90/bdf49052dd79aa1e1fc2270a02ba783c.jpg" data-canonical-src="https://s-media-cache-ak0.pinimg.com/236x/bd/f4/90/bdf49052dd79aa1e1fc2270a02ba783c.jpg" width="100" height="100" /></a>
 **Intellij IDEA**
 ___
-####The image below is a Visual Summary of the main capabilities of n-cube.
+#### The image below is a Visual Summary of the main capabilities of n-cube.
 ![Alt text](https://raw.githubusercontent.com/jdereg/n-cube/master/n-cubeImage.png "n-cube Capabilities")
 
 What are the components of an n-cube?
