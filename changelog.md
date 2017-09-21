@@ -5,6 +5,7 @@
   * Bug fix: On non-combined server, `mergePullRequest()` now throws `PullRequestException` when marking PR obsolete.
   * Bug fix: Test updated metaproperty was changing even when test data was not updated.
   * Bug fix: `generatePullRequestHash` was not using `runSystemRequest` for one of its calls, forcing a failure when making tx cubes unreadable.
+  * Bug fix: Removed all remaining references and support of using transforms with `method`. 
 * 4.1.13
   * Enhancement: `JsonHttpProxy` connects the `HttpClient's` inputStream directly to `JsonReader` so that construction of objects from JSON begins immediately as data arrives.
   * Enhancement: Improved performance of `NCubeJdbcPersister.doCubesExist()` by including sys.info in where clause

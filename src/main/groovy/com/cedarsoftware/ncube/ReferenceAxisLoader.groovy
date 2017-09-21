@@ -50,12 +50,10 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
     public static final String TRANSFORM_STATUS = 'transformStatus'
     public static final String TRANSFORM_BRANCH = 'transformBranch'
     public static final String TRANSFORM_CUBE_NAME = 'transformCubeName'
-    public static final String TRANSFORM_METHOD_NAME = 'transformMethodName'
 
     private String cubeName
     private String axisName
     private Map args
-    private boolean usesMethod
 
     /**
      * @param containingCubeName String name of cube that holds the 'pointer' (referring) axis
@@ -114,8 +112,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 
         if (transformCube != null)
         {   // Allow this cube to manipulate the passed in Axis.
-            input.method = args[TRANSFORM_METHOD_NAME]
-            ensureMethodAxisExists(transformCube, axis)
+            ensureTransformCubeIsCorrect(transformCube, axis)
             transform(transformCube, input, output, axis)
         }
         else
@@ -151,115 +148,80 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 
     private void transform(NCube transformCube, Map<String, Object> input, Map<String, Object> output, Axis axis)
     {
-        if (usesMethod)
-        {
-            try
-            {
-                transformCube.getCell(input, output)
-            }
-            catch (CoordinateNotFoundException e)
-            {
-                throw new IllegalStateException("""\
-Unable to load n-cube: ${cubeName}, which has a reference axis: ${axis.name}. \
-Method: ${input.method} does not exist on the 'method' axis of the transformation \
-n-cube: ${transformCube.name}, transform app: ${axis.transformApp}""", e)
-            }
-        }
-        else
-        {
-            List<Column> columns = input.columns as List
-            transformCube.getAxis('transform').columnsWithoutDefault.each { Column column ->
-                def typeCell = transformCube.getCellNoExecute([transform: column.value, property: 'type'])
-                if (!(typeCell instanceof String) || StringUtilities.isEmpty(typeCell as String))
-                {
-                    throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
-It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)}. Please enter a String for type in transform id: ${column.value}.""")
-                }
-                String type = (typeCell as String).toLowerCase()
-
-                def valueCell = transformCube.getCellNoExecute([transform: column.value, property: 'value'])
-                if (!(valueCell instanceof String) || StringUtilities.isEmpty(valueCell as String))
-                {
-                    throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
-It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)}. Please enter a String for value in transform id: ${column.value}.""")
-                }
-                String value = valueCell as String
-
-                List<String> values = Splitter.on(',').trimResults().splitToList(value)
-                switch (type)
-                {
-                    case 'add':
-                        if (values.size() > 1)
-                        {
-                            throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
-It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)}. Transform type 'add' only supports adding one column at a time in transform id: ${column.value}.""")
-                        }
-                        Comparable newValue = Axis.promoteValue(axis.valueType, values[0])
-                        columns.add(new Column(newValue, Integer.MAX_VALUE - (column.value as Long)))
-                        break
-                    case 'remove':
-                        values.each { String val ->
-                            Comparable newValue = Axis.promoteValue(axis.valueType, val)
-                            Column columnToRemove = columns.find { it.value == newValue }
-                            columns.remove(columnToRemove)
-                        }
-                        break
-                    case 'subset':
-                        Set<Column> columnsToKeep = new LinkedHashSet()
-                        columns.each { Column col ->
-                            for (String val : values)
-                            {
-                                Comparable newValue = Axis.promoteValue(axis.valueType, val)
-                                if (col.value == newValue)
-                                {
-                                    columnsToKeep.add(col)
-                                    break
-                                }
-                            }
-                        }
-                        columns = columnsToKeep as List
-                        break
-                    case 'addaxis':
-                        if (values.size() != 4)
-                        {
-                            throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
-It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)}. Transform type addAxis must have a value with format 'app name, version, cube name, axis name' in transform id: ${column.value} found: ${value}.""")
-                        }
-                        ApplicationID appId = new ApplicationID(transformCube.applicationID.tenant, values[0], values[1], ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)
-                        NCube ncube = ncubeClient.getCube(appId, values[2])
-                        Axis cubeAxis = ncube.getAxis(values[3])
-                        columns.addAll(cubeAxis.columnsWithoutDefault)
-                        break
-                    default:
-                        throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
-It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)}. Transform type must be one of [add, remove, subset, addAxis] in transform id: ${column.value} found: ${type}.""")
-                }
-            }
-            output.columns = columns
-        }
-    }
-
-    private void ensureMethodAxisExists(NCube transformCube, Axis axis)
-    {
-        usesMethod = true
-        if (transformCube.getAxis('method') == null)
-        {
-            if (ensureTransformCubeIsCorrect(transformCube, axis))
-            {
-                usesMethod = false
-            }
-            else
+        List<Column> columns = input.columns as List
+        transformCube.getAxis('transform').columnsWithoutDefault.each { Column column ->
+            def typeCell = transformCube.getCellNoExecute([transform: column.value, property: 'type'])
+            if (!(typeCell instanceof String) || StringUtilities.isEmpty(typeCell as String))
             {
                 throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
-${getTransformInfo(axis)} which must have two DISCRETE axes: transform (LONG) and property (STRING)""")
+${getTransformInfo(axis)}. Please enter a String for type in transform id: ${column.value}.""")
+            }
+            String type = (typeCell as String).toLowerCase()
+
+            def valueCell = transformCube.getCellNoExecute([transform: column.value, property: 'value'])
+            if (!(valueCell instanceof String) || StringUtilities.isEmpty(valueCell as String))
+            {
+                throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Please enter a String for value in transform id: ${column.value}.""")
+            }
+            String value = valueCell as String
+
+            List<String> values = Splitter.on(',').trimResults().splitToList(value)
+            switch (type)
+            {
+                case 'add':
+                    if (values.size() > 1)
+                    {
+                        throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type 'add' only supports adding one column at a time in transform id: ${column.value}.""")
+                    }
+                    Comparable newValue = Axis.promoteValue(axis.valueType, values[0])
+                    columns.add(new Column(newValue, Integer.MAX_VALUE - (column.value as Long)))
+                    break
+                case 'remove':
+                    values.each { String val ->
+                        Comparable newValue = Axis.promoteValue(axis.valueType, val)
+                        Column columnToRemove = columns.find { it.value == newValue }
+                        columns.remove(columnToRemove)
+                    }
+                    break
+                case 'subset':
+                    Set<Column> columnsToKeep = new LinkedHashSet()
+                    columns.each { Column col ->
+                        for (String val : values)
+                        {
+                            Comparable newValue = Axis.promoteValue(axis.valueType, val)
+                            if (col.value == newValue)
+                            {
+                                columnsToKeep.add(col)
+                                break
+                            }
+                        }
+                    }
+                    columns = columnsToKeep as List
+                    break
+                case 'addaxis':
+                    if (values.size() != 4)
+                    {
+                        throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type addAxis must have a value with format 'app name, version, cube name, axis name' in transform id: ${column.value} found: ${value}.""")
+                    }
+                    ApplicationID appId = new ApplicationID(transformCube.applicationID.tenant, values[0], values[1], ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)
+                    NCube ncube = ncubeClient.getCube(appId, values[2])
+                    Axis cubeAxis = ncube.getAxis(values[3])
+                    columns.addAll(cubeAxis.columnsWithoutDefault)
+                    break
+                default:
+                    throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type must be one of [add, remove, subset, addAxis] in transform id: ${column.value} found: ${type}.""")
             }
         }
+        output.columns = columns
     }
 
     private boolean ensureTransformCubeIsCorrect(NCube transformCube, Axis axis)
@@ -273,7 +235,12 @@ ${getTransformInfo(axis)} which must have two DISCRETE axes: transform (LONG) an
                 transform.type != AxisType.DISCRETE ||
                 property.valueType != AxisValueType.STRING ||
                 transform.valueType != AxisValueType.LONG)
-        return !incorrectShape
+        if (incorrectShape) {
+            throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)} which must have two DISCRETE axes: transform (LONG) and property (STRING)""")
+        }
+        return true
     }
 
     private Axis getReferencedAxis(NCube refCube, String refAxisName, Axis axis)

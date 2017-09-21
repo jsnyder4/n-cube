@@ -373,7 +373,6 @@ class Axis
         removeMetaProperty(TRANSFORM_STATUS)
         removeMetaProperty(TRANSFORM_BRANCH)
         removeMetaProperty(TRANSFORM_CUBE_NAME)
-        removeMetaProperty(TRANSFORM_METHOD_NAME)
     }
 
     /**

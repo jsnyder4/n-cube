@@ -691,19 +691,47 @@ class NCubeBuilder
   "ncube": "multiplier",
   "axes": [
     {
-      "name": "method",
+      "name": "transform",
       "type": "DISCRETE",
-      "valueType": "STRING",
+      "valueType": "LONG",
       "preferredOrder": 1,
       "hasDefault": false,
       "columns": [
         {
           "id": 1000000000001,
-          "value": "double"
+          "value": "1"
         },
         {
           "id": 1000000000002,
-          "value": "triple"
+          "value": "2"
+        },
+        {
+          "id": 1000000000003,
+          "value": "3"
+        },
+        {
+          "id": 1000000000004,
+          "value": "4"
+        }
+      ]
+    },
+    {
+      "name":"property",
+      "hasDefault":false,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":3000000000001,
+          "type":"string",
+          "value":"type"
+        },
+        {
+          "id":3000000000002,
+          "type":"string",
+          "value":"value"
         }
       ]
     }
@@ -711,23 +739,67 @@ class NCubeBuilder
   "cells": [
     {
       "id": [
-        1000000000001
+        1000000000001,
+        3000000000001
       ],
-      "type": "exp",
-      "value": "        output.columns = new ArrayList(); assert input.refCube instanceof NCube; assert input.refAxis instanceof Axis; assert input.referencingAxis instanceof Axis; 
-        for (Column column : input.columns)
-        {
-            Column copy = new Column(column.value * 2, column.id)
-            copy.setColumnName(column.getColumnName())
-            output.columns.add(copy)
-        }"
+      "type": "string",
+      "value": "remove"
     },
     {
       "id": [
-        1000000000002
+        1000000000001,
+        3000000000002
       ],
-      "type": "exp",
-      "value": "assert input.refCube instanceof NCube; assert input.refAxis instanceof Axis; assert input.referencingAxis instanceof Axis; output.columns = new ArrayList()\nfor (Column column : input.columns)\n{\noutput.columns.add(column.value * 2)\n}"
+      "type": "string",
+      "value": "1,2,3"
+    },
+    {
+      "id": [
+        1000000000002,
+        3000000000001
+      ],
+      "type": "string",
+      "value": "add"
+    },
+    {
+      "id": [
+        1000000000002,
+        3000000000002
+      ],
+      "type": "string",
+      "value": "2"
+    },
+    {
+      "id": [
+        1000000000003,
+        3000000000001
+      ],
+      "type": "string",
+      "value": "add"
+    },
+    {
+      "id": [
+        1000000000003,
+        3000000000002
+      ],
+      "type": "string",
+      "value": "4"
+    },
+    {
+      "id": [
+        1000000000004,
+        3000000000001
+      ],
+      "type": "string",
+      "value": "add"
+    },
+    {
+      "id": [
+        1000000000004,
+        3000000000002
+      ],
+      "type": "string",
+      "value": "6"
     }
   ]
 }''')

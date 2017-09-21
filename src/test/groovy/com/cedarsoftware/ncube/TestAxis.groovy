@@ -2746,7 +2746,7 @@ class TestAxis extends NCubeBaseTest
 
         NCube transform = NCubeBuilder.transformMultiply
         transform.applicationID = ApplicationID.testAppId
-        assert transform.getAxis('method').size() == 2
+        assert transform.getAxis('transform').size() == 4
         ncubeRuntime.addCube(transform)
 
         Map<String, Object> args = [:]
@@ -2764,7 +2764,6 @@ class TestAxis extends NCubeBaseTest
         args[TRANSFORM_STATUS] = appId.status
         args[TRANSFORM_BRANCH] = appId.branch
         args[TRANSFORM_CUBE_NAME] = 'multiplier'
-        args[TRANSFORM_METHOD_NAME] = 'double'
 
         // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
@@ -2805,7 +2804,7 @@ class TestAxis extends NCubeBaseTest
 
         NCube transform = NCubeBuilder.transformMultiply
         transform.applicationID = ApplicationID.testAppId
-        assert transform.getAxis('method').size() == 2
+        assert transform.getAxis('transform').size() == 4
         ncubeRuntime.addCube(transform)
 
         Map<String, Object> args = [:]
@@ -2823,7 +2822,6 @@ class TestAxis extends NCubeBaseTest
         args[TRANSFORM_STATUS] = appId.status
         args[TRANSFORM_BRANCH] = appId.branch
         args[TRANSFORM_CUBE_NAME] = 'multiplier'
-        args[TRANSFORM_METHOD_NAME] = 'double'
 
         // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
@@ -2851,11 +2849,16 @@ class TestAxis extends NCubeBaseTest
         two.removeAxisReferenceTransform('age')
         json = two.toFormattedJson()
         reload = NCube.fromSimpleJson(json)
-        assert reload.numCells == 3
+        assert reload.numCells == 0
 
-        // 1, 2, 3 should not be transformed
+        // should have original columns
+        reload.setCell('a', [age:1] as Map)
         assert 'a' == reload.getCell([age:1] as Map)
+
+        reload.setCell('b', [age:2] as Map)
         assert 'b' == reload.getCell([age:2] as Map)
+
+        reload.setCell('c', [age:3] as Map)
         assert 'c' == reload.getCell([age:3] as Map)
 
     }
@@ -2922,7 +2925,7 @@ class TestAxis extends NCubeBaseTest
 
         NCube transform = NCubeBuilder.transformMultiply
         transform.applicationID = ApplicationID.testAppId
-        assert transform.getAxis('method').size() == 2
+        assert transform.getAxis('transform').size() == 4
         ncubeRuntime.addCube(transform)
 
         Map<String, Object> args = [:]
@@ -2940,7 +2943,6 @@ class TestAxis extends NCubeBaseTest
         args[TRANSFORM_STATUS] = appId.status
         args[TRANSFORM_BRANCH] = appId.branch
         args[TRANSFORM_CUBE_NAME] = 'multiplierNotThere'
-        args[TRANSFORM_METHOD_NAME] = 'double'
 
         // stateSource instead of 'state' to prove the axis on the referring cube does not have to have the same name
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
@@ -2954,8 +2956,7 @@ class TestAxis extends NCubeBaseTest
             assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis', 'failed to load transform')
         }
 
-        args[TRANSFORM_CUBE_NAME] = 'discreteLong'  // this cube has no 'method' axis
-        args[TRANSFORM_METHOD_NAME] = 'double'
+        args[TRANSFORM_CUBE_NAME] = 'discreteLong'  // this cube does not have correct axes
         refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
         try
         {
@@ -2965,19 +2966,6 @@ class TestAxis extends NCubeBaseTest
         catch (IllegalArgumentException e)
         {
             assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis: age', 'must have two discrete')
-        }
-
-        args[TRANSFORM_CUBE_NAME] = 'multiplier'  // this cube has no 'method' axis
-        args[TRANSFORM_METHOD_NAME] = 'doubleNotThere'
-        refAxisLoader = new ReferenceAxisLoader('TestTransform', 'age', args)
-        try
-        {
-            Axis ignore = new Axis('age', 1, false, refAxisLoader)
-            fail(ignore.name)
-        }
-        catch (IllegalStateException e)
-        {
-            assertContainsIgnoreCase(e.message, 'unable to load', 'TestTransform', 'reference axis: age', 'doubleNotThere does not exist')
         }
     }
 
