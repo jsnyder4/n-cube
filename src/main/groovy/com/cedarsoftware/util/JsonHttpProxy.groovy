@@ -178,7 +178,7 @@ class JsonHttpProxy implements CallableBean
             {
                 throw envelope.exception
             }
-            if (envelope.status == false)
+            if (!envelope.status)
             {
                 String msg
                 if (envelope.data instanceof String)

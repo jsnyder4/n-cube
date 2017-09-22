@@ -8,11 +8,14 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
+import org.apache.tomcat.jdbc.pool.DataSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
+import org.springframework.jdbc.datasource.DataSourceUtils
 
+import java.sql.Connection
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
@@ -2308,6 +2311,27 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     }
 
     Map<String, Object> mergePullRequest(String prId)
+    {
+        try
+        {
+            return attemptMergePullRequest(prId)
+        }
+        catch (IllegalStateException e)
+        {
+            Connection connection = threadBoundConnection
+            connection.rollback() // rollback in case any work was done before this point
+            obsoletePullRequest(prId)
+            connection.commit() // force database changes before throwing exception
+            throw e
+        }
+    }
+
+    private static Connection getThreadBoundConnection()
+    {
+        return DataSourceUtils.getConnection(NCubeAppContext.getBean(DATA_SOURCE_BEAN) as DataSource)
+    }
+
+    private Map<String, Object> attemptMergePullRequest(String prId)
     {
         NCube prCube = loadPullRequestCube(prId)
 

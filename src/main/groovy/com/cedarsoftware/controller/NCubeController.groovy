@@ -1,7 +1,6 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
-import com.cedarsoftware.ncube.exception.PullRequestException
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -1298,16 +1297,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     Object mergePullRequest(String prId)
     {
-        try
-        {
-            Map result = mutableClient.mergePullRequest(prId)
-            return result
-        }
-        catch (IllegalStateException e)
-        {
-            mutableClient.obsoletePullRequest(prId)
-            throw new PullRequestException(e.message)
-        }
+        Map result = mutableClient.mergePullRequest(prId)
+        return result
     }
 
     NCube cancelPullRequest(String prId)

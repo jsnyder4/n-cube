@@ -71,6 +71,10 @@ class TestPullRequests extends NCubeCleanupBaseTest
     @Test
     void testGeneratePullRequestLinkWithoutPermissions()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         createCubeFromResource('test.branch.1.json')
 
         NCube branchPermCube = mutableClient.getCube(appId.asVersion('0.0.0'), SYS_BRANCH_PERMISSIONS)

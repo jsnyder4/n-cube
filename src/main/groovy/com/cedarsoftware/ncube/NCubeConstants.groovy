@@ -98,6 +98,7 @@ interface NCubeConstants
     final String MANAGER_BEAN = 'ncubeManager'
     final String CONTROLLER_BEAN = 'ncubeController'
     final String NCUBE_CLIENT_BEAN = 'ncube-client'
+    final String DATA_SOURCE_BEAN = 'ncubeDataSource'
 
     final int LOG_ARG_LENGTH = 125
 }

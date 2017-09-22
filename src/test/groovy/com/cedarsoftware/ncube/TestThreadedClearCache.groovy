@@ -40,7 +40,6 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
     {
     }
     
-    // Uncomment when testing threading.  This hits an external website, so use sparingly
     @Test
     void testCubesWithThreadedClearCacheWithAppId()
     {

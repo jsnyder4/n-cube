@@ -2,7 +2,6 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
-import com.cedarsoftware.ncube.exception.PullRequestException
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.JsonHttpProxy
@@ -352,7 +351,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
             call('mergePullRequest', [prId])
             fail()
         }
-        catch (PullRequestException e)
+        catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'branch', 'request', 'obsolete', 'requested', 'applicationid')
             Map<String, Object> pr = mutableClient.pullRequests.first() as Map
@@ -375,7 +374,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
             call('mergePullRequest', [prId])
             fail()
         }
-        catch (PullRequestException e)
+        catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'cube', 'valid', 'request', 'obsolete', 'requested', 'applicationid')
             Map<String, Object> pr = mutableClient.pullRequests.first() as Map
@@ -397,7 +396,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
             call('mergePullRequest', [prId])
             fail()
         }
-        catch (PullRequestException e)
+        catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'cube', 'changed', 'request', 'obsolete', 'requested', 'applicationid')
             Map<String, Object> pr = mutableClient.pullRequests.first() as Map

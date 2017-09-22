@@ -280,7 +280,7 @@ class TestJsonFormatter extends NCubeBaseTest
     {
         for (String f : strings)
         {
-            String original = NCubeRuntime.getResourceAsString(f)
+            InputStream original = NCubeRuntime.getResourceAsStream("/${f}")
             NCube ncube = NCube.fromSimpleJson(original)
 
             //long start = System.nanoTime()

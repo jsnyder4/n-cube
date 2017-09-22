@@ -24,6 +24,9 @@ import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.util.io.MetaUtils
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonToken
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -2574,6 +2577,8 @@ class NCube<T>
     {
         try
         {
+//            JsonParser jsonParser = new JsonFactory().createParser(stream);
+//            parseJson(jsonParser)
             Map options = [:]
             options[JsonReader.USE_MAPS] = true
             Map jsonNCube = (Map) JsonReader.jsonToJava(new BufferedInputStream(stream), options)
@@ -2587,6 +2592,16 @@ class NCube<T>
         {
             throw new IllegalStateException("Error reading cube from passed in JSON", e)
         }
+    }
+
+    private static <T> NCube<T> parseJson(JsonParser parser)
+    {
+        while (parser.nextToken() != JsonToken.END_OBJECT)
+        {
+            JsonToken token = parser.nextToken()
+            println token
+        }
+        return null
     }
 
     /**
