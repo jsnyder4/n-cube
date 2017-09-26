@@ -1738,7 +1738,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         Sql sql = getSql(c)
         List<String> apps = []
 
-        sql.eachRow("/* getAppNames */ SELECT DISTINCT app_cd FROM n_cube WHERE tenant_cd = :tenant AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
+        sql.eachRow("/* getAppNames */ SELECT DISTINCT app_cd FROM n_cube WHERE tenant_cd = :tenant AND n_cube_nm = :sysinfo", map, { ResultSet row ->
             apps.add(row.getString('app_cd'))
         })
         return apps
@@ -1756,7 +1756,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         List<String> snapshotVersions = []
         Map<String, List<String>> versions = [:]
 
-        sql.eachRow("/* getVersions */ SELECT DISTINCT version_no_cd, status_cd FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
+        sql.eachRow("/* getVersions */ SELECT DISTINCT version_no_cd, status_cd FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND n_cube_nm = :sysinfo", map, { ResultSet row ->
             String version = row.getString('version_no_cd')
             if (ReleaseStatus.RELEASE.name() == row.getString('status_cd'))
             {
@@ -1780,7 +1780,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         Sql sql = getSql(c)
         Set<String> branches = new HashSet<>()
 
-        sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND LOWER(n_cube_nm) = LOWER(:sysinfo)", map, { ResultSet row ->
+        sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND n_cube_nm = :sysinfo", map, { ResultSet row ->
             branches.add(row.getString('branch_id'))
         })
         return branches
@@ -1799,7 +1799,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         map.tenant = padTenant(c, appId.tenant)
         map.sysinfo = SYS_INFO
         Sql sql = getSql(c)
-        String statement = "/* ${methodName}.doCubesExist */ SELECT DISTINCT n_cube_id FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch AND LOWER(n_cube_nm) = LOWER(:sysinfo)"
+        String statement = "/* ${methodName}.doCubesExist */ SELECT 1 FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch AND n_cube_nm = :sysinfo"
 
         if (!ignoreStatus)
         {
@@ -1810,8 +1810,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         sql.eachRow(statement, map, 0, 1, { ResultSet row -> result = true })
         return result
     }
-
-
+    
     static Long getMaxRevision(Connection c, ApplicationID appId, String cubeName, String methodName)
     {
         Map map = appId as Map

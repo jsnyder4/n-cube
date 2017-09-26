@@ -1540,6 +1540,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         NCubeAppContext.testServer.clearTestDatabase()
     }
 
+    void clearPermCache()
+    {
+        NCubeAppContext.testServer.clearPermCache()
+    }
+
     Map health(boolean showAll = false)
     {
         // If remotely accessing server, use the following to get the MBeanServerConnection...

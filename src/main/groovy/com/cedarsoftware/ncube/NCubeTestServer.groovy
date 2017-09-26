@@ -24,4 +24,6 @@ import groovy.transform.CompileStatic
 interface NCubeTestServer
 {
     void clearTestDatabase()
+
+    void clearPermCache()
 }

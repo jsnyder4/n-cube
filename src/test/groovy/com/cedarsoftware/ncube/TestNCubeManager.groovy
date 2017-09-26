@@ -2034,14 +2034,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testIsAdminPass()
     {
-        if (NCubeAppContext.clientTest)
-        {
-            return
-        }
-
         String userId = mutableClient.userId
         Map coord = [(AXIS_USER):userId,(AXIS_ROLE):ROLE_ADMIN]
-        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
 
         NCube sysUserCube = mutableClient.getCube(sysAppId, SYS_USERGROUPS)
         assertNotNull(sysUserCube)
@@ -2051,18 +2045,21 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assertNotNull(appUserCube)
         assert appUserCube.at(coord)
 
-        // sys admin
+        // is sys admin
+        assert mutableClient.sysAdmin
         assert mutableClient.isAppAdmin(defaultSnapshotApp)
 
-        // app admin only
-        sysUserCube.setCell(false, coord)
-        manager.updateCube(sysUserCube, true)
-        assert mutableClient.isAppAdmin(defaultSnapshotApp)
+        // is app admin only
+        ApplicationID sysAppBranch = sysAppId.asBranch('test')
+        mutableClient.copyBranch(sysAppId, sysAppBranch)
+        NCube branchSysUserCube = mutableClient.getCube(sysAppBranch, SYS_USERGROUPS)
+        branchSysUserCube.setCell(false, coord)
+        mutableClient.updateCube(branchSysUserCube)
+        mutableClient.commitBranch(sysAppBranch)
 
-        // no permissions cubes
-        Object[] cubeList = [SYS_USERGROUPS] as Object[]
-        manager.deleteCubes(sysAppId, cubeList, true)
-        manager.deleteCubes(defaultBootApp, cubeList, true)
+        // clear cached permissions
+        testClient.clearPermCache()
+        assert !mutableClient.sysAdmin
         assert mutableClient.isAppAdmin(defaultSnapshotApp)
     }
 

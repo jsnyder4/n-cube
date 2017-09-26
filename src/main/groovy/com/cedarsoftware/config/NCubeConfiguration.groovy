@@ -44,7 +44,7 @@ class NCubeConfiguration
 
     @Value('${ncube.perm.cache.max.size:100000}') int maxSizePermCache
     @Value('${ncube.perm.cache.evict.type:expireAfterAccess}') String typePermCache
-    @Value('${ncube.perm.cache.evict.duration:2}') int durationPermCache
+    @Value('${ncube.perm.cache.evict.duration:3}') int durationPermCache
     @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
     @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
 

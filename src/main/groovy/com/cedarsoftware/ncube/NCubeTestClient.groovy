@@ -28,6 +28,8 @@ interface NCubeTestClient
 
     void clearCache()
 
+    void clearPermCache()
+
     Cache getCacheForApp(ApplicationID appId)
 
     void clearTestDatabase()

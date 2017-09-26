@@ -2596,12 +2596,54 @@ class NCube<T>
 
     private static <T> NCube<T> parseJson(JsonParser parser)
     {
-        while (parser.nextToken() != JsonToken.END_OBJECT)
+        NCube<T> ncube = new NCube('tmp')
+        while (!parser.closed)
         {
-            JsonToken token = parser.nextToken()
-            println token
+            parser.nextToken()
+            String fieldName = parser.currentName
+            if ('ncube' == fieldName)
+            {
+                ncube.name = parser.text
+            }
+            else if (DEFAULT_CELL_VALUE == fieldName)
+            {
+            }
+            else if (DEFAULT_CELL_VALUE_TYPE == fieldName)
+            {
+            }
+            else if (DEFAULT_CELL_VALUE_URL == fieldName)
+            {
+            }
+            else if (DEFAULT_CELL_VALUE_CACHE == fieldName)
+            {
+            }
+            else if ('axes' == fieldName)
+            {
+                while (parser.nextToken() != JsonToken.END_ARRAY)
+                {
+                    //
+                }
+            }
+            else if ('cells' == fieldName)
+            {
+                while (parser.nextToken() != JsonToken.END_ARRAY)
+                {
+                    //
+                }
+            }
+            else
+            {
+                // Not-understood properties at the root level are meta-properties
+                if (StringUtilities.hasContent(fieldName))
+                {
+                    ncube.setMetaProperty(fieldName, parser.text)
+                }
+            }
         }
-        return null
+        transformMetaProperties(ncube.metaProps)
+
+        parser.close()
+        return ncube
     }
 
     /**

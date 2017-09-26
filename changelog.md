@@ -1,9 +1,14 @@
 ### Revision History
-* 4.1.15-SNAPSHOT
+* 4.1.16-SNAPSHOT
+  * --
+* 4.1.15
   * Enhancement: Added `NCubeManager.isSysAdmin()` to allow global admin permissions.
   * Enhancement: Cache admin/sysAdmin permissions to eliminate frequent calls.
+  * Enhancement: SQL queries in `NCubeJdbcPersister` methods `doCubesExist()`, `getAppNames()`, `getVersions()`, and `getBranches()` sped up by matching sys.info cube name exact, not using `LOWER()`. 
+  * Updated permissions cache time-to-live (TTL) from 2 to 3 minutes. 
   * Bug fix: Fix `NCubeManager.fastCheckPermissions()` to not load cubes when permissions are already cached.
   * Bug fix: Catch `BranchMergeException` during `NCubeManager.mergePullRequest()`, obsolete the pull request and re-throw the exception.
+  * Bug fix: Admin could be cached before test setup permissions cubes properly.
 * 4.1.14
   * Enhancement: Improved error handling when comparing a cube against a branch where it does not exist.
   * Enhancement: Added `ApplicationID.asBootVersion()` to avoid repetition.

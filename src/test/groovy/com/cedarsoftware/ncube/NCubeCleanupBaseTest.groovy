@@ -42,6 +42,7 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
         testClient.clearTestDatabase()
         testClient.clearCache()
         testClient.clearSysParams()
+        testClient.clearPermCache()
     }
 
     /**
