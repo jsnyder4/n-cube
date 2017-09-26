@@ -144,6 +144,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.checkPermissions(appId, resource, action)
     }
 
+    Boolean isSysAdmin()
+    {
+        return mutableClient.isSysAdmin()
+    }
+
     Boolean isAppAdmin(ApplicationID appId)
     {
         appId = addTenant(appId)

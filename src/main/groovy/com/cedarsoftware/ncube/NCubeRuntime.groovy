@@ -248,6 +248,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
+    Boolean isSysAdmin()
+    {
+        Boolean result = bean.call(beanName, 'isSysAdmin', []) as Boolean
+        return result
+    }
+
     Boolean isAppAdmin(ApplicationID appId)
     {
         Boolean result = bean.call(beanName, 'isAppAdmin', [appId]) as Boolean

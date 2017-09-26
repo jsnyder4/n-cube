@@ -864,12 +864,9 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         content = handleWildCard(content)
 
-        Map permInfo = getPermInfo(appId)
         List<NCubeInfoDto> cubes = persister.search(appId, cubeNamePattern, content, options, getUserId())
-        if (!permInfo.skipPermCheck && !systemRequest)
-        {
-            cubes.removeAll { !fastCheckPermissions(appId, it.name, Action.READ, permInfo) }
-        }
+        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect{it.name})
+        cubes.removeAll { !validCubeNames.contains(it.name)}
         return cubes
     }
 
@@ -884,12 +881,9 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         content = handleWildCard(content)
 
-        Map permInfo = getPermInfo(appId)
         List<NCube> cubes = persister.cubeSearch(appId, cubeNamePattern, content, options, getUserId())
-        if (!permInfo.skipPermCheck && !systemRequest)
-        {
-            cubes.removeAll { !fastCheckPermissions(appId, it.name, Action.READ, permInfo) }
-        }
+        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect{it.name})
+        cubes.removeAll { !validCubeNames.contains(it.name)}
         return cubes
     }
 
@@ -1228,14 +1222,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private String getPermissionCacheKey(String resource, Action action)
     {
-        final String sep = '/'
-        final StringBuilder builder = new StringBuilder()
-        builder.append(getUserId())
-        builder.append(sep)
-        builder.append(resource)
-        builder.append(sep)
-        builder.append(action)
-        return builder.toString()
+        return "${getUserId()}/${resource}/${action.name()}"
     }
 
     private static Boolean checkPermissionCache(Cache cache, String key)
@@ -1279,6 +1266,12 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             return true
         }
 
+        if (isAppAdmin(appId))
+        {
+            permCache.put(key, true)
+            return true
+        }
+
         ApplicationID bootVersion = getBootAppId(appId)
         NCube permCube = loadCubeInternal(bootVersion, SYS_PERMISSIONS)
         if (permCube == null)
@@ -1297,7 +1290,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         // Step 1: Get user's roles
         Set<String> roles = getRolesForUser(userToRole)
 
-        if (!roles.contains(ROLE_ADMIN) && CUBE_MUTATE_ACTIONS.contains(action))
+        if (CUBE_MUTATE_ACTIONS.contains(action))
         {   // If user is not an admin, check branch permissions.
             NCube branchPermCube = loadCubeInternal(bootVersion.asBranch(appId.branch), SYS_BRANCH_PERMISSIONS)
             if (branchPermCube != null && !checkBranchPermission(branchPermCube, resource))
@@ -1326,47 +1319,77 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Faster permissions check that should be used when filtering a list of n-cubes.  Before calling this
      * API, call getPermInfo(AppId) to get the 'permInfo' Map to be used in this API.
      */
-    private boolean fastCheckPermissions(ApplicationID appId, String resource, Action action, Map permInfo)
+    private Set<String> fastCheckPermissions(ApplicationID appId, Action action, Collection<String> cubeNames)
     {
+        if (systemRequest || isAppAdmin(appId))
+        {
+            return cubeNames as Set
+        }
+
+        Map permInfo
         Cache permCache = permCacheManager.getCache(appId.cacheKey())
-        String key = getPermissionCacheKey(resource, action)
-        Boolean allowed = checkPermissionCache(permCache, key)
-        if (allowed instanceof Boolean)
+        Iterator<String> it = cubeNames.iterator()
+        while (it.hasNext())
         {
-            return allowed
-        }
-
-        if (Action.READ == action && SYS_LOCK.equalsIgnoreCase(resource))
-        {
-            permCache.put(key, true)
-            return true
-        }
-
-        Set<String> roles = permInfo.roles as Set
-        if (!roles.contains(ROLE_ADMIN) && CUBE_MUTATE_ACTIONS.contains(action))
-        {   // If user is not an admin, check branch permissions.
-            NCube branchPermCube = (NCube)permInfo.branchPermCube
-            if (branchPermCube != null && !checkBranchPermission(branchPermCube, resource))
+            String resource = it.next()
+            String key = getPermissionCacheKey(resource, action)
+            Boolean allowed = checkPermissionCache(permCache, key)
+            if (allowed instanceof Boolean)
             {
-                permCache.put(key, false)
-                return false
+                if (allowed)
+                {
+                    continue
+                }
+                else
+                {
+                    it.remove()
+                    continue
+                }
             }
-        }
 
-        // Step 2: Make sure one of the user's roles allows access
-        final String actionName = action.lower()
-        NCube permCube = permInfo.permCube as NCube
-        for (String role : roles)
-        {
-            if (checkResourcePermission(permCube, role, resource, actionName))
+            if (Action.READ == action && SYS_LOCK.equalsIgnoreCase(resource))
             {
                 permCache.put(key, true)
-                return true
+                continue
+            }
+
+            if (permInfo == null)
+            {
+                permInfo = getPermInfo(appId)
+            }
+            Set<String> roles = permInfo.roles as Set
+            if (CUBE_MUTATE_ACTIONS.contains(action))
+            {   // If user is not an admin, check branch permissions.
+                NCube branchPermCube = (NCube)permInfo.branchPermCube
+                if (branchPermCube != null && !checkBranchPermission(branchPermCube, resource))
+                {
+                    permCache.put(key, false)
+                    it.remove()
+                    continue
+                }
+            }
+
+            // Step 2: Make sure one of the user's roles allows access
+            final String actionName = action.lower()
+            NCube permCube = permInfo.permCube as NCube
+            boolean foundRolePermission = false
+            for (String role : roles)
+            {
+                if (checkResourcePermission(permCube, role, resource, actionName))
+                {
+                    permCache.put(key, true)
+                    foundRolePermission = true
+                    break
+                }
+            }
+            if (!foundRolePermission)
+            {
+                permCache.put(key, false)
+                it.remove()
             }
         }
 
-        permCache.put(key, false)
-        return false
+        return cubeNames as Set
     }
 
     private Map getPermInfo(ApplicationID appId)
@@ -1478,14 +1501,35 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return p.matcher(text).matches()
     }
 
+    protected Boolean isTypeOfAdmin(ApplicationID appId)
+    {
+        Cache permCache = permCacheManager.getCache(appId.cacheKey())
+        String key = getPermissionCacheKey(SYS_INFO, Action.READ)
+        Boolean allowed = checkPermissionCache(permCache, key)
+        if (allowed instanceof Boolean)
+        {
+            return allowed
+        }
+
+        NCube userCube = loadCubeInternal(getBootAppId(appId), SYS_USERGROUPS)
+        allowed = userCube && isUserInGroup(userCube, ROLE_ADMIN)
+        permCache.put(key, allowed)
+        return allowed
+    }
+
+    Boolean isSysAdmin()
+    {
+        ApplicationID sysAppId = new ApplicationID(tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        return isTypeOfAdmin(sysAppId)
+    }
+
     Boolean isAppAdmin(ApplicationID appId)
     {
-        NCube userCube = loadCubeInternal(getBootAppId(appId), SYS_USERGROUPS)
-        if (userCube == null)
-        {   // Allow everything if no permissions are set up.
+        if (sysAdmin)
+        {
             return true
         }
-        return isUserInGroup(userCube, ROLE_ADMIN)
+        return isTypeOfAdmin(appId)
     }
 
     private boolean isUserInGroup(NCube userCube, String groupName)

@@ -57,6 +57,10 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
             {
                 LOG.info("    [SLOW DB - ${time} ms] [${username}] ${msg}")
             }
+            else if (LOG.debugEnabled)
+            {
+                LOG.debug("    [DB - ${time} ms] [${username}] ${msg}")
+            }
             return ret
         }
         finally

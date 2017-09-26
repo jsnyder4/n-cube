@@ -48,6 +48,8 @@ interface NCubeMutableClient extends NCubeClient
 
     Boolean checkPermissions(ApplicationID appId, String resource, Action action)
 
+    Boolean isSysAdmin()
+
     Boolean isAppAdmin(ApplicationID appId)
 
     String getAppLockedBy(ApplicationID appId)

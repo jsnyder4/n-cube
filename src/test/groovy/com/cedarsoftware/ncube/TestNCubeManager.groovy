@@ -5,6 +5,7 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.DeepEquals
+import com.cedarsoftware.util.UniqueIdGenerator
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -1862,7 +1863,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = 'garpley'
+        String otherUser = UniqueIdGenerator.uniqueId
         ApplicationID branchBootAppId = defaultBootApp.asBranch(origUser)
         Map lockCoord = [(AXIS_SYSTEM): null]
 
@@ -1927,11 +1928,13 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // assert admin can read prcube
         assert mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
+        assert !mutableClient.search(sysAppId, "tx.${prId}", null, null).empty
 
         // assert other user can't read prcube
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-        manager.userId = 'otherUser'
+        manager.userId = UniqueIdGenerator.uniqueId
         assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
+        assert mutableClient.search(sysAppId, "tx.${prId}", null, null).empty
 
         try
         {   // make sure other user can still merge the pr (ignoring permissions)
@@ -2014,7 +2017,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         try
         {
-            manager.userId = 'otherUser'
+            manager.userId = UniqueIdGenerator.uniqueId
             testCube.setCell('testval', [(testAxisName): null])
             mutableClient.updateCube(testCube)
             fail()
@@ -2031,10 +2034,31 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testIsAdminPass()
     {
-        //without user cube present
-        assertTrue(mutableClient.isAppAdmin(defaultSnapshotApp))
-        assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
-        assertTrue(mutableClient.isAppAdmin(defaultSnapshotApp))
+        String userId = mutableClient.userId
+        Map coord = [(AXIS_USER):userId,(AXIS_ROLE):ROLE_ADMIN]
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+
+        NCube sysUserCube = mutableClient.getCube(sysAppId, SYS_USERGROUPS)
+        assertNotNull(sysUserCube)
+        assert sysUserCube.at(coord)
+
+        NCube appUserCube = mutableClient.getCube(defaultBootApp, SYS_USERGROUPS)
+        assertNotNull(appUserCube)
+        assert appUserCube.at(coord)
+
+        // sys admin
+        assert mutableClient.isAppAdmin(defaultSnapshotApp)
+
+        // app admin only
+        sysUserCube.setCell(false, coord)
+        manager.updateCube(sysUserCube, true)
+        assert mutableClient.isAppAdmin(defaultSnapshotApp)
+
+        // no permissions cubes
+        Object[] cubeList = [SYS_USERGROUPS] as Object[]
+        manager.deleteCubes(sysAppId, cubeList, true)
+        manager.deleteCubes(defaultBootApp, cubeList, true)
+        assert mutableClient.isAppAdmin(defaultSnapshotApp)
     }
 
     @Test
@@ -2047,7 +2071,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         String origUser = manager.userId
         assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
-        manager.userId = 'bad'
+        manager.userId = UniqueIdGenerator.uniqueId
         assert !mutableClient.isAppAdmin(defaultSnapshotApp)
         manager.userId = origUser
     }
@@ -2060,7 +2084,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = 'otherUser'
+        String otherUser = UniqueIdGenerator.uniqueId
         String testAxisName = 'testAxis'
         ApplicationID branchBootApp = defaultBootApp.asBranch(ApplicationID.TEST_BRANCH)
 

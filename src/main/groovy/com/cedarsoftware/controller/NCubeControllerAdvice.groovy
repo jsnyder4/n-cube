@@ -63,7 +63,7 @@ class NCubeControllerAdvice
         }
         else if (LOG.debugEnabled)
         {
-            LOG.debug(MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH))
+            LOG.debug("[${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         return ret
     }
