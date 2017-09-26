@@ -1932,7 +1932,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // assert other user can't read prcube
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-        manager.userId = UniqueIdGenerator.uniqueId
+        manager.userId = UniqueIdGenerator.uniqueId as String
         assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
         assert mutableClient.search(sysAppId, "tx.${prId}", null, null).empty
 
@@ -2017,7 +2017,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         try
         {
-            manager.userId = UniqueIdGenerator.uniqueId
+            manager.userId = UniqueIdGenerator.uniqueId as String
             testCube.setCell('testval', [(testAxisName): null])
             mutableClient.updateCube(testCube)
             fail()
@@ -2034,6 +2034,11 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testIsAdminPass()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
+
         String userId = mutableClient.userId
         Map coord = [(AXIS_USER):userId,(AXIS_ROLE):ROLE_ADMIN]
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
@@ -2071,7 +2076,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         String origUser = manager.userId
         assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
-        manager.userId = UniqueIdGenerator.uniqueId
+        manager.userId = UniqueIdGenerator.uniqueId as String
         assert !mutableClient.isAppAdmin(defaultSnapshotApp)
         manager.userId = origUser
     }

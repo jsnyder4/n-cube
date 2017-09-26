@@ -1,8 +1,9 @@
 ### Revision History
 * 4.1.15-SNAPSHOT
-  * Enhancement: Added `isSysAdmin` to manager to allow global admin permissions.
+  * Enhancement: Added `NCubeManager.isSysAdmin()` to allow global admin permissions.
   * Enhancement: Cache admin/sysAdmin permissions to eliminate frequent calls.
-  * Bug fix: Fix `fastPermissionsCheck` to not load cubes when permissions are already cached.
+  * Bug fix: Fix `NCubeManager.fastCheckPermissions()` to not load cubes when permissions are already cached.
+  * Bug fix: Catch `BranchMergeException` during `NCubeManager.mergePullRequest()`, obsolete the pull request and re-throw the exception.
 * 4.1.14
   * Enhancement: Improved error handling when comparing a cube against a branch where it does not exist.
   * Enhancement: Added `ApplicationID.asBootVersion()` to avoid repetition.

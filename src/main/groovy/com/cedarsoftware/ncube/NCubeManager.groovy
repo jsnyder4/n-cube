@@ -2360,7 +2360,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             return attemptMergePullRequest(prId)
         }
-        catch (IllegalStateException e)
+        catch (IllegalStateException | BranchMergeException e)
         {
             Connection connection = threadBoundConnection
             connection.rollback() // rollback in case any work was done before this point

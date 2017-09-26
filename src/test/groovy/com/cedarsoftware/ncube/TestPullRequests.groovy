@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
@@ -294,5 +295,76 @@ class TestPullRequests extends NCubeCleanupBaseTest
         String notes = headDtos[0].notes
         assertContainsIgnoreCase(notes, otherUser, 'merged pull request', origUser, 'HEAD')
         manager.userId = origUser
+    }
+
+    @Test
+    void testMergePullRequestConflictingChanges()
+    {
+        ApplicationID branch1 = appId.asBranch('branch1')
+        ApplicationID branch2 = appId.asBranch('branch2')
+        preloadCubes(branch1, 'test.branch.1.json')
+        preloadCubes(branch2, 'test.branch.1.json')
+        preloadCubes(appId.asHead(), 'test.branch.1.json')
+
+        NCube cube1 = mutableClient.getCube(branch1, 'TestBranch')
+        cube1.setCell('AAA', [Code : -15])
+        mutableClient.updateCube(cube1)
+        List<NCubeInfoDto> dtos1 = mutableClient.search(branch1, 'TestBranch', null, null)
+        String prId1 = mutableClient.generatePullRequestHash(branch1, dtos1.toArray())
+
+        NCube cube2 = mutableClient.getCube(branch2, 'TestBranch')
+        cube2.setCell('BBB', [Code : -15])
+        mutableClient.updateCube(cube2)
+        List<NCubeInfoDto> dtos2 = mutableClient.search(branch2, 'TestBranch', null, null)
+        String prId2 = mutableClient.generatePullRequestHash(branch2, dtos2.toArray())
+
+        mutableClient.mergePullRequest(prId1)
+
+        try
+        {
+            mutableClient.mergePullRequest(prId2)
+            fail()
+        }
+        catch (BranchMergeException e)
+        {
+            assert (e.errors[mutableClient.BRANCH_ADDS] as Collection).empty
+            assert (e.errors[mutableClient.BRANCH_DELETES] as Collection).empty
+            assert (e.errors[mutableClient.BRANCH_UPDATES] as Collection).empty
+            assert (e.errors[mutableClient.BRANCH_RESTORES] as Collection).empty
+            assert (e.errors[mutableClient.BRANCH_REJECTS] as Collection).size() == 1
+        }
+        NCube pr1 = mutableClient.getCube(sysAppId, "tx.${prId1}")
+        NCube pr2 = mutableClient.getCube(sysAppId, "tx.${prId2}")
+        assert PR_COMPLETE == pr1.getCell([(PR_PROP): PR_STATUS])
+        assert PR_OBSOLETE == pr2.getCell([(PR_PROP): PR_STATUS])
+    }
+
+    @Test
+    void testMergePullRequestNonConflictingChanges()
+    {
+        ApplicationID branch1 = appId.asBranch('branch1')
+        ApplicationID branch2 = appId.asBranch('branch2')
+        preloadCubes(branch1, 'test.branch.1.json')
+        preloadCubes(branch2, 'test.branch.1.json')
+        preloadCubes(appId.asHead(), 'test.branch.1.json')
+
+        NCube cube1 = mutableClient.getCube(branch1, 'TestBranch')
+        cube1.setCell('AAA', [Code : -15])
+        mutableClient.updateCube(cube1)
+        List<NCubeInfoDto> dtos1 = mutableClient.search(branch1, 'TestBranch', null, null)
+        String prId1 = mutableClient.generatePullRequestHash(branch1, dtos1.toArray())
+
+        NCube cube2 = mutableClient.getCube(branch2, 'TestBranch')
+        cube2.setCell('BBB', [Code : 15])
+        mutableClient.updateCube(cube2)
+        List<NCubeInfoDto> dtos2 = mutableClient.search(branch2, 'TestBranch', null, null)
+        String prId2 = mutableClient.generatePullRequestHash(branch2, dtos2.toArray())
+
+        mutableClient.mergePullRequest(prId1)
+        mutableClient.mergePullRequest(prId2)
+        NCube pr1 = mutableClient.getCube(sysAppId, "tx.${prId1}")
+        NCube pr2 = mutableClient.getCube(sysAppId, "tx.${prId2}")
+        assert PR_COMPLETE == pr1.getCell([(PR_PROP): PR_STATUS])
+        assert PR_COMPLETE == pr2.getCell([(PR_PROP): PR_STATUS])
     }
 }
