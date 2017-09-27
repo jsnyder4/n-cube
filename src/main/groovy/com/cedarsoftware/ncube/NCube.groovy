@@ -2579,6 +2579,7 @@ class NCube<T>
         {
 //            JsonParser jsonParser = new JsonFactory().createParser(stream);
 //            parseJson(jsonParser)
+//            stream.reset()
             Map options = [:]
             options[JsonReader.USE_MAPS] = true
             Map jsonNCube = (Map) JsonReader.jsonToJava(new BufferedInputStream(stream), options)
@@ -2596,48 +2597,148 @@ class NCube<T>
 
     private static <T> NCube<T> parseJson(JsonParser parser)
     {
+        final int INIT = 0
+        final int NCUBE = 1
+        final int AXES = 2
+        final int COLUMN = 3
+        final int CELLS = 4
+        int level = INIT
         NCube<T> ncube = new NCube('tmp')
+        
         while (!parser.closed)
         {
-            parser.nextToken()
-            String fieldName = parser.currentName
-            if ('ncube' == fieldName)
+            JsonToken token = parser.nextToken()
+            if (token == null)
             {
-                ncube.name = parser.text
+                break
             }
-            else if (DEFAULT_CELL_VALUE == fieldName)
+
+            switch(level)
             {
-            }
-            else if (DEFAULT_CELL_VALUE_TYPE == fieldName)
-            {
-            }
-            else if (DEFAULT_CELL_VALUE_URL == fieldName)
-            {
-            }
-            else if (DEFAULT_CELL_VALUE_CACHE == fieldName)
-            {
-            }
-            else if ('axes' == fieldName)
-            {
-                while (parser.nextToken() != JsonToken.END_ARRAY)
-                {
-                    //
-                }
-            }
-            else if ('cells' == fieldName)
-            {
-                while (parser.nextToken() != JsonToken.END_ARRAY)
-                {
-                    //
-                }
-            }
-            else
-            {
-                // Not-understood properties at the root level are meta-properties
-                if (StringUtilities.hasContent(fieldName))
-                {
-                    ncube.setMetaProperty(fieldName, parser.text)
-                }
+                case INIT:
+                    if (JsonToken.START_OBJECT == token)
+                    {
+                        level = NCUBE
+                    }
+                    break
+                
+                case NCUBE:
+                    if (JsonToken.FIELD_NAME == token)
+                    {
+                        switch(parser.text)
+                        {
+                            case 'ncube':
+                                token = parser.nextToken()
+                                ncube.name = parser.text
+                                break
+                            case 'axes':
+                                token = parser.nextToken()
+                                if (JsonToken.START_ARRAY != token)
+                                {
+                                    throw new IllegalStateException("Expecting start array '[' but instead found: ${token}")
+                                }
+                                token = parser.nextToken()
+                                if (JsonToken.START_OBJECT != token)
+                                {
+                                    throw new IllegalStateException("Expecting start object '{' but instead found: ${token}")
+                                }
+                                level = AXES
+                                break
+
+                            case 'cells':
+                                level = CELLS
+                                break
+
+                            case DEFAULT_CELL_VALUE:
+                                break
+
+                            case DEFAULT_CELL_VALUE_TYPE:
+                                break
+
+                            case DEFAULT_CELL_VALUE_URL:
+                                break
+
+                            case DEFAULT_CELL_VALUE_CACHE:
+                                break
+                            
+                            default:  // meta-properties
+                                String key = parser.text
+                                token = parser.nextToken()
+                                println "key = ${key}"
+                                println "token name = ${token.name()}"
+                                println "parser text = ${parser.text}"
+                                println ''
+                                break
+                        }
+                    }
+                    break
+
+                case AXES:
+                    if (JsonToken.FIELD_NAME == token)
+                    {
+                        String fieldName = parser.text
+                        token = parser.nextToken()
+                        switch (fieldName)
+                        {
+                            case 'name':
+                                break
+
+                            case 'type':
+                                break
+
+                            case 'valueType':
+                                break
+
+                            case 'hasDefault':
+                                break
+
+                            case 'preferredOrder':
+                                break
+
+                            case 'columns':
+                                level = COLUMN
+                                break
+                        }
+                    }
+                    else
+                    {
+                        println 'hey'
+                    }
+                    break
+
+                case COLUMN:
+                    if (JsonToken.START_OBJECT != token)
+                    {
+                        throw new IllegalStateException("Expecting start object '{' but instead found: ${token}")
+                    }
+                    token = parser.nextToken()
+                    switch(parser.text)
+                    {
+                        case 'id':
+                            break
+
+                        case 'value': // possibly complex [range, set, etc.]
+                            break
+
+                        case 'name':
+                            break
+
+                        case 'url':
+                            break
+
+                        case 'type':
+                            break
+                        
+                        case 'cache':
+                            break
+                    }
+                    break
+                
+                case CELLS:
+                    break
+                
+                default:
+                    throw new IllegalStateException("Unknown state ${level} reached while parsing JSON into an NCube.")
             }
         }
         transformMetaProperties(ncube.metaProps)
