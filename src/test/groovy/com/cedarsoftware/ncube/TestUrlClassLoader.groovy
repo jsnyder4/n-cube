@@ -7,6 +7,7 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.TestWithPreloadedDatabase.appId
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.fail
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -49,6 +50,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         try
         {
             ncubeRuntime.getUrlClassLoader(appId, [:])
+            fail()
         }
         catch (IllegalStateException e)
         {

@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.controller.NCubeController
 import groovy.transform.CompileStatic
+import org.junit.After
 import org.junit.Ignore
 import org.junit.runner.RunWith
 import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer
@@ -41,6 +42,12 @@ class NCubeBaseTest implements NCubeConstants
 {
     static String baseRemoteUrl
 
+    @After
+    void teardown()
+    {
+        testClient.clearCache()
+    }
+    
     static NCubeMutableClient getMutableClient()
     {
         String beanName = NCubeAppContext.containsBean(RUNTIME_BEAN) ? RUNTIME_BEAN : MANAGER_BEAN

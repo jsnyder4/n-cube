@@ -185,7 +185,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
             clearCache(ncube.applicationID)
         }
-        clearCubeFromCache(ncube.applicationID, ncube.name)
+        clearCache(ncube.applicationID, [ncube.name])
         ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
         return result
     }
@@ -226,7 +226,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('duplicate')
         Boolean result = bean.call(beanName, 'duplicate', [oldAppId, newAppId, oldName, newName]) as Boolean
-        clearCubeFromCache(newAppId, newName)
+        clearCache(newAppId, [newName])
         return result
     }
 
@@ -384,7 +384,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             for (Object cubeName : cubeNames)
             {
-                clearCubeFromCache(appId, cubeName as String)
+                clearCache(appId, [cubeName as String])
             }
         }
         return result
@@ -402,8 +402,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('renameCube')
         Boolean result = bean.call(beanName, 'renameCube', [appId, oldName, newName]) as Boolean
-        clearCubeFromCache(appId, oldName)
-        clearCubeFromCache(appId, newName)
+        clearCache(appId, [oldName, newName])
         return result
     }
 
@@ -468,7 +467,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('updateAxisMetaProperties')
         bean.call(beanName, 'updateAxisMetaProperties', [appId, cubeName, axisName, newMetaProperties])
-        clearCubeFromCache(appId, cubeName)
+        clearCache(appId, [cubeName])
     }
 
     Boolean updateNotes(ApplicationID appId, String cubeName, String notes)
@@ -538,7 +537,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         ApplicationID headAppId = prApp.asHead()
         clearCache(headAppId)
         String prCube = result[PR_CUBE] as String
-        clearCubeFromCache(prApp, prCube)
+        clearCache(prApp, [prCube])
         return result
     }
 
@@ -546,7 +545,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('obsoletePullRequest')
         NCube ncube = bean.call(beanName, 'obsoletePullRequest', [prId]) as NCube
-        clearCubeFromCache(ncube.applicationID, ncube.name)
+        clearCache(ncube.applicationID, [ncube.name])
         return ncube
     }
 
@@ -554,7 +553,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('cancelPullRequest')
         NCube ncube = bean.call(beanName, 'cancelPullRequest', [prId]) as NCube
-        clearCubeFromCache(ncube.applicationID, ncube.name)
+        clearCache(ncube.applicationID, [ncube.name])
         return ncube
     }
 
@@ -562,7 +561,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('reopenPullRequest')
         NCube ncube = bean.call(beanName, 'reopenPullRequest', [prId]) as NCube
-        clearCubeFromCache(ncube.applicationID, ncube.name)
+        clearCache(ncube.applicationID, [ncube.name])
         return ncube
     }
 
@@ -629,7 +628,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         verifyAllowMutable('createRefAxis')
         bean.call(beanName, 'createRefAxis', [appId, cubeName, axisName, refAppId, refCubeName, refAxisName])
-        clearCubeFromCache(appId, cubeName)
+        clearCache(appId, [cubeName])
     }
 
     //-- Run Tests -------------------------------------------------------------------------------------------------
@@ -894,41 +893,47 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      * This will remove all the n-cubes from memory, compiled Groovy code,
      * caches related to expressions, caches related to method support,
      * advice caches, and local classes loaders (used when no sys.classpath is
-     * present).
+     * present). If NCube names are passed as the second argument, only those
+     * NCubes will be evicted from the cache.
      *
      * @param appId ApplicationID for which the cache is to be cleared.
+     * @param cubeNames (optional, defaults to null) Collection<String> for specific NCubes to clear from cache.
      */
-    void clearCache(ApplicationID appId)
+    void clearCache(ApplicationID appId, Collection<String> cubeNames = null)
     {
-        synchronized (ncubeCacheManager)
+        ApplicationID.validateAppId(appId)
+        if (cubeNames != null)
         {
-            ApplicationID.validateAppId(appId)
-
-            // Clear NCube cache
             Cache cubeCache = ncubeCacheManager.getCache(appId.cacheKey())
-            cubeCache.clear()   // eviction will trigger removalListener, which clears other NCube internal caches
-
-            GroovyBase.clearCache(appId)
-            NCubeGroovyController.clearCache(appId)
-
-            // Clear Advice cache
-            Cache adviceCache = adviceCacheManager.getCache(appId.cacheKey())
-            adviceCache.clear()
-
-            // Clear ClassLoader cache
-            GroovyClassLoader classLoader = localClassLoaders[appId]
-            if (classLoader != null)
+            for (String cubeName : cubeNames)
             {
-                classLoader.clearCache()
-                localClassLoaders.remove(appId)
+                cubeCache.evict(cubeName.toLowerCase())
             }
         }
-    }
+        else
+        {
+            synchronized (ncubeCacheManager)
+            {
+                // Clear NCube cache
+                Cache cubeCache = ncubeCacheManager.getCache(appId.cacheKey())
+                cubeCache.clear()   // eviction will trigger removalListener, which clears other NCube internal caches
 
-    void clearCubeFromCache(ApplicationID appId, String cubeName)
-    {
-        Cache cubeCache = ncubeCacheManager.getCache(appId.cacheKey())
-        cubeCache.evict(cubeName.toLowerCase())
+                GroovyBase.clearCache(appId)
+                NCubeGroovyController.clearCache(appId)
+
+                // Clear Advice cache
+                Cache adviceCache = adviceCacheManager.getCache(appId.cacheKey())
+                adviceCache.clear()
+
+                // Clear ClassLoader cache
+                GroovyClassLoader classLoader = localClassLoaders[appId]
+                if (classLoader != null)
+                {
+                    classLoader.clearCache()
+                    localClassLoaders.remove(appId)
+                }
+            }
+        }
     }
 
     void clearCache()

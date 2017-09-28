@@ -25,6 +25,8 @@ interface NCubeRuntimeClient extends NCubeClient
 {
     void clearCache(ApplicationID appId)
 
+    void clearCache(ApplicationID appId, Collection<String> cubeNames)
+
     URL getActualUrl(ApplicationID appId, String url, Map input)
 
     URLClassLoader getLocalClassloader(ApplicationID appId)

@@ -40,9 +40,9 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
     void teardown()
     {
         testClient.clearTestDatabase()
-        testClient.clearCache()
         testClient.clearSysParams()
         testClient.clearPermCache()
+        super.teardown()
     }
 
     /**

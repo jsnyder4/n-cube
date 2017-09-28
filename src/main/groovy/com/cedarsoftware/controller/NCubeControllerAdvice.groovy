@@ -59,11 +59,11 @@ class NCubeControllerAdvice
 
         if (time > 1000)
         {
-            LOG.info("[SLOW - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            LOG.info("[SLOW CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         else if (LOG.debugEnabled)
         {
-            LOG.debug("[${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            LOG.debug("[CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         return ret
     }

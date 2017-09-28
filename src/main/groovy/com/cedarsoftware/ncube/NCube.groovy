@@ -2578,7 +2578,8 @@ class NCube<T>
         try
         {
 //            JsonParser jsonParser = new JsonFactory().createParser(stream);
-//            parseJson(jsonParser)
+//            NCube<T> ncube = parseJson(jsonParser)
+//            return ncube
 //            stream.reset()
             Map options = [:]
             options[JsonReader.USE_MAPS] = true

@@ -1,6 +1,9 @@
 ### Revision History
-* 4.1.16-SNAPSHOT
+* 4.1.17-SNAPSHOT
   * --
+* 4.1.16
+  * Enhancement: Updated `NCubeRuntime.clearCache()` to take a second argument `Collection<String>` of NCube names which defaults to null. Passing null retains previous functionality, whereas passing NCube names will only evict the specified NCubes from the cache.
+  * Consumed json-command-servlet 1.8.2
 * 4.1.15
   * Enhancement: Added `NCubeManager.isSysAdmin()` to allow global admin permissions.
   * Enhancement: Cache admin/sysAdmin permissions to eliminate frequent calls.
@@ -49,7 +52,7 @@
   * Bug fix: Copy branch would not return the correct error message if target branch already existed.
   * Bug fix: `ApplicationID.validateBranchIsNotHead()` did not match lowercase `head`. 
 * 4.1.4
-  * Switched to using Spring's FastByteArrayOutputStream (no synchronized, fast access to internal byte[]) instead of JDK's ByteArrayOutputStream.
+  * Switched to using Spring's `FastByteArrayOutputStream` (no synchronized, fast access to internal `byte[]`) instead of JDK's `ByteArrayOutputStream`.
 * 4.1.3
   * Consumed java-util 1.29.0
   * Consumed json-command-servlet 1.6.5
@@ -64,7 +67,7 @@
   * Increased the time the execution thread will wait to obtain the per-cell lock before it can dynamically compile a cell.  Value increased from 10 seconds to 60 seconds.
 * 4.0.24
   * Added `use()` API to `NCube` and `NCubeGroovyExpression`.  This API allows the user to point a cell to another cell, which is then fetched, but executed in the input context of the calling cell.  This allows creating reference cells that can be re-used.  Often these are placed on Default columns, or an `NCube` can be created with reference cells in it, and other cells can `use()` these reference cells (again their input will be used when calling the other cell).
-  * Bug fix: getReferenceAxes and updateReferenceAxes would fail when cubes could not be loaded due to invalid references.
+  * Bug fix: `getReferenceAxes()` and `updateReferenceAxes()` would fail when cubes could not be loaded due to invalid references.
   * Bug fix: contains search would not return anything if an invalid reference axis was encountered.
 * 4.0.23
   * Introduced hidden sys.info n-cube in all n-cube applications. This n-cube will help speed up queries used by `NCubeController` methods `getAppNames()`, `getVersions()` and `getBranches()`. 
@@ -153,7 +156,7 @@
   * Support mode for json format when getting raw json (json-pretty, json)
   * Update to Spring Boot 1.5.3, Spring 4.3.8, and Groovy 2.4.11
 * 4.0.4
-  * NCubeController.commitCube() was passing an incompatable argument to commitBranch. Fixed bug and added test coverage for commitCube. 
+  * `NCubeController.commitCube()` was passing an incompatible argument to commitBranch. Fixed bug and added test coverage for commitCube. 
 * 4.0.3
   * `NCubeManager.getReferenceAxes()` was incorrectly validating reference versions. 
 * 4.0.2
