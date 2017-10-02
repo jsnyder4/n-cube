@@ -91,18 +91,13 @@ interface NCubeReadOnlyPersister
      * is set to true in the options Map.
      * @param searchValue Optional String which will be 'contains' matched against the JSON format of the n-cube.  It
      * may contain * and ? wildcard patterns.  This match is performed case-insensitively.
-     * @param options
-     * @return
+     * @param options - See NCubeConstants.SEARCH_* for all the search options.
+     * @return List<NCubeInfoDto> records
      */
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
 
     /**
      * Same as search but returns built cubes.
-     * @param appId
-     * @param cubeNamePattern
-     * @param searchValue
-     * @param options
-     * @return
      */
     List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
 

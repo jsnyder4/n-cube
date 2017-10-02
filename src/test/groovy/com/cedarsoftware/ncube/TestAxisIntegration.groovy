@@ -3,7 +3,12 @@ package com.cedarsoftware.ncube
 import groovy.transform.CompileStatic
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
 import static org.junit.Assert.fail
 
 @CompileStatic
@@ -21,9 +26,9 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         axis.addColumn('B')
         axis.addColumn('C')
         cube.addAxis(axis)
-        cube.setCell('Aval', [axis:'A'])
-        cube.setCell('Bval', [axis:'B'])
-        cube.setCell('Cval', [axis:'C'])
+        cube.setCell('Aval', [axis: 'A'])
+        cube.setCell('Bval', [axis: 'B'])
+        cube.setCell('Cval', [axis: 'C'])
         cube.applicationID = appId
         int numCells = cube.numCells
         assert numCells == 3
@@ -54,9 +59,9 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         assert appId.branch == metaProps[REF_BRANCH]
         assert refCubeName == metaProps[REF_CUBE_NAME]
         assert refAxisName == metaProps[REF_AXIS_NAME]
-        assert 'Aval' == cube.getCell((axis.name):'A')
-        assert 'Bval' == cube.getCell((axis.name):'B')
-        assert 'Cval' == cube.getCell((axis.name):'C')
+        assert 'Aval' == cube.getCell((axis.name): 'A')
+        assert 'Bval' == cube.getCell((axis.name): 'B')
+        assert 'Cval' == cube.getCell((axis.name): 'C')
         assert cube.numCells == numCells
     }
 
@@ -79,9 +84,9 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         axis.addColumn('B')
         axis.addColumn('C')
         cube.addAxis(axis)
-        cube.setCell('Aval', [axis:'A'])
-        cube.setCell('Bval', [axis:'B'])
-        cube.setCell('Cval', [axis:'C'])
+        cube.setCell('Aval', [axis: 'A'])
+        cube.setCell('Bval', [axis: 'B'])
+        cube.setCell('Cval', [axis: 'C'])
         cube.applicationID = appId
         int numCells = cube.numCells
         assert numCells == 3
@@ -100,9 +105,9 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         assert appId.branch == metaProps[REF_BRANCH]
         assert refCube.name == metaProps[REF_CUBE_NAME]
         assert refAxis.name == metaProps[REF_AXIS_NAME]
-        assert 'Aval' == cube.getCell((axis.name):'A')
-        assert 'Bval' == cube.getCell((axis.name):'B')
-        assert 'Cval' == cube.getCell((axis.name):'C')
+        assert 'Aval' == cube.getCell((axis.name): 'A')
+        assert 'Bval' == cube.getCell((axis.name): 'B')
+        assert 'Cval' == cube.getCell((axis.name): 'C')
         assert cube.numCells == numCells
     }
 
