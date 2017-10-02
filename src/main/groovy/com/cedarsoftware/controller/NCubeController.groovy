@@ -1,6 +1,7 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -250,51 +251,47 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return getJson(appId, cubeName, [mode:"json-index"])
     }
 
+    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
+    {
+        appId = addTenant(appId)
+        Map record = mutableClient.getCubeRawJsonBytes(appId, cubeName, options)
+        return record
+    }
+
+    Map getCubeRawJsonBytesById(long id, Map options = null)
+    {
+        Map record = mutableClient.getCubeRawJsonBytesById(id, options)
+        return record
+    }
+
+    @Deprecated
     String getCubeRawJson(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        String rawJson = mutableClient.getCubeRawJson(appId, cubeName)
+        Map record = mutableClient.getCubeRawJsonBytes(appId, cubeName, null)
+        String rawJson = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), 'UTF-8')
         return rawJson
     }
 
+    @Deprecated //TODO - remove this asap, default Map options in other method when removed
     byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
     {
-        appId = addTenant(appId)
-        byte[] bytes = mutableClient.getCubeRawJsonBytes(appId, cubeName)
+        Map record = getCubeRawJsonBytes(appId, cubeName, null) as Map
+        byte[] bytes = record.bytes as byte[]
         return bytes
     }
 
     String getJson(ApplicationID appId, String cubeName, Map options)
     {
         appId = addTenant(appId)
-        try
-        {
-            NCube ncube = getCubeInternal(appId, cubeName)
-            return formatCube(ncube, options)
-        }
-        catch(IllegalStateException e)
-        {
-            if (['json','json-pretty'].contains(options.mode))
-            {
-                LOG.error(e.message, e)
-                String json = mutableClient.getCubeRawJson(appId, cubeName)
-                if ('json-pretty' == options.mode)
-                {
-                    return JsonWriter.formatJson(json)
-                }
-                return json
-            }
-            else
-            {
-                throw e
-            }
-        }
+        String json = mutableClient.getJson(appId, cubeName, options)
+        return json
     }
 
+    @Deprecated
     NCube getCube(ApplicationID appId, String cubeName)
     {
-        appId = addTenant(appId)
-        NCube cube = mutableClient.getCube(appId, cubeName)
+        NCube cube = loadCube(appId, cubeName, null)
         return cube
     }
 
@@ -840,7 +837,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     void promoteRevision(long cubeId)
     {
-        NCube ncube = mutableClient.loadCubeById(cubeId)
+        //TODO - fix asap!!! add API through all layers to do work on storage server side
+        Map record = mutableClient.getCubeRawJsonBytesById(cubeId, null)
+        NCube ncube = NCube.createCubeFromBytes(record.bytes as byte[])
         mutableClient.updateCube(ncube)
     }
 
@@ -904,8 +903,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        NCube cube = mutableClient.loadCube(appId, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
-        return cube.testData.toArray()
+        String tests = mutableClient.getTests(appId, cubeName)
+        List<NCubeTest> testData = NCubeTestReader.convert(tests)
+        return testData.toArray()
     }
 
     Map getAppTests(ApplicationID appId)
@@ -1306,22 +1306,19 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
-    NCube cancelPullRequest(String prId)
+    void cancelPullRequest(String prId)
     {
-        NCube result = mutableClient.cancelPullRequest(prId)
-        return result
+        mutableClient.cancelPullRequest(prId)
     }
 
-    NCube reopenPullRequest(String prId)
+    void reopenPullRequest(String prId)
     {
-        NCube result = mutableClient.reopenPullRequest(prId)
-        return result
+        mutableClient.reopenPullRequest(prId)
     }
 
-    NCube obsoletePullRequest(String prId)
+    void obsoletePullRequest(String prId)
     {
-        NCube result = mutableClient.obsoletePullRequest(prId)
-        return result
+        mutableClient.obsoletePullRequest(prId)
     }
 
     Object[] getPullRequests(Date startDate = null, Date endDate = null)
@@ -1377,6 +1374,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
+    Boolean deleteApp(ApplicationID appId)
+    {
+        appId = addTenant(appId)
+        Boolean result = mutableClient.deleteApp(appId)
+        return result
+    }
+
     Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
     {
         appId = addTenant(appId)
@@ -1391,20 +1395,26 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     String loadCubeById(ApplicationID appId, long id, String mode)
     {
-        NCube ncube = mutableClient.loadCubeById(id)
-        return formatCube(ncube, [mode: mode])
+        Map record = mutableClient.getCubeRawJsonBytesById(id, null)
+        NCube ncube = NCube.createCubeFromBytes(record.bytes as byte[])
+        ncube.applicationID = appId
+        return NCube.formatCube(ncube, [mode: mode])
     }
 
+    @Deprecated
     NCube loadCubeById(long id, Map options = null)
     {
-        NCube ncube = mutableClient.loadCubeById(id, options)
+        Map record = mutableClient.getCubeRawJsonBytesById(id, options)
+        NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
 
+    @Deprecated
     NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
     {
         appId = addTenant(appId)
-        NCube ncube = mutableClient.loadCube(appId, cubeName, options)
+        Map record = getCubeRawJsonBytes(appId, cubeName, options)
+        NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
 
@@ -1508,8 +1518,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
-        NCube newCube = mutableClient.loadCubeById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
-        NCube oldCube = mutableClient.loadCubeById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        Map newRecord = mutableClient.getCubeRawJsonBytesById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        NCube newCube = NCube.createCubeFromRecord(newRecord)
+
+        Map oldRecord = mutableClient.getCubeRawJsonBytesById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        NCube oldCube = NCube.createCubeFromRecord(oldRecord)
+
         addTenant(newCube.applicationID)
         addTenant(oldCube.applicationID)
         return DeltaProcessor.getDeltaDescription(newCube, oldCube)
@@ -1872,7 +1886,9 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private NCube getCubeFromDto(NCubeInfoDto dto, Map options = null)
     {
         ApplicationID appId = new ApplicationID(tenant, dto.app, dto.version, dto.status, dto.branch)
-        return mutableClient.loadCube(appId, dto.name, options)
+        Map record = mutableClient.getCubeRawJsonBytes(appId, dto.name, options)
+        NCube ncube = NCube.createCubeFromRecord(record)
+        return ncube
     }
 
     private NCube getCubeInternal(ApplicationID appId, String ncubeName)
@@ -1917,32 +1933,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             }
         })
         return items
-    }
-
-    private static String formatCube(NCube ncube, Map options)
-    {
-        String mode = options.mode
-        if ('html' == mode)
-        {
-            return ncube.toHtml()
-        }
-
-        Map formatOptions = [:]
-        if (mode.contains('index'))
-        {
-            formatOptions.indexFormat = true
-        }
-        if (mode.contains('nocells'))
-        {
-            formatOptions.nocells = true
-        }
-
-        String json = ncube.toFormattedJson(formatOptions)
-        if (mode.contains('pretty'))
-        {
-            return JsonWriter.formatJson(json)
-        }
-        return json
     }
 
     private static String getInetHostname()

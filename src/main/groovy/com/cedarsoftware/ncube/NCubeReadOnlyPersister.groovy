@@ -26,23 +26,6 @@ import groovy.transform.CompileStatic
 interface NCubeReadOnlyPersister
 {
     /**
-     * Load n-cube by ID (specific n-cube)
-     * @param id long id of n-cube to load
-     * @param options Map of additional option to include test data
-     * @return NCube loaded from database
-     * @throws IllegalArgumentException if there is no n-cube with the given id.
-     */
-    NCube loadCubeById(long id, Map options, String username)
-
-    /**
-     * Load n-cube by name (latest revision)
-     * @param appId ApplicationID containing the n-cube
-     * @param name String name of the n-cube to load
-     * @param options Map of additional option to include test data
-     */
-    NCube loadCube(ApplicationID appId, String name, Map options, String username)
-
-    /**
      * Load n-cube by SHA-1 (latest revision with that SHA-1)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
@@ -54,15 +37,17 @@ interface NCubeReadOnlyPersister
      * Load n-cube raw JSON by name (latest revision)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
+     * @return Map with keys of appId, bytes, cubeName, sha1, testData
      */
-    String loadCubeRawJson(ApplicationID appId, String name, String username)
+    Map loadCubeRecord(ApplicationID appId, String name, Map options, String username)
 
     /**
-     * Load n-cube raw JSON by name (latest revision)
-     * @param appId ApplicationID containing the n-cube
-     * @param name String name of the n-cube to load
+     * Load n-cube by ID (specific n-cube)
+     * @param id long id of n-cube to load
+     * @param options Map of additional option to include test data
+     * @return Map with keys of appId, bytes, cubeName, sha1, testData
      */
-    byte[] loadCubeRawJsonBytes(ApplicationID appId, String name, String username)
+    Map loadCubeRecordById(long id, Map options, String username)
 
     /**
      * Get all application names for the given tenant

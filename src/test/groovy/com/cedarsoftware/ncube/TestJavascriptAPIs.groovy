@@ -71,6 +71,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         // runtime methods removed because they are runtime only concerns (never go across the wire)
         Set<String> allowedRunTimeMethods = [
+                'getCube(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
                 'addCube(class com.cedarsoftware.ncube.NCube)',
                 'getBootVersion(class java.lang.String, class java.lang.String)',
                 'getSystemParams()',
@@ -87,6 +88,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
 
         // mutable methods removed because of transformed return type (usually Object[] for Javascript clients)
         Set<String> allowedMutableMethods = [
+                'getCube(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set)',
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set, boolean)',
                 'mergeDeltas(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.List)',
@@ -129,6 +131,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     @Test
     void testGetJson()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         NCube ncube1 = NCubeBuilder.discrete1D
         NCube ncube2 = NCubeBuilder.discrete1D
         ncube1.applicationID = BRANCH1

@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
@@ -197,14 +198,16 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     NCube loadCubeById(long id, Map options = null)
     {
-        NCube ncube = bean.call(beanName, 'loadCubeById', [id, options]) as NCube
+        Map record = getCubeRawJsonBytesById(id, options)
+        NCube ncube = NCube.createCubeFromRecord(record)
         applyAdvices(ncube)
         return ncube
     }
 
     NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
     {
-        NCube ncube = bean.call(beanName, 'loadCube', [appId, cubeName, options]) as NCube
+        Map record = getCubeRawJsonBytes(appId, cubeName, options)
+        NCube ncube = NCube.createCubeFromRecord(record)
         applyAdvices(ncube)
         return ncube
     }
@@ -348,22 +351,57 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    String getCubeRawJson(ApplicationID appId, String cubeName)
+    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
     {
-        byte[] bytes = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName]) as byte[]
-        return new String(IOUtilities.uncompressBytes(bytes), "UTF-8")
+        Map record = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName, options]) as Map
+        return record
     }
 
-    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
+    Map getCubeRawJsonBytesById(long id, Map options = null)
     {
-        byte[] bytes = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName]) as byte[]
-        return bytes
+        Map record = bean.call(beanName, 'getCubeRawJsonBytesById', [id, options]) as Map
+        return record
+    }
+
+    String getJson(ApplicationID appId, String cubeName, Map options)
+    {
+        try
+        {
+            NCube ncube = getCube(appId, cubeName)
+            return NCube.formatCube(ncube, options)
+        }
+        catch (IllegalStateException e)
+        {
+            if (['json','json-pretty'].contains(options.mode))
+            {
+                LOG.error(e.message, e)
+                Map record = getCubeRawJsonBytes(appId, cubeName, options)
+                String json = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), "UTF-8")
+                if ('json-pretty' == options.mode)
+                {
+                    return JsonWriter.formatJson(json)
+                }
+                return json
+            }
+            else
+            {
+                throw e
+            }
+        }
     }
 
     Boolean deleteBranch(ApplicationID appId)
     {
         verifyAllowMutable('deleteBranch')
         Boolean result = bean.call(beanName, 'deleteBranch', [appId]) as Boolean
+        clearCache(appId)
+        return result
+    }
+
+    Boolean deleteApp(ApplicationID appId)
+    {
+        verifyAllowMutable('deleteApp')
+        Boolean result = bean.call(beanName, 'deleteApp', [appId]) as Boolean
         clearCache(appId)
         return result
     }
@@ -541,28 +579,22 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    NCube obsoletePullRequest(String prId)
+    void obsoletePullRequest(String prId)
     {
         verifyAllowMutable('obsoletePullRequest')
-        NCube ncube = bean.call(beanName, 'obsoletePullRequest', [prId]) as NCube
-        clearCache(ncube.applicationID, [ncube.name])
-        return ncube
+        bean.call(beanName, 'obsoletePullRequest', [prId]) as NCube
     }
 
-    NCube cancelPullRequest(String prId)
+    void cancelPullRequest(String prId)
     {
         verifyAllowMutable('cancelPullRequest')
-        NCube ncube = bean.call(beanName, 'cancelPullRequest', [prId]) as NCube
-        clearCache(ncube.applicationID, [ncube.name])
-        return ncube
+        bean.call(beanName, 'cancelPullRequest', [prId]) as NCube
     }
 
-    NCube reopenPullRequest(String prId)
+    void reopenPullRequest(String prId)
     {
         verifyAllowMutable('reopenPullRequest')
-        NCube ncube = bean.call(beanName, 'reopenPullRequest', [prId]) as NCube
-        clearCache(ncube.applicationID, [ncube.name])
-        return ncube
+        bean.call(beanName, 'reopenPullRequest', [prId]) as NCube
     }
 
     Object[] getPullRequests(Date startDate = null, Date endDate = null)
@@ -1010,16 +1042,15 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         // and normal app processing doesn't do two queries anymore.
         // used to do getCubeInfoRecords() -> dto
         // and then dto -> loadCube(id)
-        byte[] bytes = getCubeRawJsonBytes(appId, cubeName)
+        Map record = getCubeRawJsonBytes(appId, cubeName, null)
 
-        if (ArrayUtilities.isEmpty(bytes))
+        if (record == null)
         {
             cubeCache.put(lowerCubeName, false)
             return null
         }
 
-        NCube ncube = NCube.createCubeFromBytes(bytes)
-        ncube.applicationID = appId
+        NCube ncube = NCube.createCubeFromRecord(record)
         return prepareCube(ncube)
     }
 

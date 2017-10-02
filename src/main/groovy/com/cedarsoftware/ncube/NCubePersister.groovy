@@ -45,6 +45,7 @@ interface NCubePersister extends NCubeReadOnlyPersister
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     boolean deleteBranch(ApplicationID appId, String username)
+    boolean deleteApp(ApplicationID appId, String username)
     boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName, String username)
 
     // Release Management

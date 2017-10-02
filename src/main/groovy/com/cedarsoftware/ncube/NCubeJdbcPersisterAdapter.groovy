@@ -81,28 +81,16 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "createCube(${cube.applicationID.cacheKey(cube.name)})", username)
     }
 
-    String loadCubeRawJson(ApplicationID appId, String name, String username)
+    Map loadCubeRecord(ApplicationID appId, String name, Map options, String username)
     {
-        return (String) jdbcOperation({ Connection c -> persister.loadCubeRawJson(c, appId, name) },
-                "loadCubeRawJson(${appId.cacheKey(name)})", username)
+        return (Map) jdbcOperation({ Connection c -> persister.loadCubeRecord(c, appId, name, options) },
+                "loadCubeRecord(${appId.cacheKey(name)})", username)
     }
 
-    byte[] loadCubeRawJsonBytes(ApplicationID appId, String name, String username)
+    Map loadCubeRecordById(long cubeId, Map options, String username)
     {
-        return (byte[]) jdbcOperation({ Connection c -> persister.loadCubeRawJsonBytes(c, appId, name) },
-                "loadCubeRawJsonBytes(${appId.cacheKey(name)})", username)
-    }
-
-    NCube loadCubeById(long cubeId, Map options, String username)
-    {
-        return (NCube) jdbcOperation({ Connection c -> persister.loadCubeById(c, cubeId, options) },
-                "loadCubeById(${cubeId})", username)
-    }
-
-    NCube loadCube(ApplicationID appId, String name, Map options, String username)
-    {
-        return (NCube) jdbcOperation({ Connection c -> persister.loadCube(c, appId, name, options) },
-                "loadCube(${appId.cacheKey(name)})", username)
+        return (Map) jdbcOperation({ Connection c -> persister.loadCubeRecordById(c, cubeId, options) },
+                "loadCubeRecordById(${cubeId})", username)
     }
 
     NCube loadCubeBySha1(ApplicationID appId, String name, String sha1, String username)
@@ -133,6 +121,12 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
     {
         return (boolean) jdbcOperation({ Connection c -> persister.deleteBranch(c, branchId) },
                 "deleteBranch(${branchId})", username)
+    }
+
+    boolean deleteApp(ApplicationID appId, String username)
+    {
+        return (boolean) jdbcOperation({ Connection c -> persister.deleteApp(c, appId) },
+                "deleteApp(${appId})", username)
     }
 
     boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName, String username)

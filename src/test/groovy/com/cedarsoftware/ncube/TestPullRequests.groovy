@@ -113,7 +113,8 @@ class TestPullRequests extends NCubeCleanupBaseTest
         assert 'open' == prCube.getCell([property: 'status'])
 
         // cancel commit
-        prCube = mutableClient.cancelPullRequest(prId)
+        mutableClient.cancelPullRequest(prId)
+        prCube = loadCube(sysAppId, "tx.${prId}")
         assert 'closed cancelled' == prCube.getCell([property: 'status'])
 
         // attempt to cancel a previously cancelled commit
@@ -128,7 +129,8 @@ class TestPullRequests extends NCubeCleanupBaseTest
         }
 
         // reopen a commit
-        prCube = mutableClient.reopenPullRequest(prId)
+        mutableClient.reopenPullRequest(prId)
+        prCube = loadCube(sysAppId, "tx.${prId}")
         assert 'open' == prCube.getCell([property: 'status'])
 
         // attempt to reopen a previously reopened commit

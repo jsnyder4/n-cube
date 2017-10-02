@@ -30,8 +30,8 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         mutableClient.createCube(cube)
         mutableClient.createRefAxis(appId, cube.name, axis.name, appId, refCubeName, refAxisName)
 
-        cube = mutableClient.loadCube(appId, cube.name)
-        NCube refCube = mutableClient.loadCube(appId, refCubeName)
+        cube = mutableClient.getCube(appId, cube.name)
+        NCube refCube = mutableClient.getCube(appId, refCubeName)
 
         assert refCube
         assert 1 == refCube.numDimensions
@@ -88,7 +88,7 @@ class TestAxisIntegration extends NCubeCleanupBaseTest
         mutableClient.createCube(cube)
         mutableClient.createRefAxis(appId, cube.name, axis.name, appId, refCube.name, refAxis.name)
 
-        cube = mutableClient.loadCube(appId, cube.name)
+        cube = mutableClient.getCube(appId, cube.name)
         assert 1 == cube.numDimensions
         axis = cube.getAxis(axis.name)
         assert axis

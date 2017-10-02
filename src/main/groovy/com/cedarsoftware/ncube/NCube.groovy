@@ -2539,6 +2539,70 @@ class NCube<T>
     // ----------------------------
 
     /**
+     * @param ncube NCube to be formatted
+     * @param options Map containing various formatting options.  Valid options, listed in
+     * (String key : String value) format, mode: html, mode: index, mode: pretty, mode: nocells.
+     * 'html' mode is a visual, nice excel-like view.  'index' mode is a different format where
+     * the columns are indexed by name below the axis, as opposed to axis having an array of
+     * columns. 'pretty' mode is the original json format but formatted nicely for viewing.
+     * 'json' mode is the default, but can be explicitly specified.  'nocells' mode is the original
+     * json format but the cells array is empty. The 'pretty' mode can be added to 'index', 'nocells',
+     * or 'json' like this 'index-pretty', 'nocells-pretty', or 'json-index'.
+     * @return String format, generated from the passed in n-cube, based upon passed in options.
+     */
+    static String formatCube(NCube ncube, Map options)
+    {
+        String mode = options.mode
+        if ('html' == mode)
+        {
+            return ncube.toHtml()
+        }
+
+        Map formatOptions = [:]
+        if (mode.contains('index'))
+        {
+            formatOptions.indexFormat = true
+        }
+        if (mode.contains('nocells'))
+        {
+            formatOptions.nocells = true
+        }
+
+        String json = ncube.toFormattedJson(formatOptions)
+        if (mode.contains('pretty'))
+        {
+            return JsonWriter.formatJson(json)
+        }
+        return json
+    }
+
+    /**
+     * Create an NCube from the given the passed in Map representing an NCube record.
+     * @param record Map with the keys 'cubeName', 'bytes', 'appId', 'sha1', and
+     * 'testData'.  The bytes are a byte[] in gzipped format of the JSON representation of an NCube.
+     * The appId is an ApplicationID instance. The sha1 is the String sha1 of the NCube.  The 'testData'
+     * key is optional and only present if there are tests associated to the NCube.  If so, then it is
+     * the String JSON form of a List<NCubeTest>.  If testData is included, then the hydrated NCube will
+     * include the key METAPROPERTY_TEST_DATA (_testData) which will include the String version of the test
+     * data.
+     * @return NCube created from the passed in Map (record) format of an NCube.
+     */
+    static NCube createCubeFromRecord(Map record)
+    {
+        if (record == null)
+        {
+            return null
+        }
+        NCube ncube = createCubeFromBytes(record.bytes as byte[])
+        ncube.applicationID = record.appId as ApplicationID
+        if (record.containsKey('testData'))
+        {
+            ncube.testData = NCubeTestReader.convert(record.testData as String).toArray()
+        }
+        return ncube
+    }
+
+    /**
      * Use this API to create NCubes from a simple JSON format.
      *
      * @param json Simple JSON format

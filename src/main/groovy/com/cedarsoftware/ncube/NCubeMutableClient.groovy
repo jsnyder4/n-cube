@@ -32,6 +32,10 @@ interface NCubeMutableClient extends NCubeClient
 
     String getUserId()
 
+    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
+
+    Map getCubeRawJsonBytesById(long id, Map options)
+
     Boolean updateCube(NCube ncube)
 
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
@@ -84,6 +88,8 @@ interface NCubeMutableClient extends NCubeClient
 
     Boolean deleteBranch(ApplicationID appId)
 
+    Boolean deleteApp(ApplicationID appId)
+
     NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
 
     Boolean deleteCubes(ApplicationID appId, Object[] cubeNames)
@@ -116,11 +122,11 @@ interface NCubeMutableClient extends NCubeClient
 
     Map<String, Object> mergePullRequest(String prId)
 
-    NCube obsoletePullRequest(String prId)
+    void obsoletePullRequest(String prId)
 
-    NCube cancelPullRequest(String prId)
+    void cancelPullRequest(String prId)
 
-    NCube reopenPullRequest(String prId)
+    void reopenPullRequest(String prId)
 
     Object[] getPullRequests()
 

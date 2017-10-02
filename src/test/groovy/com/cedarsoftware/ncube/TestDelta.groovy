@@ -1712,7 +1712,8 @@ class TestDelta extends NCubeCleanupBaseTest
 
         try
         { // make sure we can't load cube
-            mutableClient.loadCube(branch1, cubeName)
+            Map record = mutableClient.getCubeRawJsonBytes(branch1, cubeName, null)
+            NCube.createCubeFromBytes(record.bytes as byte[])
             fail()
         }
         catch(IllegalStateException e)
@@ -1734,7 +1735,9 @@ class TestDelta extends NCubeCleanupBaseTest
         assert nextSnapVer == axisRefs[1].destVersion
 
         // make sure we can load cube again
-        assertNotNull(mutableClient.loadCube(branch1, cubeName))
+        Map record = mutableClient.getCubeRawJsonBytes(branch1, cubeName, null)
+        NCube ncube = NCube.createCubeFromBytes(record.bytes as byte[])
+        assertNotNull(ncube)
     }
 
     @Test

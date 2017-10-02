@@ -34,6 +34,7 @@ import static org.junit.Assert.*
 class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 {
     public static ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'preloaded', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
+    public static ApplicationID sysAppId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'sys.app', ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
     private static final ApplicationID HEAD = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
     private static final ApplicationID BRANCH1 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'FOO')
     private static final ApplicationID BRANCH2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'BAR')
@@ -291,6 +292,65 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         dtos = mutableClient.search(tripZero, '*', null, null)
         assertEquals(4, dtos.size())
+    }
+
+    @Test
+    void testDeleteAppPass()
+    {
+        createCubeFromResource(BRANCH1, 'test.branch.age.1.json')
+        mutableClient.commitBranch(BRANCH1)
+
+        assert 1 == mutableClient.search(BRANCH1, null, null, null).size()
+        assert 1 == mutableClient.search(HEAD, null, null, null).size()
+        assert 3 == mutableClient.search(HEAD.asBootVersion(), null, null, null).size()
+
+        mutableClient.deleteApp(BRANCH1)
+        assert !mutableClient.getVersions(BRANCH1.app).size()
+    }
+
+    @Test
+    void testDeleteReleasedAppFails()
+    {
+        String newSnapVer = '1.1.1'
+        createCubeFromResource(BRANCH1, 'test.branch.age.1.json')
+        mutableClient.commitBranch(BRANCH1)
+        mutableClient.releaseCubes(HEAD, newSnapVer)
+
+        assert 1 == mutableClient.search(HEAD.asRelease(), null, null, null).size()
+
+        try
+        {
+            mutableClient.deleteApp(BRANCH1)
+            fail()
+        }
+        catch(IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'Only applications without a released version can be deleted')
+        }
+    }
+
+    @Test
+    void testDeleteAppNotSysAdminFails()
+    {
+        ApplicationID sysAppBranch = sysAppId.asBranch('test')
+        createCubeFromResource(BRANCH1, 'test.branch.age.1.json')
+        mutableClient.commitBranch(BRANCH1)
+        mutableClient.copyBranch(sysAppId, sysAppBranch)
+        NCube sysPermsCube = mutableClient.getCube(sysAppBranch, SYS_USERGROUPS)
+        sysPermsCube.setCell(false, [(AXIS_USER):mutableClient.userId, (AXIS_ROLE):ROLE_ADMIN])
+        mutableClient.updateCube(sysPermsCube)
+        mutableClient.commitBranch(sysAppBranch)
+        testClient.clearPermCache()
+
+        try
+        {
+            mutableClient.deleteApp(BRANCH1)
+            fail()
+        }
+        catch(IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'system administrator')
+        }
     }
 
     @Test
