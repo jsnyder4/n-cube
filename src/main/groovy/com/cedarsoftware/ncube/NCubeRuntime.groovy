@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
@@ -198,7 +197,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     NCube loadCubeById(long id, Map options = null)
     {
-        Map record = getCubeRawJsonBytesById(id, options)
+        NCubeInfoDto record = loadCubeRecordById(id, options)
         NCube ncube = NCube.createCubeFromRecord(record)
         applyAdvices(ncube)
         return ncube
@@ -206,7 +205,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
     {
-        Map record = getCubeRawJsonBytes(appId, cubeName, options)
+        NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
         NCube ncube = NCube.createCubeFromRecord(record)
         applyAdvices(ncube)
         return ncube
@@ -351,15 +350,15 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
+    NCubeInfoDto loadCubeRecord(ApplicationID appId, String cubeName, Map options)
     {
-        Map record = bean.call(beanName, 'getCubeRawJsonBytes', [appId, cubeName, options]) as Map
+        NCubeInfoDto record = bean.call(beanName, 'loadCubeRecord', [appId, cubeName, options]) as NCubeInfoDto
         return record
     }
 
-    Map getCubeRawJsonBytesById(long id, Map options = null)
+    NCubeInfoDto loadCubeRecordById(long id, Map options = null)
     {
-        Map record = bean.call(beanName, 'getCubeRawJsonBytesById', [id, options]) as Map
+        NCubeInfoDto record = bean.call(beanName, 'loadCubeRecordById', [id, options]) as NCubeInfoDto
         return record
     }
 
@@ -375,8 +374,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             if (['json','json-pretty'].contains(options.mode))
             {
                 LOG.error(e.message, e)
-                Map record = getCubeRawJsonBytes(appId, cubeName, options)
-                String json = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), "UTF-8")
+                NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
+                String json = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
                 if ('json-pretty' == options.mode)
                 {
                     return JsonWriter.formatJson(json)
@@ -1042,7 +1041,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         // and normal app processing doesn't do two queries anymore.
         // used to do getCubeInfoRecords() -> dto
         // and then dto -> loadCube(id)
-        Map record = getCubeRawJsonBytes(appId, cubeName, null)
+        NCubeInfoDto record = loadCubeRecord(appId, cubeName, null)
 
         if (record == null)
         {

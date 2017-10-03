@@ -148,7 +148,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private NCube loadCubeInternal(ApplicationID appId, String cubeName, Map options = null)
     {
-        Map record = persister.loadCubeRecord(appId, cubeName, options, getUserId())
+        NCubeInfoDto record = persister.loadCubeRecord(appId, cubeName, options, getUserId())
         NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
@@ -825,10 +825,10 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         throw new IllegalStateException("getJson(${appId}, ${cubeName}) should not be called on a storage server")
     }
 
-    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options = null)
+    NCubeInfoDto loadCubeRecord(ApplicationID appId, String cubeName, Map options = null)
     {
         assertPermissions(appId, cubeName)
-        Map record = persister.loadCubeRecord(appId, cubeName, options, getUserId())
+        NCubeInfoDto record = persister.loadCubeRecord(appId, cubeName, options, getUserId())
         return record
     }
 
@@ -837,24 +837,24 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param id long n-cube id.
      * @param options Map of options using keys from NCubeConstants.SEARCH_*.  Mainly to allow active, deleted, or
      * both to be searched.
-     * @return NCube that has the passed in id.
+     * @return NCube that has the passed in id or null if no cube exists with that id.
      */
     private NCube loadCubeById(long id, Map options = null)
     {
-        Map record = persister.loadCubeRecordById(id, options, getUserId())
+        NCubeInfoDto record = persister.loadCubeRecordById(id, options, getUserId())
         NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
 
-    Map getCubeRawJsonBytesById(long id, Map options = null)
+    NCubeInfoDto loadCubeRecordById(long id, Map options = null)
     {
-        Map record = persister.loadCubeRecordById(id, options, getUserId())
-        ApplicationID appId = record.appId as ApplicationID
+        NCubeInfoDto record = persister.loadCubeRecordById(id, options, getUserId())
+        ApplicationID appId = record.applicationID
         if (appId.tenant != tenant)
         {
             throw new SecurityException("Operation not performed. You do not have READ permission for cube with id: ${id}, user: ${getUserId()}")
         }
-        assertPermissions(record.appId as ApplicationID, record.cubeName as String)
+        assertPermissions(record.applicationID, record.name)
         return record
     }
 
@@ -889,7 +889,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         content = handleWildCard(content)
 
         List<NCubeInfoDto> cubes = persister.search(appId, cubeNamePattern, content, options, getUserId())
-        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect{it.name})
+        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect { it.name })
         cubes.removeAll { !validCubeNames.contains(it.name)}
         return cubes
     }
@@ -923,13 +923,8 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null)
 
-        List<NCubeInfoDto> list = search(appId, null, "${REF_APP}", [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        List<AxisRef> refAxes = []
-
-        for (NCubeInfoDto source : list)
-        {
-            Map record = persister.loadCubeRecord(appId, source.name, null, getUserId())
-            String json = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), "UTF-8")
+        Closure getRefAxes = { NCubeInfoDto dto, Object refAxes ->
+            String json = new String(IOUtilities.uncompressBytes(dto.bytes as byte[]), "UTF-8")
 
             //TODO - fix asap!!! call loadCube() which will use new parser
             Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
@@ -941,7 +936,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 {
                     AxisRef ref = new AxisRef()
                     ref.srcAppId = appId
-                    ref.srcCubeName = source.name
+                    ref.srcCubeName = dto.name
                     ref.srcAxisName = axis.name
 
                     ref.destApp = axis[REF_APP]
@@ -960,10 +955,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                         ref.transformCubeName = axis[TRANSFORM_CUBE_NAME]
                     }
 
-                    refAxes.add(ref)
+                    ((List<AxisRef>)refAxes).add(ref)
                 }
             }
         }
+        List<AxisRef> refAxes = []
+        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY): true, (SEARCH_CLOSURE): getRefAxes, (SEARCH_OUTPUT): refAxes]
+        search(appId, null, "${REF_APP}", options)
+
         return refAxes
     }
 
@@ -1084,8 +1083,8 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             for (Map.Entry<String, Set<AxisRef>> cubeNameRefAxEntry : appIdCubeNameEntry.value)
             {
                 String cubeName = cubeNameRefAxEntry.key
-                Map record = persister.loadCubeRecord(appId, cubeName, null, getUserId())
-                String json = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), "UTF-8")
+                NCubeInfoDto record = persister.loadCubeRecord(appId, cubeName, null, getUserId())
+                String json = new String(IOUtilities.uncompressBytes(record.bytes), "UTF-8")
 
                 //TODO - fix asap!!! call loadCube() which will use new parser
                 Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
@@ -1119,7 +1118,7 @@ target axis: ${destApp} / ${destVersion} / ${destCubeName}.${destAxisName}, user
                         {   // If transformer cube reference supplied, verify that the cube exists
                             ApplicationID txAppId = new ApplicationID(srcAppId.tenant, transformApp, transformVersion, transformStatus, transformBranch)
                             assertPermissions(txAppId, transformCubeName)
-                            Map transformCubeRecord = persister.loadCubeRecord(txAppId, transformCubeName, null, getUserId())
+                            NCubeInfoDto transformCubeRecord = persister.loadCubeRecord(txAppId, transformCubeName, [(SEARCH_INCLUDE_CUBE_DATA): false], getUserId())
                             if (transformCubeRecord == null)
                             {
                                 throw new IllegalArgumentException("""\

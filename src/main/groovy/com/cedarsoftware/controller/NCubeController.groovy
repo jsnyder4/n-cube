@@ -251,16 +251,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return getJson(appId, cubeName, [mode:"json-index"])
     }
 
-    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
+    NCubeInfoDto loadCubeRecord(ApplicationID appId, String cubeName, Map options)
     {
         appId = addTenant(appId)
-        Map record = mutableClient.getCubeRawJsonBytes(appId, cubeName, options)
+        NCubeInfoDto record = mutableClient.loadCubeRecord(appId, cubeName, options)
         return record
     }
 
-    Map getCubeRawJsonBytesById(long id, Map options = null)
+    NCubeInfoDto loadCubeRecordById(long id, Map options = null)
     {
-        Map record = mutableClient.getCubeRawJsonBytesById(id, options)
+        NCubeInfoDto record = mutableClient.loadCubeRecordById(id, options)
         return record
     }
 
@@ -268,16 +268,16 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     String getCubeRawJson(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        Map record = mutableClient.getCubeRawJsonBytes(appId, cubeName, null)
-        String rawJson = new String(IOUtilities.uncompressBytes(record.bytes as byte[]), 'UTF-8')
+        NCubeInfoDto record = mutableClient.loadCubeRecord(appId, cubeName, null)
+        String rawJson = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
         return rawJson
     }
 
     @Deprecated //TODO - remove this asap, default Map options in other method when removed
     byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
     {
-        Map record = getCubeRawJsonBytes(appId, cubeName, null) as Map
-        byte[] bytes = record.bytes as byte[]
+        NCubeInfoDto record = loadCubeRecord(appId, cubeName, null)
+        byte[] bytes = record.bytes
         return bytes
     }
 
@@ -838,8 +838,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     void promoteRevision(long cubeId)
     {
         //TODO - fix asap!!! add API through all layers to do work on storage server side
-        Map record = mutableClient.getCubeRawJsonBytesById(cubeId, null)
-        NCube ncube = NCube.createCubeFromBytes(record.bytes as byte[])
+        NCubeInfoDto record = mutableClient.loadCubeRecordById(cubeId, [(SEARCH_INCLUDE_TEST_DATA): true])
+        NCube ncube = NCube.createCubeFromRecord(record)
         mutableClient.updateCube(ncube)
     }
 
@@ -1395,16 +1395,15 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     String loadCubeById(ApplicationID appId, long id, String mode)
     {
-        Map record = mutableClient.getCubeRawJsonBytesById(id, null)
-        NCube ncube = NCube.createCubeFromBytes(record.bytes as byte[])
-        ncube.applicationID = appId
+        NCubeInfoDto record = mutableClient.loadCubeRecordById(id, null)
+        NCube ncube = NCube.createCubeFromRecord(record)
         return NCube.formatCube(ncube, [mode: mode])
     }
 
     @Deprecated
     NCube loadCubeById(long id, Map options = null)
     {
-        Map record = mutableClient.getCubeRawJsonBytesById(id, options)
+        NCubeInfoDto record = mutableClient.loadCubeRecordById(id, options)
         NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
@@ -1413,7 +1412,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
     {
         appId = addTenant(appId)
-        Map record = getCubeRawJsonBytes(appId, cubeName, options)
+        NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
         NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }
@@ -1518,10 +1517,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
-        Map newRecord = mutableClient.getCubeRawJsonBytesById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        //TODO - fix asap!!! do all this work in NCubeManager
+        NCubeInfoDto newRecord = mutableClient.loadCubeRecordById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube newCube = NCube.createCubeFromRecord(newRecord)
 
-        Map oldRecord = mutableClient.getCubeRawJsonBytesById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
+        NCubeInfoDto oldRecord = mutableClient.loadCubeRecordById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube oldCube = NCube.createCubeFromRecord(oldRecord)
 
         addTenant(newCube.applicationID)
@@ -1886,7 +1886,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private NCube getCubeFromDto(NCubeInfoDto dto, Map options = null)
     {
         ApplicationID appId = new ApplicationID(tenant, dto.app, dto.version, dto.status, dto.branch)
-        Map record = mutableClient.getCubeRawJsonBytes(appId, dto.name, options)
+        NCubeInfoDto record = mutableClient.loadCubeRecord(appId, dto.name, options)
         NCube ncube = NCube.createCubeFromRecord(record)
         return ncube
     }

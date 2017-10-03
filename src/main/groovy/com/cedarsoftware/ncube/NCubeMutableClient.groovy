@@ -32,9 +32,9 @@ interface NCubeMutableClient extends NCubeClient
 
     String getUserId()
 
-    Map getCubeRawJsonBytes(ApplicationID appId, String cubeName, Map options)
+    NCubeInfoDto loadCubeRecord(ApplicationID appId, String cubeName, Map options)
 
-    Map getCubeRawJsonBytesById(long id, Map options)
+    NCubeInfoDto loadCubeRecordById(long id, Map options)
 
     Boolean updateCube(NCube ncube)
 

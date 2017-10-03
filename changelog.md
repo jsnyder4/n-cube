@@ -1,5 +1,6 @@
 ### Revision History
 * 4.1.17-SNAPSHOT
+  * Enhancement: Allow a `Closure` to be sent as a search option when retrieving records from the database in order to eliminate the need to return to the database to perform additional processing.   
   * Enhancement: APIs that returned `NCube` now return a `Map` with entries like appId, bytes, cubeName, sha1, testData. The old APIs are now `@Deprecated`
   * Enhancement: Added `deleteApp` API only for sys admins to remove apps that have no released version.
 * 4.1.16

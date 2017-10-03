@@ -667,9 +667,9 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // added to be sure CUBE_VALUE_BIN was not being deleted
         List<NCubeInfoDto> newRevisions = mutableClient.getRevisionHistory(defaultSnapshotApp, 'test.Floppy')
-        assert mutableClient.getCubeRawJsonBytesById(newRevisions[0].id as long, null)
+        assert mutableClient.loadCubeRecordById(newRevisions[0].id as long, null)
         List<NCubeInfoDto> oldRevisions = mutableClient.getRevisionHistory(defaultSnapshotApp, 'test.ValidTrailorConfigs')
-        assert mutableClient.getCubeRawJsonBytesById(oldRevisions[0].id as long, null)
+        assert mutableClient.loadCubeRecordById(oldRevisions[0].id as long, null)
     }
 
     @Test
@@ -1203,8 +1203,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         long rev0Id = Converter.convert(history[1].id, long.class) as long
         long rev1Id = Converter.convert(history[0].id, long.class) as long
-        Map record0 = mutableClient.getCubeRawJsonBytesById(rev0Id, null)
-        Map record1 = mutableClient.getCubeRawJsonBytesById(rev1Id, null)
+        NCubeInfoDto record0 = mutableClient.loadCubeRecordById(rev0Id, null)
+        NCubeInfoDto record1 = mutableClient.loadCubeRecordById(rev1Id, null)
         NCube rev0 = NCube.createCubeFromBytes(record0.bytes as byte[])
         NCube rev1 = NCube.createCubeFromBytes(record1.bytes as byte[])
 
@@ -1278,9 +1278,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.releaseCubes(appId, newVer)
 
         appId = appId.asVersion(newVer)
-        Map record = mutableClient.getCubeRawJsonBytesById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long, null)
-        cube = NCube.createCubeFromBytes(record.bytes as byte[])
-        cube.applicationID = appId
+        NCubeInfoDto record = mutableClient.loadCubeRecordById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long, null)
+        cube = NCube.createCubeFromRecord(record)
         cube.setCell(2d, [Gender:'Male', Age: 10])
         mutableClient.updateCube(cube)
         mutableClient.commitBranch(appId)
@@ -1288,9 +1287,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.releaseCubes(appId, newVer)
 
         appId = appId.asVersion(newVer)
-        record = mutableClient.getCubeRawJsonBytesById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long, null)
-        cube = NCube.createCubeFromBytes(record.bytes as byte[])
-        cube.applicationID = appId
+        record = mutableClient.loadCubeRecordById(mutableClient.search(appId, cube.name, null, searchOpts)[0].id as long, null)
+        cube = NCube.createCubeFromRecord(record)
         cube.setCell(5d, [Gender:'Male', Age: 42])
         mutableClient.updateCube(cube)
         mutableClient.commitBranch(appId)

@@ -11,6 +11,7 @@ import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
 import com.cedarsoftware.util.AdjustableGZIPOutputStream
+import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
@@ -2578,26 +2579,20 @@ class NCube<T>
 
     /**
      * Create an NCube from the given the passed in Map representing an NCube record.
-     * @param record Map with the keys 'cubeName', 'bytes', 'appId', 'sha1', and
-     * 'testData'.  The bytes are a byte[] in gzipped format of the JSON representation of an NCube.
-     * The appId is an ApplicationID instance. The sha1 is the String sha1 of the NCube.  The 'testData'
-     * key is optional and only present if there are tests associated to the NCube.  If so, then it is
-     * the String JSON form of a List<NCubeTest>.  If testData is included, then the hydrated NCube will
-     * include the key METAPROPERTY_TEST_DATA (_testData) which will include the String version of the test
-     * data.
+     * @param record NCubeInfoDto
      * @return NCube created from the passed in Map (record) format of an NCube.
      */
-    static NCube createCubeFromRecord(Map record)
+    static NCube createCubeFromRecord(NCubeInfoDto record)
     {
-        if (record == null)
+        if (record == null || !record.hasCubeData())
         {
             return null
         }
-        NCube ncube = createCubeFromBytes(record.bytes as byte[])
-        ncube.applicationID = record.appId as ApplicationID
-        if (record.containsKey('testData'))
+        NCube ncube = createCubeFromBytes(record.bytes)
+        ncube.applicationID = record.applicationID
+        if (record.hasTestData())
         {
-            ncube.testData = NCubeTestReader.convert(record.testData as String).toArray()
+            ncube.testData = NCubeTestReader.convert(record.testData).toArray()
         }
         return ncube
     }

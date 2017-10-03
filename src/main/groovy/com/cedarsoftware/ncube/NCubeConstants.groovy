@@ -40,6 +40,8 @@ interface NCubeConstants
     final String SEARCH_EXACT_MATCH_NAME = 'exactMatchName'
     final String SEARCH_FILTER_INCLUDE = 'includeTags'
     final String SEARCH_FILTER_EXCLUDE = 'excludeTags'
+    final String SEARCH_CLOSURE = 'closure'
+    final String SEARCH_OUTPUT = 'output'
 
     final String SYS_APP = 'sys.app'
     final String SYS_BOOTSTRAP = 'sys.bootstrap'

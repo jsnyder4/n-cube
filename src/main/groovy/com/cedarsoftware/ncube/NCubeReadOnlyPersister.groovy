@@ -39,7 +39,7 @@ interface NCubeReadOnlyPersister
      * @param name String name of the n-cube to load
      * @return Map with keys of appId, bytes, cubeName, sha1, testData
      */
-    Map loadCubeRecord(ApplicationID appId, String name, Map options, String username)
+    NCubeInfoDto loadCubeRecord(ApplicationID appId, String name, Map options, String username)
 
     /**
      * Load n-cube by ID (specific n-cube)
@@ -47,7 +47,7 @@ interface NCubeReadOnlyPersister
      * @param options Map of additional option to include test data
      * @return Map with keys of appId, bytes, cubeName, sha1, testData
      */
-    Map loadCubeRecordById(long id, Map options, String username)
+    NCubeInfoDto loadCubeRecordById(long id, Map options, String username)
 
     /**
      * Get all application names for the given tenant
