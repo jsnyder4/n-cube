@@ -69,10 +69,15 @@ abstract class GroovyBase extends UrlCommandCell
         super(cmd, url, cache)
     }
 
-    void clearClassLoaderCache()
+    void clearClassLoaderCache(ApplicationID appId)
     {
+        super.clearClassLoaderCache(appId)
         runnableCode = null
-        super.clearClassLoaderCache()
+        ConcurrentMap<String, Class> L2Cache = L2_CACHE[appId]
+        if (L2Cache && L2CacheKey)
+        {
+            L2Cache.remove(L2CacheKey)
+        }
     }
 
     /**
@@ -230,9 +235,6 @@ abstract class GroovyBase extends UrlCommandCell
         compilationUnit.compile(Phases.CLASS_GENERATION)
         Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
         Class generatedClass = defineClasses(gcLoader, compilationUnit.classes, L2Cache, groovySource)
-
-        GroovyScriptEngine groovyScriptEngine = new GroovyScriptEngine(gcLoader.URLs)
-        groovyScriptEngine.config = compilerConfiguration
 
         return generatedClass
     }
@@ -452,7 +454,12 @@ abstract class GroovyBase extends UrlCommandCell
             GroovyClassLoader gcLoader = getAppIdClassLoader(ctx)
             ret.loader = gcLoader
 
-            if (Regexes.grabPattern.matcher(cmd).find() || Regexes.grapePattern.matcher(cmd).find())
+            if (Regexes.hasClassDefPattern.matcher(cmd).find())
+            {
+                ret.source = expandNCubeShortCuts(cmd)
+                return ret
+            }
+            else if (Regexes.grabPattern.matcher(cmd).find() || Regexes.grapePattern.matcher(cmd).find())
             {
                 // force recompile
             }

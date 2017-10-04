@@ -3,6 +3,7 @@
   * Enhancement: Allow a `Closure` to be sent as a search option when retrieving records from the database in order to eliminate the need to return to the database to perform additional processing.   
   * Enhancement: APIs that returned `NCube` now return a `Map` with entries like appId, bytes, cubeName, sha1, testData. The old APIs are now `@Deprecated`
   * Enhancement: Added `deleteApp` API only for sys admins to remove apps that have no released version.
+  * Pushed work being done in `NCubeController` methods `promoteRevision()`, `fetchJsonRevDiffs()` and `fetchJsonBranchDiffs()` to `NCubeManager`.
 * 4.1.16
   * Enhancement: Updated `NCubeRuntime.clearCache()` to take a second argument `Collection<String>` of NCube names which defaults to null. Passing null retains previous functionality, whereas passing NCube names will only evict the specified NCubes from the cache.
   * Consumed json-command-servlet 1.8.2

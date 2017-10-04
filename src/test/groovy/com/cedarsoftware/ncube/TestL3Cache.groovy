@@ -297,7 +297,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         output.clear()
         testCube.getCell([name:'customClass'],output)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
-        verifySourceFileExistence(expClass,false)
+        verifySourceFileExistence(expClass,true)
     }
 
     /**
@@ -324,11 +324,11 @@ class TestL3Cache extends NCubeCleanupBaseTest
         assertTrue(loadedClasses.empty)
         verifyClassFileExistence(expClass)
 
-        // load customMatchingClass before customClass will load cached customClass still
+        // load customMatchingClass before customClass will NOT load cached customClass
         output.clear()
         testCube.getCell([name:'customMatchingClass'],output)
-        assertFalse(output.containsKey('customMatchingClass')) // second still not found
-        assertTrue(output.containsKey('customClass')) // first still returns
+        assertTrue(output.containsKey('customMatchingClass')) // second still not found
+        assertFalse(output.containsKey('customClass')) // first still returns
     }
 
     /**
@@ -351,7 +351,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         output.clear()
         testCube.getCell([name:'customPackage'],output)
         assertEquals(expClass.name,findLoadedClass(expClass).name)
-        verifySourceFileExistence(expClass,false)
+        verifySourceFileExistence(expClass,true)
     }
 
     /**
@@ -376,7 +376,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         output.clear()
         testCube.getCell(input,output)
         assertEquals(methodClass.name,findLoadedClass(methodClass).name)
-        verifySourceFileExistence(methodClass,false)
+        verifySourceFileExistence(methodClass,true)
     }
 
     /**
@@ -426,7 +426,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
         output.clear()
         testCube.getCell(input,output)
         assertEquals(methodClass.name,findLoadedClass(methodClass).name)
-        verifySourceFileExistence(methodClass,false)
+        verifySourceFileExistence(methodClass,true)
     }
 
     /**
@@ -655,6 +655,66 @@ class TestL3Cache extends NCubeCleanupBaseTest
 
         Class newClass = output.simple
         assertNotEquals(origClass.name,newClass.name)
+    }
+
+    @Test
+    void testSwapCustomClass()
+    {
+        NCube ncube = new NCube('simple')
+        ncube.applicationID = ApplicationID.testAppId
+        Axis axis = new Axis('state', AxisType.DISCRETE, AxisValueType.CISTRING, true)
+        ncube.addAxis(axis)
+        ncubeRuntime.addCube(ncube)
+
+        String class1 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { println 'hello' ; output.hello = true } }"
+        String class2 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { println 'goodbye' ; output.goodbye = true } }"
+
+        GroovyExpression exp1 = new GroovyExpression(class1, null,false)
+        GroovyExpression exp2 = new GroovyExpression(class2, null,false)
+
+        Map output = [:]
+        ncube.setCell(exp1, [:])
+        ncube.getCell([:], output)
+        assert output.hello == true
+
+        output.clear()
+        ncubeRuntime.clearCache(ApplicationID.testAppId, ['simple'])
+        ncubeRuntime.addCube(ncube)
+        ncube.setCell(exp2, [:])
+        ncube.getCell([:], output)
+        assert output.hello == true
+
+        ncubeRuntime.clearCache(ApplicationID.testAppId)
+        ncubeRuntime.addCube(ncube)
+        ncube.getCell([:], output)
+        assert output.goodbye == true
+    }
+
+    @Test
+    void testSwapCustomClass2()
+    {
+        NCube ncube = new NCube('simple')
+        ncube.applicationID = ApplicationID.testAppId
+        Axis axis = new Axis('state', AxisType.DISCRETE, AxisValueType.CISTRING, true)
+        ncube.addAxis(axis)
+        ncubeRuntime.addCube(ncube)
+
+        String class1 = "println 'hello' ; output.hello = true"
+        String class2 = "println 'goodbye' ; output.goodbye = true"
+
+        GroovyExpression exp1 = new GroovyExpression(class1, null,false)
+        GroovyExpression exp2 = new GroovyExpression(class2, null,false)
+
+        Map output = [:]
+        ncube.setCell(exp1, [:])
+        ncube.getCell([:], output)
+        assert output.hello == true
+
+        output.clear()
+        ncubeRuntime.clearCache(ApplicationID.testAppId, ['simple'])
+        ncube.setCell(exp2, [:])
+        ncube.getCell([:], output)
+        assert output.goodbye == true
     }
 
     private void configureDirectories(srcDirPath, clsDirPath)

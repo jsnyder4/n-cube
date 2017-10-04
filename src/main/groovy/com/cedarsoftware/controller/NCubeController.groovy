@@ -835,12 +835,17 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.renameCube(appId, oldName, newName)
     }
 
-    void promoteRevision(long cubeId)
+    /**
+     * Promote a previous revision of an NCube.
+     * @param cubeId long
+     * @return NCubeInfoDto for the revision of the passed in cubeId, NOT the newly created revision.
+     * NCubeInfDto does not contain bytes or testData
+     * Note: the restored dto and the dto to restore from differ only in revision number
+     */
+    NCubeInfoDto promoteRevision(long cubeId)
     {
-        //TODO - fix asap!!! add API through all layers to do work on storage server side
-        NCubeInfoDto record = mutableClient.loadCubeRecordById(cubeId, [(SEARCH_INCLUDE_TEST_DATA): true])
-        NCube ncube = NCube.createCubeFromRecord(record)
-        mutableClient.updateCube(ncube)
+        NCubeInfoDto record = mutableClient.promoteRevision(cubeId)
+        return record
     }
 
     void saveJson(ApplicationID appId, String json)
@@ -903,9 +908,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
-        String tests = mutableClient.getTests(appId, cubeName)
-        List<NCubeTest> testData = NCubeTestReader.convert(tests)
-        return testData.toArray()
+        Object[] tests = mutableClient.getTests(appId, cubeName)
+        return tests
     }
 
     Map getAppTests(ApplicationID appId)
@@ -1517,24 +1521,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
-        //TODO - fix asap!!! do all this work in NCubeManager
-        NCubeInfoDto newRecord = mutableClient.loadCubeRecordById(newCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
-        NCube newCube = NCube.createCubeFromRecord(newRecord)
-
-        NCubeInfoDto oldRecord = mutableClient.loadCubeRecordById(oldCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
-        NCube oldCube = NCube.createCubeFromRecord(oldRecord)
-
-        addTenant(newCube.applicationID)
-        addTenant(oldCube.applicationID)
-        return DeltaProcessor.getDeltaDescription(newCube, oldCube)
+        List<Delta> deltas = mutableClient.fetchJsonRevDiffs(newCubeId, oldCubeId)
+        return deltas
     }
 
     List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
     {
-        Map options = [(SEARCH_INCLUDE_TEST_DATA):true]
-        NCube newCube = getCubeFromDto(newInfoDto, options)
-        NCube oldCube = getCubeFromDto(oldInfoDto, options)
-        return DeltaProcessor.getDeltaDescription(newCube, oldCube)
+        List<Delta> deltas = mutableClient.fetchJsonBranchDiffs(newInfoDto, oldInfoDto)
+        return deltas
     }
 
     Object[] getReferenceAxes(ApplicationID appId)
@@ -1881,14 +1875,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             colIds.add((Long)Converter.convert(id, Long.class))
         }
         return colIds
-    }
-
-    private NCube getCubeFromDto(NCubeInfoDto dto, Map options = null)
-    {
-        ApplicationID appId = new ApplicationID(tenant, dto.app, dto.version, dto.status, dto.branch)
-        NCubeInfoDto record = mutableClient.loadCubeRecord(appId, dto.name, options)
-        NCube ncube = NCube.createCubeFromRecord(record)
-        return ncube
     }
 
     private NCube getCubeInternal(ApplicationID appId, String ncubeName)

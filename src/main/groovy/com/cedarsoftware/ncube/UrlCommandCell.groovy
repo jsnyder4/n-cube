@@ -78,7 +78,7 @@ abstract class UrlCommandCell implements CommandCell
         return cacheable
     }
 
-    void clearClassLoaderCache()
+    void clearClassLoaderCache(ApplicationID appId)
     {
         TimedSynchronize.synchronize(hasBeenCachedLock, 100, TimeUnit.MILLISECONDS, 'Dead lock detected attempting to clear ClassLoader cache.')
         hasBeenCached = false

@@ -147,4 +147,10 @@ interface NCubeMutableClient extends NCubeClient
     Boolean isCubeUpToDate(ApplicationID appId, String cubeName)
 
     void createRefAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
+
+    NCubeInfoDto promoteRevision(long cubeId)
+
+    List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
+
+    List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
 }

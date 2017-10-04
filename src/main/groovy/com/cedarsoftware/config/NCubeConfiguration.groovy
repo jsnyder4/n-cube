@@ -80,7 +80,7 @@ class NCubeConfiguration
                     if (cellValue instanceof UrlCommandCell)
                     {
                         UrlCommandCell cell = cellValue as UrlCommandCell
-                        cell.clearClassLoaderCache()
+                        cell.clearClassLoaderCache(ncube.applicationID)
                     }
                 }
             }
