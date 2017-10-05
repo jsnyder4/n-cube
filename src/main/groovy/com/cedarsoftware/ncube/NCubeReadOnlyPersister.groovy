@@ -26,20 +26,28 @@ import groovy.transform.CompileStatic
 interface NCubeReadOnlyPersister
 {
     /**
+     * Search the persisted storage for n-cube (NCubeInfoDto's) that match are within the passed in ApplicationID,
+     * and optionally match the supplied cube name pattern, and optionally further match (contain within) the
+     * searchValue, using the passed in options Map.
+     * @param appId ApplicationID containing the n-cube
+     * @param cubeNamePattern String name pattern to match ('*' matches any character, '?' matches a single character)
+     * and these can be used more than once.  null is allowed, which matches anything.  If a specific n-cube name is
+     * supplied and the caller's intention is match only one, make sure to passed in the SEARCH_EXACT_MATCH_NAME
+     * is set to true in the options Map.
+     * @param searchValue Optional String which will be 'contains' matched against the JSON format of the n-cube.  It
+     * may contain * and ? wildcard patterns.  This match is performed case-insensitively.
+     * @param options - See NCubeConstants.SEARCH_* for all the search options.
+     * @return List<NCubeInfoDto> records
+     */
+    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
+
+    /**
      * Load n-cube by SHA-1 (latest revision with that SHA-1)
      * @param appId ApplicationID containing the n-cube
      * @param name String name of the n-cube to load
      * @param sha1 String SHA-1 of the n-cube to load
      */
     NCube loadCubeBySha1(ApplicationID appId, String name, String sha1, String username)
-
-    /**
-     * Load n-cube raw JSON by name (latest revision)
-     * @param appId ApplicationID containing the n-cube
-     * @param name String name of the n-cube to load
-     * @return Map with keys of appId, bytes, cubeName, sha1, testData
-     */
-    NCubeInfoDto loadCubeRecord(ApplicationID appId, String name, Map options, String username)
 
     /**
      * Load n-cube by ID (specific n-cube)
@@ -79,22 +87,6 @@ interface NCubeReadOnlyPersister
      * The ordering of the versions is not specified.
      */
     List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion, String username)
-
-    /**
-     * Search the persisted storage for n-cube (NCubeInfoDto's) that match are within the passed in ApplicationID,
-     * and optionally match the supplied cube name pattern, and optionally further match (contain within) the
-     * searchValue, using the passed in options Map.
-     * @param appId ApplicationID containing the n-cube
-     * @param cubeNamePattern String name pattern to match ('*' matches any character, '?' matches a single character)
-     * and these can be used more than once.  null is allowed, which matches anything.  If a specific n-cube name is
-     * supplied and the caller's intention is match only one, make sure to passed in the SEARCH_EXACT_MATCH_NAME
-     * is set to true in the options Map.
-     * @param searchValue Optional String which will be 'contains' matched against the JSON format of the n-cube.  It
-     * may contain * and ? wildcard patterns.  This match is performed case-insensitively.
-     * @param options - See NCubeConstants.SEARCH_* for all the search options.
-     * @return List<NCubeInfoDto> records
-     */
-    List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
 
     /**
      * Same as search but returns built cubes.

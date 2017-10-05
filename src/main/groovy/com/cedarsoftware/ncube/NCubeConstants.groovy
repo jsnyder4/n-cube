@@ -42,6 +42,7 @@ interface NCubeConstants
     final String SEARCH_FILTER_EXCLUDE = 'excludeTags'
     final String SEARCH_CLOSURE = 'closure'
     final String SEARCH_OUTPUT = 'output'
+    final String SEARCH_ALLOW_SYS_INFO = 'allowSysInfo'
 
     final String SYS_APP = 'sys.app'
     final String SYS_BOOTSTRAP = 'sys.bootstrap'

@@ -65,7 +65,7 @@ class NCubeJdbcPersister
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
-    private static final Pattern REF_APP_SEARCH_PATTERN = Pattern.compile(StringUtilities.wildcardToRegexString('*' + REF_APP + '*'), Pattern.CASE_INSENSITIVE)
+    private static final Pattern REF_APP_SEARCH_PATTERN = Pattern.compile(StringUtilities.wildcardToRegexString("*${REF_APP}*"), Pattern.CASE_INSENSITIVE)
     private static volatile AtomicBoolean isOracle = null
 
     static List<NCubeInfoDto> search(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
@@ -75,7 +75,7 @@ class NCubeJdbcPersister
 
         Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
         boolean hasSearchContent = StringUtilities.hasContent(searchContent)
-        copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent
+        copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent || options[SEARCH_INCLUDE_CUBE_DATA]
         if (hasSearchContent)
         {
             searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
@@ -115,31 +115,6 @@ class NCubeJdbcPersister
             }
         })
         return cubes
-    }
-
-    static NCubeInfoDto loadCubeRecord(Connection c, ApplicationID appId, String cubeName, Map options)
-    {
-        if (!options)
-        {
-            options = [:]
-        }
-        if (!options.containsKey(SEARCH_INCLUDE_CUBE_DATA))
-        {
-            options[SEARCH_INCLUDE_CUBE_DATA] = true
-        }
-        if (!options.containsKey(SEARCH_ACTIVE_RECORDS_ONLY))
-        {   // Allow deleted records to be loaded
-            options[SEARCH_ACTIVE_RECORDS_ONLY] = true
-        }
-        options[SEARCH_EXACT_MATCH_NAME] = true         // must be true, only 1 record returned
-        options[METHOD_NAME] = 'loadCubeRecord'   // this method dictates the method name listed in the query
-        NCubeInfoDto record = null
-
-        runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
-            record = createDtoFromRow(row, options)
-            record.tenant = appId.tenant
-        })
-        return record
     }
 
     static NCubeInfoDto loadCubeRecordById(Connection c, long cubeId, Map options)
@@ -901,8 +876,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
      */
     private static void createSysInfoCube(Connection c, ApplicationID appId, String username)
     {
-        NCubeInfoDto record = loadCubeRecord(c, appId, SYS_INFO, [(SEARCH_INCLUDE_CUBE_DATA): false])
-        if (record != null)
+        List<NCubeInfoDto> records = search(c, appId, SYS_INFO, null,
+                [(SEARCH_INCLUDE_CUBE_DATA): false,
+                 (SEARCH_EXACT_MATCH_NAME): true,
+                 (SEARCH_ACTIVE_RECORDS_ONLY):false,
+                 (SEARCH_DELETED_RECORDS_ONLY):false,
+                 (SEARCH_ALLOW_SYS_INFO):true
+                ] as Map)
+
+        if (!records.empty)
         {
             return
         }
@@ -1897,7 +1879,7 @@ ORDER BY abs(revision_number) DESC"""
 
         NCubeInfoDto dto = createDtoFromRow(row, options)
         dto.tenant = appId.tenant
-        if (SYS_INFO != dto.name)
+        if (SYS_INFO != dto.name || options[SEARCH_ALLOW_SYS_INFO])
         {
             list.add(dto)
         }

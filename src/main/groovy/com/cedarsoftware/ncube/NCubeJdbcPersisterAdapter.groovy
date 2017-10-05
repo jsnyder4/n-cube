@@ -81,12 +81,6 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "createCube(${cube.applicationID.cacheKey(cube.name)})", username)
     }
 
-    NCubeInfoDto loadCubeRecord(ApplicationID appId, String name, Map options, String username)
-    {
-        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.loadCubeRecord(c, appId, name, options) },
-                "loadCubeRecord(${appId.cacheKey(name)})", username)
-    }
-
     NCubeInfoDto loadCubeRecordById(long cubeId, Map options, String username)
     {
         return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.loadCubeRecordById(c, cubeId, options) },

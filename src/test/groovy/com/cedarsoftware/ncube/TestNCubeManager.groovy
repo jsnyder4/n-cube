@@ -1797,13 +1797,15 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     @Test
     void testCreateCubeCreatesSysInfoCubes()
     {
-        NCube sysInfo = mutableClient.getCube(ApplicationID.testAppId, SYS_INFO)
+        NCubeInfoDto sysInfoRec = mutableClient.loadCubeRecord(ApplicationID.testAppId, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
+        NCube sysInfo = NCube.createCubeFromRecord(sysInfoRec)
         assert 1 == sysInfo.numDimensions
         Axis attribute = sysInfo.getAxis(AXIS_ATTRIBUTE)
         assert 1 == attribute.size()
         assert attribute.hasDefaultColumn()
 
-        NCube sysInfo000 = mutableClient.getCube(ApplicationID.testAppId.asBootVersion(), SYS_INFO)
+        NCubeInfoDto sysInfo000Rec = mutableClient.loadCubeRecord(ApplicationID.testAppId.asBootVersion(), SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
+        NCube sysInfo000 = NCube.createCubeFromRecord(sysInfo000Rec)
         assert 1 == sysInfo000.numDimensions
         Axis attribute000 = sysInfo000.getAxis(AXIS_ATTRIBUTE)
         assert 1 == attribute000.size()
@@ -1814,14 +1816,14 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testUnableToDeleteSysInfo()
     {
         NCube sysClasspath = mutableClient.getCube(ApplicationID.testAppId, SYS_CLASSPATH)
-        NCube sysInfo = mutableClient.getCube(ApplicationID.testAppId, SYS_INFO)
+        NCubeInfoDto sysInfo = mutableClient.loadCubeRecord(ApplicationID.testAppId, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
         assert sysClasspath != null
         assert sysInfo != null
 
         mutableClient.deleteCubes(ApplicationID.testAppId, [SYS_INFO, SYS_CLASSPATH] as String[])
 
         sysClasspath = mutableClient.getCube(ApplicationID.testAppId, SYS_CLASSPATH)
-        sysInfo = mutableClient.getCube(ApplicationID.testAppId, SYS_INFO)
+        sysInfo = mutableClient.loadCubeRecord(ApplicationID.testAppId, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
         assert sysClasspath == null
         assert sysInfo != null
     }
@@ -1832,7 +1834,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         ApplicationID newApp = ApplicationID.testAppId.asBranch('TEST2')
         mutableClient.duplicate(ApplicationID.testAppId, newApp, SYS_CLASSPATH, SYS_CLASSPATH)
         NCube sysClasspath = mutableClient.getCube(newApp, SYS_CLASSPATH)
-        NCube sysInfo = mutableClient.getCube(newApp, SYS_INFO)
+        NCubeInfoDto sysInfo = mutableClient.loadCubeRecord(newApp, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
         assert sysClasspath != null
         assert sysInfo != null
     }
@@ -1841,14 +1843,14 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testCommitCubesCreatesSysInfo()
     {
         ApplicationID headApp = ApplicationID.testAppId.asHead()
-        NCube headSysInfo = mutableClient.getCube(headApp, SYS_INFO)
-        NCube headSysInfo000 = mutableClient.getCube(headApp.asBootVersion(), SYS_INFO)
+        NCubeInfoDto headSysInfo = mutableClient.loadCubeRecord(headApp, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
+        NCubeInfoDto headSysInfo000 = mutableClient.loadCubeRecord(headApp.asBootVersion(), SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
         assert headSysInfo == null
         assert headSysInfo000 != null // sys.info is created in 0.0.0 HEAD when permissions n-cubes are created
 
         mutableClient.commitBranch(ApplicationID.testAppId)
-        headSysInfo = mutableClient.getCube(headApp, SYS_INFO)
-        headSysInfo000 = mutableClient.getCube(headApp.asBootVersion(), SYS_INFO)
+        headSysInfo = mutableClient.loadCubeRecord(headApp, SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
+        headSysInfo000 = mutableClient.loadCubeRecord(headApp.asBootVersion(), SYS_INFO, [(SEARCH_ALLOW_SYS_INFO): true])
         assert headSysInfo != null
         assert headSysInfo000 != null
     }
