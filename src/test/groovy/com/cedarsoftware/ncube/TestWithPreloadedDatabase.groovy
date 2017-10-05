@@ -6698,6 +6698,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         NCube ncube = NCubeBuilder.discrete1DEmpty
         GroovyExpression exp = new GroovyExpression('''\
 import org.apache.commons.collections.primitives.*
+import static com.cedarsoftware.ncube.NCubeConstants.*
 @Grab(group='commons-primitives', module='commons-primitives', version='1.0')
 
 Object ints = new ArrayIntList()

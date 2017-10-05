@@ -226,9 +226,9 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "getTestData(${cubeId})", username)
     }
 
-    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, long txId)
+    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, String txId, String notes)
     {
-        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToHead(c, appId, cube, username, txId) },
+        return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToHead(c, appId, cube, username, txId, notes) },
                 "commitMergedCubeToHead(${appId.cacheKey(cube.name)}, txID=${txId})", username)
     }
 
@@ -238,9 +238,9 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "commitMergedCubeToBranch(${appId.cacheKey(cube.name)}, headSHA1=${headSha1}, txID=${txId})", username)
     }
 
-    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, String requestUser, long txId)
+    List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, String requestUser, String txId, String notes)
     {
-        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.commitCubes(c, appId, cubeIds, username, requestUser, txId) },
+        return (List<NCubeInfoDto>) jdbcOperation({ Connection c -> persister.commitCubes(c, appId, cubeIds, username, requestUser, txId, notes) },
                 "commitCubes(${appId}, txId=${txId})", username)
     }
 

@@ -82,12 +82,15 @@ println 'code'"""
         String code = """package foo
 import java.lang.*
 import this.is.ok  // are you sure?
+import static java.static.*
 class x { println " import i.fooled.it;" }"""
         Matcher m = Regexes.importPattern.matcher(code)
         assert m.find()
         assert 'import java.lang.*' == m.group(1)
         assert m.find()
         assert 'import this.is.ok' == m.group(1)
+        assert m.find()
+        assert 'import static java.static.*' == m.group(1)
         assert !m.find()
 
         m.reset()

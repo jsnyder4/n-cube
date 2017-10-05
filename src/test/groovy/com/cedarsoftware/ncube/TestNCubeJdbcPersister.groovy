@@ -226,7 +226,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
     @Test
     void testCommitCubeWithInvalidRevision()
     {
-        assert 0 == new NCubeJdbcPersister().commitCubes(null, defaultSnapshotApp, null, USER_ID, 'requestUser', UniqueIdGenerator.uniqueId).size()
+        assert 0 == new NCubeJdbcPersister().commitCubes(null, defaultSnapshotApp, null, USER_ID, 'requestUser', 'testprid', 'notes').size()
     }
 
     @Test

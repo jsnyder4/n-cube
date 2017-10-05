@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
+
 /**
  * Regular Expressions used throughout n-cube implementation.
  *
@@ -35,7 +37,7 @@ interface Regexes
     String bracketMatch = '\\s*\\[.*?:.*?\\]'
     String varMatch = '[^)=]+'
 
-    Pattern importPattern = ~/(?m)^(\s*import\s+[^;\n"'\/ ]+;?)/
+    Pattern importPattern = ~/(?m)^(\s*import\s+(static\s+)?[^;\n"'\/ ]+;?)/
     Pattern grapePattern = ~/(@Grapes\s*?\((?:.*?|\n)+\]\s*?\))/
     Pattern grabPattern = ~/(@(?:Grab|GrabConfig|GrabExclude|GrabResolver)\s*?\(.*?\))/
     Pattern compileStaticPattern = ~/(@(?:CompileStatic)\s+?.*?)/
@@ -74,4 +76,6 @@ interface Regexes
     Pattern isHSQLDBPattern = ~/(?i)^.*HSQL Database Engine Driver.*$/
 
     Pattern rangePattern = ~/\s*([^,]+)[,](.*)\s*$/
+
+    Pattern refAppSearchPattern = ~/${REF_APP}/
 }

@@ -148,30 +148,36 @@ class TestPullRequests extends NCubeCleanupBaseTest
     @Test
     void testGetPullRequests()
     {
+        String test1Notes = 'test1'
+        String test2Notes = 'test2'
         preloadCubes(ApplicationID.testAppId, 'test.branch.1.json', 'test.branch.age.1.json')
         List<NCubeInfoDto> branchDtos = mutableClient.search(appId, 'TestBranch', null, null)
         List<NCubeInfoDto> ageDtos = mutableClient.search(appId, 'TestAge', null, null)
-        mutableClient.generatePullRequestHash(appId, branchDtos.toArray())
-        mutableClient.generatePullRequestHash(appId, ageDtos.toArray())
+        mutableClient.generatePullRequestHash(appId, branchDtos.toArray(), test1Notes)
+        mutableClient.generatePullRequestHash(appId, ageDtos.toArray(), test2Notes)
 
         Object[] prs = mutableClient.getPullRequests(null, null)
         assert 2 == prs.length
+        assert test1Notes == prs[0][PR_ID]
+        assert test2Notes == prs[1][PR_ID]
     }
 
     @Test
     void testMergeOwnPullRequest()
     {
+        String testNotes = 'testnotes'
         NCube ncube = createCubeFromResource('test.branch.1.json')
         List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
 
         List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
         assert headDtos.empty
 
-        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
+        String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray(), testNotes)
         mutableClient.mergePullRequest(prId)
 
         headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
         assert 1 == headDtos.size()
+        assertContainsIgnoreCase(headDtos[0].notes, testNotes)
 
         // attempt to commit a request that's already been committed
         try

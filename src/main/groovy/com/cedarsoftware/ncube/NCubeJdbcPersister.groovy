@@ -62,10 +62,10 @@ class NCubeJdbcPersister
     static final String HEAD_SHA_1 = 'head_sha1'
     static final String CHANGED = 'changed'
     static final String VALUE = 'value'
+    static final String PR_NOTES_STRING = 'PR notes: '
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
-    private static final Pattern REF_APP_SEARCH_PATTERN = Pattern.compile(StringUtilities.wildcardToRegexString("*${REF_APP}*"), Pattern.CASE_INSENSITIVE)
     private static volatile AtomicBoolean isOracle = null
 
     static List<NCubeInfoDto> search(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
@@ -488,7 +488,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             return infoRecs
         }
         createSysInfoCube(c, appId, username)
-        String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, ${CUBE_VALUE_BIN}, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = ?"
+        String sql = "/* pullToBranch */ SELECT n_cube_nm, revision_number, branch_id, ${CUBE_VALUE_BIN}, test_data_bin, ${NOTES_BIN}, sha1 FROM n_cube WHERE n_cube_id = ?"
         PreparedStatement stmt = null
         try
         {
@@ -508,6 +508,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                     String branch = row.getString('branch_id')
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
 
+                    byte[] notes = row.getBytes(NOTES_BIN)
+                    String notesStr = StringUtilities.createUTF8String(notes)
+                    String newNotes = "updated from ${branch}, txId: [${txId}]"
+                    if (notesStr.contains(PR_NOTES_STRING)) {
+                        newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_STRING))}"
+                    }
+
                     Long maxRevision = getMaxRevision(c, appId, cubeName, 'pullToBranch')
 
                     //  create case because max revision was not found.
@@ -525,7 +532,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                         maxRevision = Math.abs(maxRevision as long) + 1
                     }
 
-                    NCubeInfoDto dto = insertCube(c, appId, cubeName, maxRevision, jsonBytes, testData, "updated from ${branch}, txId: [${txId}]", false, sha1, sha1, username, 'pullToBranch')
+                    NCubeInfoDto dto = insertCube(c, appId, cubeName, maxRevision, jsonBytes, testData, newNotes, false, sha1, sha1, username, 'pullToBranch')
                     infoRecs.add(dto)
                 }
             }
@@ -736,6 +743,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
     {
         Map options = [(SEARCH_INCLUDE_TEST_DATA):true,
                        (SEARCH_EXACT_MATCH_NAME):true,
+                       (SEARCH_INCLUDE_NOTES): true,
                        (METHOD_NAME) : 'commitMergedCubeToBranch'] as Map
 
         NCubeInfoDto result = null
@@ -745,12 +753,20 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             Long revision = row.getLong('revision_number')
             byte[] testData = row.getBytes(TEST_DATA_BIN)
             revision = revision < 0 ? revision - 1 : revision + 1
-            result = insertCube(c, appId, cube, revision, testData, "merged to branch, txId: [${txId}]", changed, headSha1, username, 'commitMergedCubeToBranch')
+
+            byte[] notes = row.getBytes(NOTES_BIN)
+            String notesStr = StringUtilities.createUTF8String(notes)
+            String newNotes = "merged to branch, txId: [${txId}]"
+            if (notesStr.contains(PR_NOTES_STRING)) {
+                newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_STRING))}"
+            }
+
+            result = insertCube(c, appId, cube, revision, testData, newNotes, changed, headSha1, username, 'commitMergedCubeToBranch')
         })
         return result
     }
 
-    static NCubeInfoDto commitMergedCubeToHead(Connection c, ApplicationID appId, NCube cube, String username, long txId)
+    static NCubeInfoDto commitMergedCubeToHead(Connection c, ApplicationID appId, NCube cube, String username, String txId, String notes)
     {
         final String methodName = 'commitMergedCubeToHead'
         Map options = [(SEARCH_INCLUDE_TEST_DATA):true,
@@ -785,13 +801,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] cubeData = cube.cubeAsGzipJsonBytes
             String sha1 = cube.sha1()
 
-            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}]", false, sha1, null, username, methodName)
+            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}], ${PR_NOTES_STRING}${notes}", false, sha1, null, username, methodName)
             result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, 'merged', false, sha1, sha1, username,  methodName)
         })
         return result
     }
 
-    static List<NCubeInfoDto> commitCubes(Connection c, ApplicationID appId, Object[] cubeIds, String username, String requestUser, long txId)
+    static List<NCubeInfoDto> commitCubes(Connection c, ApplicationID appId, Object[] cubeIds, String username, String requestUser, String txId, String notes)
     {
         List<NCubeInfoDto> infoRecs = []
         if (ArrayUtilities.isEmpty(cubeIds))
@@ -854,7 +870,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 if (changeType)
                 {
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
-                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}]", false, sha1, null, username, 'commitCubes')
+                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}], ${PR_NOTES_STRING}${notes}", false, sha1, null, username, 'commitCubes')
                     Map map1 = [head_sha1: sha1, create_dt: nowAsTimestamp(), id: cubeIds[i]]
                     Sql sql1 = getSql(c)
                     sql1.executeUpdate(map1, '/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id')
@@ -1810,7 +1826,7 @@ ORDER BY abs(revision_number) DESC"""
 
             if (includeFilter || excludeFilter)
             {
-                Matcher tagMatcher = cubeData =~ /.*"$CUBE_TAGS"\s*:\s*(?:"|\{.*?value":")?(?<tags>.*?)".*/
+                Matcher tagMatcher = cubeData =~ /"$CUBE_TAGS"\s*:\s*(?:"|\{.*?value":")?(?<tags>.*?)"/
                 Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new HashSet<String>()
 
                 Closure tagsMatchFilter = { Set<String> filter ->
@@ -1831,8 +1847,7 @@ ORDER BY abs(revision_number) DESC"""
                 if (!searchPattern.matcher(cubeData.substring(cubeData.indexOf(','))).find()) // don't search name of cube
                 {   // Did not contains-match content pattern
                     // check if cube has reference axes before returning, as the value may exist on a referenced column
-
-                    if (REF_APP_SEARCH_PATTERN.matcher(cubeData).find())
+                    if (Regexes.refAppSearchPattern.matcher(cubeData).find())
                     {
                         boolean foundInRefAxColumn = false
                         NCube cube
