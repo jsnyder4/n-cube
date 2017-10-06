@@ -5,8 +5,11 @@ import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
+import org.junit.Ignore
 import org.junit.Test
 import org.springframework.util.FastByteArrayOutputStream
+
+import java.util.zip.GZIPInputStream
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.assertEquals
@@ -46,6 +49,32 @@ class TestJsonFormatter extends NCubeBaseTest
         //s.add('urlContent.json')
         List<String> s = allTestFiles
         runAllTests(s)
+    }
+
+    @Ignore
+    void testBigFileJackson()
+    {
+        File file = new File('/workspace/n-cube/src/test/resources/foo.gz')
+
+        for (int i=0; i < 3; i++)
+        {
+            println "Test ${i + 1}"
+            InputStream inputStream = new FileInputStream(file)
+            long start = System.nanoTime()
+            NCube.createCubeFromStream(inputStream)
+            long stop = System.nanoTime()
+            long a = stop - start
+            println "  Jackson empty parse time ${a / 1000000}"
+
+            inputStream = new GZIPInputStream(new FileInputStream(file))
+            start = System.nanoTime()
+            JsonReader.jsonToMaps(inputStream, [:])   // read into Map of Map representation in memory
+            stop = System.nanoTime()
+            long b = stop - start
+            println "  json-io to memory time ${b / 1000000}"
+            println "  Improvement: ${b / a} times faster"
+            println()
+        }
     }
 
     @Test
