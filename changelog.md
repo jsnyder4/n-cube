@@ -1,4 +1,6 @@
 ### Revision History
+* 4.1.19-SNAPSHOT
+  * Added Java 7 compatible jar. To use as a dependency, add `<classifier>jre7</classifier>`.
 * 4.1.17/4.1.18
   * Enhancement: Allow notes on pull requests that are tied to revision history.
   * Enhancement: Allow a `Closure` to be sent as a search option when retrieving records from the database in order to eliminate the need to return to the database to perform additional processing.   
@@ -32,7 +34,7 @@
   * Enhancement: Improved performance of `NCubeJdbcPersister.doCubesExist()` by including sys.info in where clause
   * Bug fix: Added `createSysInfoCube()` to `pullToBranch()` in `NCubeJdbcPersister`
 * 4.1.12
-  * Updated tp consume json-command-servlet 1.7.1
+  * Updated to consume json-command-servlet 1.7.1
 * 4.1.11
   * Updated to consume json-command-servlet 1.7.0
 * 4.1.10
