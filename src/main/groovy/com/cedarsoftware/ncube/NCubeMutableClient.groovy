@@ -134,8 +134,8 @@ interface NCubeMutableClient extends NCubeClient
     Object[] getPullRequests(Date startDate, Date endDate)
 
     Map<String, Object> commitBranch(ApplicationID appId)
-
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes)
+    Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes, String notes)
 
     Integer rollbackBranch(ApplicationID appId, Object[] names)
 

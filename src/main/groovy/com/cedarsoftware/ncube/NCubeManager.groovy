@@ -2629,9 +2629,9 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Commit the passed in changed cube records identified by NCubeInfoDtos.
      * @return array of NCubeInfoDtos that are to be committed.
      */
-    Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
+    Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null, String notes = null)
     {
-        String prId = generatePullRequestHash(appId, inputCubes)
+        String prId = generatePullRequestHash(appId, inputCubes, notes)
         return mergePullRequest(prId)
     }
 

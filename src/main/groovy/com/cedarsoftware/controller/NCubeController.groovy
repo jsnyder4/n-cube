@@ -1341,10 +1341,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.commitBranch(appId, list.toArray())
     }
 
-    Object commitBranch(ApplicationID appId, Object[] infoDtos = null)
+    Object commitBranch(ApplicationID appId, Object[] infoDtos = null, String notes = null)
     {
         appId = addTenant(appId)
-        return mutableClient.commitBranch(appId, infoDtos)
+        return mutableClient.commitBranch(appId, infoDtos, notes)
     }
 
     Integer rollbackBranch(ApplicationID appId, Object[] cubeNames)

@@ -73,11 +73,6 @@ abstract class GroovyBase extends UrlCommandCell
     {
         super.clearClassLoaderCache(appId)
         runnableCode = null
-        ConcurrentMap<String, Class> L2Cache = L2_CACHE[appId]
-        if (L2Cache && L2CacheKey)
-        {
-            L2Cache.remove(L2CacheKey)
-        }
     }
 
     /**

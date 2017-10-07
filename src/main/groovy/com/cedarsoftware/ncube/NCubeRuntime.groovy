@@ -627,10 +627,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null)
+    Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null, String notes = null)
     {
         verifyAllowMutable('commitBranch')
-        Map<String, Object> map = bean.call(beanName, 'commitBranch', [appId, inputCubes]) as Map<String, Object>
+        Map<String, Object> map = bean.call(beanName, 'commitBranch', [appId, inputCubes, notes]) as Map<String, Object>
         clearCache(appId)
         clearCache(appId.asHead())
         return map

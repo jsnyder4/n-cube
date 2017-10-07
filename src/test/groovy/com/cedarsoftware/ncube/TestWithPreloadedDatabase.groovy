@@ -9,6 +9,7 @@ import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.Test
 
+import static com.cedarsoftware.ncube.NCubeAppContext.containsBean
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.*
@@ -164,7 +165,8 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert dtos2.empty
         // end verify
 
-        Map<String, Object> result = mutableClient.commitBranch(BRANCH1, dtos.toArray())
+        String notesText = 'i am a note'
+        Map<String, Object> result = mutableClient.commitBranch(BRANCH1, dtos.toArray(), notesText)
         assert (result[mutableClient.BRANCH_ADDS] as Collection).size() == 1
         assert (result[mutableClient.BRANCH_DELETES] as Collection).empty
         assert (result[mutableClient.BRANCH_UPDATES] as Collection).empty
@@ -176,7 +178,9 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         assert dtos.empty
 
         ApplicationID headId = HEAD
-        assert 1 == mutableClient.search(headId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).size()
+        dtos = mutableClient.search(headId, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assert 1 == dtos.size()
+        assertContainsIgnoreCase(dtos[0].notes, notesText)
     }
 
     @Test
