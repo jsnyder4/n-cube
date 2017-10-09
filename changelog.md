@@ -1,5 +1,7 @@
 ### Revision History
-* 4.1.19-SNAPSHOT
+* 4.1.20-SNAPSHOT
+  * --
+* 4.1.19
   * Added Java 7 compatible jar. To use as a dependency, add `<classifier>jre7</classifier>`.
   * Bug fix: PR Notes now work for Commit
   * Enhancement: Content search uses less CPU and RAM
