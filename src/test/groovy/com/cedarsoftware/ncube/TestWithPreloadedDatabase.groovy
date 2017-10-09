@@ -9,7 +9,6 @@ import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.NCubeAppContext.containsBean
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.*

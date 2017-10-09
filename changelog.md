@@ -1,6 +1,9 @@
 ### Revision History
 * 4.1.19-SNAPSHOT
   * Added Java 7 compatible jar. To use as a dependency, add `<classifier>jre7</classifier>`.
+  * Bug fix: PR Notes now work for Commit
+  * Enhancement: Content search uses less CPU and RAM
+  * Enhancement: Added optional limiting clauses to specific SQL queries
 * 4.1.17/4.1.18
   * Enhancement: Allow notes on pull requests that are tied to revision history.
   * Enhancement: Allow a `Closure` to be sent as a search option when retrieving records from the database in order to eliminate the need to return to the database to perform additional processing.   

@@ -119,6 +119,7 @@ interface NCubeMutableClient extends NCubeClient
     Map<String, Object> updateBranch(ApplicationID appId, Object[] cubeDtos)
 
     String generatePullRequestHash(ApplicationID appId, Object[] infoDtos)
+
     String generatePullRequestHash(ApplicationID appId, Object[] infoDtos, String notes)
 
     Map<String, Object> mergePullRequest(String prId)
@@ -134,7 +135,9 @@ interface NCubeMutableClient extends NCubeClient
     Object[] getPullRequests(Date startDate, Date endDate)
 
     Map<String, Object> commitBranch(ApplicationID appId)
+
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes)
+
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes, String notes)
 
     Integer rollbackBranch(ApplicationID appId, Object[] names)
