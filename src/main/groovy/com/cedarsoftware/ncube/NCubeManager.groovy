@@ -957,7 +957,17 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             cubeNamePattern = handleWildCard(cubeNamePattern)
         }
 
-        content = handleWildCard(content)
+        if (content)
+        {
+            while (content.startsWith('*'))
+            {
+                content = content.substring(1)
+            }
+            while (content.startsWith('*'))
+            {
+                content = content[0..-2]
+            }
+        }
 
         List<NCubeInfoDto> cubes = persister.search(appId, cubeNamePattern, content, options, getUserId())
         Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect { it.name })

@@ -2639,7 +2639,7 @@ class NCube<T>
 //            JsonParser jsonParser = new JsonFactory().createParser(stream);
 //            NCube<T> ncube = parseJson(jsonParser)
 //            return ncube
-//            stream.reset()
+
             Map options = [:]
             options[JsonReader.USE_MAPS] = true
             Map jsonNCube = (Map) JsonReader.jsonToJava(new BufferedInputStream(stream), options)
@@ -2664,7 +2664,7 @@ class NCube<T>
         final int CELLS = 4
         int level = INIT
         NCube<T> ncube = new NCube('tmp')
-        
+
         while (!parser.closed)
         {
             JsonToken token = parser.nextToken()

@@ -72,8 +72,9 @@ interface Regexes
 
     Pattern hasClassDefPattern = ~/(?s)^(package\s+(?<packageName>[a-zA-Z_0-9$.]+))?(|.*[;\s]+)class\s+(?<className>[a-zA-Z_0-9$.]+).*?\{.*?}.*$/
 
-    Pattern isOraclePattern = ~/(?i)^.*Oracle.*$/
-    Pattern isHSQLDBPattern = ~/(?i)^.*HSQL Database Engine Driver.*$/
+    Pattern isOraclePattern = ~/(?i)oracle/
+    Pattern isHSQLDBPattern = ~/(?i)hsql/
+    Pattern isMySQLPattern = ~/(?i)mysql/
 
     Pattern rangePattern = ~/\s*([^,]+)[,](.*)\s*$/
 

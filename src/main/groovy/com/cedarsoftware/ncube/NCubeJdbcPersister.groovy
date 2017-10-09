@@ -30,7 +30,6 @@ import java.util.regex.Pattern
 import java.util.zip.Deflater
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 
 /**
  * SQL Persister for n-cubes.  Manages all reads and writes of n-cubes to an SQL database.
@@ -61,12 +60,13 @@ class NCubeJdbcPersister
     static final String NOTES_BIN = 'notes_bin'
     static final String HEAD_SHA_1 = 'head_sha1'
     static final String CHANGED = 'changed'
-    static final String VALUE = 'value'
-    static final String PR_NOTES_STRING = 'PR notes: '
+    static final String PR_NOTES_PREFIX = 'PR notes: '
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
     private static volatile AtomicBoolean isOracle = null
+    private static volatile AtomicBoolean isMySQL = null
+    private static volatile AtomicBoolean isHSQLDB = null
 
     static List<NCubeInfoDto> search(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
     {
@@ -78,7 +78,10 @@ class NCubeJdbcPersister
         copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent || options[SEARCH_INCLUDE_CUBE_DATA]
         if (hasSearchContent)
         {
-            searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
+            String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
+            contentPattern = contentPattern.substring(1) // remove ^
+            contentPattern = contentPattern[0..-2]                   // remove $
+            searchPattern = Pattern.compile(contentPattern, Pattern.CASE_INSENSITIVE)
         }
 
         // Convert INCLUDE or EXCLUDE filter query from String, Set, or Map to Set.
@@ -103,7 +106,10 @@ class NCubeJdbcPersister
         Pattern searchPattern = null
         if (StringUtilities.hasContent(searchContent))
         {
-            searchPattern = Pattern.compile(StringUtilities.wildcardToRegexString(searchContent), Pattern.CASE_INSENSITIVE)
+            String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
+            contentPattern = contentPattern.substring(1) // remove ^
+            contentPattern = contentPattern[0..-2]                   // remove $
+            searchPattern = Pattern.compile(contentPattern, Pattern.CASE_INSENSITIVE)
         }
 
         options[SEARCH_INCLUDE_CUBE_DATA] = true
@@ -511,8 +517,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                     byte[] notes = row.getBytes(NOTES_BIN)
                     String notesStr = StringUtilities.createUTF8String(notes)
                     String newNotes = "updated from ${branch}, txId: [${txId}]"
-                    if (notesStr.contains(PR_NOTES_STRING)) {
-                        newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_STRING))}"
+                    if (notesStr.contains(PR_NOTES_PREFIX))
+                    {
+                        newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_PREFIX))}"
                     }
 
                     Long maxRevision = getMaxRevision(c, appId, cubeName, 'pullToBranch')
@@ -757,8 +764,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] notes = row.getBytes(NOTES_BIN)
             String notesStr = StringUtilities.createUTF8String(notes)
             String newNotes = "merged to branch, txId: [${txId}]"
-            if (notesStr.contains(PR_NOTES_STRING)) {
-                newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_STRING))}"
+            if (notesStr.contains(PR_NOTES_PREFIX))
+            {
+                newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_PREFIX))}"
             }
 
             result = insertCube(c, appId, cube, revision, testData, newNotes, changed, headSha1, username, 'commitMergedCubeToBranch')
@@ -801,7 +809,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] cubeData = cube.cubeAsGzipJsonBytes
             String sha1 = cube.sha1()
 
-            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}], ${PR_NOTES_STRING}${notes}", false, sha1, null, username, methodName)
+            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}], ${PR_NOTES_PREFIX}${notes}", false, sha1, null, username, methodName)
             result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, 'merged', false, sha1, sha1, username,  methodName)
         })
         return result
@@ -870,7 +878,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 if (changeType)
                 {
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
-                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}], ${PR_NOTES_STRING}${notes}", false, sha1, null, username, 'commitCubes')
+                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}], ${PR_NOTES_PREFIX}${notes}", false, sha1, null, username, 'commitCubes')
                     Map map1 = [head_sha1: sha1, create_dt: nowAsTimestamp(), id: cubeIds[i]]
                     Sql sql1 = getSql(c)
                     sql1.executeUpdate(map1, '/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id')
@@ -1202,7 +1210,8 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             changed = true
         }
 
-        if ((sourceRevision < 0 != newRevision < 0) && StringUtilities.equalsIgnoreCase(sourceSha1, sourceHeadSha1)) {
+        if ((sourceRevision < 0 != newRevision < 0) && StringUtilities.equalsIgnoreCase(sourceSha1, sourceHeadSha1))
+        {
             changed = true
         }
 
@@ -1789,11 +1798,13 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
             statement += ' AND status_cd = :status'
         }
 
+        statement += addLimitingClause(c)
+
         boolean result = false
         sql.eachRow(statement, map, 0, 1, { ResultSet row -> result = true })
         return result
     }
-    
+
     static Long getMaxRevision(Connection c, ApplicationID appId, String cubeName, String methodName)
     {
         Map map = appId as Map
@@ -1801,15 +1812,29 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         map.tenant = padTenant(c, appId.tenant)
         Sql sql = getSql(c)
         Long rev = null
-        String select = """\
+        String select
+        select = """\
 /* ${methodName}.maxRev */ SELECT revision_number FROM n_cube
 WHERE ${buildNameCondition("n_cube_nm")} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch
-ORDER BY abs(revision_number) DESC"""
+ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
 
         sql.eachRow(select, map, 0, 1, { ResultSet row ->
             rev = row.getLong('revision_number')
         })
         return rev
+    }
+
+    private static String addLimitingClause(Connection c)
+    {
+        if (isOracle(c))
+        {
+            return ' FETCH FIRST 1 ROW ONLY'
+        }
+        else if (isMySQL(c) || isHSQLDB(c))
+        {
+            return ' LIMIT 1'
+        }
+        return ''
     }
 
     protected static NCubeInfoDto getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
@@ -1821,6 +1846,7 @@ ORDER BY abs(revision_number) DESC"""
         if (hasSearchPattern || includeFilter || excludeFilter)
         {   // Only read CUBE_VALUE_BIN if needed (searching content or filtering by cube_tags)
             byte[] bytes = IOUtilities.uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
+            blankOutName(bytes, row.getString('n_cube_nm'))
             String cubeData = StringUtilities.createUtf8String(bytes)
             bytes = null // Clear out early (memory friendly for giant NCubes)
 
@@ -1844,7 +1870,7 @@ ORDER BY abs(revision_number) DESC"""
 
             if (hasSearchPattern)
             {
-                if (!searchPattern.matcher(cubeData.substring(cubeData.indexOf(','))).find()) // don't search name of cube
+                if (!searchPattern.matcher(cubeData).find())
                 {   // Did not contains-match content pattern
                     // check if cube has reference axes before returning, as the value may exist on a referenced column
                     if (Regexes.refAppSearchPattern.matcher(cubeData).find())
@@ -1866,8 +1892,7 @@ ORDER BY abs(revision_number) DESC"""
                             {
                                 for (Column column : axis.columnsWithoutDefault)
                                 {
-                                    if (searchPattern.matcher(column.value.toString())
-                                            || (column.columnName != null && searchPattern.matcher(column.columnName)))
+                                    if (searchPattern.matcher(column.value.toString()).find() || (column.columnName != null && searchPattern.matcher(column.columnName).find()))
                                     {
                                         foundInRefAxColumn = true
                                         break
@@ -1904,6 +1929,35 @@ ORDER BY abs(revision_number) DESC"""
             closure(dto, options[SEARCH_OUTPUT])
         }
         return dto
+    }
+
+    /**
+     * Locate cube name within bytes, and set to hyphens in byte[].  This is used to
+     * prevent the cube name from matching content searches.
+     */
+    private static void blankOutName(byte[] bytes, String cubeName)
+    {
+        String json
+        if (bytes.length < 4096)
+        {
+            json = StringUtilities.createUTF8String(bytes)
+        }
+        else
+        {   // Make new String out of partial piece of original (don't want to duplicate giant JSON strings)
+            json = new String(bytes, 0, 4096)
+        }
+
+        int start = json.indexOf("\"${cubeName}\"")
+        if (start == -1)
+        {
+            return
+        }
+
+        int end = start + 1 + cubeName.length()
+        for (int i = start + 1; i < end; i++)
+        {
+            bytes[i] = 45   // UTF-8 / ASCII hyphen
+        }
     }
 
     private static NCubeInfoDto createDtoFromRow(ResultSet row, Map options)
@@ -2033,8 +2087,8 @@ ORDER BY abs(revision_number) DESC"""
 
         if (isOracle == null)
         {
-            isOracle = new AtomicBoolean(Regexes.isOraclePattern.matcher(c.metaData.driverName).matches())
-            LOG.info('Oracle JDBC driver: ' + isOracle.get())
+            isOracle = new AtomicBoolean(Regexes.isOraclePattern.matcher(c.metaData.driverName).find())
+            LOG.info("Oracle JDBC driver: ${isOracle.get()}")
         }
         return isOracle.get()
     }
@@ -2046,7 +2100,28 @@ ORDER BY abs(revision_number) DESC"""
             return false
         }
 
-        return Regexes.isHSQLDBPattern.matcher(c.metaData.driverName).matches()
+        if (isHSQLDB == null)
+        {
+            isHSQLDB = new AtomicBoolean(Regexes.isHSQLDBPattern.matcher(c.metaData.driverName).find())
+            LOG.info("HSQLDB JDBC driver: ${isHSQLDB.get()}")
+        }
+
+        return isHSQLDB.get()
+    }
+
+    static boolean isMySQL(Connection c)
+    {
+        if (c == null)
+        {
+            return false
+        }
+
+        if (isMySQL == null)
+        {
+            isMySQL = new AtomicBoolean(Regexes.isMySQLPattern.matcher(c.metaData.driverName).find())
+            LOG.info("MySQL JDBC driver: ${isMySQL.get()}")
+        }
+        return isMySQL.get()
     }
 
     /**
