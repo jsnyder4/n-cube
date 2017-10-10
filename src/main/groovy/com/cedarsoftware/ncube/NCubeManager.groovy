@@ -1064,7 +1064,19 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             AxisRef axisRef = obj as AxisRef
             ApplicationID srcApp = axisRef.srcAppId
-            ApplicationID destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, axisRef.destStatus, axisRef.destBranch)
+            ApplicationID destAppId = null
+            try
+            {
+                 destAppId = new ApplicationID(srcApp.tenant, axisRef.destApp, axisRef.destVersion, axisRef.destStatus, axisRef.destBranch)
+            }
+            catch (Exception e)
+            {
+                axisRef.with {
+                    throw new IllegalStateException("""\
+Could not validate reference axis on cube: ${srcCubeName}, app: ${srcAppId}, referenced cube: ${destCubeName}, \
+referenced app: ${destApp}/${destVersion}/${destStatus}/${destBranch}/""", e)
+                }
+            }
             if (source)
             {
                 uniqueAppIds.add(srcApp)
@@ -1074,12 +1086,23 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 uniqueAppIds.add(destAppId)
             }
 
-            if (axisRef.transformApp != null && axisRef.transformVersion != null && axisRef.transformStatus != null && axisRef.transformBranch != null)
+            if (StringUtilities.hasContent(axisRef.transformApp) || StringUtilities.hasContent(axisRef.transformVersion) || StringUtilities.hasContent(axisRef.transformStatus) || StringUtilities.hasContent(axisRef.transformBranch))
             {
-                ApplicationID transformAppId = new ApplicationID(srcApp.tenant, axisRef.transformApp, axisRef.transformVersion, axisRef.transformStatus, axisRef.transformBranch)
-                if (!source)
+                try
                 {
-                    uniqueAppIds.add(transformAppId)
+                    ApplicationID transformAppId = new ApplicationID(srcApp.tenant, axisRef.transformApp, axisRef.transformVersion, axisRef.transformStatus, axisRef.transformBranch)
+                    if (!source)
+                    {
+                        uniqueAppIds.add(transformAppId)
+                    }
+                }
+                catch (Exception e)
+                {
+                    axisRef.with {
+                        throw new IllegalStateException("""\
+Could not validate reference axis transform on cube: ${srcCubeName}, app: ${srcAppId}, transform cube: ${transformCubeName}, \
+transform app: ${transformApp}/${transformVersion}/${transformStatus}/${transformBranch}/""", e)
+                    }
                 }
             }
         }
