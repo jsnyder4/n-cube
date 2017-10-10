@@ -1,6 +1,8 @@
 ### Revision History
-* 4.1.20-SNAPSHOT
+* 4.1.21-SNAPSHOT
   * --
+* 4.1.20
+  * Enhancement: Removed cube data from `NCubeInfoDto` for searches that did not specifically request the `SEARCH_INCLUDE_CUBE_DATA` option.
 * 4.1.19
   * Added Java 7 compatible jar. To use as a dependency, add `<classifier>jre7</classifier>`.
   * Bug fix: PR Notes now work for Commit

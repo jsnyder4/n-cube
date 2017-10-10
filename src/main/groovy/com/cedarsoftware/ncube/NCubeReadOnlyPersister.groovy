@@ -87,12 +87,7 @@ interface NCubeReadOnlyPersister
      * The ordering of the versions is not specified.
      */
     List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion, String username)
-
-    /**
-     * Same as search but returns built cubes.
-     */
-    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
-
+    
     /**
      * Get the list of branches for the given ApplicationID
      * @param appId ApplicationID containing the tenant, app, version, and status values.  The branch field of

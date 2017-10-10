@@ -77,6 +77,20 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testSearchIncludeData()
+    {
+        preloadCubes(defaultSnapshotApp, 'test.branch.1.json', 'test.branch.age.1.json')
+        List<NCubeInfoDto> list = mutableClient.search(defaultSnapshotApp, null, 'adult', [:])
+        NCubeInfoDto dto = list.first()
+        assert dto.bytes == null
+        assert dto.testData == null
+
+        list = mutableClient.search(defaultSnapshotApp, null, 'adult', [(SEARCH_INCLUDE_CUBE_DATA):true])
+        dto = list.first()
+        assert dto.bytes != null
+    }
+    
+    @Test
     void testLoadCubes()
     {
         NCube ncube = NCubeBuilder.getTestNCube2D(true)

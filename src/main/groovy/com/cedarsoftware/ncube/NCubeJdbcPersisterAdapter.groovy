@@ -268,12 +268,6 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "search(${appId}, ${cubeNamePattern}, ${searchValue})", username)
     }
 
-    List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String searchValue, Map options, String username)
-    {
-        return (List<NCube>) jdbcOperation({ Connection c -> persister.cubeSearch(c, appId, cubeNamePattern, searchValue, options) },
-                "cubeSearch(${appId}, ${cubeNamePattern}, ${searchValue})", username)
-    }
-
     void clearTestDatabase(String username)
     {
         jdbcOperation({ Connection c -> persister.clearTestDatabase(c) },

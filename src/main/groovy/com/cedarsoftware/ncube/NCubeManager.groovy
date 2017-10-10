@@ -936,11 +936,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param appId ApplicationID on which we are working
      * @param cubeNamePattern cubeNamePattern String pattern to match cube names
      * @param content String value that is 'contained' within the cube's JSON
-     * @param options map with possible keys:
-     *                changedRecordsOnly - default false ->  Only searches changed records if true.
-     *                activeRecordsOnly - default false -> Only searches non-deleted records if true.
-     *                deletedRecordsOnly - default false -> Only searches deleted records if true.
-     *                cacheResult - default false -> Cache the cubes that match this result..
+     * @param options map with possible keys.  See NCubeConstants.SEARCH_*
      * @return List<NCubeInfoDto>
      */
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String content, Map options)
@@ -978,6 +974,12 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     protected List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String content, Map options = [:])
     {
         ApplicationID.validateAppId(appId)
+        if (options == null)
+        {
+            options = [:]
+        }
+        options[SEARCH_INCLUDE_CUBE_DATA] = true
+        options[SEARCH_INCLUDE_TEST_DATA] = true
 
         if (!options[SEARCH_EXACT_MATCH_NAME])
         {
@@ -986,8 +988,16 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         content = handleWildCard(content)
 
-        List<NCube> cubes = persister.cubeSearch(appId, cubeNamePattern, content, options, getUserId())
-        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect{it.name})
+        List<NCube> cubes = new ArrayList<>()
+        Set cubeNames = new LinkedHashSet()
+        options[SEARCH_CLOSURE] = { NCubeInfoDto dto, List<NCube> ncubes ->
+            NCube ncube = NCube.createCubeFromRecord(dto)
+            cubeNames.add(ncube.name)
+            ncubes.add(ncube)
+        }
+        options[SEARCH_OUTPUT] = cubes
+        persister.search(appId, cubeNamePattern, content, options, getUserId())
+        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubeNames)
         cubes.removeAll { !validCubeNames.contains(it.name)}
         return cubes
     }

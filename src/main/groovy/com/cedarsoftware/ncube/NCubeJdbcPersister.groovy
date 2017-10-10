@@ -72,10 +72,10 @@ class NCubeJdbcPersister
     {
         List<NCubeInfoDto> list = []
         Pattern searchPattern = null
-
         Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
         boolean hasSearchContent = StringUtilities.hasContent(searchContent)
         copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent || options[SEARCH_INCLUDE_CUBE_DATA]
+        
         if (hasSearchContent)
         {
             String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
@@ -96,31 +96,12 @@ class NCubeJdbcPersister
 
         copyOptions[SEARCH_INCLUDE_CUBE_DATA] = includeCubeData
         copyOptions[METHOD_NAME] = 'search'
-        runSelectCubesStatement(c, appId, cubeNamePattern, copyOptions, { ResultSet row -> getCubeInfoRecords(appId, searchPattern, list, copyOptions, row) })
-        return list
-    }
-
-    static List<NCube> cubeSearch(Connection c, ApplicationID appId, String cubeNamePattern, String searchContent, Map<String, Object> options)
-    {
-        List<NCube> cubes = []
-        Pattern searchPattern = null
-        if (StringUtilities.hasContent(searchContent))
-        {
-            String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
-            contentPattern = contentPattern.substring(1) // remove ^
-            contentPattern = contentPattern[0..-2]                   // remove $
-            searchPattern = Pattern.compile(contentPattern, Pattern.CASE_INSENSITIVE)
-        }
-
-        options[SEARCH_INCLUDE_CUBE_DATA] = true
-        options[METHOD_NAME] = 'cubeSearch'
-        runSelectCubesStatement(c, appId, cubeNamePattern, options, { ResultSet row ->
-            if (getCubeInfoRecords(appId, searchPattern, [], options, row))
-            {
-                cubes << buildCube(appId, row)
-            }
+        runSelectCubesStatement(c, appId, cubeNamePattern, copyOptions, { ResultSet row ->
+            // look at original options value (not coerced value) for SEARCH_INCLUDE_CUBE_DATA
+            boolean keepCubeData = options[SEARCH_INCLUDE_CUBE_DATA] as Boolean
+            getCubeInfoRecords(appId, searchPattern, list, copyOptions, row, keepCubeData)
         })
-        return cubes
+        return list
     }
 
     static NCubeInfoDto loadCubeRecordById(Connection c, long cubeId, Map options)
@@ -208,7 +189,9 @@ ORDER BY abs(revision_number) DESC
         }
 
         List<NCubeInfoDto> records = []
-        sql.eachRow(map, sqlStatement, { ResultSet row -> getCubeInfoRecords(appId, null, records, [:], row) })
+        sql.eachRow(map, sqlStatement, { ResultSet row ->
+            getCubeInfoRecords(appId, null, records, [:], row)
+        })
 
         if (records.empty)
         {
@@ -227,7 +210,7 @@ ORDER BY abs(revision_number) DESC
             s = c.prepareStatement("""\
 /* ${methodName}.insertCubeBytes */
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
-sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
+sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, ${TEST_DATA_BIN}, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             long uniqueId = UniqueIdGenerator.uniqueId
             s.setLong(1, uniqueId)
@@ -1219,11 +1202,6 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         return true
     }
 
-    protected static void runSelectCubesStatement(Connection c, ApplicationID appId, String namePattern, Map options, Closure closure)
-    {
-        runSelectCubesStatement(c, appId, namePattern, options, 0, closure)
-    }
-
     /**
      * @param c Connection (JDBC) from ConnectionProvider
      * @param appId ApplicationID
@@ -1237,7 +1215,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
      *                exactMatchName - default false
      * @param closure Closure to run for each record selected.
      */
-    protected static void runSelectCubesStatement(Connection c, ApplicationID appId, String namePattern, Map options, int max, Closure closure)
+    protected static void runSelectCubesStatement(Connection c, ApplicationID appId, String namePattern, Map options, int max = 0, Closure closure)
     {
         boolean includeCubeData = toBoolean(options[SEARCH_INCLUDE_CUBE_DATA])
         boolean includeTestData = toBoolean(options[SEARCH_INCLUDE_TEST_DATA])
@@ -1837,7 +1815,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         return ''
     }
 
-    protected static NCubeInfoDto getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row)
+    protected static NCubeInfoDto getCubeInfoRecords(ApplicationID appId, Pattern searchPattern, List<NCubeInfoDto> list, Map options, ResultSet row, boolean keepCubeData = true)
     {
         boolean hasSearchPattern = searchPattern != null
         Set<String> includeFilter = options[SEARCH_FILTER_INCLUDE] as Set
@@ -1927,6 +1905,11 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         if (closure)
         {
             closure(dto, options[SEARCH_OUTPUT])
+        }
+        if (!keepCubeData)
+        {   // Although possibly used for searching contents, clear cube data from DTO unless they specifically requested it.
+            dto.bytes = null
+            dto.testData = null
         }
         return dto
     }
