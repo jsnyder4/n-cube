@@ -331,10 +331,18 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         ApplicationID newAppId = new ApplicationID(tenant, newInfoDto.app, newInfoDto.version, newInfoDto.status, newInfoDto.branch)
         NCubeInfoDto newRecord = loadCubeRecord(newAppId, newInfoDto.name, options)
+        if (newRecord == null)
+        {
+            throw new IllegalArgumentException("cube: ${newInfoDto.name} in app: ${newInfoDto.applicationID} does not exist.")
+        }
         NCube newCube = NCube.createCubeFromRecord(newRecord)
 
         ApplicationID oldAppId = new ApplicationID(tenant, oldInfoDto.app, oldInfoDto.version, oldInfoDto.status, oldInfoDto.branch)
         NCubeInfoDto oldRecord = loadCubeRecord(oldAppId, oldInfoDto.name, options)
+        if (oldRecord == null)
+        {
+            throw new IllegalArgumentException("cube: ${oldInfoDto.name} in app: ${oldInfoDto.applicationID} does not exist.")
+        }
         NCube oldCube = NCube.createCubeFromRecord(oldRecord)
 
         return DeltaProcessor.getDeltaDescription(newCube, oldCube)
