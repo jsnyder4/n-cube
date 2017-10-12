@@ -493,6 +493,24 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         assert code == 'ABC'
     }
 
+    @Test
+    void testGetCubeRawJson()
+    {
+        String classPathString = call('getCubeRawJson', [ApplicationID.testAppId, 'sys.classpath']) as byte[]
+        assert classPathString != null
+        String nullString = call('getCubeRawJson', [ApplicationID.testAppId, 'NonExistentCube']) as byte[]
+        assert nullString == null
+    }
+
+    @Test
+    void testGetCubeRawJsonBytes()
+    {
+        byte[] classPathBytes = call('getCubeRawJsonBytes', [ApplicationID.testAppId, 'sys.classpath']) as byte[]
+        assert classPathBytes != null
+        byte[] nullBytes = call('getCubeRawJsonBytes', [ApplicationID.testAppId, 'NonExistentCube']) as byte[]
+        assert nullBytes == null
+    }
+
     private static Object call(String methodName, List args)
     {
         if (NCubeAppContext.clientTest)

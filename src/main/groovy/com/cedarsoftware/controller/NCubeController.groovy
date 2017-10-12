@@ -269,6 +269,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         NCubeInfoDto record = mutableClient.loadCubeRecord(appId, cubeName, null)
+        if (record == null)
+        {
+            return null
+        }
         String rawJson = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
         return rawJson
     }
@@ -277,6 +281,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
     {
         NCubeInfoDto record = loadCubeRecord(appId, cubeName, null)
+        if (record == null)
+        {
+            return null
+        }
         byte[] bytes = record.bytes
         return bytes
     }
