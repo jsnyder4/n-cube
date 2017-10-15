@@ -59,6 +59,86 @@ class CellInfo
     private static final UNSUPPORTED_TYPE = 'bogusType'
     private static final Pattern DECIMAL_REGEX = ~/[.]/
     private static final Pattern HEX_DIGIT = ~/[0-9a-fA-F]+/
+    private static final Map<String, Closure> typeConversion = [:]
+
+    static
+    {
+        Closure stringToString = { Object val, String type, boolean cache -> return val }
+        typeConversion[null] = stringToString
+        typeConversion[''] = stringToString
+        typeConversion['string'] = stringToString
+        typeConversion['boolean'] = { Object val, String type, boolean cache ->
+            String bool = (String)val
+            if ('true'.equalsIgnoreCase(bool) || 'false'.equalsIgnoreCase(bool))
+            {
+                return 'true'.equalsIgnoreCase((String) val)
+            }
+            throw new IllegalArgumentException("Boolean must be 'true' or 'false'.  Case does not matter.")
+        }
+        typeConversion['byte'] = { Object val, String type, boolean cache -> return Converter.convert(val, byte.class) }
+        typeConversion['short'] = { Object val, String type, boolean cache -> return Converter.convert(val, short.class) }
+        typeConversion['int'] = { Object val, String type, boolean cache -> return Converter.convert(val, int.class) }
+        typeConversion['long'] = { Object val, String type, boolean cache -> return Converter.convert(val, long.class) }
+        typeConversion['double'] = { Object val, String type, boolean cache -> return Converter.convert(val, double.class) }
+        typeConversion['float'] = { Object val, String type, boolean cache -> return Converter.convert(val, float.class) }
+        typeConversion['exp'] = { Object val, String type, boolean cache -> return new GroovyExpression((String)val, null, cache) }
+        typeConversion['method'] = { Object val, String type, boolean cache -> return new GroovyMethod((String) val, null, cache) }
+        typeConversion['template'] = { Object val, String type, boolean cache -> return new GroovyTemplate((String)val, null, cache) }
+        Closure stringToDate = { Object val, String type, boolean cache ->
+            try
+            {
+                Date date = (Date)Converter.convert(val, Date.class)
+                return (date == null) ? val : date
+            }
+            catch (Exception ignored)
+            {
+                throw new IllegalArgumentException("Could not parse ${type}': ${val}")
+            }
+        }
+        typeConversion['date'] = stringToDate
+        typeConversion['datetime'] = stringToDate   // synonym for 'date'
+        typeConversion['binary'] = { Object val, String type, boolean cache ->  // convert hex string "10AF3F" as byte[]
+            String hex = (String)val
+            if (hex.length() % 2 != 0)
+            {
+                throw new IllegalArgumentException('Binary (hex) values must have an even number of digits.')
+            }
+            if (!HEX_DIGIT.matcher(hex).matches())
+            {
+                throw new IllegalArgumentException('Binary (hex) values must contain only the numbers 0 thru 9 and letters A thru F.')
+            }
+            return StringUtilities.decode((String) val)
+        }
+        typeConversion['bigint'] = { Object val, String type, boolean cache -> return new BigInteger((String) val) }
+        typeConversion['bigdec'] = { Object val, String type, boolean cache -> return new BigDecimal((String) val) }
+        typeConversion['latlon'] = { Object val, String type, boolean cache ->
+            Matcher m = Regexes.valid2Doubles.matcher((String) val)
+            if (!m.matches())
+            {
+                throw new IllegalArgumentException(String.format('Invalid Lat/Long value (%s)', val))
+            }
+
+            return new LatLon((double)Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+        }
+        typeConversion['point2d'] = { Object val, String type, boolean cache ->
+            Matcher m = Regexes.valid2Doubles.matcher((String) val)
+            if (!m.matches())
+            {
+                throw new IllegalArgumentException(String.format('Invalid Point2D value (%s)', val))
+            }
+            return new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+        }
+        typeConversion['point3d'] = { Object val, String type, boolean cache ->
+            Matcher m = Regexes.valid3Doubles.matcher((String) val)
+            if (!m.matches())
+            {
+                throw new IllegalArgumentException(String.format('Invalid Point3D value (%s)', val))
+            }
+            return new Point3D((double) Converter.convert(m.group(1), double.class),
+                    (double) Converter.convert(m.group(2), double.class),
+                    (double) Converter.convert(m.group(3), double.class))
+        }
+    }
 
     private static final ThreadLocal<DecimalFormat> decimalIntFormat = new ThreadLocal<DecimalFormat>() {
         DecimalFormat initialValue()
@@ -123,7 +203,7 @@ class CellInfo
         }
         else if (cell instanceof GroovyExpression)
         {
-            GroovyExpression exp = cell as GroovyExpression
+            GroovyExpression exp = (GroovyExpression) cell
             isUrl = StringUtilities.hasContent(exp.url)
             value = isUrl ? exp.url : exp.cmd
             dataType = 'exp'
@@ -131,7 +211,7 @@ class CellInfo
         }
         else if (cell instanceof CellInfo)
         {   // clone
-            CellInfo cellInfo = cell as CellInfo
+            CellInfo cellInfo = (CellInfo) cell
             isUrl = cellInfo.isUrl
             value = cellInfo.value
             dataType = cellInfo.dataType
@@ -154,7 +234,7 @@ class CellInfo
         }
         else if (cell instanceof Date)
         {
-            value = formatForDisplay(cell as Date)
+            value = formatForDisplay((Date)cell)
             dataType = 'date'
         }
         else if (cell instanceof Double)
@@ -169,7 +249,7 @@ class CellInfo
         }
         else if (cell instanceof BigDecimal)
         {
-            value = (cell as BigDecimal).stripTrailingZeros().toPlainString()
+            value = ((BigDecimal)cell).stripTrailingZeros().toPlainString()
             dataType = 'bigdec'
         }
         else if (cell instanceof BigInteger)
@@ -179,7 +259,7 @@ class CellInfo
         }
         else if (cell instanceof byte[])
         {
-            value = StringUtilities.encode(cell as byte[])
+            value = StringUtilities.encode((byte[])cell)
             dataType = 'binary'
         }
         else if (cell instanceof Point2D)
@@ -199,7 +279,7 @@ class CellInfo
         }
         else if (cell instanceof GroovyMethod)
         {
-            GroovyMethod method = cell as GroovyMethod
+            GroovyMethod method = (GroovyMethod)cell
             isUrl = StringUtilities.hasContent(method.url)
             value = isUrl ? method.url : method.cmd
             dataType = 'method'
@@ -207,7 +287,7 @@ class CellInfo
         }
         else if (cell instanceof StringUrlCmd)
         {
-            StringUrlCmd strCmd = cell as StringUrlCmd
+            StringUrlCmd strCmd = (StringUrlCmd)cell
             value = strCmd.url
             dataType = 'string'
             isUrl = true
@@ -215,7 +295,7 @@ class CellInfo
         }
         else if (cell instanceof BinaryUrlCmd)
         {
-            BinaryUrlCmd binCmd = cell as BinaryUrlCmd
+            BinaryUrlCmd binCmd = (BinaryUrlCmd)cell
             value = binCmd.url
             dataType = 'binary'
             isUrl = true
@@ -223,7 +303,7 @@ class CellInfo
         }
         else if (cell instanceof GroovyTemplate)
         {
-            GroovyTemplate templateCmd = cell as GroovyTemplate
+            GroovyTemplate templateCmd = (GroovyTemplate)cell
             isUrl = StringUtilities.hasContent(templateCmd.url)
             value = isUrl ? templateCmd.url : templateCmd.cmd
             dataType = 'template'
@@ -231,7 +311,7 @@ class CellInfo
         }
         else if (cell instanceof Range)
         {
-            Range range = cell as Range
+            Range range = (Range)cell
             isUrl = false
             value = formatForEditing(range)
             dataType = 'range'
@@ -239,7 +319,7 @@ class CellInfo
         }
         else if (cell instanceof RangeSet)
         {
-            RangeSet set = cell as RangeSet
+            RangeSet set = (RangeSet)cell
             isUrl = false
             StringBuilder builder = new StringBuilder()
             int len = set.size()
@@ -562,11 +642,11 @@ class CellInfo
         {
             if ('bigdec' == type)
             {
-                return new BigDecimal(val as double)
+                return new BigDecimal((double)val)
             }
             else if ('float' == type)
             {
-                return (val as Double).floatValue()
+                return ((Double)val).floatValue()
             }
             return val
         }
@@ -582,15 +662,15 @@ class CellInfo
             }
             else if ('byte' == type)
             {
-                return (val as Long).byteValue()
+                return ((Long)val).byteValue()
             }
             else if ('short' == type)
             {
-                return ((val as Long).shortValue())
+                return (((Long)val).shortValue())
             }
             else if ('bigdec' == type)
             {
-                return new BigDecimal(val as long)
+                return new BigDecimal((long)val)
             }
             return val
         }
@@ -600,127 +680,13 @@ class CellInfo
         }
         else if (val instanceof String)
         {
-            val = (val as String).trim()
-            if (StringUtilities.isEmpty(type))
-            {
-                return val
-            }
-            else if ('boolean' == type)
-            {
-                String bool = (String)val
-                if ('true'.equalsIgnoreCase(bool) || 'false'.equalsIgnoreCase(bool))
-                {
-                    return 'true'.equalsIgnoreCase((String) val)
-                }
-                throw new IllegalArgumentException("Boolean must be 'true' or 'false'.  Case does not matter.")
-            }
-            else if ('byte' == type)
-            {
-                return Converter.convert(val, byte.class)
-            }
-            else if ('short' == type)
-            {
-                return Converter.convert(val, short.class)
-            }
-            else if ('int' == type)
-            {
-                return Converter.convert(val, int.class)
-            }
-            else if ('long' == type)
-            {
-                return Converter.convert(val, long.class)
-            }
-            else if ('double' == type)
-            {
-                return Converter.convert(val, double.class)
-            }
-            else if ('float' == type)
-            {
-                return Converter.convert(val, float.class)
-            }
-            else if ('exp' == type)
-            {
-                return new GroovyExpression((String)val, null, cache)
-            }
-            else if ('method' == type)
-            {
-                return new GroovyMethod((String) val, null, cache)
-            }
-            else if ('date' == type || 'datetime' == type)
-            {
-                try
-                {
-                    Date date = Converter.convert(val, Date.class) as Date
-                    return (date == null) ? val : date
-                }
-                catch (Exception ignored)
-                {
-                    throw new IllegalArgumentException("Could not parse '" + type + "': " + val)
-                }
-            }
-            else if ('template' == type)
-            {
-                return new GroovyTemplate((String)val, null, cache)
-            }
-            else if ('string' == type)
-            {
-                return val
-            }
-            else if ('binary' == type)
-            {   // convert hex string "10AF3F" as byte[]
-                String hex = (String)val
-                if (hex.length() % 2 != 0)
-                {
-                    throw new IllegalArgumentException('Binary (hex) values must have an even number of digits.')
-                }
-                if (!HEX_DIGIT.matcher(hex).matches())
-                {
-                    throw new IllegalArgumentException('Binary (hex) values must contain only the numbers 0 thru 9 and letters A thru F.')
-                }
-                return StringUtilities.decode((String) val)
-            }
-            else if ('bigint' == type)
-            {
-                return new BigInteger((String) val)
-            }
-            else if ('bigdec' == type)
-            {
-                return new BigDecimal((String)val)
-            }
-            else if ('latlon' == type)
-            {
-                Matcher m = Regexes.valid2Doubles.matcher((String) val)
-                if (!m.matches())
-                {
-                    throw new IllegalArgumentException(String.format('Invalid Lat/Long value (%s)', val))
-                }
-
-                return new LatLon((double)Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
-            }
-            else if ('point2d' == type)
-            {
-                Matcher m = Regexes.valid2Doubles.matcher((String) val)
-                if (!m.matches())
-                {
-                    throw new IllegalArgumentException(String.format('Invalid Point2D value (%s)', val))
-                }
-                return new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
-            }
-            else if ('point3d' == type)
-            {
-                Matcher m = Regexes.valid3Doubles.matcher((String) val)
-                if (!m.matches())
-                {
-                    throw new IllegalArgumentException(String.format('Invalid Point3D value (%s)', val))
-                }
-                return new Point3D((double) Converter.convert(m.group(1), double.class),
-                        (double) Converter.convert(m.group(2), double.class),
-                        (double) Converter.convert(m.group(3), double.class))
-            }
-            else
+            val = ((String)val).trim()
+            Closure method = typeConversion[type]
+            if (method == null)
             {
                 throw new IllegalArgumentException("Unknown value: ${type} for 'type' field")
             }
+            return method(val, type, cache)
         }
         else if (val.class.array)
         {   // Legacy support - remove once we drop support for array type (can be done using GroovyExpression).
@@ -770,7 +736,7 @@ class CellInfo
         }
         else if (o instanceof Boolean)
         {
-            builder.append((o as Boolean) ? 'true' : 'false')
+            builder.append(((Boolean)o) ? 'true' : 'false')
         }
         else if (o instanceof Double)
         {
@@ -789,7 +755,7 @@ class CellInfo
         }
         else if (o instanceof BigDecimal)
         {
-            builder.append((o as BigDecimal).stripTrailingZeros().toPlainString())
+            builder.append(((BigDecimal)o).stripTrailingZeros().toPlainString())
             builder.append('G')
         }
         else if (o instanceof BigInteger)
@@ -833,7 +799,7 @@ class CellInfo
         }
         else if (val instanceof BigDecimal)
         {
-            BigDecimal x = val as BigDecimal
+            BigDecimal x = (BigDecimal)val
             String s = x.stripTrailingZeros().toPlainString()
             if (s.contains("."))
             {
@@ -851,7 +817,7 @@ class CellInfo
         }
         else if (val instanceof Date)
         {
-            return getDateAsString(val as Date)
+            return getDateAsString((Date)val)
         }
         else if (val == null)
         {
@@ -879,8 +845,8 @@ class CellInfo
         }
         else if (val instanceof Range)
         {
-            Range range = val as Range
-            return formatForEditing(range.low) + ', ' + formatForEditing(range.high)
+            Range range = (Range)val
+            return "${formatForEditing(range.low)}, ${formatForEditing(range.high)}"
         }
         return val.toString()
     }

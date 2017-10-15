@@ -29,6 +29,8 @@ interface NCubeRuntimeClient extends NCubeClient
 
     URL getActualUrl(ApplicationID appId, String url, Map input)
 
+    String getUrlContent(ApplicationID appId, String url, Map input)
+
     URLClassLoader getLocalClassloader(ApplicationID appId)
 
     URLClassLoader getUrlClassLoader(ApplicationID appId, Map input)

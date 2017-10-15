@@ -52,6 +52,54 @@ class TestJsonFormatter extends NCubeBaseTest
     }
 
     @Ignore
+    void testFoo()
+    {
+        int runs = 4
+        long oldTime = 0
+        long newTime = 0
+
+//        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/empty2D.json')
+//        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/test.branch.1.json')
+//        File file = new File('/workspace/n-cube/src/test/resources/merge1.json')
+        File file = new File('/workspace/n-cube/src/test/resources/mdm.WC.gz')
+
+        NCube oldCube = null
+        NCube newCube = null
+
+        for (int i=0; i < runs; i++)
+        {
+            InputStream is1 = new GZIPInputStream(new FileInputStream(file), 65536)
+            long oldStart = System.nanoTime()
+            oldCube = NCube.fromSimpleJson(is1)
+            long oldStop = System.nanoTime()
+            oldTime += (oldStop - oldStart)
+
+            println "Goin' from the old to the new!"
+
+            InputStream is2 = new GZIPInputStream(new FileInputStream(file), 65536)
+            long newStart  = System.nanoTime()
+            newCube = NCube.fromSimpleJsonNew(is2)
+            long newStop = System.nanoTime()
+            newTime += (newStop - newStart)
+
+//            if (i % 1000 == 0)
+//            {
+//                println "Run: ${i}  ${(oldStop - oldStart)}  ${(newStop - newStart)}"
+//            }
+              println "Run: ${i}  ${(oldStop - oldStart)}  ${(newStop - newStart)}"
+//            println "Run: ${i}  ${(newStop - newStart)}"
+        }
+
+//        List<Delta> deltas = DeltaProcessor.getDeltaDescription(newCube, oldCube)
+//        assert deltas.size() == 0
+//        assert oldCube == newCube
+
+        println "Timing across ${runs} runs"
+        println "Old time: ${oldTime / 1000000.0d} ms"
+        println "New time: ${newTime / 1000000.0d} ms"
+    }
+
+    @Ignore
     void testBigFileJackson()
     {
         File file = new File('/workspace/n-cube/src/test/resources/foo.gz')
@@ -317,6 +365,11 @@ class TestJsonFormatter extends NCubeBaseTest
 //            System.out.println(s)
             NCube res = NCube.fromSimpleJson((String)s)
             //long end = System.nanoTime()
+
+//            println f
+//            println ncube.sha1()
+//            println res.sha1()
+
             assertEquals(res, ncube)
             //long time = (end-start)/1000000;
             //if (time > 250) {

@@ -2,6 +2,7 @@
 * 4.1.21-SNAPSHOT
   * Bug fix: Return `null` from deprecated `NCubeController` methods `getCubeRawJson()` and `getCubeRawJsonBytes()` when `NCube` does not exist.
   * Added better exception and error message for invalid reference axes and transforms.
+  * Added `NCubeController.getUrlContent()` to resolve issues viewing files on the CDN. 
 * 4.1.20
   * Enhancement: Removed cube data from `NCubeInfoDto` for searches that did not specifically request the `SEARCH_INCLUDE_CUBE_DATA` option.
 * 4.1.19

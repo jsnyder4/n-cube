@@ -1,7 +1,6 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
-import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -1239,6 +1238,15 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             throw new IllegalStateException("Unable to resolve the relative URL (${relativeUrl}) to a physical URL, app: ${appId}")
         }
         return absUrl
+    }
+
+    String getUrlContent(ApplicationID appId, String relativeUrl)
+    {
+        verifyAllowExecute('getUrlContent')
+        appId = addTenant(appId)
+        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
+        String content = runtime.getUrlContent(appId, relativeUrl, [:])
+        return content
     }
 
     void clearCache(ApplicationID appId)

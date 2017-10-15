@@ -229,12 +229,6 @@ return ret
     }
 
     @Test
-    void testSysProtoErrorHandling2()
-    {
-        assert null == (new GroovyExpression('1', null, false)).getSysPrototype(null)
-    }
-
-    @Test
     void testSysProtoErrorHandling3()
     {
         GroovyExpression.addPrototypeExpImports(null,  null)

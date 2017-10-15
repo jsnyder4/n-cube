@@ -809,7 +809,7 @@ class Axis
 
         // New columns are always added at the end in terms of displayOrder.
         int order = displayOrder.isEmpty() ? 1 : displayOrder.lastKey() + 1
-        column.setDisplayOrder(column.default ? Integer.MAX_VALUE : order)
+        column.displayOrder = column.default ? Integer.MAX_VALUE : order
         indexColumn(column)
         return column
     }
@@ -921,7 +921,7 @@ class Axis
         ensureUnique(newColumn.value)
 
         // re-use displayOrder or take it from order arg
-        newColumn.setDisplayOrder(order == -1i ? column.displayOrder : order)
+        newColumn.displayOrder = order == -1i ? column.displayOrder : order
         indexColumn(newColumn)
     }
 

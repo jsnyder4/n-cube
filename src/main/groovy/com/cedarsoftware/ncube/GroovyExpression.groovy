@@ -85,7 +85,7 @@ class GroovyExpression extends GroovyBase
 
         if (!SYS_PROTOTYPE.equalsIgnoreCase(ncube.name))
         {
-            NCube prototype = getSysPrototype(ncube.applicationID)
+            NCube prototype = ncubeRuntime.getCube(ncube.applicationID, SYS_PROTOTYPE)
 
             if (prototype != null)
             {
@@ -122,31 +122,6 @@ class ${className} extends ${expClassName}
 """
     }
 
-    static NCube getSysPrototype(ApplicationID appId)
-    {
-        try
-        {
-            return ncubeRuntime.getCube(appId, SYS_PROTOTYPE)
-        }
-        catch (Exception e)
-        {
-            handleException(e, "Exception occurred fetching ${SYS_PROTOTYPE}")
-            return null
-        }
-    }
-
-    protected static void handleException(Exception e, String msg)
-    {
-        if (LOG.debugEnabled)
-        {
-            LOG.debug(msg, e)
-        }
-        else
-        {
-            LOG.info("${msg}, ${e.message}")
-        }
-    }
-
     protected static String addPrototypeExpImports(Map<String, Object> ctx, NCube prototype)
     {
         try
@@ -170,7 +145,7 @@ class ${className} extends ${expClassName}
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching imports from ${SYS_PROTOTYPE}")
+            LOG.info("Exception occurred fetching imports from ${SYS_PROTOTYPE}", e)
             return ''
         }
     }
@@ -189,7 +164,7 @@ class ${className} extends ${expClassName}
         }
         catch (Exception e)
         {
-            handleException(e, "Exception occurred fetching base class for Groovy Expression cells from ${SYS_PROTOTYPE}")
+            LOG.info("Exception occurred fetching base class for Groovy Expression cells from ${SYS_PROTOTYPE}", e)
         }
         return null
     }

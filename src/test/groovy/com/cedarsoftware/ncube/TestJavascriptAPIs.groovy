@@ -83,6 +83,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
                 'getNCubesFromResource(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
                 'addAdvice(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface com.cedarsoftware.ncube.Advice)',
                 'getActualUrl(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Map)',
+                'getUrlContent(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Map)',
                 'clearCache(class com.cedarsoftware.ncube.ApplicationID, interface java.util.Collection)'
         ] as Set
 

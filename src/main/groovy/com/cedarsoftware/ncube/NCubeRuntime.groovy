@@ -1210,6 +1210,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
     }
 
+    String getUrlContent(ApplicationID appId, String url, Map input)
+    {
+        URL actualUrl = getActualUrl(appId, url, input)
+        return actualUrl?.getText()
+    }
+
     /**
      * Fetch the classloader for the given ApplicationID.
      */
