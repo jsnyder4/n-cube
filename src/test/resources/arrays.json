@@ -51,58 +51,58 @@
     "cells":[
         {
             "id":["bytes"],
-            "type":"byte",
-            "value":[0, 1, 127]
+            "type":"exp",
+            "value":"[0, 1, 127] as byte[]"
         },
         {
             "id":["shorts"],
-            "type":"short",
-            "value":[0, 1, 32767]
+            "type":"exp",
+            "value":"[0, 1, 32767] as short[]"
         },
         {
             "id":["ints"],
-            "type":"int",
-            "value":[0, 1, 2147483647]
+            "type":"exp",
+            "value":"[0, 1, 2147483647] as int[]"
         },
         {
             "id":["longs"],
-            "type":"long",
-            "value":[0, 1, 9223372036854775807]
+            "type":"exp",
+            "value":"[0, 1, 9223372036854775807] as long[]"
         },
         {
             "id":["bigints"],
-            "type":"bigint",
-            "value":[0, 1, 9223372036854775807, "147573952589676410000"]
+            "type":"exp",
+            "value":"[0, 1, 9223372036854775807, \"147573952589676410000\"] as BigInteger[]"
         },
         {
             "id":["strings"],
-            "type":"string",
-            "value": ["alpha", "bravo", "charlie"]
+            "type":"exp",
+            "value": "[\"alpha\", \"bravo\", \"charlie\"] as String[]"
         },
         {
             "id":["floats"],
-            "type":"float",
-            "value": [1.0, 2.0, 3.8]
+            "type":"exp",
+            "value": "[1.0, 2.0, 3.8] as float[]"
         },
         {
             "id":["doubles"],
-            "type":"double",
-            "value": [8.0, 9.0, 10.1]
+            "type":"exp",
+            "value": "[8.0, 9.0, 10.1] as double[]"
         },
         {
             "id":["bigdecimals"],
-            "type":"bigdec",
-            "value": [15.1, 16.1, 18, "19.1"]
+            "type":"exp",
+            "value": "[15.1, 16.1, 18, \"19.1\"] as BigDecimal[]"
         },
         {
             "id":["booleans"],
-            "type":"boolean",
-            "value": [true, false, true, false]
+            "type":"exp",
+            "value": "[true, false, true, false] as boolean[]"
         },
         {
             "id":["crazy"],
             "type":"exp",
-            "value": ["1.0", "1.a","1.b", "2.0"]
+            "value": "[\"1.0\", \"1.a\",\"1.b\", \"2.0\"] as Object[]"
         }
     ]
 }

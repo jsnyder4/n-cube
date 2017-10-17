@@ -1,8 +1,11 @@
 ### Revision History
-* 4.1.21-SNAPSHOT
+* 4.1.22-SNAPSHOT
+  * --
+* 4.1.21
   * Bug fix: Return `null` from deprecated `NCubeController` methods `getCubeRawJson()` and `getCubeRawJsonBytes()` when `NCube` does not exist.
   * Added better exception and error message for invalid reference axes and transforms.
-  * Added `NCubeController.getUrlContent()` to resolve issues viewing files on the CDN. 
+  * Added `NCubeController.getUrlContent()` to resolve issues viewing files on the CDN.
+  * Sped up `NCube` parsing and formatting.  Technique 1) using casting instead of 'as' when LHS is known, 2) Using Map's of Closures instead of if-else or swtich statments where the decision variable is a String, and 3) Sped up `NCube.ensureFullCoordinate()` by converting code that was performing as X * Y to X + Y iterations. 
 * 4.1.20
   * Enhancement: Removed cube data from `NCubeInfoDto` for searches that did not specifically request the `SEARCH_INCLUDE_CUBE_DATA` option.
 * 4.1.19

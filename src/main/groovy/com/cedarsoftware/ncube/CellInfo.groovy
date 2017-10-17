@@ -69,30 +69,28 @@ class CellInfo
         typeConversion['string'] = stringToString
         typeConversion['boolean'] = { Object val, String type, boolean cache ->
             String bool = (String)val
-            if ('true'.equalsIgnoreCase(bool) || 'false'.equalsIgnoreCase(bool))
-            {
-                return 'true'.equalsIgnoreCase((String) val)
-            }
+            if ('true'.equalsIgnoreCase(bool)) return true
+            if ('false'.equalsIgnoreCase(bool)) return false
             throw new IllegalArgumentException("Boolean must be 'true' or 'false'.  Case does not matter.")
         }
-        typeConversion['byte'] = { Object val, String type, boolean cache -> return Converter.convert(val, byte.class) }
-        typeConversion['short'] = { Object val, String type, boolean cache -> return Converter.convert(val, short.class) }
-        typeConversion['int'] = { Object val, String type, boolean cache -> return Converter.convert(val, int.class) }
-        typeConversion['long'] = { Object val, String type, boolean cache -> return Converter.convert(val, long.class) }
-        typeConversion['double'] = { Object val, String type, boolean cache -> return Converter.convert(val, double.class) }
-        typeConversion['float'] = { Object val, String type, boolean cache -> return Converter.convert(val, float.class) }
+        typeConversion['byte'] = { Object val, String type, boolean cache -> return Converter.convertToByte(val) }
+        typeConversion['short'] = { Object val, String type, boolean cache -> return Converter.convertToShort(val) }
+        typeConversion['int'] = { Object val, String type, boolean cache -> return Converter.convertToInteger(val) }
+        typeConversion['long'] = { Object val, String type, boolean cache -> return Converter.convertToLong(val) }
+        typeConversion['double'] = { Object val, String type, boolean cache -> return Converter.convertToDouble(val) }
+        typeConversion['float'] = { Object val, String type, boolean cache -> return Converter.convertToFloat(val) }
         typeConversion['exp'] = { Object val, String type, boolean cache -> return new GroovyExpression((String)val, null, cache) }
         typeConversion['method'] = { Object val, String type, boolean cache -> return new GroovyMethod((String) val, null, cache) }
         typeConversion['template'] = { Object val, String type, boolean cache -> return new GroovyTemplate((String)val, null, cache) }
         Closure stringToDate = { Object val, String type, boolean cache ->
             try
             {
-                Date date = (Date)Converter.convert(val, Date.class)
+                Date date = Converter.convertToDate(val)
                 return (date == null) ? val : date
             }
             catch (Exception ignored)
             {
-                throw new IllegalArgumentException("Could not parse ${type}': ${val}")
+                throw new IllegalArgumentException("Could not parse as a date: ${val}")
             }
         }
         typeConversion['date'] = stringToDate
@@ -109,8 +107,8 @@ class CellInfo
             }
             return StringUtilities.decode((String) val)
         }
-        typeConversion['bigint'] = { Object val, String type, boolean cache -> return new BigInteger((String) val) }
-        typeConversion['bigdec'] = { Object val, String type, boolean cache -> return new BigDecimal((String) val) }
+        typeConversion['bigint'] = { Object val, String type, boolean cache -> return Converter.convertToBigInteger(val) }
+        typeConversion['bigdec'] = { Object val, String type, boolean cache -> return Converter.convertToBigDecimal(val) }
         typeConversion['latlon'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid2Doubles.matcher((String) val)
             if (!m.matches())
@@ -118,7 +116,7 @@ class CellInfo
                 throw new IllegalArgumentException(String.format('Invalid Lat/Long value (%s)', val))
             }
 
-            return new LatLon((double)Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+            return new LatLon(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
         }
         typeConversion['point2d'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid2Doubles.matcher((String) val)
@@ -126,7 +124,7 @@ class CellInfo
             {
                 throw new IllegalArgumentException(String.format('Invalid Point2D value (%s)', val))
             }
-            return new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+            return new Point2D(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
         }
         typeConversion['point3d'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid3Doubles.matcher((String) val)
@@ -134,9 +132,9 @@ class CellInfo
             {
                 throw new IllegalArgumentException(String.format('Invalid Point3D value (%s)', val))
             }
-            return new Point3D((double) Converter.convert(m.group(1), double.class),
-                    (double) Converter.convert(m.group(2), double.class),
-                    (double) Converter.convert(m.group(3), double.class))
+            return new Point3D(Converter.convertToDouble(m.group(1)),
+                    Converter.convertToDouble(m.group(2)),
+                    Converter.convertToDouble(m.group(3)))
         }
     }
 
@@ -638,21 +636,13 @@ class CellInfo
         {
             return null
         }
-        else if (val instanceof Double)
-        {
-            if ('bigdec' == type)
-            {
-                return new BigDecimal((double)val)
-            }
-            else if ('float' == type)
-            {
-                return ((Double)val).floatValue()
-            }
-            return val
-        }
         else if (val instanceof Long)
         {
-            if ('int' == type)
+            if ('long' == type || type == null || '' == type)
+            {
+                return val
+            }
+            else if ('int' == type)
             {
                 return ((Long)val).intValue()
             }
@@ -676,6 +666,22 @@ class CellInfo
         }
         else if (val instanceof Boolean)
         {
+            return val
+        }
+        else if (val instanceof Double)
+        {
+            if ('double' == type || type == null || '' == type)
+            {
+                return val
+            }
+            else if ('bigdec' == type)
+            {
+                return new BigDecimal((double)val)
+            }
+            else if ('float' == type)
+            {
+                return ((Double)val).floatValue()
+            }
             return val
         }
         else if (val instanceof String)
@@ -841,7 +847,7 @@ class CellInfo
         }
         else if (val instanceof Double || val instanceof Float || val instanceof BigDecimal)
         {
-            return Converter.convert(val, String.class)
+            return Converter.convertToString(val)
         }
         else if (val instanceof Range)
         {

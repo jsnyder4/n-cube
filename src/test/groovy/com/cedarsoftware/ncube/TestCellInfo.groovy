@@ -232,25 +232,6 @@ class TestCellInfo extends NCubeBaseTest
     }
 
     @Test
-    void testInvalidJsonObjectType()
-    {
-        try
-        {
-            JsonObject o = new JsonObject()
-            Object[] items = [1]
-            items[0] = new CellInfo('string', null, false, false)
-            o.put('@items', items)
-
-            CellInfo.javaToGroovySource(o)
-            fail 'should not make it here'
-        }
-        catch (IllegalArgumentException e)
-        {
-            assertTrue e.message.contains('Unknown Groovy Type')
-        }
-    }
-
-    @Test
     void testNullItemOnFormatForDisplay()
     {
         assertEquals 'Default', CellInfo.formatForDisplay(null)

@@ -127,7 +127,7 @@ class NCube<T>
             Map map = (Map)jOb
             if (map.size() == 1)
             {   // If "@type" was added, then you need to extract the n-cube instance from the "ncube" field.
-                map = map.ncube as Map
+                map = (Map)map.ncube
             }
             NCube ncube = hydrateCube(map)
             String tenant = ncube.getMetaProperty('n-tenant')
@@ -992,7 +992,7 @@ class NCube<T>
             if (cellValue instanceof CommandCell)
             {
                 Map ctx = prepareExecutionContext(coordinate, output)
-                return (T) executeExpression(ctx, cellValue as CommandCell)
+                return (T) executeExpression(ctx, (CommandCell)cellValue)
             }
             else
             {
@@ -1019,26 +1019,26 @@ class NCube<T>
 
         cells.each { ids, cell ->
             if(cell instanceof GroovyBase) {
-                compileCell(getCoordinateFromIds(ids), cell as GroovyBase, compileInfo)
+                compileCell(getCoordinateFromIds(ids), (GroovyBase)cell, compileInfo)
             }
         }
 
         metaProps.each { key, value ->
             if (value instanceof GroovyBase) {
-                compileCell([metaProp:key],value as GroovyBase, compileInfo)
+                compileCell([metaProp:key], (GroovyBase)value, compileInfo)
             }
         }
 
         axisList.each { axisName, axis ->
             axis.columns.each { column ->
                 if (column.value instanceof GroovyBase) {
-                    compileCell([axis:axisName,column:column.columnName],column.value as GroovyBase, compileInfo)
+                    compileCell([axis:axisName,column:column.columnName], (GroovyBase)column.value, compileInfo)
                 }
 
                 if (column.metaProps) {
                     column.metaProps.each { key, value ->
                         if (value instanceof GroovyBase) {
-                            compileCell([axis:axisName,column:column.columnName,metaProp:key],value as GroovyBase, compileInfo)
+                            compileCell([axis:axisName,column:column.columnName,metaProp:key], (GroovyBase)value, compileInfo)
                         }
                     }
                 }
@@ -1047,7 +1047,7 @@ class NCube<T>
             if (axis.metaProps) {
                 axis.metaProps.each { key, value ->
                     if (value instanceof GroovyBase) {
-                        compileCell([axis:axisName,metaProp:key],value as GroovyBase, compileInfo)
+                        compileCell([axis:axisName,metaProp:key], (GroovyBase)value, compileInfo)
                     }
                 }
             }
@@ -1287,11 +1287,11 @@ class NCube<T>
             Column column
             if (isDiscrete)
             {
-                column = axis.findColumn(value as Comparable)
+                column = axis.findColumn((Comparable)value)
             }
             else
             {
-                column = axis.findColumnByName(value as String)
+                column = axis.findColumnByName((String)value)
             }
             columns.add(column)
         }
@@ -1322,7 +1322,7 @@ class NCube<T>
             {
                 Axis otherAxis = axisList[other]
                 def value = input[other]
-                Column column = otherAxis.findColumn(value as Comparable)
+                Column column = otherAxis.findColumn((Comparable)value)
                 if (!column)
                 {
                     throw new CoordinateNotFoundException("Column [${value}] not found on axis [${other}] on cube [${this.name}]", name, null, other, value)
@@ -1418,22 +1418,22 @@ class NCube<T>
 
         if (ruleValue instanceof Map)
         {
-            return (ruleValue as Map).size() > 0
+            return ((Map)ruleValue).size() > 0
         }
 
         if (ruleValue instanceof Collection)
         {
-            return (ruleValue as Collection).size() > 0
+            return ((Collection)ruleValue).size() > 0
         }
 
         if (ruleValue instanceof Enumeration)
         {
-            return (ruleValue as Enumeration).hasMoreElements()
+            return ((Enumeration)ruleValue).hasMoreElements()
         }
 
         if (ruleValue instanceof Iterator)
         {
-            return (ruleValue as Iterator).hasNext()
+            return ((Iterator)ruleValue).hasNext()
         }
 
         return true
@@ -1468,19 +1468,19 @@ class NCube<T>
                 }
                 else if (value instanceof Collection)
                 {   // Collection of rule names to select (orchestration)
-                    Collection<String> orchestration = value as Collection
+                    Collection<String> orchestration = (Collection)value
                     bindings[axisName] = axis.findColumns(orchestration)
                     assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, rule names ${orchestration}, cube: ${name}")
                 }
                 else if (value instanceof Map)
                 {   // key-value pairs that meta-properties of rule columns must match to select rules.
-                    Map<String, Object> required = value as Map
+                    Map<String, Object> required = (Map)value
                     bindings[axisName] = axis.findColumns(required)
                     assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match ${required}, cube: ${name}")
                 }
                 else if (value instanceof Closure)
                 {
-                    bindings[axisName] = axis.findColumns(value as Closure)
+                    bindings[axisName] = axis.findColumns((Closure)value)
                     assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match closure, cube: ${name}")
                 }
                 else
@@ -1490,7 +1490,7 @@ class NCube<T>
             }
             else
             {   // Find the single column that binds to the input coordinate on a regular axis.
-                final Column column = axis.findColumn(value as Comparable)
+                final Column column = axis.findColumn((Comparable)value)
                 if (column == null || column.default)
                 {
                     trackUnboundAxis(output, name, axisName, value)
@@ -1729,7 +1729,7 @@ class NCube<T>
 
         if (coordinate instanceof TrackingMap)
         {
-            TrackingMap trackMap = coordinate as TrackingMap
+            TrackingMap trackMap = (TrackingMap)coordinate
             if (trackMap.getWrappedMap() instanceof CaseInsensitiveMap)
             {
                 safeCoord = coordinate
@@ -1928,11 +1928,11 @@ class NCube<T>
         {   // Rule axes are deleted by ID, name, or null (default - can be deleted with null or ID).
             if (value instanceof Long)
             {
-                column = axis.deleteColumnById(value as Long)
+                column = axis.deleteColumnById((Long)value)
             }
             else if (value instanceof String)
             {
-                column = axis.findColumnByName(value as String)
+                column = axis.findColumnByName((String)value)
                 if (column != null)
                 {
                     axis.deleteColumnById(column.id)
@@ -2474,7 +2474,7 @@ class NCube<T>
             if (cell instanceof CommandCell)
             {
                 Map<String, Object> coord = getDisplayCoordinateFromIds(ids)
-                getReferences(refs, coord, cell as CommandCell)
+                getReferences(refs, coord, (CommandCell)cell)
             }
         }
 
@@ -2503,7 +2503,7 @@ class NCube<T>
         // If the DefaultCellValue references another n-cube, add it into the dependency list.
         if (defaultCellValue instanceof CommandCell)
         {
-            getReferences(refs, [:], defaultCellValue as CommandCell)
+            getReferences(refs, [:], (CommandCell)defaultCellValue)
         }
         return refs
     }
@@ -3110,7 +3110,7 @@ class NCube<T>
         boolean defCache = getBoolean(jsonNCube, DEFAULT_CELL_VALUE_CACHE)
         ncube.setDefaultCellValue(CellInfo.parseJsonValue(jsonNCube[DEFAULT_CELL_VALUE], defUrl, defType, defCache))
         
-        Object[] axes = jsonNCube.axes as Object[]
+        Object[] axes = (Object[])jsonNCube.axes
 
         if (axes == null)
         {
@@ -3413,7 +3413,7 @@ class NCube<T>
                 MapEntry result = generateRuleName(names, count)
                 column.name = result.key
                 count = result.value as int
-                names.add(column.name as String)
+                names.add((String)column.name)
             }
             else
             {
@@ -3474,7 +3474,7 @@ class NCube<T>
             }
             else if (entry.value instanceof CellInfo)
             {
-                CellInfo info = entry.value as CellInfo
+                CellInfo info = (CellInfo)entry.value
                 entriesToUpdate.add(new MapEntry(entry.key, info.recreate()))
             }
         }
@@ -3791,7 +3791,7 @@ class NCube<T>
             }
             else if (value instanceof Map)
             {
-                Map map = value as Map
+                Map map = (Map)value
                 md.update(MAP_BYTES)
                 md.update(String.valueOf(map.size()).bytes)
                 md.update(sep)
@@ -3806,12 +3806,12 @@ class NCube<T>
             {
                 if (value instanceof String)
                 {
-                    md.update((value as String).bytes)
+                    md.update(((String)value).bytes)
                     md.update(sep)
                 }
                 else if (value instanceof CommandCell)
                 {
-                    CommandCell cmdCell = value as CommandCell
+                    CommandCell cmdCell = (CommandCell)value
                     md.update(cmdCell.class.name.bytes)
                     md.update(sep)
                     if (cmdCell.url != null)
