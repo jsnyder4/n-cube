@@ -772,4 +772,31 @@ class AdviceTest extends NCubeCleanupBaseTest
 
         ncube.clearAdvices()
     }
+
+    @Test
+    void testExpressionFromSysAdvice()
+    {
+        ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "sysAdviceTest.json")
+        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
+
+        Map output = [:]
+        ncube.getCell([env_level:'local', protocol:'http',content:'95'] as Map, output)
+
+        assert ((long)output._atime1) > ((long)output._btime1)
+    }
+
+    @Test
+    void testMultipleExpressionFromSysAdvice()
+    {
+        ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "sysAdviceTest2.json")
+        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
+
+        Map output = [:]
+        ncube.getCell([env_level:'local', protocol:'http',content:'95'] as Map, output)
+
+        assert ((long)output._atime1) > ((long)output._atime2)
+        assert ((long)output._btime1) < ((long)output._btime2)
+        assert ((long)output._btime2) < ((long)output._atime1)
+        assert ((long)output._btime1) < ((long)output._atime1)
+    }
 }

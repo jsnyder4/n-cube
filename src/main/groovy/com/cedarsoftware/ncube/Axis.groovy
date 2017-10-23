@@ -151,7 +151,7 @@ class Axis
         this.name = name
         this.id = id
         isRef = true
-        this.valueToCol = new TreeMap<>()
+        this.valueToCol = null
 
         // Ask the provider to load this axis up.
         axisRefProvider.load(this)
@@ -529,7 +529,7 @@ class Axis
 
         if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {
-            valueToCol[standardizeColumnValue(column.value)] = column
+            valueToColumn[standardizeColumnValue(column.value)] = column
         }
         else if (type == AxisType.RANGE)
         {
@@ -633,7 +633,10 @@ class Axis
         valueType = newValueType
         NavigableMap<Comparable, Column> existing = valueToCol
         valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
-        valueToCol.putAll(existing)
+        if (existing)
+        {
+            valueToCol.putAll(existing)
+        }
     }
 
     protected void clearIndexes()
@@ -710,7 +713,7 @@ class Axis
         {
             if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
             {
-                if (valueToCol.containsKey(value))
+                if (valueToColumn.containsKey(value))
                 {
                     throw new AxisOverlapException("Passed in value '${value}' matches a value already on axis '${name}'")
                 }
@@ -872,7 +875,7 @@ class Axis
         // Remove from 'value' storage
         if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {   // O(1) remove
-            valueToCol.remove(standardizeColumnValue(col.value))
+            valueToColumn.remove(standardizeColumnValue(col.value))
         }
         else if (type == AxisType.RANGE)
         {   // O(Log n) remove
@@ -1591,7 +1594,7 @@ class Axis
 
         if (type == AxisType.DISCRETE)
         {
-            Column colToFind = valueToCol.get(promotedValue)
+            Column colToFind = valueToColumn[promotedValue]
             return colToFind == null ? defaultCol : colToFind
         }
         else if (type == AxisType.RANGE || type == AxisType.SET)
@@ -1639,7 +1642,7 @@ class Axis
 
     private Column findNearest(final Comparable promotedValue)
     {
-        if (valueToCol.isEmpty())
+        if (valueToColumn.isEmpty())
         {
             return null
         }
@@ -1793,7 +1796,7 @@ class Axis
     {
         if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {
-            return new ArrayList<>((preferredOrder == SORTED) ? valueToCol.values() : displayOrder.values())
+            return new ArrayList<>((preferredOrder == SORTED) ? valueToColumn.values() : displayOrder.values())
         }
         else if (type == AxisType.RULE)
         {
@@ -1887,5 +1890,14 @@ class Axis
         {
             return findColumn(source.value)
         }
+    }
+
+    private NavigableMap<Comparable, Column> getValueToColumn()
+    {
+        if (valueToCol == null)
+        {
+            valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
+        }
+        return valueToCol
     }
 }

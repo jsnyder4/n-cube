@@ -74,13 +74,13 @@ class NCubeJdbcPersister
         Pattern searchPattern = null
         Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
         boolean hasSearchContent = StringUtilities.hasContent(searchContent)
-        copyOptions[SEARCH_INCLUDE_CUBE_DATA] = hasSearchContent || options[SEARCH_INCLUDE_CUBE_DATA]
+        boolean keepCubeData = (boolean)options[SEARCH_INCLUDE_CUBE_DATA] // look at original options value (not coerced value) for SEARCH_INCLUDE_CUBE_DATA
+        boolean includeCubeData = hasSearchContent || keepCubeData
         
         if (hasSearchContent)
         {
             String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
-            contentPattern = contentPattern.substring(1) // remove ^
-            contentPattern = contentPattern[0..-2]                   // remove $
+            contentPattern = contentPattern[1..-2]                   // remove ^ and $
             searchPattern = Pattern.compile(contentPattern, Pattern.CASE_INSENSITIVE)
         }
 
@@ -91,14 +91,10 @@ class NCubeJdbcPersister
         Set excludeTags = copyOptions[SEARCH_FILTER_EXCLUDE] as Set
 
         // If filtering by tags, we need to include CUBE DATA, so add that flag to the search
-        boolean includeCubeData = copyOptions[SEARCH_INCLUDE_CUBE_DATA]
-        includeCubeData |= includeTags || excludeTags  // Set to true if either inclusion or exclusion filter has content, or if it was already set to true.
-
+        includeCubeData |= includeTags || excludeTags
         copyOptions[SEARCH_INCLUDE_CUBE_DATA] = includeCubeData
         copyOptions[METHOD_NAME] = 'search'
         runSelectCubesStatement(c, appId, cubeNamePattern, copyOptions, { ResultSet row ->
-            // look at original options value (not coerced value) for SEARCH_INCLUDE_CUBE_DATA
-            boolean keepCubeData = options[SEARCH_INCLUDE_CUBE_DATA] as Boolean
             getCubeInfoRecords(appId, searchPattern, list, copyOptions, row, keepCubeData)
         })
         return list
@@ -1901,7 +1897,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         {
             list.add(dto)
         }
-        Closure closure = options[SEARCH_CLOSURE] as Closure
+        Closure closure = (Closure)options[SEARCH_CLOSURE]
         if (closure)
         {
             closure(dto, options[SEARCH_OUTPUT])

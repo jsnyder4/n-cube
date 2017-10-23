@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
+import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.StringUtilities
 
@@ -71,6 +72,40 @@ def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = ncubeRuntime.getCube(appId, cubeName)
     return target.getCell(coord, output, defaultValue)
+}
+
+def use(Map altInput, String cubeName = ncube.name, def defaultValue = null)
+{
+    Map origInput = new CaseInsensitiveMap(input)
+    input.putAll(altInput)
+    return getCube(cubeName).use(input, origInput, output, defaultValue)
+}
+
+def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
+{
+    NCube target = ncubeRuntime.getCube(appId, cubeName)
+    if (target == null)
+    {
+        throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+    }
+    Map origInput = new CaseInsensitiveMap(input)
+    input.putAll(altInput)
+    return getCube(cubeName).use(input, origInput, output, defaultValue)
+}
+
+Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null)
+{
+    NCube target
+    if (cubeName)
+    {
+        appId = appId ?: applicationID
+        target = ncubeRuntime.getCube(appId, cubeName)
+    }
+    else
+    {
+        target = ncube
+    }
+    return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
 }
 
 String url(String url)

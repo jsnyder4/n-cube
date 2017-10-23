@@ -44,6 +44,7 @@ interface NCubeConstants
     final String SEARCH_OUTPUT = 'output'
     final String SEARCH_ALLOW_SYS_INFO = 'allowSysInfo'
 
+    final String SYS_ADVICE = 'sys.advice'
     final String SYS_APP = 'sys.app'
     final String SYS_BOOTSTRAP = 'sys.bootstrap'
     final String SYS_PROTOTYPE = 'sys.prototype'
@@ -74,7 +75,6 @@ interface NCubeConstants
     final String NCUBE_PARAMS = 'NCUBE_PARAMS'
     final String NCUBE_PARAMS_BYTE_CODE_DEBUG = 'byteCodeDebug'
     final String NCUBE_PARAMS_BYTE_CODE_VERSION = 'byteCodeVersion'
-    final String NCUBE_ACCEPTED_DOMAINS = 'acceptedDomains'
     final String NCUBE_PARAMS_BRANCH = 'branch'
 
     final String REQUIRED_SCOPE = 'requiredScopeKeys'

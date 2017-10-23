@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.CompilationFailedException
 import org.junit.*
+import org.springframework.test.context.TestPropertySource
 
 import java.lang.reflect.Field
 
@@ -28,6 +29,7 @@ import static org.junit.Assert.*
  *         limitations under the License.
  */
 @CompileStatic
+@TestPropertySource(properties="ncube.accepted.domains=org.apache.")
 class TestL3Cache extends NCubeCleanupBaseTest
 {
     private NCube cp
@@ -37,7 +39,6 @@ class TestL3Cache extends NCubeCleanupBaseTest
     private File sourcesDir
     private File classesDir
     private File singleDir
-    private String savedDomains
 
     private static File targetDir
     private static String savedSourcesDir
@@ -55,8 +56,6 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Before
     void setUp()
     {
-        savedDomains = ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS]
-
         sourcesDir = new File("${targetDir.path}/TestL3Cache-sources")
         classesDir = new File("${targetDir.path}/TestL3Cache-classes")
         singleDir = new File ("${targetDir.path}/single-l3cache")
@@ -82,14 +81,6 @@ class TestL3Cache extends NCubeCleanupBaseTest
     {
         GroovyBase.generatedSourcesDirectory = savedSourcesDir
         CdnClassLoader.generatedClassesDirectory = savedClassesDir
-        if (savedDomains)
-        {
-            ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = savedDomains
-        }
-        else
-        {
-            ncubeRuntime.systemParams.remove(NCUBE_ACCEPTED_DOMAINS)
-        }
         super.teardown()
     }
 
@@ -155,7 +146,6 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testCompile()
     {
-        ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
         reloadCubes('sys.classpath.L3cache.json')
 
         CompileInfo compileInfo = testCube.compile()
@@ -385,8 +375,6 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Test
     void testExpressionWithGrab()
     {
-        ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
-
         Map output = [:]
         testCube.getCell([name:'grab'],output)
 

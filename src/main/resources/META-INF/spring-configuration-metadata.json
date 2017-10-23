@@ -52,6 +52,13 @@
       "defaultValue": "false"
     },
     {
+      "name": "ncube.accepted.domains",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Allow access to external domains.",
+      "defaultValue": ""
+    },
+    {
       "name": "ncube.stackEntry.coordinate.value.max",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",

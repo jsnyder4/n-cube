@@ -714,7 +714,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCube testCube = createCubeFromResource(customId, 'sys.classpath.tests.json')
 
         assertEquals(1, ncubeRuntime.getUrlClassLoader(customId, [:]).URLs.length)
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
 
         mutableClient.updateCube(testCube) // reload to clear classLoader inside the cell
 
@@ -723,10 +723,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         assertTrue(mutableClient.updateCube(testCube))
         assertNotNull(ncubeRuntime.getUrlClassLoader(customId, [:]))
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
 
         testCube = mutableClient.getCube(customId, 'sys.classpath')
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
         assertEquals(1, ncubeRuntime.getUrlClassLoader(customId, [:]).URLs.length)
 
         //  validate item got added to cache.
@@ -746,24 +746,24 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         final URLClassLoader urlClassLoader = ncubeRuntime.getUrlClassLoader(customId, [:])
         assertEquals(1, urlClassLoader.URLs.length)
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
 
         ncubeRuntime.clearCache(customId)
         NCube testCube = createRuntimeCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
         testCube.name = 'sys.mistake'
         mutableClient.createCube(testCube)
 
-        assertEquals(2, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
+        assertEquals(3, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
 
         //  validate item got added to cache.
         assertEquals(testCube, mutableClient.getCube(customId, 'sys.mistake'))
 
         assertTrue(mutableClient.renameCube(customId, 'sys.mistake', 'sys.classpath'))
         assertNotNull(ncubeRuntime.getUrlClassLoader(customId, [:]))
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
 
         testCube = mutableClient.getCube(customId, 'sys.classpath')
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
         assertEquals(1, ncubeRuntime.getUrlClassLoader(customId, [:]).URLs.length)
 
         //  validate item got added to cache.
@@ -783,24 +783,24 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         final URLClassLoader urlClassLoader = ncubeRuntime.getUrlClassLoader(customId, [:])
         assertEquals(1, urlClassLoader.URLs.length)
-        assertEquals(2, getCacheSize(customId))
+        assertEquals(3, getCacheSize(customId))
 
         ncubeRuntime.clearCache(customId)
         NCube testCube = createRuntimeCubeFromResource(customId, 'sys.classpath.tests.json')        // reload so that it does not attempt to write classLoader cells (which will blow up)
         testCube.name = 'sys.mistake'
         mutableClient.createCube(testCube)
 
-        assertEquals(2, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
+        assertEquals(3, getCacheSize(customId))     // both sys.mistake and sys.classpath are in the cache
 
         //  validate item got added to cache.
         assertEquals(testCube, mutableClient.getCube(customId, 'sys.mistake'))
 
         mutableClient.duplicate(customId, customId, 'sys.mistake', 'sys.classpath')
         assertNotNull(ncubeRuntime.getUrlClassLoader(customId, [:]))
-        assertEquals(3, getCacheSize(customId))
+        assertEquals(4, getCacheSize(customId))
 
         testCube = mutableClient.getCube(customId, 'sys.classpath')
-        assertEquals(3, getCacheSize(customId))
+        assertEquals(4, getCacheSize(customId))
         assertEquals(1, ncubeRuntime.getUrlClassLoader(customId, [:]).URLs.length)
 
         //  validate item got added to cache.

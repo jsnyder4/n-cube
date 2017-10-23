@@ -27,10 +27,13 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime;
 @CompileStatic
 class TestBadJsonFormats extends NCubeBaseTest
 {
-    @Test(expected=RuntimeException.class)
-    void testNCubeMissingColumnParserError()
+    @Test
+    void testNCubeMissingColumn()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-missing-column-error.json')
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ncube-missing-column-error.json')
+        assert ncube != null
+        Axis axis = ncube.getAxis('Lat / Lon')
+        assert axis.size() == 0
     }
 
     @Test(expected=RuntimeException.class)

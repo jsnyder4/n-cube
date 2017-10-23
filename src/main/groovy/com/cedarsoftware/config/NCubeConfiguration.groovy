@@ -49,6 +49,7 @@ class NCubeConfiguration
     @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
 
     @Value('${ncube.allow.mutable.methods:false}') boolean allowMutableMethods
+    @Value('${ncube.accepted.domains:}') String ncubeAcceptedDomains
     @Value('${ncube.target.scheme:http}') String scheme
     @Value('${ncube.target.host:localhost}') String host
     @Value('${ncube.target.port:9000}') int port
@@ -123,6 +124,15 @@ class NCubeConfiguration
         MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
         methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.NCube.setStackEntryCoordinateValueMaxSize"
         methodInvokingBean.arguments = [stackEntryCoordinateValueMaxSize] as Object []
+        return methodInvokingBean
+    }
+
+    @Bean(name = "ncubeAcceptedDomains")
+    MethodInvokingBean setNcubeAcceptedDomains()
+    {
+        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
+        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.util.CdnClassLoader.setNcubeAcceptedDomains"
+        methodInvokingBean.arguments = [ncubeAcceptedDomains] as Object []
         return methodInvokingBean
     }
 

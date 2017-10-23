@@ -108,6 +108,7 @@ import com.cedarsoftware.util.io.*
 import groovy.transform.CompileStatic 
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
+import java.lang.reflect.Method
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 ${addlImports}

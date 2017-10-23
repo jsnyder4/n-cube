@@ -54,13 +54,15 @@ class TestJsonFormatter extends NCubeBaseTest
     @Ignore
     void testFoo()
     {
-        int runs = 4
+        int runs = 5
         long oldTime = 0
         long newTime = 0
 
-//        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/empty2D.json')
-//        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/test.branch.1.json')
-//        File file = new File('/workspace/n-cube/src/test/resources/merge1.json')
+        NCube<String> states2 = (NCube<String>) NCubeBuilder.discrete1D
+        states2.applicationID = ApplicationID.testAppId.asVersion('1.0.0').asHead().asRelease()
+        ncubeRuntime.addCube(states2)
+//        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/sys.bootstrap.multi.api.json')
+//        File file = new File('/Users/jsnyder4/Development/mdm.WC.gz')
         File file = new File('/workspace/n-cube/src/test/resources/mdm.WC.gz')
 
         NCube oldCube = null
@@ -70,15 +72,15 @@ class TestJsonFormatter extends NCubeBaseTest
         {
             InputStream is1 = new GZIPInputStream(new FileInputStream(file), 65536)
             long oldStart = System.nanoTime()
-            oldCube = NCube.fromSimpleJson(is1)
+//            oldCube = NCube.fromSimpleJsonOld(is1)
             long oldStop = System.nanoTime()
             oldTime += (oldStop - oldStart)
 
-            println "Goin' from the old to the new!"
+//            println "Goin' from the old to the new!"
 
             InputStream is2 = new GZIPInputStream(new FileInputStream(file), 65536)
             long newStart  = System.nanoTime()
-            newCube = NCube.fromSimpleJsonNew(is2)
+            newCube = NCube.fromSimpleJson(is2)
             long newStop = System.nanoTime()
             newTime += (newStop - newStart)
 
@@ -86,8 +88,8 @@ class TestJsonFormatter extends NCubeBaseTest
 //            {
 //                println "Run: ${i}  ${(oldStop - oldStart)}  ${(newStop - newStart)}"
 //            }
-              println "Run: ${i}  ${(oldStop - oldStart)}  ${(newStop - newStart)}"
-//            println "Run: ${i}  ${(newStop - newStart)}"
+//              println "Run: ${i}  ${(oldStop - oldStart)}  ${(newStop - newStart)}"
+            println "Run: ${i}  ${(newStop - newStart)}"
         }
 
 //        List<Delta> deltas = DeltaProcessor.getDeltaDescription(newCube, oldCube)
@@ -99,30 +101,44 @@ class TestJsonFormatter extends NCubeBaseTest
         println "New time: ${newTime / 1000000.0d} ms"
     }
 
-    @Ignore
-    void testBigFileJackson()
+    @Test
+    void testCanParse()
     {
-        File file = new File('/workspace/n-cube/src/test/resources/foo.gz')
-
-        for (int i=0; i < 3; i++)
+        List<String> fileNames = allTestFiles
+        List<String> parsed = []
+        List<String> failed = []
+        List<String> equals = []
+        for (String fileName : fileNames)
         {
-            println "Test ${i + 1}"
-            InputStream inputStream = new FileInputStream(file)
-            long start = System.nanoTime()
-            NCube.createCubeFromStream(inputStream)
-            long stop = System.nanoTime()
-            long a = stop - start
-            println "  Jackson empty parse time ${a / 1000000}"
-
-            inputStream = new GZIPInputStream(new FileInputStream(file))
-            start = System.nanoTime()
-            JsonReader.jsonToMaps(inputStream, [:])   // read into Map of Map representation in memory
-            stop = System.nanoTime()
-            long b = stop - start
-            println "  json-io to memory time ${b / 1000000}"
-            println "  Improvement: ${b / a} times faster"
-            println()
+            InputStream isOld = NCubeRuntime.getResourceAsStream("/${fileName}")
+            InputStream isNew = NCubeRuntime.getResourceAsStream("/${fileName}")
+//            println "begin parse: ${fileName}"
+            try
+            {
+                NCube oldCube = NCube.fromSimpleJsonOld(isOld)
+                NCube newCube = NCube.fromSimpleJson(isNew)
+                parsed.add(fileName)
+                List<Delta> deltas = DeltaProcessor.getDeltaDescription(newCube, oldCube)
+                if (oldCube == newCube && deltas.size() == 0)
+                {
+                    equals.add(fileName)
+                }
+                else
+                {
+                    println fileName
+                    println deltas
+                }
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace()
+                failed.add(fileName)
+                println fileName
+            }
         }
+        println "parsed: ${parsed.size()}"
+        println "failed: ${failed.size()}"
+        println "equals: ${equals.size()}"
     }
 
     @Test

@@ -8,6 +8,9 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.junit4.SpringRunner
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
@@ -31,6 +34,8 @@ import static org.junit.Assert.*
  *         limitations under the License.
  */
 @CompileStatic
+@RunWith(SpringRunner.class)
+@TestPropertySource(properties=["ncube.accepted.domains=org.apache."])
 class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 {
     public static ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'preloaded', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)
@@ -6696,8 +6701,6 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     @Test
     void testDynamicallyLoadedCode()
     {
-        String save = ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS]
-        ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = 'org.apache.'
         NCube ncube = NCubeBuilder.discrete1DEmpty
         GroovyExpression exp = new GroovyExpression('''\
 import org.apache.commons.collections.primitives.*
@@ -6712,15 +6715,6 @@ return ints''', null, false)
         ncube.setCell(exp, [state: 'OH'])
         def x = ncube.getCell([state: 'OH'])
         assert 'org.apache.commons.collections.primitives.ArrayIntList' == x.class.name
-
-        if (save)
-        {
-            ncubeRuntime.systemParams[NCUBE_ACCEPTED_DOMAINS] = save
-        }
-        else
-        {
-            ncubeRuntime.systemParams.remove(NCUBE_ACCEPTED_DOMAINS)
-        }
     }
 
     @Test

@@ -574,22 +574,27 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             if ([Delta.Location.AXIS, Delta.Location.AXIS_META, Delta.Location.COLUMN, Delta.Location.COLUMN_META].contains(delta.location))
             {
                 String axisName
-                switch (delta.location)
+                if (delta.location == Delta.Location.AXIS)
                 {
-                    case Delta.Location.AXIS:
-                        axisName = ((delta.sourceVal ?: delta.destVal) as Axis).name
-                        break
-                    case Delta.Location.AXIS_META:
-                    case Delta.Location.COLUMN:
-                        axisName = delta.locId as String
-                        break
-                    case Delta.Location.COLUMN_META:
-                        axisName = (delta.locId as Map<String, Object>).axis
-                        break
-                    default:
-                        throw new IllegalArgumentException("Invalid properties on delta, no changes will be merged, app: ${appId}, cube: ${cubeName}, user: ${getUserId()}")
+                    axisName = ((delta.sourceVal ?: delta.destVal) as Axis).name
                 }
-                assertPermissions(appId, cubeName + '/' + axisName, Action.UPDATE)
+                else if (delta.location == Delta.Location.AXIS_META)
+                {
+                    axisName = delta.locId as String
+                }
+                else if (delta.location == Delta.Location.COLUMN)
+                {
+                    axisName = delta.locId as String
+                }
+                else if (delta.location == Delta.Location.COLUMN_META)
+                {
+                    axisName = (delta.locId as Map<String, Object>).axis
+                }
+                else
+                {
+                    throw new IllegalArgumentException("Invalid properties on delta, no changes will be merged, app: ${appId}, cube: ${cubeName}, user: ${getUserId()}")
+                }
+                assertPermissions(appId, "${cubeName}/${axisName}", Action.UPDATE)
             }
         }
 
@@ -645,7 +650,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                 throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
             }
         }
-        if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
+        if (persister.doCubesExist(appId.asRelease(), false, 'releaseVersion', getUserId()))
         {
             throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
@@ -669,7 +674,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         {
             throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_000 + " app: ${appId}, user: ${getUserId()}")
         }
-        if (!search(appId.asRelease(), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
+        if (persister.doCubesExist(appId.asRelease(), false, 'releaseCubes', getUserId()))
         {
             throw new IllegalArgumentException("A RELEASE version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
         }
@@ -680,7 +685,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             {
                 throw new IllegalArgumentException(ERROR_CANNOT_RELEASE_TO_000 + " app: ${appId}, user: ${getUserId()}")
             }
-            if (!search(appId.asVersion(newSnapVer), null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true]).empty)
+            if (persister.doCubesExist(appId.asVersion(newSnapVer), false, 'releaseCubes', getUserId()))
             {
                 throw new IllegalArgumentException("A SNAPSHOT version ${appId.version} already exists, app: ${appId}, user: ${getUserId()}")
             }
@@ -1022,15 +1027,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         assertPermissions(appId, null)
 
-        Closure getRefAxes = { NCubeInfoDto dto, Object refAxes ->
-            String json = new String(IOUtilities.uncompressBytes(dto.bytes as byte[]), "UTF-8")
-
-            //TODO - fix asap!!! call loadCube() which will use new parser
-            Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
-            Object[] axes = jsonNCube.axes as Object[]
+        Map<String, Object> jsonReaderOpts = [(JsonReader.USE_MAPS):(Object)true]
+        Closure getRefAxes = { NCubeInfoDto dto, List<AxisRef> refAxes ->
+            String json = StringUtilities.createUTF8String(IOUtilities.uncompressBytes((byte[])dto.bytes))
+            Map jsonNCube = (Map)JsonReader.jsonToJava(json, jsonReaderOpts)
+            Object[] axes = (Object[])jsonNCube.axes
             for (Object axisEntry : axes)
             {
-                Map axis = axisEntry as Map
+                Map axis = (Map)axisEntry
                 if (axis.containsKey(REF_APP))
                 {
                     AxisRef ref = new AxisRef()
@@ -1054,7 +1058,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
                         ref.transformCubeName = axis[TRANSFORM_CUBE_NAME]
                     }
 
-                    ((List<AxisRef>)refAxes).add(ref)
+                    refAxes.add(ref)
                 }
             }
         }
@@ -2929,14 +2933,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             return true
         }
-        Map options = [:]
-        options[(SEARCH_ACTIVE_RECORDS_ONLY)] = true
-        options[(SEARCH_EXACT_MATCH_NAME)] = true
-
+        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_EXACT_MATCH_NAME):true]
         List<NCubeInfoDto> list = search(appId, cubeName, null, options)
-        if (list.size() != 1)
-        {
-            return false
+        if (list.empty)
+        { // cube doesn't exist or is deleted in branch
+            return true
         }
 
         NCubeInfoDto branchDto = list.first()     // only 1 because we used exact match
@@ -2944,10 +2945,6 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         if (list.empty)
         {   // New n-cube - up-to-date because it does not yet exist in HEAD - the branch n-cube is the Creator.
             return true
-        }
-        else if (list.size() != 1)
-        {   // Should never happen
-            return false
         }
 
         NCubeInfoDto headDto = list.first()     // only 1 because we used exact match

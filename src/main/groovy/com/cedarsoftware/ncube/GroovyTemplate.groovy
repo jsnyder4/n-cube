@@ -46,6 +46,25 @@ class GroovyTemplate extends ContentCmdCell
         super(cmd, url, cache)
     }
 
+    protected def fetchResult(Map<String, Object> ctx)
+    {
+        Object data = null
+
+        if (resolvedTemplate == null)
+        {
+            if (url == null)
+            {
+                data = cmd
+            }
+            else
+            {
+                data = fetchContentFromUrl(ctx)
+            }
+        }
+
+        return executeInternal(data, ctx)
+    }
+
     void getCubeNamesFromCommandText(final Set<String> cubeNames)
     {
         if (cmd == null)
@@ -129,11 +148,6 @@ class GroovyTemplate extends ContentCmdCell
 
         // Do normal Groovy substitutions.
         String result = resolvedTemplate.make(ctx).toString()
-        if (cacheable)
-        {   // No need to hold onto the template since cache:true on the cell, meaning that the substitution
-            // is only being done once.
-            resolvedTemplate = null
-        }
         return result
     }
 

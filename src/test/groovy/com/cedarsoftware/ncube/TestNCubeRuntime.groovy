@@ -16,7 +16,7 @@ class TestNCubeRuntime extends NCubeBaseTest
         populateCache()
         ncubeRuntime.clearCache(ApplicationID.testAppId, ['testbranch', 'testage'])
         Map cache = ((GuavaCache) testClient.getCacheForApp(ApplicationID.testAppId)).nativeCache.asMap()
-        assert 1 == cache.size()
+        assert 2 == cache.size()
         assert !cache.containsKey('testbranch')
         assert !cache.containsKey('testage')
         assert cache.containsKey('testcube')
@@ -51,7 +51,7 @@ class TestNCubeRuntime extends NCubeBaseTest
     {
         Map cache = populateCache()
         ncubeRuntime.clearCache(ApplicationID.testAppId, ['testnone'])
-        assert 3 == cache.size()
+        assert 4 == cache.size()
         assert cache.containsKey('testbranch')
         assert cache.containsKey('testage')
         assert cache.containsKey('testcube')

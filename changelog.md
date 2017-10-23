@@ -1,6 +1,11 @@
 ### Revision History
-* 4.1.22-SNAPSHOT
-  * --
+* 4.1.23-SNAPSHOT
+  * Accepted domains for the CdnClassLoader is now an application property instead of part of `NCUBE_PARAMS`.
+  * Made transitive dependency on logback, optional in pom.xml.  This will stop the dependency from become a dependency to those who consume n-cube as a library.
+* 4.1.22
+  * `NCube.fromSimpleJson(inputStream)` has been sped up by about 33% and uses much less memory when loading an n-cube.
+  * Replaced a few `search()` calls with `doCubesExist()`.
+  * Added ability to define advice for an app using `sys.advice` cube.
 * 4.1.21
   * Bug fix: Return `null` from deprecated `NCubeController` methods `getCubeRawJson()` and `getCubeRawJsonBytes()` when `NCube` does not exist.
   * Added better exception and error message for invalid reference axes and transforms.

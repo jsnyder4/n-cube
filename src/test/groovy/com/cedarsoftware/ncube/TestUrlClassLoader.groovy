@@ -70,19 +70,19 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         Map input = [:]
         URLClassLoader loader = ncubeRuntime.getUrlClassLoader(appId, input)
         assertEquals(1, loader.URLs.length)
-        assertEquals(2, getCacheSize(appId))
+        assertEquals(3, getCacheSize(appId))
         assertEquals(new URL("${baseRemoteUrl}/tests/ncube/cp1/"), loader.URLs[0])
 
-        assertEquals(2, getCacheSize(appId))
+        assertEquals(3, getCacheSize(appId))
 
         assertNotNull(ncubeRuntime.getUrlClassLoader(appId, input))
-        assertEquals(2, getCacheSize(appId))
+        assertEquals(3, getCacheSize(appId))
 
         ncubeRuntime.clearCache(appId)
         assertEquals(0, getCacheSize(appId))
 
         assertEquals(1, ncubeRuntime.getUrlClassLoader(appId, input).URLs.length)
-        assertEquals(2, getCacheSize(appId))
+        assertEquals(3, getCacheSize(appId))
     }
 
     @Test
@@ -92,13 +92,13 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
 
         assertEquals(0, getCacheSize(appId))
         NCube cube = ncubeRuntime.getCube(appId, 'GroovyMethodClassPath1')
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
 
         Map input = [method: 'foo']
         Object x = cube.getCell(input)
         assertEquals('foo', x)
 
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         input.method = 'foo2'
         x = cube.getCell(input)
@@ -117,13 +117,13 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         assertEquals(0, getCacheSize(appId))
 
         cube = ncubeRuntime.getCube(appId, 'GroovyMethodClassPath1')
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
 
         input = [method: 'foo']
         x = cube.getCell(input)
         assertEquals('boo', x)
 
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         input.method = 'foo2'
         x = cube.getCell(input)
@@ -143,7 +143,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         NCube cube = ncubeRuntime.getCube(appId, 'GroovyMethodClassPath1')
 
         // classpath isn't loaded at this point.
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
 
         def input = [:]
         input.env = 'DEV'
@@ -151,7 +151,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         Object x = cube.getCell(input)
         assertEquals('foo', x)
 
-        assertEquals(5, getCacheSize(appId))
+        assertEquals(6, getCacheSize(appId))
 
         // cache hasn't been cleared yet.
         input.put('method', 'foo2')
@@ -173,7 +173,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
 
         assertEquals('boo', x)
 
-        assertEquals(5, getCacheSize(appId))
+        assertEquals(6, getCacheSize(appId))
 
         input.put('method', 'foo2')
         x = cube.getCell(input)
@@ -197,7 +197,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         NCube cube = ncubeRuntime.getCube(appId, 'GroovyExpCp1')
 
         // classpath isn't loaded at this point.
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
 
         def input = [:]
         input.env = 'a'
@@ -206,7 +206,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         assert 'Hello, world.' == x
 
         // GroovyExpCp1, sys.classpath, sys.prototype are now both loaded.
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         input.env = 'b'
         input.state = 'TX'
@@ -238,30 +238,30 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         NCube cube = ncubeRuntime.getCube(appId, 'MathController')
 
         // classpath isn't loaded at this point.
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
         def input = [:]
         input.env = 'a'
         input.x = 5
         input.method = 'square'
 
-        assertEquals(1, getCacheSize(appId))
+        assertEquals(2, getCacheSize(appId))
         assertEquals(25, cube.getCell(input))
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         input.method = 'factorial'
         assertEquals(120, cube.getCell(input))
 
         // same number of cubes, different cells
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         // test that shows you can add an axis to a controller to selectively choose a new classpath
         input.env = 'b'
         input.method = 'square'
         assertEquals(5, cube.getCell(input))
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
 
         input.method = 'factorial'
         assertEquals(5, cube.getCell(input))
-        assertEquals(3, getCacheSize(appId))
+        assertEquals(4, getCacheSize(appId))
     }
 }
