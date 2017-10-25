@@ -84,6 +84,40 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testCopyBranchCreateHidCurrentUser()
+    {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
+        ApplicationID branch1 = defaultSnapshotApp.asBranch('branch1')
+        ApplicationID branch2 = defaultSnapshotApp.asBranch('branch2')
+        preloadCubes(branch1, 'test.branch.1.json', 'test.branch.age.1.json')
+
+        String origUser = mutableClient.getUserId()
+        String otherUser = UniqueIdGenerator.uniqueId
+        NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
+        manager.userId = otherUser
+
+        try
+        {
+            mutableClient.copyBranch(branch1, branch2)
+            NCubeInfoDto branch1dto = mutableClient.getRevisionHistory(branch1, 'TestBranch').first()
+            NCubeInfoDto branch2dto = mutableClient.getRevisionHistory(branch2, 'TestBranch').first()
+            String branch1hid = branch1dto.createHid
+            String branch2hid = branch2dto.createHid
+
+            assert branch1hid != branch2hid
+            assert branch1hid == origUser
+            assert branch2hid == otherUser
+        }
+        finally
+        { // reset userId no matter what
+            manager.userId = origUser
+        }
+    }
+
+    @Test
     void testDbApis()
     {
         NCube ncube1 = NCubeBuilder.testNCube3D_Boolean
@@ -260,7 +294,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
 
         try
         {
-            new NCubeJdbcPersister().copyBranch(c, defaultSnapshotApp.asHead(), defaultSnapshotApp)
+            new NCubeJdbcPersister().copyBranch(c, defaultSnapshotApp.asHead(), defaultSnapshotApp, USER_ID)
             fail()
         }
         catch (NullPointerException ignored)

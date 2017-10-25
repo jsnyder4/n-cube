@@ -167,13 +167,13 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
 
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
-        return (int) jdbcOperation({ Connection c -> persister.copyBranch(c, srcAppId, targetAppId) },
+        return (int) jdbcOperation({ Connection c -> persister.copyBranch(c, srcAppId, targetAppId, username) },
                 "copyBranch(${srcAppId} -> ${targetAppId})", username)
     }
 
     int copyBranchWithHistory(ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
-        return (int) jdbcOperation({ Connection c -> persister.copyBranchWithHistory(c, srcAppId, targetAppId) },
+        return (int) jdbcOperation({ Connection c -> persister.copyBranchWithHistory(c, srcAppId, targetAppId, username) },
                 "copyBranchWithHistory(${srcAppId} -> ${targetAppId})", username)
     }
 

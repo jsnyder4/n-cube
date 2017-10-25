@@ -1306,14 +1306,14 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
         }
     }
 
-    static int copyBranch(Connection c, ApplicationID srcAppId, ApplicationID targetAppId)
+    static int copyBranch(Connection c, ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
         if (doCubesExist(c, targetAppId, true, 'copyBranch'))
         {
             throw new IllegalArgumentException("Branch '${targetAppId.branch}' already exists, app: ${targetAppId}")
         }
 
-        int headCount = srcAppId.head ? 0 : copyBranchInitialRevisions(c, srcAppId, targetAppId)
+        int headCount = srcAppId.head ? 0 : copyBranchInitialRevisions(c, srcAppId, targetAppId, username)
 
         Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
                                        (SEARCH_INCLUDE_TEST_DATA): true,
@@ -1334,7 +1334,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, nowAsTimestamp())
-                insert.setString(5, row.getString('create_hid'))
+                insert.setString(5, username)
                 insert.setString(6, targetAppId.version)
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
@@ -1373,7 +1373,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
         }
     }
 
-    private static int copyBranchInitialRevisions(Connection c, ApplicationID srcAppId, ApplicationID targetAppId)
+    private static int copyBranchInitialRevisions(Connection c, ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
         Map map = srcAppId as Map
         map.tenant = padTenant(c, srcAppId.tenant)
@@ -1416,7 +1416,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, nowAsTimestamp())
-                insert.setString(5, row.getString('create_hid'))
+                insert.setString(5, username)
                 insert.setString(6, targetAppId.version)
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
@@ -1449,7 +1449,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
         }
     }
 
-    static int copyBranchWithHistory(Connection c, ApplicationID srcAppId, ApplicationID targetAppId)
+    static int copyBranchWithHistory(Connection c, ApplicationID srcAppId, ApplicationID targetAppId, String username)
     {
         if (doCubesExist(c, targetAppId, true, 'copyBranch'))
         {
@@ -1474,7 +1474,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, row.getTimestamp('create_dt'))
-                insert.setString(5, row.getString('create_hid'))
+                insert.setString(5, username)
                 insert.setString(6, targetAppId.version)
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
