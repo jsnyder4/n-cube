@@ -90,10 +90,6 @@ class DeltaProcessor
             return null
         }
 
-        delta[DELTA_TESTS] = getTestDeltas(baseCube, changeCube)
-        baseCube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
-        changeCube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
-
         Map<String, Map<String, Object>> metaDeltaMap = new CaseInsensitiveMap<>()
         delta[DELTA_NCUBE] = metaDeltaMap
         List<Delta> metaChanges = compareMetaProperties(baseCube.metaProperties, changeCube.metaProperties, Delta.Location.NCUBE_META, "ncube: ${changeCube.name}", changeCube.name)
@@ -132,6 +128,7 @@ class DeltaProcessor
         // Store updates-to-be-made so that if cell equality tests pass, these can be 'played' at the end to
         // transactionally apply the merge.  We do not want a partial merge.
         delta[DELTA_CELLS] = getCellDelta(baseCube, changeCube)
+        delta[DELTA_TESTS] = getTestDeltas(baseCube, changeCube)
         return delta
     }
 

@@ -188,7 +188,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testMergeWithNoHadCube()
+    void testMergeWithNoHeadCube()
     {
         createCubeFromResource(BRANCH1, 'test.branch.age.1.json')
         createCubeFromResource(BRANCH2, 'test.branch.age.2.json')
@@ -5315,7 +5315,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testMergeAcceptTheirsTheirsIsChangeAndOursIsNotChanged()
+    void testMergeAcceptTheirsTheirsIsChangedAndOursIsNotChanged()
     {
         preloadCubes(BRANCH1, 'test.branch.1.json')
         mutableClient.commitBranch(BRANCH1)
@@ -5348,7 +5348,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testMergeAcceptTheirsTheirsIsChangeAndOursIsChanged()
+    void testMergeAcceptTheirsTheirsIsChangedAndOursIsChanged()
     {
         preloadCubes(BRANCH1, 'test.branch.1.json')
         mutableClient.commitBranch(BRANCH1)

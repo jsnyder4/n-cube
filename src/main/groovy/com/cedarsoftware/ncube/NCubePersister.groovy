@@ -39,7 +39,7 @@ interface NCubePersister extends NCubeReadOnlyPersister
     List<NCubeInfoDto> pullToBranch(ApplicationID appId, Object[] cubeIds, String username, long txId)
     boolean mergeAcceptTheirs(ApplicationID appId, String cubeName, String sourceBranch, String username)
     boolean mergeAcceptMine(ApplicationID appId, String cubeName, String username)
-    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, String txId, String notes)
+    NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, String requestUser, String txId, String notes)
     NCubeInfoDto commitMergedCubeToBranch(ApplicationID appId, NCube cube, String headSha1, String username, long txId)
     boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1, String username)
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)

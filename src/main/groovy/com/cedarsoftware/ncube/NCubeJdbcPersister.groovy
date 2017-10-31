@@ -141,11 +141,11 @@ WHERE n_cube_id = :id""", 0, 1, { ResultSet row ->
         Sql sql = getSql(c)
         sql.eachRow(map, """\
 /* loadCubeBySha1 */
-SELECT ${CUBE_VALUE_BIN}, sha1
+SELECT ${CUBE_VALUE_BIN}, sha1, ${TEST_DATA_BIN}
 FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = :sha1""",
                 0, 1, { ResultSet row ->
-            cube = buildCube(appId, row)
+            cube = buildCube(appId, row, true)
         })
 
         if (cube)
@@ -198,7 +198,7 @@ ORDER BY abs(revision_number) DESC
 
     static NCubeInfoDto insertCube(Connection c, ApplicationID appId, String name, Long revision, byte[] cubeData,
                                    byte[] testData, String notes, boolean changed, String sha1, String headSha1,
-                                   String username, String methodName) throws SQLException
+                                   String username, String methodName, String requestUser = null) throws SQLException
     {
         PreparedStatement s = null
         try
@@ -221,11 +221,12 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             s.setString(10, headSha1)
             Timestamp now = nowAsTimestamp()
             s.setTimestamp(11, now)
-            s.setString(12, username)
+            String user = requestUser ?: username
+            s.setString(12, user)
             s.setBytes(13, cubeData)
             s.setBytes(14, testData)
             String note = createNote(username, now, notes)
-            s.setBytes(15, StringUtilities.getBytes(note, "UTF-8"))
+            s.setBytes(15, StringUtilities.getUTF8Bytes(note))
             s.setInt(16, changed ? 1 : 0)
 
             NCubeInfoDto dto = new NCubeInfoDto()
@@ -239,8 +240,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             dto.version = appId.version
             dto.status = appId.status
             dto.branch = appId.branch
-            dto.createDate = new Date(System.currentTimeMillis())
-            dto.createHid = username
+            dto.createDate = now
+            dto.createHid = user
             dto.notes = note
             dto.revision = Long.toString(revision)
 
@@ -737,8 +738,17 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             Long revision = row.getLong('revision_number')
-            byte[] testData = row.getBytes(TEST_DATA_BIN)
             revision = revision < 0 ? revision - 1 : revision + 1
+
+            byte[] testData = row.getBytes(TEST_DATA_BIN)
+            if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
+            {
+                byte[] updatedTestData = StringUtilities.getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
+                if ((updatedTestData || testData) && updatedTestData != testData)
+                {
+                    testData = updatedTestData
+                }
+            }
 
             byte[] notes = row.getBytes(NOTES_BIN)
             String notesStr = StringUtilities.createUTF8String(notes)
@@ -753,7 +763,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         return result
     }
 
-    static NCubeInfoDto commitMergedCubeToHead(Connection c, ApplicationID appId, NCube cube, String username, String txId, String notes)
+    static NCubeInfoDto commitMergedCubeToHead(Connection c, ApplicationID appId, NCube cube, String username, String requestUser, String txId, String notes)
     {
         final String methodName = 'commitMergedCubeToHead'
         Map options = [(SEARCH_INCLUDE_TEST_DATA):true,
@@ -762,6 +772,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         ApplicationID headAppId = appId.asHead()
         NCubeInfoDto result = null
+        String noteText = "merged-committed from [${requestUser}], txId: [${txId}], ${PR_NOTES_PREFIX}${notes}"
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             Long revision = row.getLong('revision_number')
@@ -788,8 +799,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] cubeData = cube.cubeAsGzipJsonBytes
             String sha1 = cube.sha1()
 
-            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, "merged-committed to HEAD, txId: [${txId}], ${PR_NOTES_PREFIX}${notes}", false, sha1, null, username, methodName)
-            result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, 'merged', false, sha1, sha1, username,  methodName)
+            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, noteText, false, sha1, null, username, methodName, requestUser)
+            result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, noteText, false, sha1, sha1, username,  methodName)
         })
         return result
     }
@@ -804,13 +815,18 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
         ApplicationID headAppId = appId.asHead()
         Sql sql = getSql(c)
+        Sql sql1 = getSql(c)
         def map = [:]
+        Timestamp now = nowAsTimestamp()
+        String searchStmt = "/* commitCubes */ SELECT n_cube_nm, revision_number, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id"
+        String commitStmt = "/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id"
+        String noteText = "merged pull request from [${requestUser}], txId: [${txId}], ${PR_NOTES_PREFIX}${notes}"
 
         for (int i = 0; i < cubeIds.length; i++)
         {
-            map.id = Converter.convert(cubeIds[i], Long.class)
-            sql.eachRow("/* commitCubes */ SELECT n_cube_nm, revision_number, ${CUBE_VALUE_BIN}, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id",
-                    map, 0, 1, { ResultSet row ->
+            Object cubeId = cubeIds[i]
+            map.id = Converter.convert(cubeId, Long.class)
+            sql.eachRow(searchStmt, map, 0, 1, { ResultSet row ->
                 byte[] jsonBytes = row.getBytes(CUBE_VALUE_BIN)
                 String sha1 = row.getString('sha1')
                 String cubeName = row.getString('n_cube_nm')
@@ -857,13 +873,12 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 if (changeType)
                 {
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
-                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, "merged pull request from [${requestUser}] to HEAD, txId: [${txId}], ${PR_NOTES_PREFIX}${notes}", false, sha1, null, username, 'commitCubes')
-                    Map map1 = [head_sha1: sha1, create_dt: nowAsTimestamp(), id: cubeIds[i]]
-                    Sql sql1 = getSql(c)
-                    sql1.executeUpdate(map1, '/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id')
+                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, noteText, false, sha1, null, username, 'commitCubes', requestUser)
+                    Map map1 = [head_sha1: sha1, create_dt: now, id: cubeId]
+                    sql1.executeUpdate(map1, commitStmt)
                     dto.changed = false
                     dto.changeType = changeType
-                    dto.id = Converter.convert(cubeIds[i], String.class)
+                    dto.id = Converter.convert(cubeId, String.class)
                     dto.sha1 = sha1
                     dto.headSha1 = sha1
                     infoRecs.add(dto)
@@ -923,7 +938,16 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
             Map map = appId as Map
             map.tenant = padTenant(c, appId.tenant)
             long txId = UniqueIdGenerator.uniqueId
-            String notes = 'rolled back, txId: [' + txId + ']'
+            Timestamp now = nowAsTimestamp()
+            String note = createNote(username, now, "rolled back, txId: [${txId}]")
+            byte[] noteBytes = StringUtilities.getUTF8Bytes(note)
+
+            String stmt = """\
+/* rollbackCubes */
+SELECT ${CUBE_VALUE_BIN}, test_data_bin, changed, sha1, head_sha1
+FROM n_cube
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
+AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
 
             names.each { String cubeName ->
                 Long madMaxRev = getMaxRevision(c, appId, cubeName, 'rollbackCubes')
@@ -940,12 +964,7 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
                     map.cube = buildName(cubeName)
                     map.rev = mustDelete ? maxRev : rollbackRev
                     Sql sql = getSql(c)
-                    sql.eachRow(map, """\
-/* rollbackCubes */
-SELECT ${CUBE_VALUE_BIN}, test_data_bin, changed, sha1, head_sha1
-FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
-AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0, 1, { ResultSet row ->
+                    sql.eachRow(map, stmt, 0, 1, { ResultSet row ->
                         byte[] bytes = row.getBytes(CUBE_VALUE_BIN)
                         byte[] testData = row.getBytes(TEST_DATA_BIN)
                         String sha1 = row.getString('sha1')
@@ -963,13 +982,11 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev""", 0
                         ins.setLong(8, mustDelete || !rollbackStatusActive ? -nextRev : nextRev)
                         ins.setString(9, sha1)
                         ins.setString(10, headSha1)
-                        Timestamp now = nowAsTimestamp()
                         ins.setTimestamp(11, now)
                         ins.setString(12, username)
                         ins.setBytes(13, bytes)
                         ins.setBytes(14, testData)
-                        String note = createNote(username, now, notes)
-                        ins.setBytes(15, StringUtilities.getUTF8Bytes(note))
+                        ins.setBytes(15, noteBytes)
                         ins.setInt(16, 0)
                         ins.addBatch()
                         count++
@@ -1339,7 +1356,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, ("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
+                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))
@@ -1421,7 +1438,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, ("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
+                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
@@ -1479,7 +1496,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, ("target ${targetAppId} full copied from ${srcAppId} - ${oldNotes}").getBytes('UTF-8'))
+                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} full copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))

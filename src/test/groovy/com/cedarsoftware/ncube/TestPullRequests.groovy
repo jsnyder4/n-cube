@@ -291,18 +291,25 @@ class TestPullRequests extends NCubeCleanupBaseTest
         mutableClient.updateCube(permissions)
 
         NCube ncube = createCubeFromResource('test.branch.1.json')
-        List<NCubeInfoDto> dtos = mutableClient.search(appId, ncube.name, null, null)
+        String cubeName = ncube.name
+        List<NCubeInfoDto> dtos = mutableClient.search(appId, cubeName, null, null)
         String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
 
         // change over to other user
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = otherUser
-        mutableClient.mergePullRequest(prId)
+        try
+        {
+            mutableClient.mergePullRequest(prId)
 
-        List<NCubeInfoDto> headDtos = mutableClient.search(appId.asHead(), ncube.name, null, null)
-        String notes = headDtos[0].notes
-        assertContainsIgnoreCase(notes, otherUser, 'merged pull request', origUser, 'HEAD')
-        manager.userId = origUser
+            NCubeInfoDto dto = mutableClient.search(appId.asHead(), cubeName, null, null).first()
+            assert origUser == dto.createHid
+            assertContainsIgnoreCase(dto.notes, otherUser, 'merged pull request', origUser)
+        }
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     @Test

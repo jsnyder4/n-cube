@@ -89,6 +89,61 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         dto = list.first()
         assert dto.bytes != null
     }
+
+    @Test
+    void testMergeChangedCubeWithTestData()
+    {
+        ApplicationID branch1 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'FOO')
+        ApplicationID branch2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'BAR')
+        NCube cube1 = NCubeBuilder.getTestNCube2D(true)
+        cube1.applicationID = branch1
+
+        Map<String, Object> coord = [gender:'male', age:47] as Map
+        cube1.setCell(1.0d, coord)
+
+        coord.gender = 'female'
+        cube1.setCell(1.1d, coord)
+
+        coord.age = 16
+        cube1.setCell(1.5d, coord)
+
+        coord.gender = 'male'
+        cube1.setCell(1.8d, coord)
+
+        String cubeName = cube1.name
+
+        // put cube in both branches
+        mutableClient.createCube(cube1)
+        mutableClient.commitBranch(branch1)
+        mutableClient.copyBranch(branch1.asHead(), branch2)
+        assert !cube1.testData
+
+        // change cube and add tests to branch1 and commit
+        Map coord1 = [gender:'male', age:47]
+        double val1 = 2.0d
+        cube1 = loadCube(branch1, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
+        cube1.testData = createTests()
+        cube1.setCell(val1, coord1)
+        mutableClient.updateCube(cube1)
+        mutableClient.commitBranch(branch1)
+
+        // make change to cube branch2
+        Map coord2 = [gender:'male', age:16]
+        double val2 = 1.0d
+        NCube cube2 = loadCube(branch2, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
+        cube2.setCell(val2, coord2)
+        mutableClient.updateCube(cube2)
+        assert !cube2.testData
+
+        // updating cube2 from HEAD should copy tests and merge data
+        mutableClient.updateBranch(branch2)
+        cube1 = loadCube(branch1, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
+        cube2 = loadCube(branch2, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
+
+        assert cube1.testData[0].name == cube2.testData[0].name
+        assert val1 == cube2.getCell(coord1)
+        assert val2 == cube2.getCell(coord2)
+    }
     
     @Test
     void testLoadCubes()
