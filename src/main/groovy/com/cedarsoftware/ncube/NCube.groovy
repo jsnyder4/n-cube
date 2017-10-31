@@ -2773,7 +2773,7 @@ class NCube<T>
             return fieldClosure(ncube, state, parser, token, input, ncubeField, fieldName)
         }
         ncubeToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            if (input.containsKey(DEFAULT_CELL_VALUE))
+            if (input.containsKey(DEFAULT_CELL_VALUE) || input.containsKey(DEFAULT_CELL_VALUE_URL))
             {
                 Object value = input[DEFAULT_CELL_VALUE]
                 String defUrl = (String)input[DEFAULT_CELL_VALUE_URL]
@@ -2878,7 +2878,7 @@ class NCube<T>
                     userIdToUniqueId[column.id] = column.id
                 }
 
-                moveAxisMetaPropsToDefaultColumn(axis)
+                moveAxisMetaPropsToDefaultColumn(axis, axisProps)
                 if (tempColumns)
                 {
                     tempColumns.each { Map column ->
@@ -2921,7 +2921,7 @@ class NCube<T>
                 }
                 else
                 {
-                    moveAxisMetaPropsToDefaultColumn(axis)
+                    moveAxisMetaPropsToDefaultColumn(axis, axisProps)
                 }
 
                 // Temporary - eventually should be removed.  Fixes rule columns with no or non-unique names
@@ -3635,7 +3635,7 @@ class NCube<T>
      * is where the default column's meta properties are stored, and copy them to the default
      * column (if one exists)
      */
-    private static void moveAxisMetaPropsToDefaultColumn(Axis axis)
+    private static void moveAxisMetaPropsToDefaultColumn(Axis axis, Map axisProps = [:])
     {
         Column defCol = axis.defaultColumn
         if (!defCol)
@@ -3651,6 +3651,7 @@ class NCube<T>
             {
                 defCol.setMetaProperty(key - JsonFormatter.DEFAULT_COLUMN_PREFIX, entry.value)
                 i.remove()  // do not leave the column_default_* properties on the Axis
+                axisProps.remove(key)
             }
         }
     }

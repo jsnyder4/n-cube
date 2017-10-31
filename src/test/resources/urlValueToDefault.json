@@ -1,0 +1,24 @@
+{
+    "ncube":"defaultCellValueUrl",
+    "defaultCellValueType":"exp",
+    "defaultCellValueUrl":"www.google.com",
+    "axes":[
+        {
+            "id":1,
+            "name":"axis1",
+            "hasDefault":false,
+            "type":"DISCRETE",
+            "valueType":"STRING",
+            "preferredOrder":1,
+            "fireAll":true,
+            "columns":[
+                {
+                    "id":1000650295349,
+                    "type":"string",
+                    "value":"A"
+                }
+            ]
+        }
+    ],
+    "cells":[]
+}

@@ -1,0 +1,34 @@
+{
+    "ncube":"defaultColumnDefaultValue",
+    "axes":[
+        {
+            "id":1,
+            "name":"axis2",
+            "hasDefault":true,
+            "type":"DISCRETE",
+            "valueType":"STRING",
+            "preferredOrder":0,
+            "fireAll":true,
+            "columns":[
+                {
+                    "id":1000982379535,
+                    "type":"string",
+                    "default_value":"Iggy Pop",
+                    "value":"D"
+                }
+            ]
+        },
+        {
+            "id":2,
+            "name":"axis1",
+            "hasDefault":true,
+            "d3fault_c0lumn_default_value":"Sex Pistols",
+            "type":"DISCRETE",
+            "valueType":"STRING",
+            "preferredOrder":1,
+            "fireAll":true,
+            "columns":[]
+        }
+    ],
+    "cells":[]
+}
