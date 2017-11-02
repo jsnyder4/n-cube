@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.util.BranchComparator
+import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
@@ -68,6 +69,13 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         Boolean initialValue()
         {
             return false
+        }
+    }
+
+    private ThreadLocal<GCacheManager> tempCacheManager = new ThreadLocal<GCacheManager>() {
+        GCacheManager initialValue()
+        {
+            return null
         }
     }
 
@@ -183,6 +191,21 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private NCubeInfoDto loadCubeRecordInternal(ApplicationID appId, String cubeName, Map options = null)
     {
+        GCacheManager cm = getTempCacheManager()
+        Cache cache
+        String cubeNameLower
+        if (cm != null)
+        {
+            cubeNameLower = cubeName.toLowerCase()
+            String cacheKey = appId.cacheKey()
+            cache = cm.getCache(cacheKey)
+            Cache.ValueWrapper item = cache.get(cubeNameLower)
+            if (item != null)
+            {
+                Object value = item.get()
+                return Boolean.FALSE == value ? null : value as NCubeInfoDto
+            }
+        }
         if (options == null)
         {
             options = [:]
@@ -194,6 +217,10 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         }
         options[SEARCH_ACTIVE_RECORDS_ONLY] = true
         List<NCubeInfoDto> records = persister.search(appId, cubeName, null, options, getUserId())
+        if (cm != null)
+        {
+            cache.put(cubeNameLower, records.empty ? false : records.first())
+        }
         if (records.empty)
         {
             return null
@@ -972,13 +999,15 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
             {
                 content = content.substring(1)
             }
-            while (content.startsWith('*'))
+            while (content.endsWith('*'))
             {
                 content = content[0..-2]
             }
         }
 
-        List<NCubeInfoDto> cubes = persister.search(appId, cubeNamePattern, content, options, getUserId())
+        List<NCubeInfoDto> cubes = (List<NCubeInfoDto>) runWithCubeCache {
+            return persister.search(appId, cubeNamePattern, content, options, getUserId())
+        }
         Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubes.collect { it.name })
         cubes.removeAll { !validCubeNames.contains(it.name)}
         return cubes
@@ -1936,7 +1965,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Set whether permissions should be checked on the current thread
      * @param boolean isSystemRequest
      */
-    void setSystemRequest(boolean isSystemRequest)
+    private void setSystemRequest(boolean isSystemRequest)
     {
         this.isSystemRequest.set(isSystemRequest)
     }
@@ -1945,9 +1974,19 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Retrieve whether permissions should be checked on the current thread
      * @return boolean
      */
-    boolean isSystemRequest()
+    private boolean isSystemRequest()
     {
         return isSystemRequest.get()
+    }
+
+    private void setTempCacheManager(GCacheManager cacheManager)
+    {
+        tempCacheManager.set(cacheManager)
+    }
+
+    private GCacheManager getTempCacheManager()
+    {
+        return tempCacheManager.get()
     }
 
     /**
@@ -2486,7 +2525,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return sha1
     }
 
-    protected def runSystemRequest(Closure closure)
+    private def runSystemRequest(Closure closure)
     {
         try
         {
@@ -2496,6 +2535,19 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         finally
         {
             systemRequest = false
+        }
+    }
+
+    private def runWithCubeCache(Closure closure)
+    {
+        try
+        {
+            setTempCacheManager(GCacheManager.newInstance())
+            return closure()
+        }
+        finally
+        {
+            tempCacheManager.remove()
         }
     }
 

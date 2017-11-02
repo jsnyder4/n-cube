@@ -1,5 +1,6 @@
 ### Revision History
 * 4.1.23-SNAPSHOT
+  * Storage server can cache for the life of one operation to prevent the same cubes being loaded from reference axes.
   * Bug fix: Fix issues with default cell url and default values on default columns in NCube.fromSimpleJson.
   * Bug fix: Tests were not merged if the branch cube was changed.
   * `create_hid` on database records when merging pull requests now shows the requested user instead of merging user.
