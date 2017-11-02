@@ -2586,7 +2586,10 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
             assert (data[mutableClient.BRANCH_RESTORES] as Collection).empty
             assert (data[mutableClient.BRANCH_REJECTS] as Collection).size() == 1
         }
-        manager.userId = origUser
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     /***** tests for commit and update from our cube matrix *****/

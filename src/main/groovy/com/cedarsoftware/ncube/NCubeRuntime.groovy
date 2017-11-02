@@ -187,10 +187,18 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String content, Map options)
     {
-        Object[] searchResults = bean.call(beanName, 'search', [appId, cubeNamePattern, content, options]) as Object[]
-        List<NCubeInfoDto> dtos = []
-        searchResults.each { NCubeInfoDto dto -> dtos.add(dto) }
-        return dtos
+        if (cubeNamePattern != null)
+        {
+            cubeNamePattern = cubeNamePattern.trim()
+        }
+        List<NCubeInfoDto> cubeInfos = (List<NCubeInfoDto>) bean.call(beanName, 'search', [appId, cubeNamePattern, content, options])
+        Collections.sort(cubeInfos, new Comparator<NCubeInfoDto>() {
+            int compare(NCubeInfoDto info1, NCubeInfoDto info2)
+            {
+                return info1.name.compareToIgnoreCase(info2.name)
+            }
+        })
+        return cubeInfos
     }
 
     /**

@@ -94,7 +94,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
         ApplicationID branch2 = defaultSnapshotApp.asBranch('branch2')
         preloadCubes(branch1, 'test.branch.1.json', 'test.branch.age.1.json')
 
-        String origUser = mutableClient.getUserId()
+        String origUser = mutableClient.userId
         String otherUser = UniqueIdGenerator.uniqueId
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = otherUser

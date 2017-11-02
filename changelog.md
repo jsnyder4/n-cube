@@ -1,9 +1,11 @@
 ### Revision History
 * 4.1.23-SNAPSHOT
+  * Enhancement: `NCube.mapReduce()` now allows a defaultValue to be passed in (similar to `getCell()`), and the execution stack is maintained just like `getCell()`, and axes with default columns do not need to have input bound to them.
+  * Moved search logic from `NCubeController` to `NCubeRuntime`.
+  * Disallow search closure from NCE server.
   * Storage server can cache for the life of one operation to prevent the same cubes being loaded from reference axes.
   * Bug fix: Fix issues with default cell url and default values on default columns in NCube.fromSimpleJson.
   * Bug fix: Tests were not merged if the branch cube was changed.
-  * `create_hid` on database records when merging pull requests now shows the requested user instead of merging user.
   * `create_hid` on database records when copying branches now shows current user instead of copied user id.
   * Accepted domains for the CdnClassLoader is now an application property instead of part of `NCUBE_PARAMS`.
   * Made transitive dependency on logback, optional in pom.xml.  This will stop the dependency from become a dependency to those who consume n-cube as a library.

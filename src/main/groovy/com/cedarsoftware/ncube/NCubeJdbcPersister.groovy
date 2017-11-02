@@ -198,7 +198,7 @@ ORDER BY abs(revision_number) DESC
 
     static NCubeInfoDto insertCube(Connection c, ApplicationID appId, String name, Long revision, byte[] cubeData,
                                    byte[] testData, String notes, boolean changed, String sha1, String headSha1,
-                                   String username, String methodName, String requestUser = null) throws SQLException
+                                   String username, String methodName) throws SQLException
     {
         PreparedStatement s = null
         try
@@ -221,8 +221,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             s.setString(10, headSha1)
             Timestamp now = nowAsTimestamp()
             s.setTimestamp(11, now)
-            String user = requestUser ?: username
-            s.setString(12, user)
+            s.setString(12, username)
             s.setBytes(13, cubeData)
             s.setBytes(14, testData)
             String note = createNote(username, now, notes)
@@ -241,7 +240,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             dto.status = appId.status
             dto.branch = appId.branch
             dto.createDate = now
-            dto.createHid = user
+            dto.createHid = username
             dto.notes = note
             dto.revision = Long.toString(revision)
 
@@ -799,7 +798,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] cubeData = cube.cubeAsGzipJsonBytes
             String sha1 = cube.sha1()
 
-            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, noteText, false, sha1, null, username, methodName, requestUser)
+            insertCube(c, headAppId, cube.name, maxRevision, cubeData, testData, noteText, false, sha1, null, username, methodName)
             result = insertCube(c, appId, cube.name, revision > 0 ? ++revision : --revision, cubeData, testData, noteText, false, sha1, sha1, username,  methodName)
         })
         return result
@@ -817,7 +816,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         Sql sql = getSql(c)
         Sql sql1 = getSql(c)
         def map = [:]
-        Timestamp now = nowAsTimestamp()
         String searchStmt = "/* commitCubes */ SELECT n_cube_nm, revision_number, cube_value_bin, test_data_bin, sha1 FROM n_cube WHERE n_cube_id = :id"
         String commitStmt = "/* commitCubes */ UPDATE n_cube set head_sha1 = :head_sha1, changed = 0, create_dt = :create_dt WHERE n_cube_id = :id"
         String noteText = "merged pull request from [${requestUser}], txId: [${txId}], ${PR_NOTES_PREFIX}${notes}"
@@ -873,8 +871,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 if (changeType)
                 {
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
-                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, noteText, false, sha1, null, username, 'commitCubes', requestUser)
-                    Map map1 = [head_sha1: sha1, create_dt: now, id: cubeId]
+                    NCubeInfoDto dto = insertCube(c, headAppId, cubeName, maxRevision, jsonBytes, testData, noteText, false, sha1, null, username, 'commitCubes')
+                    Map map1 = [head_sha1: sha1, create_dt: nowAsTimestamp(), id: cubeId]
                     sql1.executeUpdate(map1, commitStmt)
                     dto.changed = false
                     dto.changeType = changeType
@@ -1017,8 +1015,7 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
         map.cube = buildName(cubeName)
         map.tenant = padTenant(c, appId.tenant)
         Long maxRev = null
-
-        sql.eachRow(map, """\
+        String stmt = """\
 /* rollbackCubes.findRollbackRevisionStatus */
 SELECT h.revision_number FROM
 (SELECT revision_number, head_sha1, create_dt FROM n_cube
@@ -1026,7 +1023,9 @@ WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_n
 AND tenant_cd = :tenant AND branch_id = :branch AND sha1 = head_sha1) b
 JOIN n_cube h ON h.sha1 = b.head_sha1
 WHERE h.app_cd = :app AND h.branch_id = 'HEAD' AND h.tenant_cd = :tenant AND h.create_dt <= b.create_dt
-ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC""", 0, 1, { ResultSet row ->
+ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC"""
+
+        sql.eachRow(map, stmt, 0, 1, { ResultSet row ->
             maxRev = row.getLong('revision_number')
         });
         return maxRev != null && maxRev >= 0

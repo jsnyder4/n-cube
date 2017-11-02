@@ -5167,6 +5167,22 @@ class TestNCube extends NCubeBaseTest
     }
 
     @Test
+    void testMapReduceWithOtherDimensionsNotSet()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTestWithDefCol.json')
+        Set set = new HashSet()
+        Map queryResult = ncube.mapReduce('key', 'query', { Map input, Map map ->
+            set.add(map.key)
+            input.foo == 'def-A-foo'
+        }, [:])
+
+        assert queryResult.size() == 1
+        assert set.contains('A')
+        assert set.contains('B')
+        assert set.size() == 2
+    }
+
+    @Test
     void testMapReduceWithOtherDimensionsMissingBindings()
     {
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'selectQueryMultiDimTest.json')

@@ -1190,13 +1190,14 @@ class NCube<T>
      * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
      * for each cell in the same column, for when the 'where' condition holds true (groovy true).
      */
-    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Map input = [:], Map output = [:], Set columnsToSearch = null, Set columnsToReturn = null)
+    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Map input = [:], Map output = [:], Set columnsToSearch = null, Set columnsToReturn = null, Object defaultValue = null)
     {
         throwIf(!rowAxisName, new IllegalArgumentException('The row axis name cannot be null'))
         throwIf(!colAxisName, new IllegalArgumentException('The column axis name cannot be null'))
         throwIf(!where, new IllegalArgumentException('The where clause cannot be null'))
 
-        Set<Long> boundColumns = bindAdditionalColumns(rowAxisName, colAxisName, input)
+        final Map commandInput = new TrackingMap<>(new CaseInsensitiveMap(input ?: [:]))
+        Set<Long> boundColumns = bindAdditionalColumns(rowAxisName, colAxisName, commandInput)
 
         Axis rowAxis = axisList[rowAxisName]
         Axis colAxis = axisList[colAxisName]
@@ -1206,7 +1207,6 @@ class NCube<T>
         final Collection<Column> selectList = selectColumns(colAxis, columnsToReturn)
         final Collection<Column> whereColumns = selectColumns(colAxis, columnsToSearch)
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
-        final Map commandInput = new CaseInsensitiveMap(input ?: [:])
         final Map matchingRows = new CaseInsensitiveMap()
         final Map whereVars = new CaseInsensitiveMap()
         Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
@@ -1224,16 +1224,25 @@ class NCube<T>
                 ids.add(whereId)
                 commandInput[colAxisName] = colAxis.getValueToLocateColumn(column)
                 Object colKey = isColDiscrete ? column.value : column.columnName
-                whereVars[colKey] = getCellValue(cellz[ids], commandInput, output)
+                whereVars[colKey] = getCellById(ids, commandInput, output, defaultValue)
                 ids.remove(whereId)
             }
 
             whereVars.putAll(input ?: [:])
-            def whereResult = where.call(whereVars)
+            def whereResult
+            if (where.maximumNumberOfParameters == 1)
+            {
+                whereResult = where.call(whereVars)
+            }
+            else
+            {
+                whereResult = where.call(whereVars,commandInput)
+            }
+            
             if (whereResult)
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
-                matchingRows[key] = buildMapReduceResultRow(colAxis, selectList, whereVars, ids, commandInput, output)
+                matchingRows[key] = buildMapReduceResultRow(colAxis, selectList, whereVars, ids, commandInput, output, defaultValue)
             }
             ids.remove(rowId)
         }
@@ -1312,7 +1321,11 @@ class NCube<T>
         if (axisNames.size() > 2)
         {
             Set<String> otherAxes = axisNames - [rowAxisName, colAxisName]
-            if (!input.keySet().containsAll(otherAxes))
+            Set<String> otherAxesWithDefaults = otherAxes.findAll { String axisName ->
+                getAxis(axisName).hasDefaultColumn()
+            }
+
+            if (!input.keySet().containsAll(otherAxes-otherAxesWithDefaults))
             {
                 throw new IllegalArgumentException("Using row axis [${rowAxisName}] and query axis [${colAxisName}] for cube [${this.name}] - bindings for axes ${otherAxes} must be supplied.")
             }
@@ -1332,16 +1345,7 @@ class NCube<T>
         return boundColumns
     }
 
-    protected def getCellValue(def cellValue, Map input, Map output)
-    {
-        if (cellValue instanceof CommandCell)
-        {
-            cellValue = executeExpression((Map) [input: input, output: output, ncube: this], (CommandCell) cellValue)
-        }
-        return cellValue
-    }
-
-    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map whereVars, Set<Long> ids, Map commandInput, Map output)
+    private Map buildMapReduceResultRow(Axis searchAxis, Collection<Column> selectList, Map whereVars, Set<Long> ids, Map commandInput, Map output, Object defaultValue = null)
     {
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
@@ -1359,7 +1363,7 @@ class NCube<T>
             commandInput[axisName] = column.valueThatMatches
             long colId = column.id
             ids.add(colId)
-            result[colValue] = getCellValue(cellz[ids], commandInput, output)
+            result[colValue] = getCellById(ids, commandInput, output, defaultValue)
             ids.remove(colId)
         }
 
@@ -1756,7 +1760,7 @@ class NCube<T>
             String axisName = axis.name
             Comparable value = (Comparable) safeCoord[axisName]
             Column column = (Column) axis.findColumn(value)
-            
+
             if (column == null || column.default)
             {
                 trackUnboundAxis(output, name, axisName, value)
@@ -3190,7 +3194,7 @@ class NCube<T>
             column[(PARSE_COL_PROPS)] = input[(PARSE_COL_PROPS)]
             List<Map> tempColumns = (List)input[(PARSE_TEMP_COLS)]
             tempColumns.add(column)
-            
+
             if (column['value'] == null)
             {
                 if (column['id'] == null)

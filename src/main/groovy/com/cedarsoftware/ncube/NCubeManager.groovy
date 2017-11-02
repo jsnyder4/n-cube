@@ -1013,37 +1013,6 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return cubes
     }
 
-    protected List<NCube> cubeSearch(ApplicationID appId, String cubeNamePattern, String content, Map options = [:])
-    {
-        ApplicationID.validateAppId(appId)
-        if (options == null)
-        {
-            options = [:]
-        }
-        options[SEARCH_INCLUDE_CUBE_DATA] = true
-        options[SEARCH_INCLUDE_TEST_DATA] = true
-
-        if (!options[SEARCH_EXACT_MATCH_NAME])
-        {
-            cubeNamePattern = handleWildCard(cubeNamePattern)
-        }
-
-        content = handleWildCard(content)
-
-        List<NCube> cubes = new ArrayList<>()
-        Set cubeNames = new LinkedHashSet()
-        options[SEARCH_CLOSURE] = { NCubeInfoDto dto, List<NCube> ncubes ->
-            NCube ncube = NCube.createCubeFromRecord(dto)
-            cubeNames.add(ncube.name)
-            ncubes.add(ncube)
-        }
-        options[SEARCH_OUTPUT] = cubes
-        persister.search(appId, cubeNamePattern, content, options, getUserId())
-        Set<String> validCubeNames = fastCheckPermissions(appId, Action.READ, cubeNames)
-        cubes.removeAll { !validCubeNames.contains(it.name)}
-        return cubes
-    }
-
     /**
      * This API will hand back a List of AxisRef, which is a complete description of a Reference
      * Axis pointer. It includes the Source ApplicationID, source Cube Name, source Axis Name,
@@ -2728,8 +2697,19 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     private List<NCube> getPullRequestCubes(Date startDate, Date endDate)
     {
-        Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true, (SEARCH_CREATE_DATE_START):startDate, (SEARCH_CREATE_DATE_END):endDate]
-        runSystemRequest { cubeSearch(sysAppId, 'tx.*', null, options) } as List<NCube>
+        List<NCube> cubes = []
+        Map<String, Object> options = [:]
+        options[SEARCH_ACTIVE_RECORDS_ONLY] = true
+        options[SEARCH_INCLUDE_CUBE_DATA] = true
+        options[SEARCH_CREATE_DATE_START] = startDate
+        options[SEARCH_CREATE_DATE_END] = endDate
+        options[SEARCH_CLOSURE] = { NCubeInfoDto dto, List<NCube> ncubes ->
+            NCube ncube = NCube.createCubeFromRecord(dto)
+            ncubes.add(ncube)
+        }
+        options[SEARCH_OUTPUT] = cubes
+        runSystemRequest { search(sysAppId, 'tx.*', null, options) }
+        return cubes
     }
 
     /**

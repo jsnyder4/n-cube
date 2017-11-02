@@ -194,6 +194,28 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testRuntimeSearchRemovesExistingSearchClosure()
+    {
+        if (!NCubeAppContext.clientTest)
+        {
+            return
+        }
+        NCube cube = NCubeBuilder.discrete1D
+        cube.applicationID = BRANCH1
+        mutableClient.createCube(cube)
+        List<NCube> cubeList = []
+        Map options = [:]
+        options[SEARCH_CLOSURE] = { NCubeInfoDto dto, List<NCube> cubes ->
+            NCube ncube = NCube.createCubeFromRecord(dto)
+            cubes.add(ncube)
+        }
+        options[SEARCH_OUTPUT] = cubeList
+        List<NCubeInfoDto> dtos = mutableClient.search(BRANCH1, cube.name, null, options)
+        assert 1 == dtos.size()
+        assert cubeList.empty
+    }
+
+    @Test
     void testIsCubeUpToDate()
     {
         NCube ncube1 = NCubeBuilder.discrete1D

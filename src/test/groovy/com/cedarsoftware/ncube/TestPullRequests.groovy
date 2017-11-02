@@ -303,7 +303,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
             mutableClient.mergePullRequest(prId)
 
             NCubeInfoDto dto = mutableClient.search(appId.asHead(), cubeName, null, null).first()
-            assert origUser == dto.createHid
+            assert otherUser == dto.createHid
             assertContainsIgnoreCase(dto.notes, otherUser, 'merged pull request', origUser)
         }
         finally

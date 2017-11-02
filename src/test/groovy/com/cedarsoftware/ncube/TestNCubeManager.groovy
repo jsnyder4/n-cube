@@ -2010,11 +2010,11 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         // assert other user can't read prcube
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = UniqueIdGenerator.uniqueId as String
-        assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
-        assert mutableClient.search(sysAppId, "tx.${prId}", null, null).empty
-
         try
-        {   // make sure other user can still merge the pr (ignoring permissions)
+        {
+            assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
+            assert mutableClient.search(sysAppId, "tx.${prId}", null, null).empty
+            // make sure other user can still merge the pr (ignoring permissions)
             Map map = mutableClient.mergePullRequest(prId)
             assert (map.adds as List).size() == 1
             assert (map.deletes as List).size() == 0
@@ -2105,7 +2105,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             assertTrue(e.message.contains(Action.UPDATE.name()))
             assertTrue(e.message.contains(testCube.name))
         }
-        manager.userId = origUser
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     @Test
@@ -2151,8 +2154,14 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         String origUser = manager.userId
         assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
         manager.userId = UniqueIdGenerator.uniqueId as String
-        assert !mutableClient.isAppAdmin(defaultSnapshotApp)
-        manager.userId = origUser
+        try
+        {
+            assert !mutableClient.isAppAdmin(defaultSnapshotApp)
+        }
+        finally
+        {
+            manager.userId = origUser
+        }
     }
 
     @Test
