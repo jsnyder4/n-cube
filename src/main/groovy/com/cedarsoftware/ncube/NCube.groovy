@@ -1151,7 +1151,7 @@ class NCube<T>
 
         for (column in columns)
         {
-            coord[axisName] = column.valueThatMatches
+            coord[axisName] = wildcardAxis.getValueToLocateColumn(column)
             result[column.value] = getCell(coord, output, defaultValue)
         }
 
@@ -1214,7 +1214,7 @@ class NCube<T>
         for (row in rowAxis.columns)
         {
             whereVars.clear()
-            commandInput[rowAxisName] = row.valueThatMatches
+            commandInput[rowAxisName] = rowAxis.getValueToLocateColumn(row)
             long rowId = row.id
             ids.add(rowId)
 
@@ -1222,7 +1222,7 @@ class NCube<T>
             {
                 long whereId = column.id
                 ids.add(whereId)
-                commandInput[colAxisName] = column.valueThatMatches
+                commandInput[colAxisName] = colAxis.getValueToLocateColumn(column)
                 Object colKey = isColDiscrete ? column.value : column.columnName
                 whereVars[colKey] = getCellValue(cellz[ids], commandInput, output)
                 ids.remove(whereId)
@@ -2264,15 +2264,8 @@ class NCube<T>
         Map<Long, Long> oldToNewId = [:]
         for (Column oldCol : oldColumns)
         {   // Locate columns in O(1) to O(log n)
-            Column column
-            if (newAxis.type == AxisType.RULE)
-            {   // Rule columns are located by ID or rule name ('name' meta-property)
-                column = newAxis.findColumn(oldCol.columnName)
-            }
-            else
-            {   // Use value that exists on OLD column to locate NEW column
-                column = newAxis.findColumn(oldCol.valueThatMatches)
-            }
+            // Use value that exists on OLD column to locate NEW column
+            Column column = newAxis.findColumn(axis.getValueToLocateColumn(oldCol))
             if (column != null)
             {
                 oldToNewId[oldCol.id] = column.id
@@ -2676,25 +2669,19 @@ class NCube<T>
     private static final Map<JsonToken, Closure> ncubeToken = [:]
     private static final Map<JsonToken, Closure> axisToken = [:]
     private static final Map<JsonToken, Closure> columnToken = [:]
-    private static final Map<JsonToken, Closure> cellToken = [:]
-    private static final Map<JsonToken, Closure> cellKeyToken = [:]
     private static final Map<Object, Closure> parserValue = [:]
     private static final Map<Object, Closure> ncubeField = [:]
     private static final Map<Object, Closure> axisField = [:]
     private static final Map<Object, Closure> columnField = [:]
-    private static final Map<Object, Closure> cellField = [:]
-    private static final Map<Object, Closure> cellKeyField = [:]
-    
+
     private static final int PARSE_USERID_TO_UNIQUE = 1
     private static final int PARSE_META_PROPERTY = 2
     private static final int PARSE_BASE_AXIS_ID = 3
     private static final int PARSE_NCUBE_PROPS = 4
     private static final int PARSE_AXIS_OBJ = 5
     private static final int PARSE_AXIS_PROPS = 6
-    private static final int PARSE_COL_IDS = 7
     private static final int PARSE_COL_OBJ = 8
     private static final int PARSE_COL_PROPS = 9
-    private static final int PARSE_CELL_OBJ = 10
     private static final int PARSE_CELL_PROPS = 11
     private static final int PARSE_TEMP_COLS = 12
 
@@ -2804,7 +2791,170 @@ class NCube<T>
             {
                 throw new IllegalStateException("Expecting start array '[' for cells but instead found: ${token}")
             }
-            return cellToken
+            Map userIdToUniqueId = (Map)input[(PARSE_USERID_TO_UNIQUE)]
+            while (!parser.closed)
+            {
+                token = parser.nextToken()
+                if (token == JsonToken.START_OBJECT)
+                {
+                    Set<Long> colIds = null
+                    Map keyMapId = null
+                    Object value = null
+                    String type = null
+                    String url = null
+                    boolean cache = false
+
+                    token = parser.nextToken()
+                    if (JsonToken.FIELD_NAME != token)
+                    {
+                        throw new IllegalStateException("Expecting field but found: ${token}")
+                    }
+                    while (!parser.closed)
+                    {
+                        String fieldName = parser.text
+                        if ('id' == fieldName)
+                        {
+                            token = parser.nextToken()
+                            if (JsonToken.START_ARRAY != token)
+                            {
+                                throw new IllegalStateException("Expecting start array '[' for cell id but instead found: ${token}")
+                            }
+
+                            colIds = new LinkedHashSet<>()
+                            Object id
+
+                            while (!parser.closed)
+                            {
+                                token = parser.nextToken()
+                                if (JsonToken.VALUE_NUMBER_INT == token)
+                                {
+                                    id = parser.valueAsLong
+                                }
+                                else if (JsonToken.END_ARRAY == token)
+                                {
+                                    parser.nextToken()
+                                    break
+                                }
+                                else if (JsonToken.VALUE_STRING == token)
+                                {
+                                    id = parser.text
+                                }
+                                else if (JsonToken.VALUE_NUMBER_FLOAT == token)
+                                {
+                                    id = parser.valueAsDouble
+                                }
+                                else
+                                {
+                                    throw new IllegalStateException("Unexpected token: ${token} when parsing cell ID")
+                                }
+                                Long mappedId = userIdToUniqueId[id]
+                                if (mappedId != null)
+                                {
+                                    colIds.add(mappedId)
+                                }
+                            }
+                        }
+                        else if ('value' == fieldName)
+                        {
+                            token = parser.nextToken()
+                            value = getParserValue(parser, token)
+                            token = parser.nextToken()
+                        }
+                        else if ('type' == fieldName)
+                        {
+                            parser.nextToken()
+                            type = parser.text
+                            token = parser.nextToken()
+                        }
+                        else if (JsonToken.END_OBJECT == token)
+                        {
+                            Object v = CellInfo.parseJsonValue(value, url, type, cache)
+
+                            if (colIds != null)
+                            {
+                                try
+                                {
+                                    ncube.setCellById((T)v, colIds)
+                                }
+                                catch (InvalidCoordinateException ignore)
+                                {
+                                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, ids: ${colIds}")
+                                }
+                            }
+                            else
+                            {
+                                for (entry in keyMapId.entrySet())
+                                {
+                                    keyMapId[entry.key] = CellInfo.parseJsonValue(entry.value, null, null, false)
+                                }
+                                try
+                                {
+                                    ncube.setCell(v, keyMapId)
+                                }
+                                catch (CoordinateNotFoundException ignore)
+                                {
+                                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, coord: ${keyMapId}")
+                                }
+                            }
+                            break
+                        }
+                        else if ('url' == fieldName)
+                        {
+                            parser.nextToken()
+                            url = parser.text
+                            token = parser.nextToken()
+                        }
+                        else if ('cache' == fieldName)
+                        {
+                            parser.nextToken()
+                            cache = 'true' == parser.text
+                            token = parser.nextToken()
+                        }
+                        else if ('key' == fieldName)
+                        {
+                            token = parser.nextToken()
+                            if (JsonToken.START_OBJECT != token)
+                            {
+                                throw new IllegalStateException("Expecting start object '{' for cell key but instead found: ${token}")
+                            }
+                            keyMapId = new CaseInsensitiveMap<>()
+                            token = parser.nextToken()
+                            while (!parser.closed)
+                            {
+                                if (JsonToken.FIELD_NAME == token)
+                                {
+                                    String keyName = parser.text
+                                    token = parser.nextToken()
+                                    keyMapId[keyName] = getParserValue(parser, token)
+                                    token = parser.nextToken()
+                                }
+                                else if (JsonToken.END_OBJECT == token)
+                                {
+                                    parser.nextToken()
+                                    break
+                                }
+                                else
+                                {
+                                    throw new IllegalStateException("Unexpected token: ${token} when parsing cell key")
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new IllegalStateException("Unknown field name for cell: ${fieldName}")
+                        }
+                    }
+                }
+                else if (token == JsonToken.END_ARRAY)
+                {
+                    break
+                }
+                else
+                {
+                    throw new IllegalStateException("Unexpected token: ${token} when parsing cells")
+                }
+            }
+            return state
         }
         ncubeField[DEFAULT_CELL_VALUE] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
             input[DEFAULT_CELL_VALUE] = getParserValue(parser, token)
@@ -3090,139 +3240,6 @@ class NCube<T>
         }
         columnField[(PARSE_META_PROPERTY)] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input, String fieldName ->
             ((Map)input[(PARSE_COL_PROPS)])[fieldName] = getParserValue(parser, token)
-            return state
-        }
-
-        cellToken[JsonToken.START_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[(PARSE_CELL_OBJ)] = [:]
-            return state
-        }
-        cellToken[JsonToken.FIELD_NAME] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            String fieldName = parser.text
-            token = parser.nextToken()
-            return fieldClosure(ncube, state, parser, token, input, cellField, fieldName)
-        }
-        cellToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            Map cellMap = (Map)input[(PARSE_CELL_OBJ)]
-            Object v = CellInfo.parseJsonValue(cellMap['value'], (String)cellMap['url'], (String)cellMap['type'], getBoolean(cellMap, 'cache'))
-            Set<Long> ids = (Set)cellMap['id']
-
-            if (ids != null)
-            {
-                try
-                {
-                    ncube.setCellById((T)v, ids)
-                }
-                catch (InvalidCoordinateException ignore)
-                {
-                    Set colIds = (Set)input[(PARSE_COL_IDS)]
-                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, ids: ${colIds}")
-                }
-            }
-            else
-            {
-                Map keys = (Map)input['cellKey']
-                for (entry in keys.entrySet())
-                {
-                    keys[entry.key] = CellInfo.parseJsonValue(entry.value, null, null, false)
-                }
-                try
-                {
-                    ncube.setCell(v, keys)
-                }
-                catch (CoordinateNotFoundException ignore)
-                {
-                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, coord: ${keys}")
-                }
-            }
-            return state
-        }
-        cellToken[JsonToken.END_ARRAY] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            return ncubeToken
-        }
-
-        cellField['id'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            if (JsonToken.START_ARRAY != token)
-            {
-                throw new IllegalStateException("Expecting start array '[' for cell id but instead found: ${token}")
-            }
-            Set colIds = new LinkedHashSet<>()
-            input[(PARSE_COL_IDS)] = colIds
-            ((Map)input[(PARSE_CELL_OBJ)])['id'] = colIds
-            Map userIdToUniqueId = (Map)input[(PARSE_USERID_TO_UNIQUE)]
-            Object id
-
-            while (!parser.closed)
-            {
-                token = parser.nextToken()
-                if (token == JsonToken.VALUE_NUMBER_INT)
-                {
-                    id = parser.valueAsLong
-                }
-                else if (token == JsonToken.END_ARRAY)
-                {
-                    return cellToken
-                }
-                else if (token == JsonToken.VALUE_STRING)
-                {
-                    id = parser.text
-                }
-                else if (token == JsonToken.VALUE_NUMBER_FLOAT)
-                {
-                    id = parser.valueAsDouble
-                }
-                else
-                {
-                    throw new IllegalStateException("Unexpected token: ${token} when parsing cell ID")
-                }
-                Long mappedId = userIdToUniqueId[id]
-                if (mappedId != null)
-                {
-                    colIds.add(mappedId)
-                }
-            }
-        }
-        cellField['key'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            if (JsonToken.START_OBJECT != token)
-            {
-                throw new IllegalStateException("Expecting start array '[' for cell id but instead found: ${token}")
-            }
-            input['cellKey'] = new JsonObject()
-            return cellKeyToken
-        }
-        cellField['value'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_CELL_OBJ)])['value'] = getParserValue(parser, token)
-            return state
-        }
-        cellField['type'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_CELL_OBJ)])['type'] = parser.text
-            return state
-        }
-        cellField['url'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_CELL_OBJ)])['url'] = parser.text
-            return state
-        }
-        cellField['cache'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_CELL_OBJ)])['cache'] = parser.text
-            return state
-        }
-        
-        cellKeyToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            return cellToken
-        }
-        cellKeyToken[JsonToken.FIELD_NAME] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            String fieldName = parser.text
-            token = parser.nextToken()
-            return fieldClosure(ncube, state, parser, token, input, cellKeyField, fieldName)
-        }
-
-        cellKeyField[(PARSE_META_PROPERTY)] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input, String fieldName ->
-            Closure method = parserValue[token]
-            if (method == null)
-            {
-                throw new IllegalStateException("Unexpected token: ${token} while parsing axis meta-properties on ncube: ${ncube.name}")
-            }
-            ((JsonObject)input['cellKey'])[fieldName] = method(parser)
             return state
         }
     }
@@ -3755,7 +3772,7 @@ class NCube<T>
         NCube stub = duplicate(name)
         stub.axes.each { Axis axis ->
             axis.columns.each { Column column ->
-                stub.deleteColumn(axis.name, column.valueThatMatches)
+                stub.deleteColumn(axis.name, axis.getValueToLocateColumn(column))
             }
         }
         return stub
@@ -4435,26 +4452,8 @@ class NCube<T>
             {
                 continue
             }
-            Object value
-            if (axis.type == AxisType.RULE)
-            {   // Favor rule name first, then use column ID if no rule name exists.
-                Column column = axis.getColumnById(colId)
-                String name = column.columnName
-                if (name != null)
-                {
-                    value = name
-                }
-                else
-                {
-                    value = colId
-                }
-            }
-            else
-            {
-                Column column = axis.getColumnById(colId)
-                value = column.valueThatMatches
-            }
-            coord[axis.name] = value
+            Column column = axis.getColumnById(colId)
+            coord[axis.name] = axis.getValueToLocateColumn(column)
         }
         return coord
     }

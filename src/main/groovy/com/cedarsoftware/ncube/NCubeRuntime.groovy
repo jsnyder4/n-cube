@@ -119,6 +119,59 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     }
 
     /**
+     * This API will fetch particular cell values (identified by the idArrays) for the passed
+     * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
+     * [
+     *  [1, 2, 3],
+     *  [4, 5, 6],
+     *  [7, 8, 9],
+     *   ...
+     *]
+     * In the example above, the 1st entry [1, 2, 3] identifies the 1st cell to fetch.  The 2nd entry [4, 5, 6]
+     * identifies the 2nd cell to fetch, and so on.
+     * </pre>
+     * @return Object[] The return value is an Object[] containing Object[]'s with the original coordinate
+     *  as the first entry and the cell value as the 2nd entry:<pre>
+     * [
+     *  [[1, 2, 3], {"type":"int", "value":75}],
+     *  [[4, 5, 6], {"type":"exp", "cache":false, "value":"return 25"}],
+     *  [[7, 8, 9], {"type":"string", "value":"hello"}],
+     *   ...
+     * ]
+     * </pre>
+     */
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
+    {
+//        NCube ncube = getCubeInternal(appId, cubeName)
+//        Object[] ret = new Object[idArrays.length]
+//        Set key = new HashSet()
+//        int idx = 0
+//
+//        for (coord in idArrays)
+//        {
+//            for (item in coord)
+//            {
+//                key.add(Converter.convert(item, Long.class))
+//            }
+//            if (ncube.containsCellById(key))
+//            {
+//                ncube.getCellById()
+//                CellInfo cellInfo = new CellInfo(ncube.getCellById())
+//                cellInfo.collapseToUiSupportedTypes()
+//                ret[idx++] = [coord, cellInfo as Map]
+//            }
+//            else
+//            {
+//                ret[idx++] = [coord, [type:null, value:null]]
+//            }
+//            key.clear()
+//        }
+//
+//        return ret
+        return null
+    }
+
+    /**
      *
      * Fetch an array of NCubeInfoDto's where the cube names match the cubeNamePattern (contains) and
      * the content (in JSON format) 'contains' the passed in content String.

@@ -1045,6 +1045,37 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     }
 
     /**
+     * This API will fetch and execute particular cell values (identified by the idArrays) for the passed
+     * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
+     * [
+     *  [1, 2, 3],
+     *  [4, 5, 6],
+     *  [7, 8, 9],
+     *   ...
+     *]
+     * In the example above, the 1st entry [1, 2, 3] identifies the 1st cell to fetch.  The 2nd entry [4, 5, 6]
+     * identifies the 2nd cell to fetch, and so on.
+     * </pre>
+     * @return Object[] The return value is an Object[] containing Object[]'s with the original coordinate
+     *  as the first entry and the executed cell value as the 2nd entry:<pre>
+     * [
+     *  [[1, 2, 3], {"type":"int", "value":75}],
+     *  [[4, 5, 6], {"type":"double", "value":3.14159}],
+     *  [[7, 8, 9], {"type":"string", "value":"hello"}],
+     *   ...
+     * ]
+     * </pre>
+     */
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
+    {
+        verifyAllowExecute("getCells")
+        appId = addTenant(appId)
+        NCubeRuntimeClient client = (NCubeRuntimeClient) mutableClient
+        Object[] ret = client.getCells(appId, cubeName, idArrays, input)
+        return ret
+    }
+
+    /**
      * This API will fetch particular cell values (identified by the idArrays) for the passed
      * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
      * [

@@ -56,4 +56,6 @@ interface NCubeRuntimeClient extends NCubeClient
     Map runTest(ApplicationID appId, String cubeName, NCubeTest test)
 
     String getTestCauses(Throwable t)
+
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
 }
