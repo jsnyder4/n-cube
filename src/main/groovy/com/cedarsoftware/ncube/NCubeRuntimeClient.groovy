@@ -27,6 +27,8 @@ interface NCubeRuntimeClient extends NCubeClient
 
     void clearCache(ApplicationID appId, Collection<String> cubeNames)
 
+    boolean isCached(ApplicationID appId, String cubeName)
+
     URL getActualUrl(ApplicationID appId, String url, Map input)
 
     String getUrlContent(ApplicationID appId, String url, Map input)
@@ -58,4 +60,8 @@ interface NCubeRuntimeClient extends NCubeClient
     String getTestCauses(Throwable t)
 
     Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
+
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Map output)
+    
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Map output, Object defaultValue)
 }

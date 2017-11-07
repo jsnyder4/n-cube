@@ -190,7 +190,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Object[] search(ApplicationID appId, String cubeNamePattern = null, String content = null, Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true])
     {
         appId = addTenant(appId)
-        if (options && options.containsKey(SEARCH_CLOSURE))
+        if (options)
         {
             options.remove(SEARCH_CLOSURE)
             options.remove(SEARCH_OUTPUT)
@@ -385,7 +385,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return valuesToCellInfo(col.metaProperties)
     }
 
-    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set)
+    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
     {
         verifyAllowExecute('mapReduce')
         appId = addTenant(appId)
@@ -396,7 +396,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         {
             throw new IllegalArgumentException("Passed in 'where' clause: ${where}, is not evaluating to a Closure.  Make sure it is in the form (example): { Map input -> input.state == 'AZ' }")
         }
-        return ncube.mapReduce(rowAxisName, colAxisName, (Closure)whereClosure, input, output, columnsToSearch, columnsToReturn)
+        return ncube.mapReduce(rowAxisName, colAxisName, (Closure)whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
     }
 
     private static Map<String, CellInfo> valuesToCellInfo(Map<String, Object> metaProps)
@@ -1060,12 +1060,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * ]
      * </pre>
      */
-    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Object defaultValue = null)
     {
         verifyAllowExecute("getCells")
         appId = addTenant(appId)
         NCubeRuntimeClient client = (NCubeRuntimeClient) mutableClient
-        Object[] ret = client.getCells(appId, cubeName, idArrays, input)
+        Object[] ret = client.getCells(appId, cubeName, idArrays, input, [:], defaultValue)
         return ret
     }
 
@@ -1095,6 +1095,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         appId = addTenant(appId)
         NCube ncube = getCubeInternal(appId, cubeName)
+        if (ncube == null)
+        {
+            throw new IllegalArgumentException("Unable to fetch requested cells. NCube: ${cubeName} not found, app: ${appId}")
+        }
         Object[] ret = new Object[idArrays.length]
         Set key = new HashSet()
         int idx = 0
@@ -1103,7 +1107,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         {
             for (item in coord)
             {
-                key.add(Converter.convert(item, Long.class))
+                key.add(Converter.convertToLong(item))
             }
             if (ncube.containsCellById(key))
             {
@@ -1814,7 +1818,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
             {
                 try
                 {
-                    return Converter.convert(value, Long.class)
+                    return Converter.convertToLong(value)
                 }
                 catch (Exception ignored) { }
             }
@@ -1829,7 +1833,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         // Try as a date (the code below supports numerous different date formats)
         try
         {
-            return Converter.convert(value, Date.class)
+            return Converter.convertToDate(value)
         }
         catch (Exception ignored) { }
 
@@ -1873,7 +1877,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private static Map columnToMap(Column col)
     {
         Map map = [:]
-        map.id = Converter.convert(col.id, String.class)  // Stringify Long ID (Javascript safe if quoted)
+        map.id = Converter.convertToString(col.id)  // Stringify Long ID (Javascript safe if quoted)
         map.'@type' = Column.class.name
         if (col.metaProperties.size() > 0)
         {
@@ -1913,7 +1917,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         Set<Long> colIds = new HashSet<>()
         for (Object id : ids)
         {
-            colIds.add((Long)Converter.convert(id, Long.class))
+            colIds.add(Converter.convertToLong(id))
         }
         return colIds
     }

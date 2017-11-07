@@ -84,7 +84,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
                 'addAdvice(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface com.cedarsoftware.ncube.Advice)',
                 'getActualUrl(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Map)',
                 'getUrlContent(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Map)',
-                'clearCache(class com.cedarsoftware.ncube.ApplicationID, interface java.util.Collection)'
+                'clearCache(class com.cedarsoftware.ncube.ApplicationID, interface java.util.Collection)',
+                'isCached(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
+                'getCells(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class [Ljava.lang.Object;, interface java.util.Map, interface java.util.Map)',
+                'getCells(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class [Ljava.lang.Object;, interface java.util.Map, interface java.util.Map, class java.lang.Object)'
         ] as Set
 
         // mutable methods removed because of transformed return type (usually Object[] for Javascript clients)

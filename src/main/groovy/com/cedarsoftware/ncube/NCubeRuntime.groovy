@@ -140,35 +140,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      * ]
      * </pre>
      */
-    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
+    Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Map output = [:], Object defaultValue = null)
     {
-//        NCube ncube = getCubeInternal(appId, cubeName)
-//        Object[] ret = new Object[idArrays.length]
-//        Set key = new HashSet()
-//        int idx = 0
-//
-//        for (coord in idArrays)
-//        {
-//            for (item in coord)
-//            {
-//                key.add(Converter.convert(item, Long.class))
-//            }
-//            if (ncube.containsCellById(key))
-//            {
-//                ncube.getCellById()
-//                CellInfo cellInfo = new CellInfo(ncube.getCellById())
-//                cellInfo.collapseToUiSupportedTypes()
-//                ret[idx++] = [coord, cellInfo as Map]
-//            }
-//            else
-//            {
-//                ret[idx++] = [coord, [type:null, value:null]]
-//            }
-//            key.clear()
-//        }
-//
-//        return ret
-        return null
+        NCube ncube = getCubeInternal(appId, cubeName)
+        if (ncube == null)
+        {
+            throw new IllegalArgumentException("Unable to fetch requested cells. NCube: ${cubeName} not found, app: ${appId}")
+        }
+        return ncube.getCells(idArrays, input, output, defaultValue)
     }
 
     /**
@@ -1089,6 +1068,23 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         prepareCube(ncube, true)
     }
 
+    /**
+     * @return boolean true if the named cube is cached in the Runtime cache, false otherwise.  If the name is
+     * of a non-existent cube, the return value will be false.
+     */
+    boolean isCached(ApplicationID appId, String cubeName)
+    {
+        Cache cubeCache = ncubeCacheManager.getCache(appId.cacheKey())
+        String loName = cubeName.toLowerCase()
+        Cache.ValueWrapper wrapper = cubeCache.get(loName)
+        if (wrapper != null)
+        {
+            def value = wrapper.get()
+            return value instanceof NCube
+        }
+        return false
+    }
+    
     private NCube cacheCube(NCube ncube, boolean force = false)
     {
         if (!ncube.metaProperties.containsKey(PROPERTY_CACHE) || Boolean.TRUE == ncube.getMetaProperty(PROPERTY_CACHE))
@@ -1112,7 +1108,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                     }
                     else
                     {
-                        LOG.info('Updating n-cube cache entry on an non-existing cube (cached = false) to an n-cube.')
+                        LOG.info('Updating n-cube cache entry on a non-existing cube (cached = false) to an n-cube.')
                         cubeCache.put(loName, ncube)
                     }
                 }

@@ -1,5 +1,10 @@
 ### Revision History
-* 4.1.23-SNAPSHOT
+* 4.1.25-SNAPSHOT
+  * --
+* 4.1.24
+  * Enhancement: `NCube.getCells()` API added to support *Values* mode (default is *Formulas* mode).
+  * Enhancement: `NCubeRuntime.isCached()` API added to allow testing whether an n-cube is cached.  Useful in unit tests. 
+* 4.1.23
   * Enhancement: `NCube.mapReduce()` now allows a defaultValue to be passed in (similar to `getCell()`), and the execution stack is maintained just like `getCell()`, and axes with default columns do not need to have input bound to them.
   * Moved search logic from `NCubeController` to `NCubeRuntime`.
   * Disallow search closure from NCE server.

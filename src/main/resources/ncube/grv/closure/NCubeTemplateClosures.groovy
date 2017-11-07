@@ -93,7 +93,7 @@ def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
     return getCube(cubeName).use(input, origInput, output, defaultValue)
 }
 
-Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null)
+Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null, Object defaultValue = null)
 {
     NCube target
     if (cubeName)
@@ -105,7 +105,7 @@ Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, 
     {
         target = ncube
     }
-    return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
+    return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
 }
 
 String url(String url)

@@ -163,7 +163,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Lat/Long value (%s)", 'foo'))
                     }
-                    result = new LatLon((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new LatLon(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
 
                 case 'point2d':
                     Matcher m = Regexes.valid2Doubles.matcher('foo')
@@ -171,7 +171,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point2D value (%s)", 'foo'))
                     }
-                    result = new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new Point2D(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
 
                 case 'point3d':
                     Matcher m = Regexes.valid3Doubles.matcher('foo')
@@ -179,9 +179,9 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point3D value (%s)", 'foo'))
                     }
-                    result = new Point3D((double) Converter.convert(m.group(1), double.class),
-                            (double) Converter.convert(m.group(2), double.class),
-                            (double) Converter.convert(m.group(3), double.class))
+                    result = new Point3D(Converter.convertToDouble(m.group(1)),
+                            Converter.convertToDouble(m.group(2)),
+                            Converter.convertToDouble(m.group(3)))
 
                 case 'null':
                     result = null

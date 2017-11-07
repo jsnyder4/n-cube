@@ -481,7 +481,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             for (int i = 0; i < cubeIds.length; i++)
             {
-                stmt.setLong(1, (Long) Converter.convert(cubeIds[i], Long.class))
+                stmt.setLong(1, (Long) Converter.convertToLong(cubeIds[i]))
                 ResultSet row = stmt.executeQuery()
 
                 if (row.next())
@@ -823,7 +823,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         for (int i = 0; i < cubeIds.length; i++)
         {
             Object cubeId = cubeIds[i]
-            map.id = Converter.convert(cubeId, Long.class)
+            map.id = Converter.convertToLong(cubeId)
             sql.eachRow(searchStmt, map, 0, 1, { ResultSet row ->
                 byte[] jsonBytes = row.getBytes(CUBE_VALUE_BIN)
                 String sha1 = row.getString('sha1')
@@ -876,7 +876,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                     sql1.executeUpdate(map1, commitStmt)
                     dto.changed = false
                     dto.changeType = changeType
-                    dto.id = Converter.convert(cubeId, String.class)
+                    dto.id = Converter.convertToString(cubeId)
                     dto.sha1 = sha1
                     dto.headSha1 = sha1
                     infoRecs.add(dto)
@@ -2181,11 +2181,11 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         }
         else if (tag instanceof Number)
         {
-            tags.add(Converter.convert(tag, String.class) as String)
+            tags.add(Converter.convertToString(tag))
         }
         else if (tag instanceof Date)
         {
-            tags.add(Converter.convert(tag, Date.class))
+            tags.add(Converter.convertToDate(tag))
         }
         else if (tag instanceof Boolean)
         {

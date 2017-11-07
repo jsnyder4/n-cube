@@ -14,6 +14,7 @@ import com.cedarsoftware.util.AdjustableGZIPOutputStream
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.MapUtilities
@@ -1183,6 +1184,10 @@ class NCube<T>
      * is similar to the 'Select List' portion of the SQL SELECT statement.  It essentially defaults to '*', but you
      * can have it return less column/value pairs in the returned Map if you add only the columns you want returned
      * here.
+     * @param defaultValue Object placed here will be returned if there is no cell at the location
+     *                     pinpointed by the input coordinate.  Normally, the defaulValue of the
+     *                     n-cube is returned, but if this parameter is passed a non-null value,
+     *                     then it will be returned.  Optional.
      * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
      * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
      * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
@@ -1209,7 +1214,6 @@ class NCube<T>
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
         final Map matchingRows = new CaseInsensitiveMap()
         final Map whereVars = new CaseInsensitiveMap()
-        Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
 
         for (row in rowAxis.columns)
         {
@@ -1229,16 +1233,8 @@ class NCube<T>
             }
 
             whereVars.putAll(input ?: [:])
-            def whereResult
-            if (where.maximumNumberOfParameters == 1)
-            {
-                whereResult = where.call(whereVars)
-            }
-            else
-            {
-                whereResult = where.call(whereVars,commandInput)
-            }
-            
+            def whereResult = where.maximumNumberOfParameters == 1 ? where.call(whereVars) : where.call(whereVars, commandInput)
+
             if (whereResult)
             {
                 Comparable key = getRowKey(isRowDiscrete, row, rowAxis)
@@ -1325,9 +1321,9 @@ class NCube<T>
                 getAxis(axisName).hasDefaultColumn()
             }
 
-            if (!input.keySet().containsAll(otherAxes-otherAxesWithDefaults))
+            if (!input.keySet().containsAll(otherAxes - otherAxesWithDefaults))
             {
-                throw new IllegalArgumentException("Using row axis [${rowAxisName}] and query axis [${colAxisName}] for cube [${this.name}] - bindings for axes ${otherAxes} must be supplied.")
+                throw new IllegalArgumentException("Using row axis: ${rowAxisName} and query axis: ${colAxisName} for cube: ${this.name} - bindings for axes: ${otherAxes} must be supplied.")
             }
 
             for (other in otherAxes)
@@ -1337,7 +1333,7 @@ class NCube<T>
                 Column column = otherAxis.findColumn((Comparable)value)
                 if (!column)
                 {
-                    throw new CoordinateNotFoundException("Column [${value}] not found on axis [${other}] on cube [${this.name}]", name, null, other, value)
+                    throw new CoordinateNotFoundException("Column: ${value} not found on axis: ${other} on cube: ${name}", name, null, other, value)
                 }
                 boundColumns << column.id
             }
@@ -1350,7 +1346,6 @@ class NCube<T>
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
         Map result = new CaseInsensitiveMap()
-        Map<Set<Long>, T> cellz = cells // local reference (non-field access = faster bytecode)
 
         for (Column column : selectList)
         {
@@ -1583,6 +1578,76 @@ class NCube<T>
             return null
         }
         return ids
+    }
+
+    /**
+     * This API will fetch particular cell values (identified by the idArrays) for the passed
+     * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
+     * [
+     *  [1, 2, 3],
+     *  [4, 5, 6],
+     *  [7, 8, 9],
+     *   ...
+     *]
+     * In the example above, the 1st entry [1, 2, 3] identifies the 1st cell to fetch.  The 2nd entry [4, 5, 6]
+     * identifies the 2nd cell to fetch, and so on.
+     * </pre>
+     * @return Object[] The return value is an Object[] containing Object[]'s with the original coordinate
+     *  as the first entry and the cell value as the 2nd entry:<pre>
+     * [
+     *  [[1, 2, 3], {"type":"int", "value":75}],
+     *  [[4, 5, 6], {"type":"exp", "cache":false, "value":"return 25"}],
+     *  [[7, 8, 9], {"type":"string", "value":"hello"}],
+     *   ...
+     * ]
+     * </pre>
+     */
+    Object[] getCells(Object[] idArrays, Map input, Map output = [:], Object defaultValue = null)
+    {
+        final Map commandInput = new TrackingMap<>(new CaseInsensitiveMap(input ?: [:]))
+
+        Object[] ret = new Object[idArrays.length]
+        int idx = 0
+
+        for (coord in idArrays)
+        {
+            Set<Long> key = new HashSet<>()
+            for (item in coord)
+            {
+                key.add(Converter.convertToLong(item))
+            }
+            key = ensureFullCoordinate(key)
+            ensureInputBindings(commandInput, key)
+            def value = getCellById(key, commandInput, output, defaultValue)
+            CellInfo cellInfo = new CellInfo(value)
+            ret[idx++] = [coord, cellInfo as Map]
+        }
+
+        return ret
+    }
+
+    /**
+     * This API ensures that the passed in inputMap has bindings for all axes specified by ids.
+     */
+    protected void ensureInputBindings(Map input, Set<Long> ids)
+    {
+        Iterator i = ids.iterator()
+        while (i.hasNext())
+        {
+            Long id = i.next()
+            Axis axis = getAxisFromColumnId(id, false)
+            if (axis != null)
+            {
+                if (!input.containsKey(axis.name))
+                {
+                    Column column = axis.getColumnById(id)
+                    if (column)
+                    {
+                        input[axis.name] = axis.getValueToLocateColumn(column)
+                    }
+                }
+            }
+        }
     }
 
     /**

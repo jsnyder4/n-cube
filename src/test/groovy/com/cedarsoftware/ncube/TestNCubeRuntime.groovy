@@ -23,6 +23,20 @@ class TestNCubeRuntime extends NCubeBaseTest
     }
 
     @Test
+    void testIsCubeCached()
+    {
+        populateCache()
+        assert ncubeRuntime.isCached(ApplicationID.testAppId, 'testbranch')
+        assert ncubeRuntime.isCached(ApplicationID.testAppId, 'testage')
+        assert ncubeRuntime.isCached(ApplicationID.testAppId, 'testcube')
+        ncubeRuntime.clearCache(ApplicationID.testAppId)
+        Map cache = ((GuavaCache) testClient.getCacheForApp(ApplicationID.testAppId)).nativeCache.asMap()
+        assert !cache.containsKey('testbranch')
+        assert !cache.containsKey('testage')
+        assert !cache.containsKey('testcube')
+    }
+
+    @Test
     void testClearCubesFromCacheNullCubeNames()
     {
         populateCache()

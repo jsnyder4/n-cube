@@ -285,6 +285,10 @@ class NCubeGroovyExpression
      * specified, the mapReduce() is run against the cube containing 'this' cell.
      * @param appId ApplicationID of another n-cube application.  If not specified, the appId of the n-cube containing
      * 'this' cell is used.
+     * @param defaultValue Object placed here will be returned if there is no cell at the location
+     *                     pinpointed by the input coordinate.  Normally, the defaulValue of the
+     *                     n-cube is returned, but if this parameter is passed a non-null value,
+     *                     then it will be returned.  Optional.
      * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
      * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
      * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
@@ -292,7 +296,7 @@ class NCubeGroovyExpression
      * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
      * for each cell in the same column, for when the 'where' condition holds true (groovy true).
      */
-    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null)
+    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null, Object defaultValue = null)
     {
         NCube target
         if (cubeName)
@@ -304,7 +308,7 @@ class NCubeGroovyExpression
         {
             target = ncube
         }
-        return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn)
+        return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
     }
 
     /**

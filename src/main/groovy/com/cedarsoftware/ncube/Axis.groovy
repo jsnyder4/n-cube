@@ -75,7 +75,7 @@ class Axis
     private static final ThreadLocal<Random> LOCAL_RANDOM = new ThreadLocal<Random>() {
         Random initialValue()
         {
-            String s = Converter.convert(System.nanoTime(), String.class)
+            String s = Converter.convertToString(System.nanoTime())
             s = EncryptionUtilities.calculateSHA1Hash(s.bytes)
             return new SecureRandom(s.bytes)
         }
@@ -1312,23 +1312,23 @@ class Axis
     {
         if (AxisValueType.STRING == srcValueType || AxisValueType.CISTRING == srcValueType)
         {
-            return (Comparable) Converter.convert(value, String.class)
+            return Converter.convertToString(value)
         }
         else if (AxisValueType.LONG == srcValueType)
         {
-            return (Comparable) Converter.convert(value, Long.class)
+            return Converter.convertToLong(value)
         }
         else if (AxisValueType.BIG_DECIMAL == srcValueType)
         {
-            return (Comparable) Converter.convert(value, BigDecimal.class)
+            return Converter.convertToBigDecimal(value)
         }
         else if (AxisValueType.DATE == srcValueType)
         {
-            return (Comparable) Converter.convert(value, Date.class)
+            return Converter.convertToDate(value)
         }
         else if (AxisValueType.DOUBLE == srcValueType)
         {
-            return (Comparable) Converter.convert(value, Double.class)
+            return Converter.convertToDouble(value)
         }
         else if (AxisValueType.EXPRESSION == srcValueType)
         {
@@ -1341,13 +1341,13 @@ class Axis
                 Matcher m = Regexes.valid2Doubles.matcher((String) value)
                 if (m.matches())
                 {   // No way to determine if it was supposed to be a Point2D. Specify as JSON for Point2D
-                    return new LatLon((Double)Converter.convert(m.group(1), double.class), (Double)Converter.convert(m.group(2), double.class))
+                    return new LatLon(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
                 }
 
                 m = Regexes.valid3Doubles.matcher((String) value)
                 if (m.matches())
                 {
-                    return new Point3D((Double)Converter.convert(m.group(1), double.class), (Double)Converter.convert(m.group(2), double.class), (Double)Converter.convert(m.group(3), double.class))
+                    return new Point3D(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)), Converter.convertToDouble(m.group(3)))
                 }
 
                 try

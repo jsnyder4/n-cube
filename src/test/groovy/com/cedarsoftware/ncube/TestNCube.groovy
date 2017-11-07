@@ -5192,13 +5192,9 @@ class TestNCube extends NCubeBaseTest
             ncube.mapReduce('key', 'query', { Map input -> input.foo == 'OH'}, [:], [:])
             fail 'Should have thrown an IllegalArgumentException'
         }
-        catch(IllegalArgumentException ex)
+        catch(IllegalArgumentException e)
         {
-            String message = ex.message
-            assert message.contains('row axis [key]')
-            assert message.contains('query axis [query]')
-            assert message.contains('bindings for axes [bind]')
-            assert message.contains('must be supplied')
+            assertContainsIgnoreCase(e.message,'row axis', 'query axis', 'Test.Select.MultiDimension', 'bind')
         }
     }
 
@@ -5212,13 +5208,9 @@ class TestNCube extends NCubeBaseTest
             ncube.mapReduce('key', 'query', { Map input -> input.foo == 'OH'}, [bind: 'invalid'], [:])
             fail 'Should have thrown a CoordinateNotFoundException'
         }
-        catch (CoordinateNotFoundException ex)
+        catch (CoordinateNotFoundException e)
         {
-            String message = ex.message
-            assert message.contains('Column [invalid]')
-            assert message.contains('axis [bind]')
-            assert message.contains('not found')
-            assert message.contains('cube [Test.Select.MultiDimension]')
+            assertContainsIgnoreCase(e.message,'invalid', 'not found', 'bind', 'Test.Select.MultiDimension')
         }
     }
 
@@ -5454,6 +5446,60 @@ class TestNCube extends NCubeBaseTest
         NCube ncube2 = createRuntimeCubeFromResource(ApplicationID.testAppId, 'useRef1.json')
         def x = ncube2.getCell([column:'a', row:1])
         assert 'C1' == x
+    }
+
+    @Test
+    void testGetCells()
+    {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'getCellsTest.json')
+        Object[] ids = [
+                [1000000000001, 2000000000001],
+                ['1000000000001', '2000000000002'],
+                [1000000000002, 2000000000001],
+                [1000000000002, 2000000000002]
+        ] as Object[]
+        Map input = [:]     // proves that no input still gets axis names bound (gender and age show up in inputUsed)
+        Map output = [:]
+        Object[] cellValues = ncube.getCells(ids, input, output, 13)
+        assert cellValues.length == 4
+
+        List list1 = cellValues[0] as List
+        List id1 = list1[0]
+        assert id1[0] == 1000000000001
+        assert id1[1] == 2000000000001
+        Map info1 = list1[1]
+        assert info1.type == 'boolean'
+        assert info1.value == 'true'
+
+        List list2 = cellValues[1] as List
+        List id2 = list2[0]
+        assert id2[0] == '1000000000001'       // proves that cell IDs can be Strings, longs, etc. (converter.convertToLong used internally)
+        assert id2[1] == '2000000000002'
+        Map info2 = list2[1]
+        assert info2.type == 'long'
+        assert info2.value == '10'
+
+        List list3 = cellValues[2] as List
+        List id3 = list3[0]
+        assert id3[0] == 1000000000002
+        assert id3[1] == 2000000000001
+        Map info3 = list3[1]
+        assert info3.type == 'boolean'
+        assert info3.value == 'true'
+
+        List list4 = cellValues[3] as List
+        List id4 = list4[0]
+        assert id4[0] == 1000000000002
+        assert id4[1] == 2000000000002
+        Map info4 = list4[1]
+        assert info4.type == 'int'
+        assert info4.value == '13'     // proves passed in 'defaultValue' for cell works
+
+        RuleInfo ruleInfo = ncube.getRuleInfo(output)
+        assert output.cell11 == true
+        assert output.cell21 == true    // prove same output used for all cells
+        assert ruleInfo.getInputKeysUsed().containsAll(['gender', 'age'])
+        assert ruleInfo.getInputKeysUsed().size() == 2
     }
 
     // ---------------------------------------------------------------------------------

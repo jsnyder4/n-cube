@@ -2013,7 +2013,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             head.branch = appId.branch  // using HEAD's DTO as return value, therefore setting the branch to the passed in AppId's branch
             NCubeInfoDto info = branchRecordMap[head.name]
-            long headRev = (long) Converter.convert(head.revision, long.class)
+            long headRev = (long) Converter.convertToLong(head.revision)
 
             if (info == null)
             {   // HEAD has cube that branch does not have
@@ -2022,7 +2022,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long infoRev = (long) Converter.convert(info.revision, long.class)
+            long infoRev = (long) Converter.convertToLong(info.revision)
             boolean activeStatusMatches = (infoRev < 0) == (headRev < 0)
             boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1)
             boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.sha1, head.sha1)
@@ -2152,7 +2152,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         // Loop through changed (added, deleted, created, restored, updated) records
         for (NCubeInfoDto updateCube : branchList)
         {
-            long revision = (long) Converter.convert(updateCube.revision, long.class)
+            long revision = Converter.convertToLong(updateCube.revision)
             NCubeInfoDto head = headMap[updateCube.name]
 
             if (head == null)
