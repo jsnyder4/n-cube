@@ -5423,19 +5423,19 @@ class TestNCube extends NCubeBaseTest
     void testUse()
     {
         NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'useRef.json')
-        def x = ncube.at([column:'a', row:1])
+        def x = ncube.getCell([column:'a', row:1])
         assert 'A3' == x
 
-        x = ncube.at([column:'a', row:2])
+        x = ncube.getCell([column:'a', row:2])
         assert 'C2' == x
 
-        x = ncube.at([column:'b', row:1])
+        x = ncube.getCell([column:'b', row:1])
         assert 'B3' == x
 
-        x = ncube.at([column:'b', row:2])
+        x = ncube.getCell([column:'b', row:2])
         assert 'C2' == x
 
-        x = ncube.at([column:'c', row:3])
+        x = ncube.getCell([column:'c', row:3])
         assert 'foo' == x
     }
 

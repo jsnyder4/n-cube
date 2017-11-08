@@ -62,7 +62,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         }
         catch (CoordinateNotFoundException e)
         {
-            assertContainsIgnoreCase(e.message, 'error', 'in cube', cube.name, '[]')
+            assertContainsIgnoreCase(e.message, 'error', 'in cube', cube.name, '[')
             assertNull(e.cubeName)
             assertNull(e.coordinate)
             assertNull(e.axisName)

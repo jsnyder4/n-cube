@@ -257,7 +257,7 @@ class NCubeGroovyExpression
         }
         Map origInput = new CaseInsensitiveMap(input)
         input.putAll(altInput)
-        return getCube(cubeName).use(input, origInput, output, defaultValue)
+        return target.use(input, origInput, output, defaultValue)
     }
 
     /**

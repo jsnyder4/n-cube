@@ -1,0 +1,121 @@
+{
+  "ncube":"007",
+  "_testData":"[{\"name\":\"Use\",\"coord\":[{\"type\":{\"type\":\"string\",\"isUrl\":false,\"value\":\"USE\"}}],\"assertions\":[{\"type\":\"exp\",\"isUrl\":false,\"value\":\"output.return\"}]},{\"name\":\"AtTest\",\"coord\":[{\"type\":{\"type\":\"string\",\"isUrl\":false,\"value\":\"AT\"}}],\"assertions\":[{\"type\":\"exp\",\"isUrl\":false,\"value\":\"output.return\"}]}]",
+  "testUpdated":{
+    "type":"long",
+    "value":151001797334294299
+  },
+  "axes":[
+    {
+      "id":5,
+      "name":"ruleName",
+      "hasDefault":true,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":5000379389478,
+          "type":"exp",
+          "name":"Test1",
+          "value":"true"
+        },
+        {
+          "id":5000097623635,
+          "type":"exp",
+          "name":"Test2",
+          "value":"true"
+        }
+      ]
+    },
+    {
+      "id":3,
+      "name":"type",
+      "hasDefault":true,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":1,
+      "fireAll":false,
+      "columns":[
+        {
+          "id":3001939705047,
+          "type":"string",
+          "value":"USE"
+        },
+        {
+          "id":3001637855593,
+          "type":"string",
+          "value":"AT"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[],
+      "type":"exp",
+      "value":"println 'Default: Default'\n'Default: Default'"
+    },
+    {
+      "id":[
+        5000379389478,
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'use Test1'\nuse([type:null])"
+    },
+    {
+      "id":[
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'use default'\nuse([type:null])"
+    },
+    {
+      "id":[
+        5000379389478,
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'at Test1'\nat([type:null])"
+    },
+    {
+      "id":[
+        5000379389478
+      ],
+      "type":"exp",
+      "value":"println 'default Test1'\n'Test1: Default'"
+    },
+    {
+      "id":[
+        5000097623635,
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'use Test2'\nuse([type:null])"
+    },
+    {
+      "id":[
+        5000097623635,
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'at Test2'\nat([type:null])"
+    },
+    {
+      "id":[
+        5000097623635
+      ],
+      "type":"exp",
+      "value":"println 'default Test2'\n'Test2: Default'"
+    },
+    {
+      "id":[
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'at default'\nat([type:null])"
+    }
+  ]
+}

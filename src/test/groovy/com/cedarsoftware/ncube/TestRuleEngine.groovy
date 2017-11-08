@@ -30,6 +30,14 @@ import static org.junit.Assert.*
 
 class TestRuleEngine extends NCubeBaseTest
 {
+    @Test
+    void testRuleAtJumpNullingOutInputCoord()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ruleUsingAtandUse.json')
+        Map input = [type:'USE']
+        ncube.getCell(input)
+    }
+
     // This test also tests ID-based ncube's specified in simple JSON format
     @Test
     void testRuleCube()
