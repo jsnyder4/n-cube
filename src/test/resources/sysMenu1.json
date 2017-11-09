@@ -1,0 +1,22 @@
+{
+  "ncube":"sys.menu",
+  "axes":[
+    {
+      "id":1,
+      "name":"menu",
+      "hasDefault":true,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[]
+    }
+  ],
+  "cells":[
+    {
+      "id":[],
+      "type":"exp",
+      "value":"['title':'App Title','tab-menu':['Visualizer':[html:'html/visualize.html', img:'img/letter-v.png']],'nav-menu':['Nav1':['App Plugin':['expression':['app':'sys.app','version':'1.0.0','status':'SNAPSHOT','branch':'tpollack','cube':'sys.menu.utils','method':'advancedSearch']]],'Nav2':['Plugin 2':['expression':['app':'sys.app','version':'1.0.0','status':'SNAPSHOT','branch':'HEAD','cube':'sys.menu.utils','method':'somethingElse']]],'Nav3':['App Plugin':['expression':['app':'sys.app','version':'1.0.0','status':'SNAPSHOT','branch':'HEAD','cube':'sys.menu.utils','method':'searchForString']]]]]"
+    }
+  ]
+}

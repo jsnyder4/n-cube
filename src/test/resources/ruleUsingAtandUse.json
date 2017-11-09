@@ -55,7 +55,7 @@
     {
       "id":[],
       "type":"exp",
-      "value":"println 'Default: Default'\n'Default: Default'"
+      "value":"output['default-default']=true\nreturn 'default-default'"
     },
     {
       "id":[
@@ -63,14 +63,14 @@
         3001939705047
       ],
       "type":"exp",
-      "value":"println 'use Test1'\nuse([type:null])"
+      "value":"output['use Test1']=true\nuse([type:null])"
     },
     {
       "id":[
         3001939705047
       ],
       "type":"exp",
-      "value":"println 'use default'\nuse([type:null])"
+      "value":"output['use default']=true\nuse([type:null])"
     },
     {
       "id":[
@@ -78,14 +78,14 @@
         3001637855593
       ],
       "type":"exp",
-      "value":"println 'at Test1'\nat([type:null])"
+      "value":"output['at Test1']=true\nat([type:null])"
     },
     {
       "id":[
         5000379389478
       ],
       "type":"exp",
-      "value":"println 'default Test1'\n'Test1: Default'"
+      "value":"output['default Test1']=true\n'default Test1'"
     },
     {
       "id":[
@@ -93,7 +93,7 @@
         3001939705047
       ],
       "type":"exp",
-      "value":"println 'use Test2'\nuse([type:null])"
+      "value":"output['use Test2']=true\nuse([type:null])"
     },
     {
       "id":[
@@ -101,21 +101,21 @@
         3001637855593
       ],
       "type":"exp",
-      "value":"println 'at Test2'\nat([type:null])"
+      "value":"output['at Test2']=true\nat([type:null])"
     },
     {
       "id":[
         5000097623635
       ],
       "type":"exp",
-      "value":"println 'default Test2'\n'Test2: Default'"
+      "value":"output['default Test2']=true\n'default Test2'"
     },
     {
       "id":[
         3001637855593
       ],
       "type":"exp",
-      "value":"println 'at default'\nat([type:null])"
+      "value":"output['at default']=true\nat([type:null])"
     }
   ]
 }

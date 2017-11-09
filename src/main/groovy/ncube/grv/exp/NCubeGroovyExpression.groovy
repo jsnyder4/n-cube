@@ -318,7 +318,7 @@ class NCubeGroovyExpression
      * @param coord Map of rule axis names, to rule names.  If the map is empty, it is the same as calling
      * jump() with no args.
      */
-    void jump(Map coord)
+    void jump(Map coord = [:])
     {
         input.putAll(coord)
         throw new RuleJump(input)

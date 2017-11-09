@@ -35,7 +35,11 @@ class TestRuleEngine extends NCubeBaseTest
     {
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ruleUsingAtandUse.json')
         Map input = [type:'USE']
-        ncube.getCell(input)
+        Map output = [:]
+        ncube.getCell(input, output)
+        output.remove('_rule')
+        output.remove('return')
+        println output
     }
 
     // This test also tests ID-based ncube's specified in simple JSON format
@@ -529,7 +533,7 @@ class TestRuleEngine extends NCubeBaseTest
         output.f = 0
         output.g = 0
         output.word = ''
-        ncube.getCell input, output
+        ncube.getCell(input, output)
 
         assert output.containsKey('A')
         // condition ran (condition axis was told to start at beginning - null)

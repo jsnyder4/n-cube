@@ -1,0 +1,22 @@
+{
+  "ncube":"sys.menu.global",
+  "axes":[
+    {
+      "id":1,
+      "name":"menu",
+      "hasDefault":true,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[]
+    }
+  ],
+  "cells":[
+    {
+      "id":[],
+      "type":"exp",
+      "value":"['title':'Global Title','tab-menu':['n-cube':[html:'html/ntwobe.html',img:'img/letter-n.png'],'n-cube-old':[html:'html/ncube.html',img:'img/letter-o.png'],'JSON':[html:'html/jsonEditor.html',img:'img/letter-j.png'],'Details':[html:'html/details.html',img:'img/letter-d.png'],'Test':[html:'html/test.html',img:'img/letter-t.png']],'nav-menu':['Nav1':['Global Plugin':['expression':['app':'sys.app','version':'1.0.0','status':'SNAPSHOT','branch':'HEAD','cube':'sys.menu.utils','method':'searchForString']]],'Nav2':['Plugin 2':['expression':['app':'sys.app','version':'1.0.0','status':'SNAPSHOT','branch':'HEAD','cube':'sys.menu.utils','method':'searchForString']]]]]"
+    }
+  ]
+}

@@ -59,9 +59,11 @@ interface NCubeRuntimeClient extends NCubeClient
 
     String getTestCauses(Throwable t)
 
+    Map getMenu(ApplicationID appId)
+
     Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input)
 
     Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Map output)
-    
+
     Object[] getCells(ApplicationID appId, String cubeName, Object[] idArrays, Map input, Map output, Object defaultValue)
 }

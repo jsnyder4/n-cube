@@ -56,6 +56,13 @@ interface NCubeConstants
     final String SYS_CLASSPATH = 'sys.classpath'
     final String SYS_INFO = 'sys.info'
 
+    final String SYS_MENU = 'sys.menu'
+    final String GLOBAL_MENU = 'sys.menu.global'
+    final String MENU_TITLE = 'title'
+    final String MENU_TAB = 'tab-menu'
+    final String MENU_NAV = 'nav-menu'
+    final String MENU_TITLE_DEFAULT = 'Enterprise Configurator'
+
     final String ROLE_ADMIN = 'admin'
     final String ROLE_USER = 'user'
     final String ROLE_READONLY = 'readonly'

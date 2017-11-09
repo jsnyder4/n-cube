@@ -1499,31 +1499,10 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     Map getMenu(ApplicationID appId)
     {
         verifyAllowExecute('getMenu')
-        try
-        {   // Do not remove try-catch handler in favor of advice handler
-            appId = addTenant(appId)
-            ApplicationID bootVersionAppId = appId.asBootVersion().asSnapshot()
-            NCube menuCube = mutableClient.getCube(bootVersionAppId, 'sys.menu')
-            if (menuCube == null)
-            {
-                menuCube = getCubeInternal(bootVersionAppId.asHead(), 'sys.menu')
-            }
-            return menuCube.getCell([:])
-        }
-        catch (Exception e)
-        {
-            LOG.debug('Unable to load sys.menu (sys.menu cube likely not in appId: ' + appId.toString() + ', exception: ' + e.message)
-            return ['title':'Enterprise Configurator',
-                    'tab-menu':
-                            ['n-cube':[html:'html/ntwobe.html',img:'img/letter-n.png'],
-                             'n-cube-old':[html:'html/ncube.html',img:'img/letter-o.png'],
-                             'JSON':[html:'html/jsonEditor.html',img:'img/letter-j.png'],
-                             'Details':[html:'html/details.html',img:'img/letter-d.png'],
-                             'Test':[html:'html/test.html',img:'img/letter-t.png'],
-                             'Visualizer':[html:'html/visualize.html', img:'img/letter-v.png']],
-                    'nav-menu':[:]
-            ]
-        }
+        appId = addTenant(appId)
+        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
+        Map menu = runtime.getMenu(appId)
+        return menu
     }
 
     Object getDefaultCell(ApplicationID appId, String cubeName)

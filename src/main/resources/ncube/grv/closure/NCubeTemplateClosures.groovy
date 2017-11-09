@@ -131,7 +131,7 @@ def ruleStop()
     throw new RuleStop()
 }
 
-def jump(Map coord)
+def jump(Map coord = [:])
 {
     input.putAll(coord);
     throw new RuleJump(input)

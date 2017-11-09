@@ -17,6 +17,7 @@ import java.lang.reflect.Method
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.ncube.NCubeConstants.*
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 
@@ -41,6 +42,7 @@ import static org.junit.Assert.fail
 @CompileStatic
 class TestJavascriptAPIs extends NCubeCleanupBaseTest
 {
+    private static final ApplicationID SYSAPP = new ApplicationID(ApplicationID.DEFAULT_TENANT, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), 'FOO')
     private static final ApplicationID BRANCH1 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'FOO')
     private static final ApplicationID BRANCH2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'BAR')
 
@@ -362,17 +364,113 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     }
 
     @Test
-    void testGetMenu()
+    void testGetMenuDefault()
     {
         try
         {
             Map menu = call('getMenu', [BRANCH1]) as Map
-            assert menu.title != null
+            assert MENU_TITLE_DEFAULT == menu[MENU_TITLE]
+            assert 6 == (menu[MENU_TAB] as Map).size()
+            assert (menu[MENU_NAV] as Map).isEmpty()
         }
         catch (IllegalStateException e)
         {
             assertContainsIgnoreCase(e.message, 'user code', 'cannot', 'executed', 'attempted', 'getMenu')
         }
+    }
+
+    @Test
+    void testGetMenuAppOnly()
+    {
+        createCubeFromResource(BRANCH1.asBootVersion(), 'sysMenu1.json')
+        Map menu = call('getMenu', [BRANCH1]) as Map
+        assert 'App Title' == menu[MENU_TITLE]
+
+        Map tabMenu = menu[MENU_TAB] as Map
+        assert 1 == tabMenu.size()
+        assert tabMenu.containsKey('Visualizer')
+
+        Map navMenu = menu[MENU_NAV] as Map
+        assert 3 == navMenu.size()
+
+        Map nav1 = navMenu['Nav1'] as Map
+        assert 1 == nav1.size()
+        assert nav1.containsKey('App Plugin')
+
+        Map nav2 = navMenu['Nav2'] as Map
+        assert 1 == nav2.size()
+        assert nav2.containsKey('Plugin 2')
+        assert 'somethingElse' == ((nav2['Plugin 2'] as Map)['expression'] as Map)['method']
+
+        Map nav3 = navMenu['Nav3'] as Map
+        assert 1 == nav3.size()
+        assert nav3.containsKey('App Plugin')
+    }
+
+    @Test
+    void testGetMenuSystemOnly()
+    {
+        createCubeFromResource(SYSAPP, 'globalSysMenu1.json')
+        mutableClient.commitBranch(SYSAPP)
+        Map menu = call('getMenu', [BRANCH1]) as Map
+        assert 'Global Title' == menu[MENU_TITLE]
+
+        Map tabMenu = menu[MENU_TAB] as Map
+        assert 5 == tabMenu.size()
+        assert tabMenu.containsKey('n-cube')
+        assert tabMenu.containsKey('n-cube-old')
+        assert tabMenu.containsKey('JSON')
+        assert tabMenu.containsKey('Details')
+        assert tabMenu.containsKey('Test')
+        assert !tabMenu.containsKey('Visualizer')
+
+        Map navMenu = menu[MENU_NAV] as Map
+        assert 2 == navMenu.size()
+
+        Map nav1 = navMenu['Nav1'] as Map
+        assert 1 == nav1.size()
+        assert nav1.containsKey('Global Plugin')
+
+        Map nav2 = navMenu['Nav2'] as Map
+        assert 1 == nav2.size()
+        assert nav2.containsKey('Plugin 2')
+        assert 'searchForString' == ((nav2['Plugin 2'] as Map)['expression'] as Map)['method']
+    }
+
+    @Test
+    void testGetMenuAppAndSystem()
+    {
+        createCubeFromResource(BRANCH1.asBootVersion(), 'sysMenu1.json')
+        createCubeFromResource(SYSAPP, 'globalSysMenu1.json')
+        mutableClient.commitBranch(SYSAPP)
+        Map menu = call('getMenu', [BRANCH1]) as Map
+        assert 'App Title' == menu[MENU_TITLE]
+
+        Map tabMenu = menu[MENU_TAB] as Map
+        assert 6 == tabMenu.size()
+        assert tabMenu.containsKey('n-cube')
+        assert tabMenu.containsKey('n-cube-old')
+        assert tabMenu.containsKey('JSON')
+        assert tabMenu.containsKey('Details')
+        assert tabMenu.containsKey('Test')
+        assert tabMenu.containsKey('Visualizer')
+
+        Map navMenu = menu[MENU_NAV] as Map
+        assert 3 == navMenu.size()
+
+        Map nav1 = navMenu['Nav1'] as Map
+        assert 2 == nav1.size()
+        assert nav1.containsKey('App Plugin')
+        assert nav1.containsKey('Global Plugin')
+
+        Map nav2 = navMenu['Nav2'] as Map
+        assert 1 == nav2.size()
+        assert nav2.containsKey('Plugin 2')
+        assert 'somethingElse' == ((nav2['Plugin 2'] as Map)['expression'] as Map)['method']
+
+        Map nav3 = navMenu['Nav3'] as Map
+        assert 1 == nav3.size()
+        assert nav3.containsKey('App Plugin')
     }
 
     @Test

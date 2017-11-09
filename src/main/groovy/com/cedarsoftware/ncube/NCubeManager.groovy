@@ -1518,13 +1518,16 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             final String actionName = action.lower()
             NCube permCube = permInfo.permCube as NCube
             boolean foundRolePermission = false
-            for (String role : roles)
+            if (roles)
             {
-                if (checkResourcePermission(permCube, role, resource, actionName))
+                for (String role : roles)
                 {
-                    permCache.put(key, true)
-                    foundRolePermission = true
-                    break
+                    if (checkResourcePermission(permCube, role, resource, actionName))
+                    {
+                        permCache.put(key, true)
+                        foundRolePermission = true
+                        break
+                    }
                 }
             }
             if (!foundRolePermission)

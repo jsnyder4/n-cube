@@ -118,6 +118,67 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         alive = false
     }
 
+    Map getMenu(ApplicationID appId)
+    {
+        Map appMenu = [:]
+        Map globalMenu = [:]
+        ApplicationID sysAppId = new ApplicationID(appId.tenant, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), ApplicationID.HEAD)
+        NCube globalMenuCube = getCubeInternal(sysAppId, GLOBAL_MENU)
+        if (globalMenuCube)
+        {
+            globalMenu =  globalMenuCube.getCell([:]) as Map
+        }
+        try
+        {   // Do not remove try-catch handler in favor of advice handler
+            ApplicationID bootVersionAppId = appId.asBootVersion().asSnapshot()
+            NCube menuCube = getCubeInternal(bootVersionAppId, SYS_MENU)
+            if (menuCube == null)
+            {
+                menuCube = getCubeInternal(bootVersionAppId.asHead(), SYS_MENU)
+            }
+            appMenu = menuCube.getCell([:]) as Map
+        }
+        catch (Exception e)
+        {
+            LOG.debug("Unable to load ${SYS_MENU} (${SYS_MENU} cube likely not in appId: ${appId}, exception: ${e.message}")
+            if (!globalMenu)
+            {
+                appMenu = [(MENU_TITLE):MENU_TITLE_DEFAULT,
+                           (MENU_TAB):
+                                   ['n-cube':[html:'html/ntwobe.html',img:'img/letter-n.png'],
+                                    'n-cube-old':[html:'html/ncube.html',img:'img/letter-o.png'],
+                                    'JSON':[html:'html/jsonEditor.html',img:'img/letter-j.png'],
+                                    'Details':[html:'html/details.html',img:'img/letter-d.png'],
+                                    'Test':[html:'html/test.html',img:'img/letter-t.png'],
+                                    'Visualizer':[html:'html/visualize.html', img:'img/letter-v.png']],
+                           (MENU_NAV):[:]
+                ]
+            }
+        }
+
+        String title = appMenu[MENU_TITLE] ?: globalMenu[MENU_TITLE]
+        Map tabMenu = globalMenu[MENU_TAB] as Map ?: [:]
+        tabMenu.putAll((appMenu[MENU_TAB] ?: [:]) as Map)
+
+        Map navMenu = globalMenu[MENU_NAV] as Map ?: [:]
+        Map appNavMenu = appMenu[MENU_NAV] as Map
+        for (Map.Entry appNavEntry : appNavMenu)
+        {
+            String navKey = appNavEntry.key
+            Map navVal = appNavEntry.value as Map
+            if (navMenu.containsKey(navKey))
+            {
+                (navMenu[navKey] as Map).putAll(navVal)
+            }
+            else
+            {
+                navMenu[navKey] = navVal
+            }
+        }
+
+        return [(MENU_TITLE):title, (MENU_TAB):tabMenu, (MENU_NAV):navMenu]
+    }
+
     /**
      * This API will fetch particular cell values (identified by the idArrays) for the passed
      * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
