@@ -73,7 +73,7 @@
 
     <properties>
         <version.json-io>4.10.0</version.json-io>
-        <version.java-util>1.32.0</version.java-util>
+        <version.java-util>1.33.0</version.java-util>
         <version.json-command-servlet>1.8.2</version.json-command-servlet>
         <version.groovy>2.4.12</version.groovy>
         <version.guava>23.0</version.guava>

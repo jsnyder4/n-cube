@@ -7,6 +7,8 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
+import com.cedarsoftware.visualizer.RpmVisualizer
+import com.cedarsoftware.visualizer.Visualizer
 import groovy.transform.CompileStatic
 import ncube.grv.method.NCubeGroovyController
 import org.slf4j.Logger
@@ -23,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.visualizer.RpmVisualizerConstants.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -179,6 +182,72 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return [(MENU_TITLE):title, (MENU_TAB):tabMenu, (MENU_NAV):navMenu]
     }
 
+    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    {
+        NCube ncube = getCubeInternal(appId, cubeName)
+        Closure whereClosure = evaluateWhereClosure(where)
+        Map result = ncube.mapReduce(rowAxisName, colAxisName, whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        return result
+    }
+
+    Map hyperMapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    {
+        NCube ncube = getCubeInternal(appId, cubeName)
+        Closure whereClosure = evaluateWhereClosure(where)
+        Map result = ncube.hyperMapReduce(colAxisName, whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        return result
+    }
+
+    private static Closure evaluateWhereClosure(String where)
+    {
+        GroovyShell shell = new GroovyShell()
+        Object whereClosure = shell.evaluate(where)
+        if (!(whereClosure instanceof Closure))
+        {
+            throw new IllegalArgumentException("Passed in 'where' clause: ${where}, is not evaluating to a Closure.  Make sure it is in the form (example): { Map input -> input.state == 'AZ' }")
+        }
+        return (Closure)whereClosure
+    }
+
+    Map<String, Object> getVisualizerGraph(ApplicationID appId, Map options)
+    {
+        Visualizer vis = getVisualizer(options.startCubeName as String)
+        return vis.loadGraph(appId, options)
+    }
+
+    Map<String, Object> getVisualizerScopeChange(ApplicationID appId, Map options)
+    {
+        Visualizer vis = getVisualizer(options.startCubeName as String)
+        return vis.loadScopeChange(appId, options)
+    }
+
+    Map<String, Object> getVisualizerNodeDetails(ApplicationID appId, Map options)
+    {
+        Visualizer vis = getVisualizer(options.startCubeName as String)
+        return vis.loadNodeDetails(appId, options)
+    }
+
+    // TODO: This needs to be externalized (loaded via Grapes)
+    private Visualizer getVisualizer(String cubeName)
+    {
+        return cubeName.startsWith(RPM_CLASS) ? new RpmVisualizer(this) : new Visualizer(this)
+    }
+
+    Map getCell(ApplicationID appId, String cubeName, Map coordinate, defaultValue = null)
+    {
+        Map output = [:]
+        NCube ncube = getCubeInternal(appId, cubeName)
+        ncube.getCell(coordinate, output, defaultValue)
+        return output
+    }
+
+    Map execute(ApplicationID appId, String cubeName, String method, Map args)
+    {
+        Map coordinate = ['method' : method, 'service': this]
+        coordinate.putAll(args)
+        return getCell(appId, cubeName, coordinate)
+    }
+
     /**
      * This API will fetch particular cell values (identified by the idArrays) for the passed
      * in appId and named cube.  The idArrays is an Object[] of Object[]'s:<pre>
@@ -269,12 +338,6 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         Object[] result = bean.call(beanName, 'getTests', [appId, cubeName]) as Object[]
-        return result
-    }
-
-    Object[] getTests(Long cubeId)
-    {
-        Object[] result = bean.call(beanName, 'getTests', [cubeId]) as Object[]
         return result
     }
 

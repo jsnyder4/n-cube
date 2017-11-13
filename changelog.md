@@ -1,6 +1,8 @@
 ### Revision History
 * 4.1.26-SNAPSHOT
+  * Add `NCube.hyperMapReduce` that allows mapReduce with multiple unknown axis values.
   * Add global menu `sys.menu.global` in `sys.app` which provides a template for all apps across the system. Application-specific menus override properties of the global menu.
+  * Bug fix: During rule execution, the name of the rule column is placed on input.  When a rule references another cell via `use()`, `at()`, or `go()` this will ensure that the appropriate rule is executed.  
 * 4.1.25
   * Bug fix: `NCubeRuntime.isCached()` (just added) was giving incorrect results.  Test and fix added.
 * 4.1.24

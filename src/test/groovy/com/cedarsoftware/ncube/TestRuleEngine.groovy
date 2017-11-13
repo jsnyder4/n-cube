@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.util.CaseInsensitiveMap
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -27,7 +28,7 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-
+@CompileStatic
 class TestRuleEngine extends NCubeBaseTest
 {
     @Test
@@ -36,10 +37,41 @@ class TestRuleEngine extends NCubeBaseTest
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ruleUsingAtandUse.json')
         Map input = [type:'USE']
         Map output = [:]
+        output.steps = []
         ncube.getCell(input, output)
         output.remove('_rule')
         output.remove('return')
-        println output
+        List steps = (List)output.steps
+        assert 'use Test1' == steps[0]
+        assert 'default Test1' == steps[1]
+        assert 'use Test2' == steps[2]
+        assert 'default Test2' == steps[3]
+
+        input = [type:'AT']
+        output.steps = []
+        ncube.getCell(input, output)
+        output.remove('_rule')
+        output.remove('return')
+        steps = (List)output.steps
+        assert 'at Test1' == steps[0]
+        assert 'default Test1' == steps[1]
+        assert 'default Test2' == steps[2]
+        assert 'at Test2' == steps[3]
+        assert 'default Test1' == steps[4]
+        assert 'default Test2' == steps[5]
+
+        input = [type:'GO']
+        output.steps = []
+        ncube.getCell(input, output)
+        output.remove('_rule')
+        output.remove('return')
+        steps = (List)output.steps
+        assert 'go Test1' == steps[0]
+        assert 'default Test1' == steps[1]
+        assert 'default Test2' == steps[2]
+        assert 'go Test2' == steps[3]
+        assert 'default Test1' == steps[4]
+        assert 'default Test2' == steps[5]
     }
 
     // This test also tests ID-based ncube's specified in simple JSON format
@@ -52,7 +84,7 @@ class TestRuleEngine extends NCubeBaseTest
         Axis state = ncube.getAxis 'state'
         assert state.columns[0].id != 10
 
-        Map input = [vehiclePrice: 5000.0, driveAge: 22, gender: 'male', vehicleCylinders: 8, state: 'TX']
+        Map<String, Object> input = [vehiclePrice: 5000.0, driveAge: 22, gender: 'male', vehicleCylinders: 8, state: 'TX'] as Map
         Map output = [:]
         Object out = ncube.getCell(input, output)
         assert out == 10
@@ -60,7 +92,7 @@ class TestRuleEngine extends NCubeBaseTest
 
         try
         {
-            input.state = "BOGUS"
+            input['state'] = "BOGUS"
             ncube.getCell(input, output)
             fail("should not make it here")
         }
@@ -128,7 +160,7 @@ class TestRuleEngine extends NCubeBaseTest
         optScope = ncube2.getOptionalScope([:], [:])
         assert 1 == optScope.size()
 
-        def coord = [age: 18, state: 'OH']
+        def coord = [age: 18, state: 'OH'] as Map
         Map output = [:]
         ncube2.getCell(coord, output)
         assert 5.0 == output.premium

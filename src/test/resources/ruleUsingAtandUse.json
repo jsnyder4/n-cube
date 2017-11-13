@@ -34,7 +34,7 @@
       "name":"type",
       "hasDefault":true,
       "type":"DISCRETE",
-      "valueType":"STRING",
+      "valueType":"CISTRING",
       "preferredOrder":1,
       "fireAll":false,
       "columns":[
@@ -47,6 +47,11 @@
           "id":3001637855593,
           "type":"string",
           "value":"AT"
+        },
+        {
+          "id":3000060648529,
+          "type":"string",
+          "value":"GO"
         }
       ]
     }
@@ -55,7 +60,7 @@
     {
       "id":[],
       "type":"exp",
-      "value":"output['default-default']=true\nreturn 'default-default'"
+      "value":"output.steps.add('default-default')\nreturn 'default-default'"
     },
     {
       "id":[
@@ -63,14 +68,22 @@
         3001939705047
       ],
       "type":"exp",
-      "value":"output['use Test1']=true\nuse([type:null])"
+      "value":"output.steps.add('use Test1')\nuse([type:null])"
     },
     {
       "id":[
         3001939705047
       ],
       "type":"exp",
-      "value":"output['use default']=true\nuse([type:null])"
+      "value":"output.steps.add('use default')\nuse([type:null])"
+    },
+    {
+      "id":[
+        5000379389478,
+        3000060648529
+      ],
+      "type":"exp",
+      "value":"output.steps.add('go Test1')\ngo([type:null])"
     },
     {
       "id":[
@@ -78,14 +91,14 @@
         3001637855593
       ],
       "type":"exp",
-      "value":"output['at Test1']=true\nat([type:null])"
+      "value":"output.steps.add('at Test1')\nat([type:null])"
     },
     {
       "id":[
         5000379389478
       ],
       "type":"exp",
-      "value":"output['default Test1']=true\n'default Test1'"
+      "value":"output.steps.add('default Test1')\n'default Test1'"
     },
     {
       "id":[
@@ -93,7 +106,7 @@
         3001939705047
       ],
       "type":"exp",
-      "value":"output['use Test2']=true\nuse([type:null])"
+      "value":"output.steps.add('use Test2')\nuse([type:null])"
     },
     {
       "id":[
@@ -101,21 +114,36 @@
         3001637855593
       ],
       "type":"exp",
-      "value":"output['at Test2']=true\nat([type:null])"
+      "value":"output.steps.add('at Test2')\nat([type:null])"
+    },
+    {
+      "id":[
+        3000060648529
+      ],
+      "type":"exp",
+      "value":"output.steps.add('go default')\ngo([type:null])"
+    },
+    {
+      "id":[
+        5000097623635,
+        3000060648529
+      ],
+      "type":"exp",
+      "value":"output.steps.add('go Test2')\ngo([type:null])"
     },
     {
       "id":[
         5000097623635
       ],
       "type":"exp",
-      "value":"output['default Test2']=true\n'default Test2'"
+      "value":"output.steps.add('default Test2')\n'default Test2'"
     },
     {
       "id":[
         3001637855593
       ],
       "type":"exp",
-      "value":"output['at default']=true\nat([type:null])"
+      "value":"output.steps.add('at default')\nat([type:null])"
     }
   ]
 }

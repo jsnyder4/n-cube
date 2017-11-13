@@ -165,7 +165,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         println("time to setup mapReduce ncube = " + diff)
 
         start = System.nanoTime()
-        ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, null, ['hotel'] as Set)
+        ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, [:], ['hotel'] as Set)
         stop = System.nanoTime()
         diff = (stop - start) / 1000000.0
         println("mapReduce time 1 = " + diff)
@@ -173,7 +173,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         for (int i=0; i < 100; i++)
         {
             start = System.nanoTime()
-            ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, null, ['hotel'] as Set)
+            ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, [:], ['hotel'] as Set)
             stop = System.nanoTime()
             diff = (stop - start) / 1000000.0
             println("mapReduce time ${i + 2} = " + diff)

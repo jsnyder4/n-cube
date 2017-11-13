@@ -7,13 +7,8 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
-import com.cedarsoftware.visualizer.RpmVisualizer
-import com.cedarsoftware.visualizer.RpmVisualizerConstants
-import com.cedarsoftware.visualizer.Visualizer
 import com.google.common.util.concurrent.AtomicDouble
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.actuate.endpoint.InfoEndpoint
@@ -49,7 +44,7 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
  */
 @CompileStatic
 @RestController
-class NCubeController implements NCubeConstants, RpmVisualizerConstants
+class NCubeController implements NCubeConstants
 {
     @Autowired
     private MetricsEndpoint metricsEndpoint
@@ -59,7 +54,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     @Value('${server.tomcat.max-connections:1000}') int tomcatMaxConnections
     @Value('${server.tomcat.max-threads:200}') int tomcatMaxThreads
 
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeController.class)
     private static final Pattern IS_NUMBER_REGEX = ~/^[\d,.e+-]+$/
     private static final Pattern NO_QUOTES_REGEX = ~/"/
 
@@ -111,11 +105,13 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     // ============================================= Begin API =========================================================
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getUserId()
     {
         return mutableClient.userId
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean assertPermissions(ApplicationID appId, String resource, String actionName)
     {
         appId = addTenant(appId)
@@ -123,6 +119,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.assertPermissions(appId, resource, action)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map checkMultiplePermissions(ApplicationID appId, String resource, Object[] actions)
     {
         if (ArrayUtilities.isEmpty(actions))
@@ -144,6 +141,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.checkPermissions(appId, resource, action)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean isSysAdmin()
     {
         return mutableClient.isSysAdmin()
@@ -155,12 +153,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.isAppAdmin(appId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getAppLockedBy(ApplicationID appId)
     {
         appId = addTenant(appId)
         return mutableClient.getAppLockedBy(appId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean isAppLocked(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -168,6 +168,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return lockedBy != null
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean lockApp(ApplicationID appId, boolean shouldLock)
     {
         appId = addTenant(appId)
@@ -200,6 +201,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cubeInfos as Object[]
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Integer getSearchCount(ApplicationID appId, String cubeNamePattern = null, String content = null, Map options = [(SEARCH_ACTIVE_RECORDS_ONLY):true])
     {
         return search(appId, cubeNamePattern, content, options).length
@@ -211,6 +213,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.restoreCubes(appId, cubeNames)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getRevisionHistory(ApplicationID appId, String cubeName, boolean ignoreVersion = false)
     {
         appId = addTenant(appId)
@@ -218,6 +221,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cubeInfos.toArray()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getCellAnnotation(ApplicationID appId, String cubeName, Object[] ids, boolean ignoreVersion = false)
     {
         appId = addTenant(appId)
@@ -225,6 +229,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cubeInfos.toArray()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getHtml(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -239,6 +244,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         ncube.toHtml('trait', 'traits', 'businessDivisionCode', 'bu', 'month', 'months', 'col', 'column', 'cols', 'columns', 'attribute', 'attributes')
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getJson(ApplicationID appId, String cubeName)
     {
         return getJson(appId, cubeName, [mode:"json-index"])
@@ -251,6 +257,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return record
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     NCubeInfoDto loadCubeRecordById(long id, Map options = null)
     {
         NCubeInfoDto record = mutableClient.loadCubeRecordById(id, options)
@@ -296,36 +303,34 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cube
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map<String, Object> getVisualizerGraph(ApplicationID appId, Map options)
     {
         verifyAllowExecute('getVisualizerGraph')
-        Visualizer vis = getVisualizer(options.startCubeName as String)
         appId = addTenant(appId)
-        return vis.loadGraph(appId, options)
+        Map graph = runtimeClient.getVisualizerGraph(appId, options)
+        return graph
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map<String, Object> getVisualizerScopeChange(ApplicationID appId, Map options)
     {
         verifyAllowExecute('getVisualizerScopeChange')
-        Visualizer vis = getVisualizer(options.startCubeName as String)
         appId = addTenant(appId)
-        return vis.loadScopeChange(appId, options)
+        Map graph = runtimeClient.getVisualizerScopeChange(appId, options)
+        return graph
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map<String, Object>  getVisualizerNodeDetails(ApplicationID appId, Map options)
     {
         verifyAllowExecute('getVisualizerNodeDetails')
-        Visualizer vis = getVisualizer(options.startCubeName as String)
         appId = addTenant(appId)
-        return vis.loadNodeDetails(appId, options)
+        Map graph = runtimeClient.getVisualizerNodeDetails(appId, options)
+        return graph
     }
 
-    // TODO: This needs to be externalized (loaded via Grapes)
-    private Visualizer getVisualizer(String cubeName)
-    {
-        return cubeName.startsWith(RPM_CLASS) ? new RpmVisualizer(mutableClient as NCubeRuntimeClient) : new Visualizer(mutableClient as NCubeRuntimeClient)
-    }
-
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateCubeMetaProperties(ApplicationID appId, String cubeName, Map<String, Object> newMetaProperties)
     {
         appId = addTenant(appId)
@@ -336,6 +341,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getCubeMetaProperties(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -343,12 +349,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return valuesToCellInfo(ncube.metaProperties)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void updateAxisMetaProperties(ApplicationID appId, String cubeName, String axisName, Map<String, Object> newMetaProperties)
     {
         appId = addTenant(appId)
         mutableClient.updateAxisMetaProperties(appId, cubeName, axisName, newMetaProperties)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getAxisMetaProperties(ApplicationID appId, String cubeName, String axisName)
     {
         appId = addTenant(appId)
@@ -359,6 +367,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return valuesToCellInfo(axis.metaProperties)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateColumnMetaProperties(ApplicationID appId, String cubeName, String axisName, long colId, Map<String, Object> newMetaProperties)
     {
         appId = addTenant(appId)
@@ -374,6 +383,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getColumnMetaProperties(ApplicationID appId, String cubeName, String axisName, long colId)
     {
         appId = addTenant(appId)
@@ -389,14 +399,17 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute('mapReduce')
         appId = addTenant(appId)
-        NCube ncube = getCubeInternal(appId, cubeName)
-        GroovyShell shell = new GroovyShell()
-        Object whereClosure = shell.evaluate(where)
-        if (!(whereClosure instanceof Closure))
-        {
-            throw new IllegalArgumentException("Passed in 'where' clause: ${where}, is not evaluating to a Closure.  Make sure it is in the form (example): { Map input -> input.state == 'AZ' }")
-        }
-        return ncube.mapReduce(rowAxisName, colAxisName, (Closure)whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        Map result = runtimeClient.mapReduce(appId, cubeName, rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        return result
+    }
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    Map hyperMapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    {
+        verifyAllowExecute('hyperMapReduce')
+        appId = addTenant(appId)
+        Map result = runtimeClient.hyperMapReduce(appId, cubeName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        return result
     }
 
     private static Map<String, CellInfo> valuesToCellInfo(Map<String, Object> metaProps)
@@ -436,6 +449,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return appNames
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getAppVersions(String app)
     {
         getAppVersions(app, null)
@@ -565,6 +579,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * @return Object[] of String cube names that the passed in (named) cube references,
      * otherwise a String error message.
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getReferencesFrom(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -615,6 +630,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     /**
      * Change the SNAPSHOT version number of an n-cube.
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void changeVersionValue(ApplicationID appId, String newSnapVer)
     {
         appId = addTenant(appId)
@@ -739,6 +755,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.updateCube(ncube)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void updateAxis(ApplicationID appId, String cubeName, String origAxisName, String axisName, boolean hasDefault, boolean isSorted, boolean fireAll)
     {
         appId = addTenant(appId)
@@ -786,6 +803,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * Update an entire set of columns on an axis at one time.  The updatedAxis is not a real axis,
      * but treated like an Axis-DTO where the list of columns within the axis are in display order.
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void updateAxisColumns(ApplicationID appId, String cubeName, String axisName, Object[] cols)
     {
         appId = addTenant(appId)
@@ -811,6 +829,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         mutableClient.updateCube(ncube)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void breakAxisReference(ApplicationID appId, String cubeName, String axisName)
     {
         appId = addTenant(appId)
@@ -822,7 +841,8 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         ncube.breakAxisReference(axisName)
         mutableClient.updateCube(ncube)
     }
-    
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void createRefAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
     {
         appId = addTenant(appId)
@@ -843,12 +863,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * NCubeInfDto does not contain bytes or testData
      * Note: the restored dto and the dto to restore from differ only in revision number
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     NCubeInfoDto promoteRevision(long cubeId)
     {
         NCubeInfoDto record = mutableClient.promoteRevision(cubeId)
         return record
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void saveJson(ApplicationID appId, String json)
     {
         appId = addTenant(appId)
@@ -885,27 +907,31 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         }
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map runTests(ApplicationID appId)
     {
+        verifyAllowExecute('runTests')
         appId = addTenant(appId)
-        verifyAllowExecute('runTest')
-        return (mutableClient as NCubeRuntimeClient).runTests(appId)
+        return runtimeClient.runTests(appId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map runTests(ApplicationID appId, String cubeName, Object[] tests)
     {
+        verifyAllowExecute('runTests')
         appId = addTenant(appId)
-        verifyAllowExecute('runTest')
-        return (mutableClient as NCubeRuntimeClient).runTests(appId, cubeName, tests)
+        return runtimeClient.runTests(appId, cubeName, tests)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map runTest(ApplicationID appId, String cubeName, NCubeTest test)
     {
-        appId = addTenant(appId)
         verifyAllowExecute('runTest')
-        return (mutableClient as NCubeRuntimeClient).runTest(appId, cubeName, test)
+        appId = addTenant(appId)
+        return runtimeClient.runTest(appId, cubeName, test)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -913,6 +939,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return tests
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getAppTests(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -920,6 +947,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return appTests
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean saveTests(ApplicationID appId, String cubeName, Object[] tests)
     {
         appId = addTenant(appId)
@@ -928,6 +956,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.updateCube(cube)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     NCubeTest createNewTest(ApplicationID appId, String cubeName, String testName)
     {
         appId = addTenant(appId)
@@ -954,12 +983,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return test
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateNotes(ApplicationID appId, String cubeName, String notes)
     {
         appId = addTenant(appId)
         return mutableClient.updateNotes(appId, cubeName, notes)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getNotes(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -969,6 +1000,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     /**
      * In-place update of a cell.
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateCell(ApplicationID appId, String cubeName, Object[] ids, CellInfo cellInfo)
     {
         appId = addTenant(appId)
@@ -987,6 +1019,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateCellAt(ApplicationID appId, String cubeName, Map coordinate, CellInfo cellInfo)
     {
         appId = addTenant(appId)
@@ -1008,14 +1041,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute('getCell')
         appId = addTenant(appId)
-        NCube ncube = getCubeInternal(appId, cubeName) // Will check READ.
-        Map output = [:]
-        // TODO: Check EXECUTE permission
-//        ncubeService.assertPermissions(appId, cubeName, Action.EXECUTE)
-        ncube.getCell(coordinate, output, defaultValue)
+        Map output = runtimeClient.getCell(appId, cubeName, coordinate, defaultValue)
         return output
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object getCellNoExecute(ApplicationID appId, String cubeName, Object[] ids)
     {
         appId = addTenant(appId)
@@ -1028,6 +1058,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cellInfo
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object getCellNoExecuteByCoordinate(ApplicationID appId, String cubeName, Map coordinate)
     {
         appId = addTenant(appId)
@@ -1064,8 +1095,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute("getCells")
         appId = addTenant(appId)
-        NCubeRuntimeClient client = (NCubeRuntimeClient) mutableClient
-        Object[] ret = client.getCells(appId, cubeName, idArrays, input, [:], defaultValue)
+        Object[] ret = runtimeClient.getCells(appId, cubeName, idArrays, input, [:], defaultValue)
         return ret
     }
 
@@ -1091,6 +1121,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
      * ]
      * </pre>
      */
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getCellsNoExecute(ApplicationID appId, String cubeName, Object[] idArrays)
     {
         appId = addTenant(appId)
@@ -1125,6 +1156,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return ret
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getCellCoordinate(ApplicationID appId, String cubeName, Object[] ids)
     {
         appId = addTenant(appId)
@@ -1139,6 +1171,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return niceCoord
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String copyCells(ApplicationID appId, String cubeName, Object[] ids, boolean isCut)
     {
         appId = addTenant(appId)
@@ -1152,11 +1185,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
         for (Object id : ids)
         {
-            Object[] cellId = (Object[]) id;
+            Object[] cellId = (Object[]) id
             if (ArrayUtilities.isEmpty(cellId))
             {
                 cells.add(null)
-                continue;
+                continue
             }
             Set<Long> colIds = getCoordinate(cellId)
             Object content = ncube.getCellByIdNoExecute(colIds)
@@ -1176,6 +1209,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return JsonWriter.objectToJson(cells.toArray())
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean pasteCellsNce(ApplicationID appId, String cubeName, Object[] clipboard)
     {
         if (ArrayUtilities.isEmpty(clipboard))
@@ -1220,6 +1254,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean pasteCells(ApplicationID appId, String cubeName, Object[] values, Object[] coords)
     {
         if (values == null || values.length == 0 || coords == null || coords.length == 0)
@@ -1256,12 +1291,12 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String resolveRelativeUrl(ApplicationID appId, String relativeUrl)
     {
         verifyAllowExecute('resolveRelativeUrl')
         appId = addTenant(appId)
-        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
-        URL absUrl = runtime.getActualUrl(appId, relativeUrl, [:])
+        URL absUrl = runtimeClient.getActualUrl(appId, relativeUrl, [:])
         if (absUrl == null)
         {
             throw new IllegalStateException("Unable to resolve the relative URL (${relativeUrl}) to a physical URL, app: ${appId}")
@@ -1269,30 +1304,25 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return absUrl
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String getUrlContent(ApplicationID appId, String relativeUrl)
     {
         verifyAllowExecute('getUrlContent')
         appId = addTenant(appId)
-        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
-        String content = runtime.getUrlContent(appId, relativeUrl, [:])
+        String content = runtimeClient.getUrlContent(appId, relativeUrl, [:])
         return content
     }
 
     void clearCache(ApplicationID appId)
     {
         appId = addTenant(appId)
-        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
-
-        if (isAppAdmin(appId))
+        if (isAppAdmin(appId) || !appId.head)
         {
-            runtime.clearCache(appId)
-        }
-        else if (!appId.head)
-        {
-            runtime.clearCache(appId)
+            runtimeClient.clearCache(appId)
         }
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void createBranch(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1314,6 +1344,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return realBranches
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Integer getBranchCount(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1321,6 +1352,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.getBranchCount(appId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getHeadChangesForBranch(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1328,6 +1360,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return branchChanges.toArray()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getBranchChangesForHead(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1335,6 +1368,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return branchChanges.toArray()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getBranchChangesForMyBranch(ApplicationID appId, String branch)
     {
         appId = addTenant(appId)
@@ -1355,27 +1389,32 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void cancelPullRequest(String prId)
     {
         mutableClient.cancelPullRequest(prId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void reopenPullRequest(String prId)
     {
         mutableClient.reopenPullRequest(prId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void obsoletePullRequest(String prId)
     {
         mutableClient.obsoletePullRequest(prId)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getPullRequests(Date startDate = null, Date endDate = null)
     {
         Object[] pullRequests = mutableClient.getPullRequests(startDate, endDate)
         return pullRequests
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object commitCube(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -1392,12 +1431,14 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.commitBranch(appId, infoDtos, notes)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Integer rollbackBranch(ApplicationID appId, Object[] cubeNames)
     {
         appId = addTenant(appId)
         return mutableClient.rollbackBranch(appId, cubeNames)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object updateCubeFromHead(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -1423,6 +1464,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean deleteApp(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1430,18 +1472,21 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return result
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
     {
         appId = addTenant(appId)
         return mutableClient.acceptTheirs(appId, cubeNames, sourceBranch)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Integer acceptMine(ApplicationID appId, Object[] cubeNames, String notNeeded = null)
     {
         appId = addTenant(appId)
         return mutableClient.acceptMine(appId, cubeNames)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     String loadCubeById(ApplicationID appId, long id, String mode)
     {
         NCubeInfoDto record = mutableClient.loadCubeRecordById(id, null)
@@ -1488,23 +1533,20 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     {
         verifyAllowExecute('execute')
         appId = addTenant(appId)
-        Map coordinate = ['method' : method, 'service': mutableClient]
-        coordinate.putAll(args)
-        NCube cube = getCubeInternal(appId, cubeName)
-        Map output = [:]
-        cube.getCell(coordinate, output)    // return value is set on 'return' key of output Map
+        Map output = runtimeClient.execute(appId, cubeName, method, args)
         return output
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map getMenu(ApplicationID appId)
     {
         verifyAllowExecute('getMenu')
         appId = addTenant(appId)
-        NCubeRuntimeClient runtime = mutableClient as NCubeRuntimeClient
-        Map menu = runtime.getMenu(appId)
+        Map menu = runtimeClient.getMenu(appId)
         return menu
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object getDefaultCell(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -1514,6 +1556,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return cellInfo
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean clearDefaultCell(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -1523,6 +1566,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return true
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean updateDefaultCell(ApplicationID appId, String cubeName, CellInfo cellInfo)
     {
         appId = addTenant(appId)
@@ -1543,18 +1587,21 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return mutableClient.mergeDeltas(appId, cubeName, deltaList)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
         List<Delta> deltas = mutableClient.fetchJsonRevDiffs(newCubeId, oldCubeId)
         return deltas
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
     {
         List<Delta> deltas = mutableClient.fetchJsonBranchDiffs(newInfoDto, oldInfoDto)
         return deltas
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Object[] getReferenceAxes(ApplicationID appId)
     {
         appId = addTenant(appId)
@@ -1562,21 +1609,25 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return refAxes as Object[]
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void updateReferenceAxes(Object[] axisRefs)
     {
         mutableClient.updateReferenceAxes(axisRefs)
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void clearTestDatabase()
     {
         NCubeAppContext.testServer.clearTestDatabase()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     void clearPermCache()
     {
         NCubeAppContext.testServer.clearPermCache()
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map health(boolean showAll = false)
     {
         // If remotely accessing server, use the following to get the MBeanServerConnection...
@@ -1698,6 +1749,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return results
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Map heartBeat(Map openCubes = null)
     {
         Map results = [:]
@@ -1705,6 +1757,7 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
         return results
     }
 
+    @SuppressWarnings("GroovyUnusedDeclaration")
     Boolean isCubeUpToDate(ApplicationID appId, String cubeName)
     {
         appId = addTenant(appId)
@@ -1715,11 +1768,6 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
 
     // ===================================== utility (non-API) methods =================================================
 
-    private static String cleanKey(String key)
-    {
-        return key.replace('"','')
-    }
-    
     private static Object getAttribute(MBeanServer mbs, String beanName, String attribute)
     {
         try
@@ -1924,6 +1972,11 @@ class NCubeController implements NCubeConstants, RpmVisualizerConstants
     private String getTenant()
     {
         return ApplicationID.DEFAULT_TENANT
+    }
+
+    private NCubeRuntimeClient getRuntimeClient()
+    {
+        return mutableClient as NCubeRuntimeClient
     }
 
     private void verifyAllowExecute(String methodName)

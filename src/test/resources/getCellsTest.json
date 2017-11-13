@@ -74,7 +74,7 @@
         2000000000003
       ],
       "type": "exp",
-      "value": "output.cell13 = 'food'"
+      "value": "output.cell13++"
     },
     {
       "id": [
@@ -89,8 +89,8 @@
         1000000000002,
         2000000000003
       ],
-      "type": "long",
-      "value": 11
+      "type": "exp",
+      "value": "return ['a', 'b', 'c']"
     },
     {
       "id": [

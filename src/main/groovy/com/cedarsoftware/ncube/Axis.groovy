@@ -1608,7 +1608,7 @@ class Axis
             {
                 return idToCol.get(promotedValue as Long)
             }
-            else if (promotedValue instanceof String)
+            else if (promotedValue instanceof String || promotedValue instanceof GString)
             {
                 Column colToFind = colNameToCol[promotedValue as String]
                 return colToFind == null ? defaultCol : colToFind

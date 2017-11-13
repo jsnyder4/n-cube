@@ -382,6 +382,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     @Test
     void testGetMenuAppOnly()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         createCubeFromResource(BRANCH1.asBootVersion(), 'sysMenu1.json')
         Map menu = call('getMenu', [BRANCH1]) as Map
         assert 'App Title' == menu[MENU_TITLE]
@@ -410,6 +414,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     @Test
     void testGetMenuSystemOnly()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         createCubeFromResource(SYSAPP, 'globalSysMenu1.json')
         mutableClient.commitBranch(SYSAPP)
         Map menu = call('getMenu', [BRANCH1]) as Map
@@ -440,6 +448,10 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     @Test
     void testGetMenuAppAndSystem()
     {
+        if (NCubeAppContext.clientTest)
+        {
+            return
+        }
         createCubeFromResource(BRANCH1.asBootVersion(), 'sysMenu1.json')
         createCubeFromResource(SYSAPP, 'globalSysMenu1.json')
         mutableClient.commitBranch(SYSAPP)
