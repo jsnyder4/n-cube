@@ -38,11 +38,11 @@
       "defaultValue": ""
     },
     {
-      "name": "ncube.proxy.headersToRemove",
+      "name": "ncube.proxy.cookiesToInclude",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.util.JsonHttpProxy",
-      "description": "Headers to remove in JsonHttpProxy when making proxy request (comma separated list, all lowercase).",
-      "defaultValue": "content-length"
+      "description": "Cookies to include in JsonHttpProxy when making proxy request (comma separated list, all lowercase).",
+      "defaultValue": "JSESSIONID"
     },
     {
       "name": "ncube.allow.mutable.methods",

@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
@@ -108,18 +109,26 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         }
     }
 
-    @Test
+    // Uncomment for mapReduce() performance testing
     @Ignore
+    @Test
     void testMapReduceLarge()
     {
+        final int timesToRun = 20
         long start = System.nanoTime()
         NCube ncube = new NCube("bigCube")
-        Axis rows = new Axis("row", AxisType.DISCRETE, AxisValueType.LONG, false)
-        ncube.addAxis(rows)
-        int max = 100000
+        Axis row = new Axis('row', AxisType.DISCRETE, AxisValueType.LONG, false)
+        row.addColumn(1)
+        row.addColumn(2)
+        row.addColumn(3)
+        row.addColumn(4)
+        ncube.addAxis(row)
+        Axis keys = new Axis("key", AxisType.DISCRETE, AxisValueType.LONG, false)
+        ncube.addAxis(keys)
+        int max = 130000
         for (int j = 0; j < max; j++)
         {
-            ncube.addColumn("row", j)
+            ncube.addColumn("key", j)
         }
 
         Axis attributes = new Axis("attribute", AxisType.DISCRETE, AxisValueType.CISTRING, false)
@@ -157,32 +166,44 @@ class TestAllCellsInBigCube extends NCubeBaseTest
             setRandomValue(ncube, random, i, 'mic')
         }
 
-        println 'num Cells = ' + ncube.numCells
-        println 'num Potential Cells = ' + ncube.numPotentialCells
-        assert ncube.numCells == ncube.numPotentialCells
+        println "num Cells = ${ncube.numCells}"
+        println "num Potential Cells = ${ncube.numPotentialCells}"
+//        assert ncube.numCells == ncube.numPotentialCells
         long stop = System.nanoTime()
         double diff = (stop - start) / 1000000.0
-        println("time to setup mapReduce ncube = " + diff)
+        println("time to setup ncube = " + diff)
 
-        start = System.nanoTime()
-        ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, [:], ['hotel'] as Set)
-        stop = System.nanoTime()
-        diff = (stop - start) / 1000000.0
-        println("mapReduce time 1 = " + diff)
+//        start = System.nanoTime()
+//        ncube.mapReduce('key', 'attribute', { Map input -> input.hotel == 50i }, null, [:], ['hotel'] as Set)
+//        stop = System.nanoTime()
+//        diff = (stop - start) / 1000000.0
+//        println("mapReduce time 1 = " + diff)
 
-        for (int i=0; i < 100; i++)
+        Map options = [:]
+        options[NCube.MAP_REDUCE_COLUMNS_TO_SEARCH] = ['hotel'] as Set
+        for (int i=0; i < timesToRun; i++)
         {
             start = System.nanoTime()
-            ncube.mapReduce('row', 'attribute', { Map input -> input.hotel == 50i }, null, [:], ['hotel'] as Set)
+            ncube.mapReduce('attribute', { Map input -> ((String)input.hotel)?.contains('ee') }, options)
             stop = System.nanoTime()
             diff = (stop - start) / 1000000.0
-            println("mapReduce time ${i + 2} = " + diff)
+            println("mapReduce no input time ${i + 1} = " + diff)
+        }
+
+        options.input = [row:1] as Map
+        for (int i=0; i < timesToRun; i++)
+        {
+            start = System.nanoTime()
+            ncube.mapReduce('attribute', { Map input -> ((String)input.hotel)?.contains('ee') }, options)
+            stop = System.nanoTime()
+            diff = (stop - start) / 1000000.0
+            println("mapReduce row:1 time ${i + 1} = " + diff)
         }
     }
 
-    private Object setRandomValue(NCube ncube, Random random, int i, String colName)
+    private static Object setRandomValue(NCube ncube, Random random, int i, String colName)
     {
-        ncube.setCell(random.nextInt() % 100i, [row: i, attribute: colName])
+        ncube.setCell(StringUtilities.getRandomString(random, 5, 8), [key: i, row:1, attribute: colName])
     }
 
     // Uncomment for memory size testing

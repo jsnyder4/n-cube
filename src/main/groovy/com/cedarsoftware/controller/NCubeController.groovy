@@ -395,20 +395,12 @@ class NCubeController implements NCubeConstants
         return valuesToCellInfo(col.metaProperties)
     }
 
-    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    Map mapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map options = [:])
     {
         verifyAllowExecute('mapReduce')
         appId = addTenant(appId)
-        Map result = runtimeClient.mapReduce(appId, cubeName, rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
-        return result
-    }
-
-    @SuppressWarnings("GroovyUnusedDeclaration")
-    Map hyperMapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
-    {
-        verifyAllowExecute('hyperMapReduce')
-        appId = addTenant(appId)
-        Map result = runtimeClient.hyperMapReduce(appId, cubeName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        Map result = runtimeClient.mapReduce(appId, cubeName, colAxisName, where, options)
         return result
     }
 

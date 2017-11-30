@@ -31,10 +31,10 @@ class Point2D implements Distance<Point2D>
 	private final double x
 	private final double y
 
-	Point2D(double x, double y)
+	Point2D(Number x, Number y)
 	{
-		this.x = x
-		this.y = y
+		this.x = x.doubleValue()
+		this.y = y.doubleValue()
 	}
 
 	boolean equals(Object obj)

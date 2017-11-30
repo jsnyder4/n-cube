@@ -40,10 +40,10 @@ class LatLon implements Distance<LatLon>
 	 * @param lat decimal degrees latitude
 	 * @param lon decimal degrees longitude
 	 */
-	LatLon(double lat, double lon)
+	LatLon(Number lat, Number lon)
 	{
-		this.lat = lat
-		this.lon = lon
+		this.lat = lat.doubleValue()
+		this.lon = lon.doubleValue()
 	}
 
 	boolean equals(Object obj)

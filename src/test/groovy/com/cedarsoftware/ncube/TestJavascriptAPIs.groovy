@@ -585,11 +585,11 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         {
             createCubeFromResource(BRANCH1, 'sys.classpath.tests.json')
             createCubeFromResource(BRANCH1, 'selectQueryTest.json')
-            Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'key', 'query', "{ Map input -> input.foo == 'AL' }", [:], [:], [] as Set, [] as Set]) as Map
+            Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'query', "{ Map input -> input.foo == 'AL' }", [:]]) as Map
 
             assert queryResult.size() == 1
 
-            Map row = queryResult['A']
+            Map row = queryResult['A'] as Map
             assert row['foo'] == 'AL'
             assert row['bar'] == 123
         }

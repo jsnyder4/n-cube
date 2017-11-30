@@ -1798,11 +1798,11 @@ class Axis
         {
             return new ArrayList<>((preferredOrder == SORTED) ? valueToColumn.values() : displayOrder.values())
         }
-        else if (type == AxisType.RULE)
+        if (type == AxisType.RULE)
         {
             return new ArrayList<>(displayOrder.values())
         }
-        else if (type == AxisType.RANGE || type == AxisType.SET)
+        if (type == AxisType.RANGE || type == AxisType.SET)
         {
             List<Column> cols = new ArrayList<>(size())
             if (preferredOrder == SORTED)
@@ -1817,10 +1817,7 @@ class Axis
             }
             return cols
         }
-        else
-        {
-            throw new IllegalStateException("AxisValueType '${type}' added but no code to support it.")
-        }
+        throw new IllegalStateException("AxisValueType '${type}' added but no code to support it.")
     }
 
     /**

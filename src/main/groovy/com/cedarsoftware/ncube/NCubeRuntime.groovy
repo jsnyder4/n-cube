@@ -62,6 +62,18 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private final String beanName
     @Value('${ncube.cache.refresh.min:75}') int cacheRefreshIntervalMin
 
+    private final ThreadLocal<GroovyShell> groovyShellThreadLocal = new ThreadLocal<GroovyShell>() {
+        GroovyShell initialValue()
+        {
+            return new GroovyShell()
+        }
+    }
+
+    private GroovyShell getGroovyShell()
+    {
+        return groovyShellThreadLocal.get()
+    }
+
     NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods, String beanName = null)
     {
         this.bean = bean
@@ -182,26 +194,17 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return [(MENU_TITLE):title, (MENU_TAB):tabMenu, (MENU_NAV):navMenu]
     }
 
-    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    Map mapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map options = [:])
     {
         NCube ncube = getCubeInternal(appId, cubeName)
         Closure whereClosure = evaluateWhereClosure(where)
-        Map result = ncube.mapReduce(rowAxisName, colAxisName, whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        Map result = ncube.mapReduce(colAxisName, whereClosure, options)
         return result
     }
 
-    Map hyperMapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map input = [:], Map output = [:], Set columnsToSearch = [] as Set, Set columnsToReturn = [] as Set, Object defaultValue = null)
+    private Closure evaluateWhereClosure(String where)
     {
-        NCube ncube = getCubeInternal(appId, cubeName)
-        Closure whereClosure = evaluateWhereClosure(where)
-        Map result = ncube.hyperMapReduce(colAxisName, whereClosure, input, output, columnsToSearch, columnsToReturn, defaultValue)
-        return result
-    }
-
-    private static Closure evaluateWhereClosure(String where)
-    {
-        GroovyShell shell = new GroovyShell()
-        Object whereClosure = shell.evaluate(where)
+        Object whereClosure = getGroovyShell().evaluate(where)
         if (!(whereClosure instanceof Closure))
         {
             throw new IllegalArgumentException("Passed in 'where' clause: ${where}, is not evaluating to a Closure.  Make sure it is in the form (example): { Map input -> input.state == 'AZ' }")

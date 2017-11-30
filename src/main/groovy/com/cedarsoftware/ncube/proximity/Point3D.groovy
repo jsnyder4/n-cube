@@ -33,11 +33,11 @@ class Point3D implements Distance<Point3D>
 	private final double y
 	private final double z
 
-	Point3D(double x, double y, double z)
+	Point3D(Number x, Number y, Number z)
 	{
-		this.x = x
-		this.y = y
-		this.z = z
+		this.x = x.doubleValue()
+		this.y = y.doubleValue()
+		this.z = z.doubleValue()
 	}
 
 	boolean equals(Object obj)

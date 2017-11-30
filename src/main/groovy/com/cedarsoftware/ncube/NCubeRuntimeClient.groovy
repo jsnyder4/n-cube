@@ -61,9 +61,7 @@ interface NCubeRuntimeClient extends NCubeClient
 
     Map getMenu(ApplicationID appId)
 
-    Map mapReduce(ApplicationID appId, String cubeName, String rowAxisName, String colAxisName, String where, Map input, Map output, Set columnsToSearch, Set columnsToReturn, Object defaultValue)
-
-    Map hyperMapReduce(ApplicationID appId, String cubeName, String colAxisName, String where, Map input, Map output, Set columnsToSearch, Set columnsToReturn, Object defaultValue)
+    Map mapReduce(ApplicationID appId, String cubeName, String colAxisName, String where, Map options)
 
     Map<String, Object> getVisualizerGraph(ApplicationID appId, Map options)
 

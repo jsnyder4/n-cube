@@ -161,28 +161,16 @@ WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd
         map.tenant = padTenant(c, appId.tenant)
         map.cube = buildName(cubeName)
         Sql sql = getSql(c)
-        String sqlStatement
+        String selectVersion = ignoreVersion ? '' : 'AND version_no_cd = :version AND status_cd = :status'
+        String orderByVersion = ignoreVersion ? 'version_no_cd DESC,' : ''
 
-        if (ignoreVersion)
-        {
-            sqlStatement = """\
+        String sqlStatement = """\
 /* getRevisions */
 SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, sha1, head_sha1, changed
 FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch
-ORDER BY version_no_cd DESC, abs(revision_number) DESC
+WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND tenant_cd = :tenant AND branch_id = :branch ${selectVersion}
+ORDER BY ${orderByVersion} abs(revision_number) DESC
 """
-        }
-        else
-        {
-            sqlStatement = """\
-/* getRevisions */
-SELECT n_cube_id, n_cube_nm, notes_bin, version_no_cd, status_cd, app_cd, create_dt, create_hid, revision_number, branch_id, sha1, head_sha1, changed
-FROM n_cube
-WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND status_cd = :status AND branch_id = :branch
-ORDER BY abs(revision_number) DESC
-"""
-        }
 
         List<NCubeInfoDto> records = []
         sql.eachRow(map, sqlStatement, { ResultSet row ->

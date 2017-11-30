@@ -923,11 +923,11 @@ class TestAxis extends NCubeBaseTest
 
         // Doubles
         Axis doubles = new Axis('bigDec', AxisType.DISCRETE, AxisValueType.DOUBLE, false)
-        assertEquals(-1.0, (double) doubles.standardizeColumnValue('-1'), 0.000001d)
-        assertEquals(0.0, (double) doubles.standardizeColumnValue('0'), 0.000001d)
-        assertEquals(1.0, (double) doubles.standardizeColumnValue('1'), 0.00001d)
-        assertEquals(12345678901234.0, (double) doubles.standardizeColumnValue('12345678901234'), 0.00001d)
-        assertEquals(-12345678901234.0, (double) doubles.standardizeColumnValue('-12345678901234'), 0.00001d)
+        assertEquals(-1.0d, (double) doubles.standardizeColumnValue('-1'), 0.000001d)
+        assertEquals(0.0d, (double) doubles.standardizeColumnValue('0'), 0.000001d)
+        assertEquals(1.0d, (double) doubles.standardizeColumnValue('1'), 0.00001d)
+        assertEquals(12345678901234.0d, (double) doubles.standardizeColumnValue('12345678901234'), 0.00001d)
+        assertEquals(-12345678901234.0d, (double) doubles.standardizeColumnValue('-12345678901234'), 0.00001d)
         assertEquals(-12345.678901234d, (double) doubles.standardizeColumnValue('-12345.678901234'), 0.00001d)
 
         // Dates
@@ -1140,22 +1140,22 @@ class TestAxis extends NCubeBaseTest
     {
         Axis axis = new Axis('loc', AxisType.NEAREST, AxisValueType.COMPARABLE, false)
         LatLon latlon = (LatLon) axis.standardizeColumnValue('1.0, 2.0')
-        assertEquals 1.0, latlon.lat, 0.00001d
-        assertEquals 2.0, latlon.lon, 0.00001d
+        assertEquals 1.0d, latlon.lat, 0.00001d
+        assertEquals 2.0d, latlon.lon, 0.00001d
 
         latlon = (LatLon) axis.standardizeColumnValue('1,2')
-        assertEquals 1.0, latlon.lat, 0.00001d
-        assertEquals 2.0, latlon.lon, 0.00001d
+        assertEquals 1.0d, latlon.lat, 0.00001d
+        assertEquals 2.0d, latlon.lon, 0.00001d
 
         latlon = (LatLon) axis.standardizeColumnValue('-1,-2')
-        assertEquals(-1.0, latlon.lat, 0.00001d)
-        assertEquals(-2.0, latlon.lon, 0.001d)
+        assertEquals(-1.0d, latlon.lat, 0.00001d)
+        assertEquals(-2.0d, latlon.lon, 0.001d)
 
         axis = new Axis('loc', AxisType.NEAREST, AxisValueType.COMPARABLE, false)
         Point3D pt3d = (Point3D) axis.standardizeColumnValue('1.0, 2.0, 3.0')
-        assertEquals 1.0, pt3d.x, 0.00001d
-        assertEquals 2.0, pt3d.y, 0.00001d
-        assertEquals 3.0, pt3d.z, 0.00001d
+        assertEquals(1.0d, pt3d.x, 0.00001d)
+        assertEquals(2.0d, pt3d.y, 0.00001d)
+        assertEquals(3.0d, pt3d.z, 0.00001d)
     }
 
     @Test

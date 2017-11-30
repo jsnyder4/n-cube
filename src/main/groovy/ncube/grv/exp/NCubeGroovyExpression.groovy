@@ -296,7 +296,7 @@ class NCubeGroovyExpression
      * where the keys are the column values (or names) for axis named colAxisName.  The associated values are the values
      * for each cell in the same column, for when the 'where' condition holds true (groovy true).
      */
-    Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Set columnsToSearch = null, Set columnsToReturn = null, String cubeName = null, ApplicationID appId = null, Object defaultValue = null)
+    Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], String cubeName = null, ApplicationID appId = null)
     {
         NCube target
         if (cubeName)
@@ -308,7 +308,9 @@ class NCubeGroovyExpression
         {
             target = ncube
         }
-        return target.mapReduce(rowAxisName, colAxisName, where, input, output, columnsToSearch, columnsToReturn, defaultValue)
+        options.input = input
+        options.output = output
+        return target.mapReduce(colAxisName, where, options)
     }
 
     /**
