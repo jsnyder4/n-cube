@@ -59,7 +59,7 @@ class NCubeAppContext implements ApplicationContextAware
 
     static boolean isTest()
     {
-        return ctx.containsBean('hsqlSetup') as boolean
+        return ctx.containsBean('testDb') as boolean
     }
 
     static boolean isClientTest()

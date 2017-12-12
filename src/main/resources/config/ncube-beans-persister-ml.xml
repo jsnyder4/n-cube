@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="ncubeManagerAdvice" class="com.cedarsoftware.ncube.NCubeManagerAdvice" depends-on="mlPersister">
+        <constructor-arg index="0" ref="ncubeManager"/>
+        <constructor-arg index="1" type="java.lang.String" value="${ncube.marklogic.host:#{'localhost'}}"/>
+        <constructor-arg index="2" type="int" value="${ncube.marklogic.port:#{8000}}"/>
+        <constructor-arg index="3" ref="securityContext"/>
+    </bean>
+
+    <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+        <constructor-arg ref="mlPersister"/>
+        <constructor-arg ref="permCacheManager"/>
+    </bean>
+
+    <bean id="mlPersister" class="com.cedarsoftware.ncube.MarkLogicPersisterAdapter"/>
+
+    <bean id="securityContext" class="com.marklogic.client.DatabaseClientFactory$DigestAuthContext">
+        <constructor-arg index="0" type="java.lang.String" value="${ncube.marklogic.username:#{'admin'}}"/>
+        <constructor-arg index="1" type="java.lang.String" value="${ncube.marklogic.password:#{'admin'}}"/>
+    </bean>
+
+</beans>

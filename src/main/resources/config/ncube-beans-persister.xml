@@ -8,6 +8,11 @@
    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
+    <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+        <constructor-arg ref="persister"/>
+        <constructor-arg ref="permCacheManager"/>
+    </bean>
+
     <bean id="persister" class="com.cedarsoftware.ncube.NCubeJdbcPersisterAdapter">
         <constructor-arg ref="connectionProvider"/>
     </bean>

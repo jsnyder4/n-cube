@@ -63,7 +63,6 @@ class NCubeJdbcPersister
     static final String PR_NOTES_PREFIX = 'PR notes: '
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
-    private static final String METHOD_NAME = '~method~'
     private static volatile AtomicBoolean isOracle = null
     private static volatile AtomicBoolean isMySQL = null
     private static volatile AtomicBoolean isHSQLDB = null
@@ -1777,7 +1776,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         return result
     }
 
-    static Long getMaxRevision(Connection c, ApplicationID appId, String cubeName, String methodName)
+    private static Long getMaxRevision(Connection c, ApplicationID appId, String cubeName, String methodName)
     {
         Map map = appId as Map
         map.cube = buildName(cubeName)

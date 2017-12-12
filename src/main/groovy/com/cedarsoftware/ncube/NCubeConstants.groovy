@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.SafeSimpleDateFormat
 import groovy.transform.CompileStatic
 
 /**
@@ -23,6 +24,8 @@ import groovy.transform.CompileStatic
 @CompileStatic
 interface NCubeConstants
 {
+    static final SafeSimpleDateFormat DATE_TIME_FORMAT = new SafeSimpleDateFormat('yyyy-MM-dd HH:mm:ss')
+
     final String ERROR_CANNOT_MOVE_000 = 'Version 0.0.0 is for system configuration and cannot be moved.'
     final String ERROR_CANNOT_MOVE_TO_000 = 'Version 0.0.0 is for system configuration and branch cannot be moved to it.'
     final String ERROR_CANNOT_RELEASE_000 = 'Version 0.0.0 is for system configuration and cannot be released.'
@@ -43,6 +46,8 @@ interface NCubeConstants
     final String SEARCH_CLOSURE = 'closure'
     final String SEARCH_OUTPUT = 'output'
     final String SEARCH_ALLOW_SYS_INFO = 'allowSysInfo'
+
+    final String METHOD_NAME = '~method~'
 
     final String SYS_ADVICE = 'sys.advice'
     final String SYS_APP = 'sys.app'

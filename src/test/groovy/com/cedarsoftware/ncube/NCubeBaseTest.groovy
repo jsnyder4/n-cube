@@ -36,7 +36,8 @@ import static org.junit.Assert.assertTrue
 @ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 //@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
-@ActiveProfiles(profiles = ['combined-server','test-database'])
+@ActiveProfiles(profiles = ['combined-server-ml, test-marklogic']) // requires MarkLogic server running locally
+//@ActiveProfiles(profiles = ['combined-server','test-database'])
 @Ignore
 class NCubeBaseTest implements NCubeConstants
 {

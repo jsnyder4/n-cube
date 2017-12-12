@@ -380,5 +380,11 @@
             <version>${version.apache.ivy}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.marklogic</groupId>
+            <artifactId>marklogic-client-api</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+
     </dependencies>
 </project>

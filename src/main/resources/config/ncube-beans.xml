@@ -49,11 +49,6 @@
 
         <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
 
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
     </beans>
 
     <beans profile="runtime-server">
@@ -102,11 +97,6 @@
             <constructor-arg value="false"/>
         </bean>
 
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
     </beans>
 
     <beans profile="combined-server">
@@ -130,10 +120,28 @@
 
         <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
         
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
+    </beans>
+
+    <beans profile="combined-server-ml">
+
+        <import resource="ncube-beans-persister-ml.xml"/>
+
+        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
+            <constructor-arg ref="ncubeController"/>
         </bean>
+
+        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
+            <constructor-arg ref="ncubeRuntime"/>
+            <constructor-arg value="true"/>
+        </bean>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="callableBean"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="true"/>
+        </bean>
+
+        <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
 
     </beans>
 

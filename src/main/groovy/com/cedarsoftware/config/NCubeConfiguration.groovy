@@ -140,7 +140,7 @@ class NCubeConfiguration
     @Profile('test-database')
     class TestDatabase
     {
-        @Bean(name = 'hsqlSetup')
+        @Bean(name = 'testDb')
         HsqlSchemaCreator getSchemaCreator()
         {
             HsqlSchemaCreator schemaCreator = new HsqlSchemaCreator(
@@ -150,6 +150,17 @@ class NCubeConfiguration
                     '',
                     '/config/hsqldb-schema.sql')
             return schemaCreator
+        }
+    }
+
+    @Configuration
+    @Profile('test-marklogic')
+    class TestMl
+    {
+        @Bean(name = 'testDb')
+        String testMl()
+        {
+            return ''
         }
     }
 }
