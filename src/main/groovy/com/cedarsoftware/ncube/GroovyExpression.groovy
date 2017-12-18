@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.StringUtilities
+import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
 import org.slf4j.Logger
@@ -112,7 +113,7 @@ import java.lang.reflect.Method
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 ${addlImports}
-${String.join('\n', extractedLines)}
+${Joiner.on('\n').join(extractedLines)}
 class ${className} extends ${expClassName}
 {
     Object run()
