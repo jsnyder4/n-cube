@@ -1,4 +1,7 @@
 ### Revision History
+* 4.1.29-SNAPSHOT
+  * `@PostConstruct` added to `NCubeConfiguration` to set compiled cache directories, acceptedDomains, and max stack size string after Spring intialize.  These were getting set too soon in the app start up phase preventing consuming apps from properly using their values.  Fix provided by Greg Morefield.
+  * Bug fix: `NCubeRuntime.prepareCube()` was caching the `NCube` before applying advices, allow another thread to pull an `NCube` from the cache before the advices were applied.  Fix provided by Greg Morefield. 
 * 4.1.28
   * Removed `String.join()`, which is Java 8 functionality, from `GroovyExpression` and replaced it with Guava's `Joiner` so that consumers using `<classifier>jre7</classifier>` can use NCube.
   * Bug fix: Updated `NCube.createStubCube()` so it doesn't try to delete columns reference axes. Reference axes on "stub NCubes" will now contain all columns. Non-reference axes continue to have no columns.

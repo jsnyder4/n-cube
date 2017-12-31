@@ -1274,12 +1274,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     private NCube prepareCube(NCube ncube, boolean force = false)
     {
+        applyAdvices(ncube)
         NCube cachedCube = cacheCube(ncube, force)
-        if (cachedCube.is(ncube))
-        {
-            applyAdvices(ncube)
-        }
-        return ncube
+        return cachedCube
     }
 
     //-- Advice --------------------------------------------------------------------------------------------------------

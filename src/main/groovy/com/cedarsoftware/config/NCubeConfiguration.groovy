@@ -1,16 +1,19 @@
 package com.cedarsoftware.config
 
+import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.UrlCommandCell
+import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.beans.factory.config.MethodInvokingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer
+
+import javax.annotation.PostConstruct
 
 /**
  * This class defines allowable actions against persisted n-cubes
@@ -103,37 +106,13 @@ class NCubeConfiguration
         return cacheManager
     }
 
-    @Bean(name = 'setSourcesDir')
-    MethodInvokingBean setSourcesDir() {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
-        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.GroovyBase.setGeneratedSourcesDirectory"
-        methodInvokingBean.arguments = [sourcesDirectory] as Object []
-        return methodInvokingBean
-    }
-
-    @Bean(name = 'setClassesDir')
-    MethodInvokingBean setClassesDir() {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
-        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.util.CdnClassLoader.setGeneratedClassesDirectory"
-        methodInvokingBean.arguments = [classesDirectory] as Object []
-        return methodInvokingBean
-    }
-
-    @Bean(name = 'setStackEntryCoordinateValueMaxSize')
-    MethodInvokingBean setStackEntryCoordinateValueMaxSize() {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
-        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.NCube.setStackEntryCoordinateValueMaxSize"
-        methodInvokingBean.arguments = [stackEntryCoordinateValueMaxSize] as Object []
-        return methodInvokingBean
-    }
-
-    @Bean(name = "ncubeAcceptedDomains")
-    MethodInvokingBean setNcubeAcceptedDomains()
+    @PostConstruct
+    void init()
     {
-        MethodInvokingBean methodInvokingBean = new MethodInvokingBean()
-        methodInvokingBean.staticMethod = "com.cedarsoftware.ncube.util.CdnClassLoader.setNcubeAcceptedDomains"
-        methodInvokingBean.arguments = [ncubeAcceptedDomains] as Object []
-        return methodInvokingBean
+        CdnClassLoader.generatedClassesDirectory = classesDirectory
+        GroovyBase.generatedSourcesDirectory = sourcesDirectory
+        NCube.stackEntryCoordinateValueMaxSize = stackEntryCoordinateValueMaxSize
+        CdnClassLoader.ncubeAcceptedDomains = ncubeAcceptedDomains
     }
 
     @Configuration
