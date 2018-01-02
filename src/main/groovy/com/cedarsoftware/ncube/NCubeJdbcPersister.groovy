@@ -60,7 +60,6 @@ class NCubeJdbcPersister
     static final String NOTES_BIN = 'notes_bin'
     static final String HEAD_SHA_1 = 'head_sha1'
     static final String CHANGED = 'changed'
-    static final String PR_NOTES_PREFIX = 'PR notes: '
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static volatile AtomicBoolean isOracle = null
@@ -183,7 +182,7 @@ ORDER BY ${orderByVersion} abs(revision_number) DESC
         return records
     }
 
-    static NCubeInfoDto insertCube(Connection c, ApplicationID appId, String name, Long revision, byte[] cubeData,
+    private static NCubeInfoDto insertCube(Connection c, ApplicationID appId, String name, Long revision, byte[] cubeData,
                                    byte[] testData, String notes, boolean changed, String sha1, String headSha1,
                                    String username, String methodName) throws SQLException
     {
@@ -244,7 +243,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         }
     }
 
-    static NCubeInfoDto insertCube(Connection c, ApplicationID appId, NCube cube, Long revision, byte[] testData, String notes,
+    private static NCubeInfoDto insertCube(Connection c, ApplicationID appId, NCube cube, Long revision, byte[] testData, String notes,
                                    boolean changed, String headSha1, String username, String methodName)
     {
         long uniqueId = UniqueIdGenerator.uniqueId
@@ -701,7 +700,6 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             Long rev = newRevision == null ? 0L : Math.abs(newRevision as long) + 1L    // New n-cube will start at 0 (unless we are re-using the name of a deleted cube, in which case it will start +1 from that)
             insertCube(c, appId, oldName, -(oldRevision + 1), oldBytes, testData, notes, true, oldSha1, oldHeadSha1, username, 'renameCube')    // delete cube being renamed
             insertCube(c, appId, ncube, rev, testData, notes, true, newHeadSha1, username, 'renameCube')                                        // create new cube
-
         }
         return true
     }
@@ -1623,14 +1621,6 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
         })
 
         return ret
-    }
-
-    static String getTestData(Connection c, Long cubeId)
-    {
-        Map map = [cubeId: cubeId]
-        String select = "/* getTestData */ SELECT test_data_bin FROM n_cube WHERE n_cube_id = :cubeId"
-        String msg = "Could not fetch test data for cube with id ${cubeId}"
-        return fetchTestData(c, map, select, msg)
     }
 
     static String getTestData(Connection c, ApplicationID appId, String cubeName)

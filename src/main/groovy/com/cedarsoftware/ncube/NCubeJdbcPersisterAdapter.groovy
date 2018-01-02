@@ -220,12 +220,6 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
                 "getTestData(${appId.cacheKey(cubeName)})", username)
     }
 
-    String getTestData(Long cubeId, String username)
-    {
-        return (String) jdbcOperation({ Connection c -> persister.getTestData(c, cubeId) },
-                "getTestData(${cubeId})", username)
-    }
-
     NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, String requestUser, String txId, String notes)
     {
         return (NCubeInfoDto) jdbcOperation({ Connection c -> persister.commitMergedCubeToHead(c, appId, cube, username, requestUser, txId, notes) },

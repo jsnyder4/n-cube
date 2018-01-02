@@ -108,6 +108,7 @@ interface NCubeConstants
     final String PR_COMPLETE = 'closed complete'
     final String PR_OBSOLETE = 'obsolete'
     final String PR_TXID = 'txid'
+    final String PR_NOTES_PREFIX = 'PR notes: '
 
     final String RUNTIME_BEAN = 'ncubeRuntime'
     final String MANAGER_BEAN = 'ncubeManager'

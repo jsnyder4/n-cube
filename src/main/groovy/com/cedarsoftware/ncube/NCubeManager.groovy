@@ -2531,6 +2531,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
         catch (IllegalStateException | BranchMergeException e)
         {
+            // TODO add logic to handle this case for MarkLogic
             Connection connection = threadBoundConnection
             connection.rollback() // rollback in case any work was done before this point
             obsoletePullRequest(prId)
@@ -2548,12 +2549,12 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     {
         NCube prCube = loadPullRequestCube(prId)
 
-        String status = prCube.getCell([(PR_PROP):PR_STATUS])
-        String appIdString = prCube.getCell([(PR_PROP):PR_APP])
+        String status = (String)prCube.getCell([(PR_PROP):PR_STATUS])
+        String appIdString = (String)prCube.getCell([(PR_PROP):PR_APP])
         ApplicationID prAppId = ApplicationID.convert(appIdString)
-        String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
-        String commitUser = prCube.getCell([(PR_PROP): PR_MERGER])
-        String prNotes = prCube.getCell([(PR_PROP): PR_ID])
+        String requestUser = (String)prCube.getCell([(PR_PROP): PR_REQUESTER])
+        String commitUser = (String)prCube.getCell([(PR_PROP): PR_MERGER])
+        String prNotes = (String)prCube.getCell([(PR_PROP): PR_ID])
 
         if (status.contains(PR_CLOSED) || status == PR_OBSOLETE)
         {

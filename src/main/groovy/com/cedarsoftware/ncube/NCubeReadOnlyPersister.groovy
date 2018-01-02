@@ -112,6 +112,4 @@ interface NCubeReadOnlyPersister
      * @throws IllegalArgumentException if the passed in cubeName does not exist.
      */
     String getTestData(ApplicationID appId, String cubeName, String username)
-
-    String getTestData(Long cubeId, String user)
 }

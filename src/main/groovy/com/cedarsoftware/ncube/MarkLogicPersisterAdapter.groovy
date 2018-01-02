@@ -5,8 +5,6 @@ import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.sql.Connection
-
 /**
  * Adapter for MarkLogic document storage
  *
@@ -70,12 +68,14 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     boolean renameCube(ApplicationID appId, String oldName, String newName, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.renameCube(appId, oldName, newName, username) },
+                "renameCube(${appId.cacheKey(oldName)} to ${newName})", username)
     }
 
     boolean duplicateCube(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.duplicateCube(oldAppId, newAppId, oldName, newName, username) },
+                "duplicateCube(${oldAppId.cacheKey(oldName)} -> ${newAppId.cacheKey(newName)})", username)
     }
 
     boolean deleteCubes(ApplicationID appId, Object[] cubeNames, boolean allowDelete, String username)
@@ -86,7 +86,8 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     boolean restoreCubes(ApplicationID appId, Object[] names, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.restoreCubes(appId, names, username) },
+                "restoreCubes(${appId})", username)
     }
 
     List<NCubeInfoDto> commitCubes(ApplicationID appId, Object[] cubeIds, String username, String requestUser, String txId, String notes)
@@ -97,37 +98,44 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     int rollbackCubes(ApplicationID appId, Object[] names, String username)
     {
-        return 0
+        return (int) mlOperation({ persister.rollbackCubes(appId, names, username) },
+                "rollbackCubes(${appId}, ${names.length} cubes)", username)
     }
 
     List<NCubeInfoDto> pullToBranch(ApplicationID appId, Object[] cubeIds, String username, long txId)
     {
-        return null
+        return (List<NCubeInfoDto>) mlOperation({ persister.pullToBranch(appId, cubeIds, username, txId) },
+                "pullToBranch(${appId}, ${cubeIds.length} cubes, txID=${txId})", username)
     }
 
     boolean mergeAcceptTheirs(ApplicationID appId, String cubeName, String sourceBranch, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.mergeAcceptTheirs(appId, cubeName, sourceBranch, username) },
+                "mergeAcceptTheirs(${appId.cacheKey(cubeName)}, theirs: ${sourceBranch})", username)
     }
 
     boolean mergeAcceptMine(ApplicationID appId, String cubeName, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.mergeAcceptMine(appId, cubeName, username) },
+                "mergeAcceptMine(${appId.cacheKey(cubeName)})", username)
     }
 
     NCubeInfoDto commitMergedCubeToHead(ApplicationID appId, NCube cube, String username, String requestUser, String txId, String notes)
     {
-        return null
+        return (NCubeInfoDto) mlOperation({ persister.commitMergedCubeToHead(appId, cube, username, requestUser, txId, notes) },
+                "commitMergedCubeToHead(${appId.cacheKey(cube.name)}, txID=${txId})", username)
     }
 
     NCubeInfoDto commitMergedCubeToBranch(ApplicationID appId, NCube cube, String headSha1, String username, long txId)
     {
-        return null
+        return (NCubeInfoDto) mlOperation({ persister.commitMergedCubeToBranch(appId, cube, headSha1, username, txId) },
+                "commitMergedCubeToBranch(${appId.cacheKey(cube.name)}, headSHA1=${headSha1}, txID=${txId})", username)
     }
 
     boolean updateBranchCubeHeadSha1(Long cubeId, String branchSha1, String headSha1, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.updateBranchCubeHeadSha1(cubeId, branchSha1, headSha1) },
+                "updateBranchCubeHeadSha1(${cubeId}, ${branchSha1}, ${headSha1})", username)
     }
 
     int copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, String username)
@@ -144,12 +152,14 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     boolean deleteBranch(ApplicationID appId, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.deleteBranch(appId) },
+                "deleteBranch(${appId})", username)
     }
 
     boolean deleteApp(ApplicationID appId, String username)
     {
-        return false
+        return (boolean) mlOperation({ persister.deleteApp(appId) },
+                "deleteApp(${appId})", username)
     }
 
     boolean doCubesExist(ApplicationID appId, boolean ignoreStatus, String methodName, String username)
@@ -160,22 +170,27 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     int changeVersionValue(ApplicationID appId, String newVersion, String username)
     {
-        return 0
+        return (int) mlOperation({ persister.changeVersionValue(appId, newVersion) },
+                "changeVersionValue(${appId}, ${newVersion})", username)
     }
 
     int moveBranch(ApplicationID appId, String newSnapVer, String username)
     {
-        return 0
+        return (int) mlOperation({ persister.moveBranch(appId, newSnapVer) },
+                "moveBranch(${appId}, to version ${newSnapVer})", username)
     }
 
     int releaseCubes(ApplicationID appId, String username)
     {
-        return 0
+        return (int) mlOperation({ persister.releaseCubes(appId) },
+                "releaseCubes(${appId})", username)
     }
 
     boolean updateNotes(ApplicationID appId, String cubeName, String notes, String username)
     {
-        return false
+        String ellipse = notes?.length() > 100 ? '...' : ''
+        return (boolean) mlOperation({ persister.updateNotes(appId, cubeName, notes) },
+                "updateNotes(${appId.cacheKey(cubeName)}, '${notes?.take(100) + ellipse}')", username)
     }
 
     void clearTestDatabase(String username)
@@ -192,7 +207,8 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     NCube loadCubeBySha1(ApplicationID appId, String name, String sha1, String username)
     {
-        return null
+        return (NCube) mlOperation({ persister.loadCubeBySha1(appId, name, sha1) },
+                "loadCubeBySha1(${appId.cacheKey(name)}, ${sha1})", username)
     }
 
     NCubeInfoDto loadCubeRecordById(long id, Map options, String username)
@@ -215,7 +231,8 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     List<NCubeInfoDto> getRevisions(ApplicationID appId, String cubeName, boolean ignoreVersion, String username)
     {
-        return null
+        return (List<NCubeInfoDto>) mlOperation({ persister.getRevisions(appId, cubeName, ignoreVersion) },
+                "getRevisions(${appId.cacheKey(cubeName)}", username)
     }
 
     Set<String> getBranches(ApplicationID appId, String username)
@@ -226,17 +243,14 @@ class MarkLogicPersisterAdapter implements NCubePersister
 
     Map getAppTestData(ApplicationID appId, String username)
     {
-        return null
+        return (Map) mlOperation({ persister.getAppTestData(appId) },
+                "getAppTestData(${appId}", username)
     }
 
     String getTestData(ApplicationID appId, String cubeName, String username)
     {
-        return null
-    }
-
-    String getTestData(Long cubeId, String user)
-    {
-        return null
+        return (String) mlOperation({ persister.getTestData(appId, cubeName) },
+                "getTestData(${appId.cacheKey(cubeName)})", username)
     }
 
 }
