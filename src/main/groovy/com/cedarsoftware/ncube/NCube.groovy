@@ -4043,8 +4043,11 @@ class NCube<T>
     {
         NCube stub = duplicate(name)
         stub.axes.each { Axis axis ->
-            axis.columns.each { Column column ->
-                stub.deleteColumn(axis.name, axis.getValueToLocateColumn(column))
+            if (!axis.reference)
+            {
+                axis.columns.each { Column column ->
+                    stub.deleteColumn(axis.name, axis.getValueToLocateColumn(column))
+                }
             }
         }
         return stub

@@ -565,23 +565,17 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
     static void createCube(Connection c, NCube cube, String username)
     {
         ApplicationID appId = cube.applicationID
-        Map<String, Object> options = [(SEARCH_INCLUDE_CUBE_DATA): true,
-                                       (SEARCH_INCLUDE_TEST_DATA): true,
-                                       (SEARCH_EXACT_MATCH_NAME): true,
+        Map<String, Object> options = [(SEARCH_EXACT_MATCH_NAME): true,
                                        (METHOD_NAME) : 'createCube'] as Map
-        boolean rowFound = false
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             throw new IllegalArgumentException("Unable to create cube: ${cube.name} in app: ${appId}, cube already exists (it may need to be restored)")
         })
 
         // Add Case - No existing row found, then create a new cube (updateCube can be used for update or create)
-        if (!rowFound)
-        {
-            String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
-            insertCube(c, appId, cube, 0L, updatedTestData?.bytes, "created", true, null, username, 'createCube')
-            createSysInfoCube(c, appId, username)
-        }
+        String updatedTestData = cube.metaProperties[NCube.METAPROPERTY_TEST_DATA]
+        insertCube(c, appId, cube, 0L, updatedTestData?.bytes, "created", true, null, username, 'createCube')
+        createSysInfoCube(c, appId, username)
     }
 
     static boolean duplicateCube(Connection c, ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName, String username)

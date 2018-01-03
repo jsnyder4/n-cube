@@ -10,6 +10,7 @@ import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static com.cedarsoftware.ncube.TestUrlClassLoader.getCacheSize
 import static org.junit.Assert.*
 
@@ -81,11 +82,13 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         preloadCubes(defaultSnapshotApp, 'test.branch.1.json', 'test.branch.age.1.json')
         List<NCubeInfoDto> list = mutableClient.search(defaultSnapshotApp, null, 'adult', [:])
+        assert list.size() == 1
         NCubeInfoDto dto = list.first()
         assert dto.bytes == null
         assert dto.testData == null
 
         list = mutableClient.search(defaultSnapshotApp, null, 'adult', [(SEARCH_INCLUDE_CUBE_DATA):true])
+        assert list.size() == 1
         dto = list.first()
         assert dto.bytes != null
     }
@@ -2246,6 +2249,57 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         {
             assertContainsIgnoreCase(e.message, ERROR_CANNOT_RELEASE_TO_000)
         }
+    }
+
+    @Test
+    void testSameRefAxisCubeCreatedInTwoBranches()
+    {
+        ApplicationID libraryBranch = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'Library', '1.0.0', ReleaseStatus.SNAPSHOT.name(), 'branch1')
+        ApplicationID library1 = libraryBranch.asHead()
+        NCube ref = new NCube('ref')
+        ref.applicationID = libraryBranch
+        Axis state = new Axis('state', AxisType.DISCRETE, AxisValueType.CISTRING, false)
+        state.addColumn('OH')
+        state.addColumn('IN')
+        state.addColumn('KY')
+        ref.addAxis(state)
+        mutableClient.createCube(ref)
+        mutableClient.commitBranch(libraryBranch)
+        mutableClient.releaseCubes(library1, '2.0.0')
+        mutableClient.releaseCubes(library1.asVersion('2.0.0'), '3.0.0')
+
+        ApplicationID branch1 = defaultSnapshotApp.asBranch('branch1')
+        ApplicationID branch2 = defaultSnapshotApp.asBranch('branch2')
+        ApplicationID lib1rel = library1.asRelease()
+
+        Map<String, Object> args = [:]
+        args[REF_TENANT] = lib1rel.tenant
+        args[REF_APP] = lib1rel.app
+        args[REF_VERSION] = lib1rel.version
+        args[REF_STATUS] = lib1rel.status
+        args[REF_BRANCH] = lib1rel.branch
+        args[REF_CUBE_NAME] = 'ref'
+        args[REF_AXIS_NAME] = 'state'
+        ReferenceAxisLoader refAxisLoader1 = new ReferenceAxisLoader('ref', 'state', args)
+        NCube pointer1 = new NCube('pointer')
+        pointer1.applicationID = branch1
+        Axis refAxis1 = new Axis('state', 1, false, refAxisLoader1)
+        pointer1.addAxis(refAxis1)
+        mutableClient.createCube(pointer1)
+
+        args[REF_VERSION] = '2.0.0'
+        ReferenceAxisLoader refAxisLoader2 = new ReferenceAxisLoader('ref', 'state', args)
+        NCube pointer2 = new NCube('pointer')
+        pointer2.applicationID = branch2
+        Axis refAxis2 = new Axis('state', 1, false, refAxisLoader2)
+        pointer2.addAxis(refAxis2)
+        pointer2.setCell('A', [state: 'OH'])
+        mutableClient.createCube(pointer2)
+
+        mutableClient.commitBranch(branch2)
+        mutableClient.updateBranch(branch1)
+        pointer2 = mutableClient.getCube(branch1, pointer1.name)
+        assert 'A' == pointer2.getCell([state: 'OH'])
     }
 
     private void loadTestClassPathCubes()
