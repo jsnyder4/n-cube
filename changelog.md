@@ -1,5 +1,7 @@
 ### Revision History
-* 4.1.29-SNAPSHOT
+* 4.1.30-SNAPSHOT
+  * --
+* 4.1.29
   * `@PostConstruct` added to `NCubeConfiguration` to set compiled cache directories, acceptedDomains, and max stack size string after Spring intialize.  These were getting set too soon in the app start up phase preventing consuming apps from properly using their values.  Fix provided by Greg Morefield.
   * Bug fix: `NCubeRuntime.prepareCube()` was caching the `NCube` before applying advices, allow another thread to pull an `NCube` from the cache before the advices were applied.  Fix provided by Greg Morefield. 
 * 4.1.28
