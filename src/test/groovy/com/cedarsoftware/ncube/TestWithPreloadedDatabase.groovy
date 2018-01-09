@@ -4950,13 +4950,13 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     void testConflictOverwriteBranch()
 	{
         NCube cube = createCubeFromResource(BRANCH2, "test.branch.2.json")
-        assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
+        assertEquals("EF05D590F7F2DA94B880EA9F4730EB6D53031B54", cube.sha1())
 
         Object[] dtos = mutableClient.getBranchChangesForHead(BRANCH2)
         mutableClient.commitBranch(BRANCH2, dtos)
 
         cube = mutableClient.getCube(HEAD, "TestBranch")
-        assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
+        assertEquals("EF05D590F7F2DA94B880EA9F4730EB6D53031B54", cube.sha1())
 
         cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -4965,7 +4965,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         createCubeFromResource(BRANCH1, "test.branch.1.json")
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
-        assertEquals("B4020BFB1B47942D8661640E560881E34993B608", cube.sha1())
+        assertEquals("D71891F6BD1CE8644F6BF5E2E553E2ECA652E785", cube.sha1())
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
@@ -5012,12 +5012,12 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 
         NCube cube = ncubeRuntime.getNCubeFromResource(BRANCH2, "test.branch.2.json")
         mutableClient.updateCube(cube)
-        assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
+        assertEquals("EF05D590F7F2DA94B880EA9F4730EB6D53031B54", cube.sha1())
 
         mutableClient.commitBranch(BRANCH2)
 
         cube = mutableClient.getCube(HEAD, "TestBranch")
-        assertEquals("BE7891140C2404A14A6C093C26B1740C749E815B", cube.sha1())
+        assertEquals("EF05D590F7F2DA94B880EA9F4730EB6D53031B54", cube.sha1())
 
         cube = mutableClient.getCube(BRANCH2, "TestBranch")
         assertEquals(3, cube.cellMap.size())
@@ -5027,7 +5027,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
-        assertEquals("B4020BFB1B47942D8661640E560881E34993B608", cube.sha1())
+        assertEquals("D71891F6BD1CE8644F6BF5E2E553E2ECA652E785", cube.sha1())
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
@@ -5515,7 +5515,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
 
         cube = mutableClient.getCube(BRANCH1, "TestBranch")
-        assertEquals("B4020BFB1B47942D8661640E560881E34993B608", cube.sha1())
+        assertEquals("D71891F6BD1CE8644F6BF5E2E553E2ECA652E785", cube.sha1())
         assertEquals(3, cube.cellMap.size())
         assertEquals("GHI", cube.getCell([Code : 10.0]))
 
