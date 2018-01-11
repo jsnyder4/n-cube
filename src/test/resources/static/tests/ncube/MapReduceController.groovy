@@ -7,6 +7,9 @@ class MapReduceController extends NCubeGroovyExpression
 {
     def run()
     {
+        // remove the 'key' that was used to access this cell to prevent mapReduce from limiting output
+        input.remove('key')
+
         Map options = [(NCube.MAP_REDUCE_COLUMNS_TO_SEARCH): ['foo'] as Set]
         if(input.cubeName)
         {

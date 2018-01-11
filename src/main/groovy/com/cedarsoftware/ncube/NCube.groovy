@@ -90,6 +90,7 @@ class NCube<T>
     private static final byte[] ARRAY_BYTES = 'array'.bytes
     private static final byte[] MAP_BYTES = 'map'.bytes
     private static final byte[] COL_BYTES = 'col'.bytes
+    private static int ncubeSha1Version
 
     private String name
     private String sha1
@@ -1259,10 +1260,25 @@ class NCube<T>
         boolean isColDiscrete = colAxis.type == AxisType.DISCRETE
 
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
-        final Map matchingRows = new CaseInsensitiveMap()
-        final Map whereVars = new CaseInsensitiveMap(input)
+        final Map matchingRows = rowAxis.valueType == AxisValueType.CISTRING ? new CaseInsensitiveMap() : new LinkedHashMap()
+        final Map whereVars = colAxis.valueType == AxisValueType.CISTRING ? new CaseInsensitiveMap(input) : new LinkedHashMap(input)
 
-        for (Column row : rowAxis.columns)
+        Collection<Column> rowColumns
+        Object rowAxisValue = input[rowAxisName]
+        if (rowAxisValue)
+        {
+            rowColumns = selectColumns(rowAxis, rowAxisValue instanceof Collection ? rowAxisValue as Set : [rowAxisValue] as Set)
+            if (rowColumns.contains(null))
+            {
+                throw new IllegalStateException("At least one row axis column not found for input:${rowAxisValue.toString()}")
+            }
+        }
+        else
+        {
+            rowColumns = rowAxis.columns
+        }
+
+        for (Column row : rowColumns)
         {
             commandInput.put(rowAxisName, rowAxis.getValueToLocateColumn(row))
             long rowId = row.id
@@ -1328,8 +1344,8 @@ class NCube<T>
      */
     Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:])
     {
-        throwIf(!colAxisName, new IllegalArgumentException('The column axis name cannot be null'))
-        throwIf(!where, new IllegalArgumentException('The where clause cannot be null'))
+        throwIf(!colAxisName, 'The column axis name cannot be null')
+        throwIf(!where, 'The where clause cannot be null')
 
         Axis colAxis = axisList[colAxisName]
         Map input = (Map)options.input ?: [:]
@@ -1467,11 +1483,11 @@ class NCube<T>
         return columns
     }
 
-    private static void throwIf(boolean throwCondition, Exception ex)
+    private static void throwIf(boolean throwCondition, String msg)
     {
         if (throwCondition)
         {
-            throw ex
+            throw new IllegalArgumentException(msg)
         }
     }
 
@@ -1516,7 +1532,7 @@ class NCube<T>
     {
         String axisName = searchAxis.name
         boolean isDiscrete = searchAxis.type == AxisType.DISCRETE
-        Map result = new CaseInsensitiveMap()
+        Map result = searchAxis.valueType == AxisValueType.CISTRING ? new CaseInsensitiveMap() : new LinkedHashMap()
 
         for (Column column : selectList)
         {
@@ -4097,11 +4113,157 @@ class NCube<T>
         return coords
     }
 
+    static int setNcubeSha1Version(int sha1Version)
+    {
+        ncubeSha1Version = sha1Version
+    }
+
+    static int getNcubeSha1Version()
+    {
+        return ncubeSha1Version
+    }
+
     /**
      * @return SHA1 value for this n-cube.  The value is durable in that Axis order and
      * cell order do not affect the SHA1 value.
      */
     String sha1()
+    {
+        if (ncubeSha1Version == 1) {
+            return sha1V1()
+        }
+        if (ncubeSha1Version == 2) {
+            return sha1V2()
+        }
+        throw new IllegalStateException('Application property for ncube.sha1.version must be set.')
+    }
+
+    private String sha1V2()
+    {
+        // Check if the SHA1 is already calculated.  If so, return it.
+        // In order to cache it successfully, all mutable operations on n-cube must clear the SHA1.
+        if (StringUtilities.hasContent(sha1))
+        {
+            return sha1
+        }
+
+        Map<String, String> axisNameMap = [:]
+        final byte sep = 0
+        MessageDigest sha1Digest = EncryptionUtilities.SHA1Digest
+        sha1Digest.update(name == null ? ''.bytes : name.bytes)
+        sha1Digest.update(sep)
+
+        deepSha1(sha1Digest, defaultCellValue, sep)
+        Map copy = new TreeMap(metaProperties)
+        copy.remove(METAPROPERTY_TEST_DATA)
+        deepSha1(sha1Digest, copy, sep)
+
+        // Need deterministic ordering (sorted by Axis name will do that)
+        Map<String, Axis> sortedAxes = new TreeMap<>(axisList)
+        sha1Digest.update(A_BYTES)       // a=axes
+        sha1Digest.update(sep)
+
+        for (entry in sortedAxes.entrySet())
+        {
+            Axis axis = entry.value
+            String axisName = axis.name
+            String axisNameLower = axisName.toLowerCase()
+            axisNameMap.put(axisName, axisNameLower)
+            sha1Digest.update(axisNameLower.bytes)
+            sha1Digest.update(sep)
+            sha1Digest.update(String.valueOf(axis.columnOrder).bytes)
+            sha1Digest.update(sep)
+            sha1Digest.update(axis.type.name().bytes)
+            sha1Digest.update(sep)
+            sha1Digest.update(axis.valueType.name().bytes)
+            sha1Digest.update(sep)
+            sha1Digest.update(axis.hasDefaultColumn() ? TRUE_BYTES : FALSE_BYTES)
+            sha1Digest.update(sep)
+            if (!axis.fireAll)
+            {   // non-default value, add to SHA1 because it's been changed (backwards sha1 compatible)
+                sha1Digest.update(O_BYTES)
+                sha1Digest.update(sep)
+            }
+            if (!MapUtilities.isEmpty(axis.metaProps))
+            {
+                deepSha1(sha1Digest, new TreeMap<>(axis.metaProps), sep)
+            }
+            sha1Digest.update(sep)
+            boolean displayOrder = axis.columnOrder == Axis.DISPLAY
+            if (axis.reference)
+            {
+                for (column in axis.columns)
+                {
+                    if (!MapUtilities.isEmpty(column.metaProps))
+                    {
+                        deepSha1(sha1Digest, column.metaProps, sep)
+                    }
+                }
+            }
+            else
+            {
+                for (column in axis.columnsWithoutDefault)
+                {
+                    Object v = column.value
+                    Object safeVal = (v == null) ? '' : v
+                    sha1Digest.update(safeVal.toString().bytes)
+                    sha1Digest.update(sep)
+                    if (!MapUtilities.isEmpty(column.metaProps))
+                    {
+                        deepSha1(sha1Digest, column.metaProps, sep)
+                    }
+                    sha1Digest.update(sep)
+                    if (displayOrder)
+                    {
+                        String order = String.valueOf(column.displayOrder)
+                        sha1Digest.update(order.bytes)
+                        sha1Digest.update(sep)
+                    }
+                }
+
+                if (axis.hasDefaultColumn() && !MapUtilities.isEmpty(axis.defaultColumn.metaProperties))
+                {
+                    deepSha1(sha1Digest, axis.defaultColumn.metaProperties, sep)
+                }
+            }
+        }
+
+        // Deterministic ordering of cell values with coordinates.
+        // 1. Build String SHA-1 of coordinate + SHA-1 of cell contents.
+        // 2. Combine and then sort.
+        // 3. Build SHA-1 from this.
+        sha1Digest.update(C_BYTES)  // c = cells
+        sha1Digest.update(sep)
+
+        if (numCells)
+        {
+            List<String> sha1s = new ArrayList<>(cells.size()) as List
+            MessageDigest tempDigest = EncryptionUtilities.SHA1Digest
+
+            for (entry in cells.entrySet())
+            {
+                String keySha1 = columnIdsToStringV2(axisNameMap, entry.key)
+                deepSha1(tempDigest, entry.value, sep)
+                String valueSha1 = StringUtilities.encode(tempDigest.digest())
+                sha1s.add(EncryptionUtilities.calculateSHA1Hash((keySha1 + valueSha1).bytes))
+                tempDigest.reset()
+            }
+
+            Collections.sort(sha1s)
+
+            for (sha_1 in sha1s)
+            {
+                sha1Digest.update(sha_1.bytes)
+            }
+        }
+        sha1 = StringUtilities.encode(sha1Digest.digest())
+        return sha1
+    }
+
+    // This version of the sha1 algorithm is broken in the case of cutting the cell data between two columns with the
+    // same value on two different axes. E.g. Deleting cell value from axis1:a, axis2:b and setting same cell value at axis1:b, axis2:a
+    @Deprecated
+    private String sha1V1()
     {
         // Check if the SHA1 is already calculated.  If so, return it.
         // In order to cache it successfully, all mutable operations on n-cube must clear the SHA1.
@@ -4201,7 +4363,7 @@ class NCube<T>
 
             for (entry in cells.entrySet())
             {
-                String keySha1 = columnIdsToString(entry.key)
+                String keySha1 = columnIdsToStringV1(entry.key)
                 deepSha1(tempDigest, entry.value, sep)
                 String valueSha1 = StringUtilities.encode(tempDigest.digest())
                 sha1s.add(EncryptionUtilities.calculateSHA1Hash((keySha1 + valueSha1).bytes))
@@ -4219,7 +4381,32 @@ class NCube<T>
         return sha1
     }
 
-    private String columnIdsToString(Set<Long> columns)
+    private String columnIdsToStringV2(Map<String, String> axisNameMap, Set<Long> columns)
+    {
+        List<String> list = new ArrayList(columns.size())
+        for (colId in columns)
+        {
+            Axis axis = getAxisFromColumnId(colId)
+            if (axis != null)
+            {   // Rare case where a column has an invalid ID.
+                Column column = axis.getColumnById(colId)
+                Object value = column.columnName ?: column.value
+                list.add("${axisNameMap.get(axis.name)}|${value == null ? 'Default' : value.toString()}".toString())
+            }
+        }
+        Collections.sort(list)
+        StringBuilder s = new StringBuilder()
+        for (str in list)
+        {
+            s.append(str)
+            s.append('|')
+        }
+        return s.toString()
+    }
+
+    // This method could cause sha1 issues where the same column names were on different axes.
+    @Deprecated
+    private String columnIdsToStringV1(Set<Long> columns)
     {
         List<String> list = new ArrayList(columns.size())
         for (colId in columns)
