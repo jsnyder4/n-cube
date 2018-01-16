@@ -5332,34 +5332,35 @@ class TestNCube extends NCubeBaseTest
     void testMapReduceFindNoMatchingRowsSpecified()
     {
         NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
-
-        try
-        {
-            ncube.mapReduce('query', { true }, [input:[key:['NonExistentKey']]])
-            fail 'Should have thrown an IllegalStateException'
-        }
-        catch (Exception e)
-        {
-            assert e instanceof IllegalStateException
-            assertContainsIgnoreCase(e.message, 'At least one row axis column not found for input', 'NonExistentKey')
-        }
+        Map queryResult = ncube.mapReduce('query', { true }, [input:[key:['NonExistentKey']]])
+        assert queryResult.isEmpty()
     }
 
     @Test
     void testMapReduceFindNoMatchingRowsInSetSpecified()
     {
         NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('query', { true }, [input:[key:['NonExistentKey','AlsoNotFound']]])
+        assert queryResult.isEmpty()
+    }
 
-        try
-        {
-            ncube.mapReduce('query', { true }, [input:[key:['NonExistentKey','AlsoNotFound']]])
-            fail 'Should have thrown an IllegalStateException'
-        }
-        catch (Exception e)
-        {
-            assert e instanceof IllegalStateException
-            assertContainsIgnoreCase(e.message, 'At least one row axis column not found for input', 'NonExistentKey', 'AlsoNotFound')
-        }
+    @Test
+    void testMapReduceFindSomeMatchingRowsInSetSpecified()
+    {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQueryTest.json')
+        Map queryResult = ncube.mapReduce('query', { true }, [input:[key:['NonExistentKey','C']]])
+        assert queryResult.size() == 1
+        assert queryResult.keySet().containsAll(['C'])
+    }
+
+    @Test
+    void testMapReduceCaseSensitive3D() {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'selectQuery3DTest.json')
+        Map queryResult = ncube.mapReduce('Val', {Map input -> input['Val1'] != null || input['val1'] != null || input[null] != null})
+        assert queryResult.size() == 3
+        assert queryResult.containsKey([Row:1L, Column:'A'])
+        assert queryResult.containsKey([Row:1L, Column:'B'])
+        assert queryResult.containsKey([Row:2L, Column:'B'])
     }
 
     @Test
