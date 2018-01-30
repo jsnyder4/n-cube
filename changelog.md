@@ -1,6 +1,17 @@
 ### Revision History
-* 4.2.2-SNAPSHOT
+* 4.2.5-SNAPSHOT
   * --
+* 4.2.4
+  * NCube.mapReduce() - input/output Map when passed in was not getting used if it was empty (Groovy truth - empty map is false - threw off comparison). @gmorefield.
+  * NCube.mapReduce() - when ran against a rule cube, the row and column axis names need to be added to the tracking map.  @gmorefield.
+* 4.2.3
+  * Updated `NCube.mapReduce()` to return errors in cells vs ending the entire call when error occurs.
+  * Updated `NCube.mapReduce()` to include an option for executing cells while running (default is no execute).
+* 4.2.2
+  * Updated to consume json-command-servlet 1.8.3
+  * Updated to consume spring 4.3.13.RELEASE
+  * Updated to consume spring-boot 1.5.9.RELEASE
+  * Updated to consume tomcat 8.5.24
 * 4.2.1
   * Remove old sha1 algorithm and sha1 versioning as it is no longer needed.
   * Bug fix: `NCube.mapReduce()` not properly handling case-sensitive columns.

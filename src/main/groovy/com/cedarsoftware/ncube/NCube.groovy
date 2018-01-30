@@ -80,6 +80,7 @@ class NCube<T>
     public static final String METAPROPERTY_TEST_DATA = '_testData'
     public static final String MAP_REDUCE_COLUMNS_TO_SEARCH = 'columnsToSearch'
     public static final String MAP_REDUCE_COLUMNS_TO_RETURN = 'columnsToReturn'
+    public static final String MAP_REDUCE_SHOULD_EXECUTE = 'shouldExecute'
     public static final String MAP_REDUCE_DEFAULT_VALUE = 'defaultValue'
     protected static final byte[] TRUE_BYTES = 't'.bytes
     protected static final byte[] FALSE_BYTES = 'f'.bytes
@@ -340,7 +341,7 @@ class NCube<T>
         {
             StringBuilder s = new StringBuilder()
             s.append("${cubeName}:[")
-            Iterator<Map.Entry<String, Object>> i = coord.entrySet().iterator()
+            Iterator<Map.Entry> i = coord.entrySet().iterator()
             
             while (i.hasNext())
             {
@@ -1245,18 +1246,29 @@ class NCube<T>
      */
     private Map internalMapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Map options = [:], Map columnDefaultCache)
     {
-        Map input = (Map) options.input ?: [:]
-        Map output = (Map) options.output ?: [:]
-        Object defaultValue = options[MAP_REDUCE_DEFAULT_VALUE]
+        Map input =  options.containsKey('input') ? (Map) options.input : [:]
+        Map output = options.containsKey('output') ? (Map) options.output : [:]
+        Object defaultValue = options.get(MAP_REDUCE_DEFAULT_VALUE)
         Collection<Column> selectList = (Collection) options.selectList
         Collection<Column> whereColumns = (Collection) options.whereColumns
-        final Map commandInput = new TrackingMap<>(new LinkedHashMap(input))
+        final TrackingMap commandInput = new TrackingMap<>(new LinkedHashMap(input))
         Set<Long> boundColumns = bindAdditionalColumns(rowAxisName, colAxisName, commandInput)
+        boolean shouldExecute = options.get(MAP_REDUCE_SHOULD_EXECUTE)
 
         Axis rowAxis = getAxis(rowAxisName)
         Axis colAxis = getAxis(colAxisName)
         boolean isRowDiscrete = rowAxis.type == AxisType.DISCRETE
         boolean isColDiscrete = colAxis.type == AxisType.DISCRETE
+
+        if (rowAxis.type!=AxisType.RULE)
+        {
+            commandInput.informAdditionalUsage([rowAxisName])
+        }
+        if (colAxis.type!=AxisType.RULE)
+        {
+            commandInput.informAdditionalUsage([colAxisName])
+        }
+        trackInputKeysUsed(commandInput,output)
 
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
         final Map matchingRows = new LinkedHashMap()
@@ -1289,7 +1301,16 @@ class NCube<T>
                 ids.add(whereId)
                 commandInput.put(colAxisName, colAxis.getValueToLocateColumn(column))
                 Object colKey = isColDiscrete ? column.value : column.columnName
-                whereVars.put(colKey, getCellById(ids, commandInput, output, defaultValue, columnDefaultCache))
+                def val
+                try
+                {
+                    val = shouldExecute ? getCellById(ids, commandInput, output, defaultValue, columnDefaultCache) : cells[ids]
+                }
+                catch (Exception e)
+                {
+                    val = "err: ${getExceptionMessage(getDeepestException(e))}".toString()
+                }
+                whereVars.put(colKey, val)
                 ids.remove(whereId)
             }
 
@@ -1348,7 +1369,7 @@ class NCube<T>
         throwIf(!where, 'The where clause cannot be null')
 
         Axis colAxis = axisList[colAxisName]
-        Map input = (Map)options.input ?: [:]
+        Map input = options.containsKey('input') ? (Map)options.input : [:]
         Set columnsToSearch = (Set)options[MAP_REDUCE_COLUMNS_TO_SEARCH]
         Set columnsToReturn = (Set)options[MAP_REDUCE_COLUMNS_TO_RETURN]
         final Map columnDefaultCache = new CaseInsensitiveMap()
@@ -1358,6 +1379,7 @@ class NCube<T>
         commandOpts.input = commandInput
         commandOpts.selectList = selectColumns(colAxis, columnsToReturn)
         commandOpts.whereColumns = selectColumns(colAxis, columnsToSearch)
+        commandOpts.put(MAP_REDUCE_SHOULD_EXECUTE, options.get(MAP_REDUCE_SHOULD_EXECUTE) == null ? true : options.get(MAP_REDUCE_SHOULD_EXECUTE))
 
         String rowAxisName
         Set<String> searchAxes = axisNames - colAxisName - input.keySet()
@@ -1580,7 +1602,7 @@ class NCube<T>
 
         if (ruleValue instanceof Boolean)
         {
-            return ruleValue == true
+            return ruleValue
         }
 
         if (ruleValue instanceof Number)
@@ -1814,7 +1836,7 @@ class NCube<T>
                     cellInfo = new CellInfo(value)
                     ret[idx++] = [coord, cellInfo as Map]
                 }
-                catch (Exception e)
+                catch (Exception ignored)
                 {
                     cellInfo = new CellInfo(value.toString())    // Convert non-logical primitive to String
                     ret[idx++] = [coord, cellInfo as Map]
@@ -3325,7 +3347,7 @@ class NCube<T>
                         {    // skip deleted columns
                             Map columnProps = (Map)column[(PARSE_COL_PROPS)]
                             transformMetaProperties(columnProps)
-                            Iterator<Map.Entry<String, Object>> i = columnProps.entrySet().iterator()
+                            Iterator<Map.Entry> i = columnProps.entrySet().iterator()
                             while (i.hasNext())
                             {
                                 Map.Entry<String, Object> entry = i.next()
@@ -3668,7 +3690,7 @@ class NCube<T>
                         Column col = newAxis.getColumnById((long)column['id'])
                         if (col)
                         {    // skip deleted columns
-                            Iterator<Map.Entry<String, Object>> i = column.entrySet().iterator()
+                            Iterator<Map.Entry> i = column.entrySet().iterator()
                             while (i.hasNext())
                             {
                                 Map.Entry<String, Object> entry = i.next()

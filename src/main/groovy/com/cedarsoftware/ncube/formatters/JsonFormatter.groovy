@@ -106,7 +106,7 @@ class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
                 }
             }
 
-            if (ncube.metaProperties.size() > 0)
+            if (!ncube.metaProperties.isEmpty())
             {
                 writeMetaProperties(ncube.metaProperties)
                 comma()
@@ -118,17 +118,12 @@ class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         }
         catch (Exception e)
         {
-            throw new IllegalStateException(String.format("Unable to format NCube '%s' into JSON", name), e)
+            throw new IllegalStateException("Unable to format NCube '${name}' into JSON", e)
         }
     }
 
     private void writeMetaProperties(Map<String, Object> metaProps) throws IOException
     {
-        if (metaProps.size() < 1)
-        {
-            return
-        }
-
         Iterator<Map.Entry<String, Object>> i = metaProps.entrySet().iterator()
         while (i.hasNext())
         {
@@ -136,7 +131,7 @@ class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             final String key = entry.key
             Object value = entry.value
 
-            if (value instanceof String || value instanceof Boolean || value == null)
+            if (value == null || value instanceof String || value instanceof Boolean)
             {   // Allows for simple key ==> value associations to be written when value is JSON supported type
                 writeObjectKeyValue(key, value, false)
             }
@@ -361,7 +356,7 @@ class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
             writeId(column.id, true)
         }
         writeType(columnType)
-        if (column.metaProperties.size() > 0)
+        if (!column.metaProperties.isEmpty())
         {
             writeMetaProperties(column.metaProperties)
             comma()
