@@ -4921,6 +4921,7 @@ class NCube<T>
      * @param axisName String name of axis to get (case ignored)
      * @return Axis if found, null otherwise.
      */
+    @Deprecated
     Axis get(String axisName)
     {
         return axisList[axisName]

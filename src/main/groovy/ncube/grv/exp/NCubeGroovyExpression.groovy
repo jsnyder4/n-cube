@@ -368,7 +368,7 @@ class NCubeGroovyExpression
      */
     Axis getAxis(String axisName)
     {
-        Axis axis = (Axis) ncube[axisName]
+        Axis axis = (Axis) ncube.getAxis(axisName)
         if (axis == null)
         {
             throw new IllegalArgumentException("Axis: ${axisName} does not exist on n-cube: ${ncube.name}")
@@ -386,7 +386,7 @@ class NCubeGroovyExpression
      */
     Axis getAxis(String cubeName, String axisName)
     {
-        Axis axis = (Axis) getCube(cubeName)[axisName]
+        Axis axis = (Axis) getCube(cubeName).getAxis(axisName)
         if (axis == null)
         {
             throw new IllegalArgumentException("Axis: ${axisName} does not exist on n-cube: ${cubeName}")

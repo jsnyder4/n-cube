@@ -654,8 +654,8 @@ class TestL3Cache extends NCubeCleanupBaseTest
         ncube.addAxis(axis)
         ncubeRuntime.addCube(ncube)
 
-        String class1 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { println 'hello' ; output.hello = true } }"
-        String class2 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { println 'goodbye' ; output.goodbye = true } }"
+        String class1 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { output.hello = true } }"
+        String class2 = "class Foo extends ncube.grv.exp.NCubeGroovyExpression { def run() { output.goodbye = true } }"
 
         GroovyExpression exp1 = new GroovyExpression(class1, null,false)
         GroovyExpression exp2 = new GroovyExpression(class2, null,false)

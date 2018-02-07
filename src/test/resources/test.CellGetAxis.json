@@ -1,0 +1,32 @@
+{
+  "ncube": "test.CellGetAxis",
+  "axes": [
+    {
+      "name": "name",
+      "type": "DISCRETE",
+      "valueType": "STRING",
+      "hasDefault": false,
+      "preferredOrder": 0,
+      "columns": [
+        {
+          "id":"OH"
+        },
+        {
+          "id":"IN"
+        }
+      ]
+    }
+  ],
+  "cells": [
+    {
+      "id": ["OH"],
+      "type": "exp",
+      "value":"Axis axis = getAxis('name'); return axis"
+    },
+    {
+      "id": ["IN"],
+      "type": "exp",
+      "value":"Axis axis = getAxis('test.CellGetAxis', 'name'); return axis"
+    }
+  ]
+}
