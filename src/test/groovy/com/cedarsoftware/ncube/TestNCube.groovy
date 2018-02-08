@@ -362,10 +362,10 @@ class TestNCube extends NCubeBaseTest
     void testDefaultNCubeCellValue()
     {
         NCube ncube = NCubeBuilder.getTestNCube2D(true)
-        ncube.defaultCellValue = 3.0        // Non-set cells will return this value
+        ncube.setDefaultCellValue(3.0d)        // Non-set cells will return this value
 
         Map coord = [Gender:'Male', Age:18] as Map
-        ncube.setCell(21.0, coord)
+        ncube.setCell(21.0d, coord)
         Double x = ncube.getCell(coord) as Double
         assertTrue(x == 21.0)
         coord.Age = 65
@@ -379,7 +379,7 @@ class TestNCube extends NCubeBaseTest
     {
         NCube ncube = NCubeBuilder.getTestNCube2D(true)
         Map coord = [Gender:'Male', Age:18] as Map
-        ncube.setCell(21.0, coord)
+        ncube.setCell(21.0d, coord)
         Double x = ncube.getCell(coord, [:], -1) as Double
         assertTrue(x == 21.0)
         coord.Age = 65
@@ -901,14 +901,14 @@ class TestNCube extends NCubeBaseTest
         Map coord = [:] as Map
         coord.put("Gender", "Male")
         coord.put("Age", 39)
-        ncube.setCell(9.9, coord)
+        ncube.setCell(9.9d, coord)
         assertTrue(ncube.getCell(coord) == 9.9)
         assertTrue(countMatches(ncube.toHtml(), "<tr") == 4)
 
         coord.put("Gender", "Fmale")    // intentional
         try
         {
-            ncube.setCell(9.9, coord)
+            ncube.setCell(9.9d, coord)
             fail("should throw an exception")
         }
         catch (CoordinateNotFoundException e)
@@ -935,7 +935,7 @@ class TestNCube extends NCubeBaseTest
         NCube ncube = NCubeBuilder.getTestNCube2D(false)
         try
         {
-            ncube.setCell(9.9, null)
+            ncube.setCell(9.9d, null)
             fail()
         }
         catch (CoordinateNotFoundException e)
@@ -948,7 +948,7 @@ class TestNCube extends NCubeBaseTest
         Map coord = [:] as Map
         try
         {
-            ncube.setCell(9.9, coord)
+            ncube.setCell(9.9d, coord)
             fail()
         }
         catch (CoordinateNotFoundException e)
@@ -964,7 +964,7 @@ class TestNCube extends NCubeBaseTest
         coord.put("Gender", "Male")
         try
         {
-            ncube.setCell(9.9, coord)
+            ncube.setCell(9.9d, coord)
             fail()
         }
         catch (CoordinateNotFoundException e)
@@ -3195,7 +3195,7 @@ class TestNCube extends NCubeBaseTest
         Set colIds = new HashSet()
         colIds.add(ageCol0)
         colIds.add(genderCol0)
-        ncube.setCellById(1.1, colIds)
+        ncube.setCellById(1.1d, colIds)
 
         def coord = [:]
         coord.AGE = ageCol.valueThatMatches
@@ -4833,7 +4833,7 @@ class TestNCube extends NCubeBaseTest
         NCube ncube = NCubeBuilder.getTestNCube2D(false)
         try
         {
-            ncube.setCellById(1.0, null)
+            ncube.setCellById(1.0d, null)
             fail()
         }
         catch (InvalidCoordinateException e)

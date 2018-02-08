@@ -19,7 +19,7 @@ NCube getCube(String name = ncube.name, boolean quiet = false)
     NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
     if (cube == null && !quiet)
     {
-        throw new IllegalArgumentException('n-cube: ' + name + ' not found.')
+        throw new IllegalArgumentException("n-cube: ${name} not found.")
     }
     return cube
 }
@@ -29,7 +29,7 @@ Axis getAxis(String axisName, String cubeName = ncube.name)
     Axis axis = getCube(cubeName).getAxis(axisName)
     if (axis == null)
     {
-        throw new IllegalArgumentException('Axis: ' + axisName + ', does not exist on n-cube: ' + cubeName + ', app: ' + ncube.applicationID)
+        throw new IllegalArgumentException("Axis: ${axisName}, does not exist on n-cube: ${cubeName}, app: ${ncube.applicationID}")
     }
     return axis
 }
@@ -93,7 +93,7 @@ def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
     return getCube(cubeName).use(input, origInput, output, defaultValue)
 }
 
-Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, Map options = [:], String cubeName = null, ApplicationID appId = null)
+Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], String cubeName = null, ApplicationID appId = null)
 {
     NCube target
     if (cubeName)
@@ -107,7 +107,7 @@ Map mapReduce(String rowAxisName, String colAxisName, Closure where = { true }, 
     }
     options.input = input
     options.output = output
-    return target.mapReduce(rowAxisName, colAxisName, where, options)
+    return target.mapReduce(colAxisName, where, options)
 }
 
 String url(String url)

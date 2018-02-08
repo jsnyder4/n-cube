@@ -816,7 +816,7 @@ class TestAxis extends NCubeBaseTest
     {
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'testCube4.json')
         ncube.deleteColumn('code', 'b')
-        Axis axis = ncube['code'] as Axis
+        Axis axis = ncube.getAxis('code') as Axis
         assert axis.id != 0
         assert axis.columns.size() == 2
         axis.deleteColumn('o')

@@ -77,7 +77,7 @@ class TestColumn extends NCubeBaseTest
     void testDeleteRuleColumnBadInput()
     {
         NCube ncube = NCubeBuilder.getRule1D()
-        Axis rule = (Axis) ncube['rule']
+        Axis rule = (Axis) ncube.getAxis('rule')
         assert rule.size() == 2
         assert !ncube.deleteColumn('rule', new Date())
         assert rule.size() == 2

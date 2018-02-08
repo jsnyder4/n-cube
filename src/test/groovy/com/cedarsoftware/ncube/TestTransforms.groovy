@@ -55,7 +55,7 @@ class TestTransforms extends NCubeCleanupBaseTest
 
         appCube.removeAxisReferenceTransform(refAxisName)
         String json = appCube.toFormattedJson()
-        Axis reloadAxis = NCube.fromSimpleJson(json).get(refAxisName)
+        Axis reloadAxis = NCube.fromSimpleJson(json).getAxis(refAxisName)
         assert 3 == reloadAxis.columns.size()
         assert reloadAxis.findColumn('OH')
         assert reloadAxis.findColumn('NJ')

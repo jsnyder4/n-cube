@@ -40,14 +40,14 @@ class ProxyRouter
 {
     static final String SYS_CLASSPATH_PREFIX = 'sys.classpath.prefix'
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProxyRouter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProxyRouter.class)
 
     /**
      * Route the given request based on configured routing within n-cube
      */
-    public void route(HttpServletRequest request, HttpServletResponse response)
+    void route(HttpServletRequest request, HttpServletResponse response)
     {   // use n-cube
-        Map<String, String[]> requestParams = request.getParameterMap()
+        Map<String, String[]> requestParams = request.parameterMap
         if (!requestParams.containsKey('appId'))
         {
             try
@@ -64,11 +64,11 @@ class ProxyRouter
         {
             ApplicationID appId = buildAppId(requestParams)
             NCube finder = new NCube('router')
-            finder.setApplicationID(appId)
+            finder.applicationID = appId
             finder.addAxis(new Axis('dontcare', AxisType.DISCRETE, AxisValueType.STRING, true, Axis.DISPLAY, 1))
             String sysPathPrefix = request.getAttribute(SYS_CLASSPATH_PREFIX)
-            String path = '/' + sysPathPrefix + '/'
-            String actualPath = request.getServletPath() - path     // Groovy String subtraction
+            String path = "/${sysPathPrefix}/"
+            String actualPath = request.servletPath - path     // Groovy String subtraction
 
             CommandCell cmd = new StringUrlCmd(actualPath, false)
             finder.setCell(cmd, [:])
@@ -77,7 +77,7 @@ class ProxyRouter
         }
         catch (Exception e)
         {
-            String msg = '"appId" parameter not parsing as valid JSON: ' + requestParams.appId
+            String msg = "'appId' parameter not parsing as valid JSON: ${requestParams.appId}"
             try
             {
                 LOG.error(msg, e)

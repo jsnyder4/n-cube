@@ -761,7 +761,7 @@ class TestDelta extends NCubeCleanupBaseTest
         assert cube1.numCells == 48
         Map coord = [age: 17, salary: 60000, log: 1000, state: 'OH', rule: 'init']
         assert '7' == getCellIgnoreRule(cube1, coord)
-        Axis rule = (Axis)cube1['rule']
+        Axis rule = (Axis)cube1.getAxis('rule')
         Column col = rule.findColumn('init')
         cube1.updateColumn(col.id, '34 < 40')
         assert '7' == getCellIgnoreRule(cube1, coord)
@@ -770,7 +770,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
         boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
-        rule = (Axis)cube2['rule']
+        rule = (Axis)cube2.getAxis('rule')
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert cube2.numCells == 48
         assert '7' == getCellIgnoreRule(cube2, coord)
@@ -785,7 +785,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1D
         NCube<String> orig = (NCube<String>) NCubeBuilder.discrete1D
 
-        Axis state = (Axis) cube1['state']
+        Axis state = (Axis) cube1.getAxis('state')
         assert state.size() == 2
         cube1.addColumn('state', null)
         assert state.size() == 3
@@ -795,7 +795,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
         boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
-        state = (Axis) cube2['state']
+        state = (Axis) cube2.getAxis('state')
         assert state.size() == 2
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert state.size() == 3
@@ -859,7 +859,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
         NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
 
-        Axis rules = (Axis) cube1['rule']
+        Axis rules = (Axis) cube1.getAxis('rule')
         assert rules.size() == 2
         cube1.addColumn('rule', null, 'summary')
         assert rules.size() == 3
@@ -869,7 +869,7 @@ class TestDelta extends NCubeCleanupBaseTest
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
         boolean compatibleChange = DeltaProcessor.areDeltaSetsCompatible(delta1, delta2)
         assert compatibleChange
-        rules = (Axis) cube2['rule']
+        rules = (Axis) cube2.getAxis('rule')
         assert rules.size() == 2
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
         assert rules.size() == 3
@@ -924,11 +924,11 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
         NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
 
-        Axis rule = (Axis) cube1['rule']
+        Axis rule = (Axis) cube1.getAxis('rule')
         Column process = rule.findColumn('process')
         cube1.updateColumn(process.id, '1 < 2')
 
-        rule = (Axis) cube2['rule']
+        rule = (Axis) cube2.getAxis('rule')
         rule.deleteColumn('process')
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
@@ -950,11 +950,11 @@ class TestDelta extends NCubeCleanupBaseTest
         assert cube1.numCells == 3
         assert '3' == getCellIgnoreRule(cube1, [:])
 
-        Axis rule = (Axis) cube1['rule']
+        Axis rule = (Axis) cube1.getAxis('rule')
         Column process = rule.findColumn('process')
         cube1.updateColumn(process.id, '1 < 2')
 
-        rule = (Axis) cube2['rule']
+        rule = (Axis) cube2.getAxis('rule')
         rule.deleteColumn(null)
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
@@ -1008,7 +1008,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
         NCube<String> orig = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
 
-        Axis state = cube1['state'] as Axis
+        Axis state = cube1.getAxis('state') as Axis
         assert state.columnOrder == Axis.DISPLAY
         List<Column> cols = state.columns
         assert cols[0].value == 'OH'
@@ -1022,7 +1022,7 @@ class TestDelta extends NCubeCleanupBaseTest
         assert compatibleChange
         DeltaProcessor.mergeDeltaSet(cube2, delta1)
 
-        state = cube2['state'] as Axis
+        state = cube2.getAxis('state') as Axis
         assert state.columnOrder == Axis.SORTED      // sort indicator updated
         cols = state.columns
         assert cols[0].value == 'GA'                 // actual sort order honored
