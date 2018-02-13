@@ -85,7 +85,8 @@
         <version.apache.ivy>2.4.0</version.apache.ivy>
         <version.plugin.assembly>3.0.0</version.plugin.assembly>
         <version.plugin.maven-compiler>3.6.2</version.plugin.maven-compiler>
-        <version.plugin.gmavenplus>1.5</version.plugin.gmavenplus>
+        <version.plugin.build-helper>3.0.0</version.plugin.build-helper>
+        <version.plugin.gmavenplus>1.6</version.plugin.gmavenplus>
         <version.plugin.nexus>1.6.8</version.plugin.nexus>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.gpg>1.6</version.plugin.gpg>
@@ -151,8 +152,7 @@
                 <artifactId>gmavenplus-plugin</artifactId>
                 <version>${version.plugin.gmavenplus}</version>
                 <configuration>
-                    <stubsOutputDirectory>${project.build.directory}/generated-sources/groovy-stubs</stubsOutputDirectory>
-                    <testStubsOutputDirectory>${project.build.directory}/generated-sources/groovy-stubs</testStubsOutputDirectory>
+                    <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
                     <scope>public</scope>
                 </configuration>
                 <executions>
@@ -161,7 +161,7 @@
                             <goal>addSources</goal>
                             <goal>addTestSources</goal>
                             <goal>compile</goal>
-                            <goal>testCompile</goal>
+                            <goal>compileTests</goal>
                         </goals>
                     </execution>
                     <execution>
@@ -181,6 +181,52 @@
                         <goals>
                             <goal>groovydoc</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${version.plugin.build-helper}</version>
+                <executions>
+                    <execution>
+                        <id>add-groovy-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/main/groovy</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/test/groovy</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>src/test/scripts</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -273,7 +319,8 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <scope>optional</scope>
+            <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
