@@ -270,7 +270,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'ncube.test', '0.0.0', 'SNAPSHOT', 'jose')
         createCubeFromResource(appId, "sys.bootstrap.test.1.json")
 
-        ApplicationID bootId = ncubeRuntime.getApplicationID(appId.tenant, appId.app, [env:null]) as ApplicationID
+        ApplicationID bootId = ncubeRuntime.getApplicationID(appId.tenant, appId.app, [env:null] as Map) as ApplicationID
         assert bootId.tenant == 'NONE'
         assert bootId.app == 'ncube.test'
         assert bootId.version == '1.28.0'
