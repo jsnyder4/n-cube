@@ -163,6 +163,25 @@ class TestPullRequests extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testGetPullRequestIdOutsideDateRange()
+    {
+        String test1Notes = 'test1'
+        preloadCubes(ApplicationID.testAppId, 'test.branch.1.json', 'test.branch.age.1.json')
+        List<NCubeInfoDto> branchDtos = mutableClient.search(appId, 'TestBranch', null, null)
+        String prId = mutableClient.generatePullRequestHash(appId, branchDtos.toArray(), test1Notes)
+
+        Calendar c = Calendar.instance
+        c.add(Calendar.DATE, -10)
+        Date date = c.time
+        Object[] prs = mutableClient.getPullRequests(date, date, prId)
+        assert 1 == prs.length
+        assert test1Notes == prs[0][PR_ID]
+
+        mutableClient.getPullRequests(null, null, prId)
+        assert 1 == prs.length // if prId is within date range, should not have duplicates
+    }
+
+    @Test
     void testMergeOwnPullRequest()
     {
         String testNotes = 'testnotes'

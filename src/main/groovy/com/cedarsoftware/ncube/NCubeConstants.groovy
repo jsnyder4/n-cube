@@ -43,6 +43,7 @@ interface NCubeConstants
     final String SEARCH_CLOSURE = 'closure'
     final String SEARCH_OUTPUT = 'output'
     final String SEARCH_ALLOW_SYS_INFO = 'allowSysInfo'
+    final String SEARCH_CHECK_SHA1 = 'checkSha1'
 
     final String SYS_ADVICE = 'sys.advice'
     final String SYS_APP = 'sys.app'

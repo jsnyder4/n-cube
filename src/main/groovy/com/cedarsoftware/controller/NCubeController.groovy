@@ -1400,9 +1400,9 @@ class NCubeController implements NCubeConstants
     }
 
     @SuppressWarnings("GroovyUnusedDeclaration")
-    Object[] getPullRequests(Date startDate = null, Date endDate = null)
+    Object[] getPullRequests(Date startDate = null, Date endDate = null, String prId = null)
     {
-        Object[] pullRequests = mutableClient.getPullRequests(startDate, endDate)
+        Object[] pullRequests = mutableClient.getPullRequests(startDate, endDate, prId)
         return pullRequests
     }
 

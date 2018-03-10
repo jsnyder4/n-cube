@@ -2676,7 +2676,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         } as NCube
     }
 
-    Object[] getPullRequests(Date startDate = null, Date endDate = null)
+    Object[] getPullRequests(Date startDate = null, Date endDate = null, String prId = null)
     {
         List<Map> results = []
         if (!startDate) {
@@ -2686,6 +2686,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
 
         List<NCube> cubes = getPullRequestCubes(startDate, endDate)
+        if (prId && !cubes.find {it.name.contains(prId)}) {
+            cubes.add(loadPullRequestCube(prId))
+        }
+
         for (NCube cube : cubes)
         {
             Map prInfo = cube.getMap([(PR_PROP):[] as Set])
@@ -2694,7 +2698,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             prInfo[PR_TXID] = cube.name.substring(3)
             results.add(prInfo)
         }
-        results.sort(true, {Map a, Map b -> Converter.convert(b[PR_REQUEST_TIME], Date.class) as Date <=> Converter.convert(a[PR_REQUEST_TIME], Date.class) as Date})
+        results.sort(true, { Map a, Map b ->
+            Converter.convertToDate(b[PR_REQUEST_TIME]) <=> Converter.convertToDate(a[PR_REQUEST_TIME]) ?:
+                    Converter.convertToDate(b[PR_MERGE_TIME]) <=> Converter.convertToDate(a[PR_MERGE_TIME])
+        })
         return results as Object[]
     }
 

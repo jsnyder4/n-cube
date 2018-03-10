@@ -1050,6 +1050,38 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testSearchWithCheckSha1()
+    {
+        // load cube with same name, but different structure in TEST branch
+        preloadCubes(HEAD, "test.branch.1.json", "test.branch.age.1.json", "TestCubeLevelDefault.json", "basicJumpStart.json")
+        testValuesOnBranch(HEAD)
+
+        NCube testBranchCube = mutableClient.getCube(HEAD, 'TestBranch')
+
+        Map<String,Object> options = [(SEARCH_INCLUDE_CUBE_DATA):true, (SEARCH_EXACT_MATCH_NAME):true] as Map<String,Object>
+        List<NCubeInfoDto> records = mutableClient.search(HEAD, 'TestBranch', null, options)
+        assertEquals(1, records.size())
+        NCubeInfoDto testBranchInfo = records.first()
+        assertEquals(true,testBranchInfo.hasCubeData())
+        assertEquals(testBranchCube.sha1(),testBranchInfo.sha1)
+
+        // add bogus sha1 and ensure bytes are still returned
+        options[SEARCH_CHECK_SHA1] = 'xx'
+        records = mutableClient.search(HEAD, 'TestBranch', null, options)
+        assertEquals(1, records.size())
+        testBranchInfo = records.first()
+        assertEquals(true,testBranchInfo.hasCubeData())
+        assertEquals(testBranchCube.sha1(),testBranchInfo.sha1)
+
+        // add matching sha1 and ensure bytes are not returned
+        options[SEARCH_CHECK_SHA1] = testBranchCube.sha1()
+        records = mutableClient.search(HEAD, 'TestBranch', null, options)
+        assertEquals(1, records.size())
+        testBranchInfo = records.first()
+        assertEquals(false,testBranchInfo.hasCubeData())
+    }
+
+    @Test
     void testSearchAdvanced()
 	{
         // load cube with same name, but different structure in TEST branch

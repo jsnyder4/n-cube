@@ -1961,7 +1961,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         dto.headSha1 = row.getString('head_sha1')
         if (options[SEARCH_INCLUDE_CUBE_DATA])
         {
-            dto.bytes = row.getBytes(CUBE_VALUE_BIN)
+            dto.bytes = options[SEARCH_CHECK_SHA1]==dto.sha1 ? null : row.getBytes(CUBE_VALUE_BIN)
         }
         if (options[SEARCH_INCLUDE_TEST_DATA])
         {

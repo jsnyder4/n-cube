@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
+import com.cedarsoftware.ncube.util.LocalFileCache
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
@@ -14,6 +15,7 @@ import ncube.grv.method.NCubeGroovyController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
@@ -26,6 +28,7 @@ import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.visualizer.RpmVisualizerConstants.*
+import static SnapshotPolicy.FORCE
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -62,6 +65,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private final String beanName
     @Value('${ncube.cache.refresh.min:75}') int cacheRefreshIntervalMin
 
+    @Autowired(required = false)
+    private LocalFileCache localFileCache
+
     private final ThreadLocal<GroovyShell> groovyShellThreadLocal = new ThreadLocal<GroovyShell>() {
         GroovyShell initialValue()
         {
@@ -72,6 +78,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private GroovyShell getGroovyShell()
     {
         return groovyShellThreadLocal.get()
+    }
+
+    LocalFileCache getLocalFileCache() {
+        return localFileCache
+    }
+
+    void setLocalFileCache(LocalFileCache localFileCache) {
+        this.localFileCache = localFileCache
     }
 
     NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods, String beanName = null)
@@ -88,7 +102,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
         }
-        
+
         def refresh = {
             while (alive)
             {
@@ -797,10 +811,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         bean.call(beanName, 'reopenPullRequest', [prId]) as NCube
     }
 
-    Object[] getPullRequests(Date startDate = null, Date endDate = null)
+    Object[] getPullRequests(Date startDate = null, Date endDate = null, String prId = null)
     {
         verifyAllowMutable('getPullRequests')
-        Object[] result = bean.call(beanName, 'getPullRequests', [startDate, endDate]) as Object[]
+        Object[] result = bean.call(beanName, 'getPullRequests', [startDate, endDate, prId]) as Object[]
         return result
     }
 
@@ -1247,6 +1261,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private NCube getCubeInternal(ApplicationID appId, String cubeName)
     {
         Cache cubeCache = ncubeCacheManager.getCache(appId.cacheKey())
+        boolean localCacheEnabled = localFileCache?.enabled
         final String lowerCubeName = cubeName.toLowerCase()
 
         Cache.ValueWrapper item = cubeCache.get(lowerCubeName)
@@ -1256,20 +1271,48 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             return Boolean.FALSE == value ? null : value as NCube
         }
 
-        // now even items with metaProperties(cache = 'false') can be retrieved
-        // and normal app processing doesn't do two queries anymore.
-        // used to do getCubeInfoRecords() -> dto
-        // and then dto -> loadCube(id)
-        NCubeInfoDto record = loadCubeRecord(appId, cubeName, null)
+        NCube ncube = null
+        if (localCacheEnabled) {
+            item = localFileCache.get(appId,cubeName)
+            if (item?.get() instanceof NCube) {
+                ncube = (NCube) item.get()
+            }
+        }
 
-        if (record == null)
+        if (!item || (localCacheEnabled && appId.isSnapshot() && localFileCache.snapshotPolicy==FORCE)) {
+            // now even items with metaProperties(cache = 'false') can be retrieved
+            // and normal app processing doesn't do two queries anymore.
+            // used to do getCubeInfoRecords() -> dto
+            // and then dto -> loadCube(id)
+
+            Map options = null
+            if (localCacheEnabled && ncube!=null) {
+                // data will only be returned if sha1 is different than supplied value
+                options = [(SEARCH_INCLUDE_CUBE_DATA):true, (SEARCH_CHECK_SHA1):ncube.sha1()]
+            }
+
+            NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
+            if (record == null ) {
+                ncube = null    // reset in case cube had existed in cache
+            }
+            else if (record.hasCubeData()) {
+                ncube = NCube.createCubeFromRecord(record)
+            }
+
+            // update cache if item is new (didn't exist before) or changed
+            if (localCacheEnabled && (!item || item.get() != ncube)) {
+                localFileCache.put(appId, cubeName, ncube)
+            }
+        }
+
+        if (ncube==null)
         {
             cubeCache.put(lowerCubeName, false)
             return null
         }
-
-        NCube ncube = NCube.createCubeFromRecord(record)
-        return prepareCube(ncube)
+        else {
+            return prepareCube(ncube)
+        }
     }
 
     private NCube prepareCube(NCube ncube, boolean force = false)
