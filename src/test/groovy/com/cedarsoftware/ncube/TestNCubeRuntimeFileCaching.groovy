@@ -224,7 +224,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         verifySha1Existence(appId, cubeName, null)
         verifyFileExistence(appId, cubeName, '', false)
 
-        exception.expectMessage("Failed to find cube:TestMissing in offline cache")
+        exception.expectMessage("Failed to find cube: TestMissing in offline cache")
         getCubeFromRuntime(appId, cubeName)
     }
 
@@ -275,7 +275,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
 
         verifyFileExistence(appId, cubeName, '', false)
 
-        exception.expectMessage("Failed to find cube:TestMissing in offline cache")
+        exception.expectMessage("Failed to find cube: TestMissing in offline cache")
         getCubeFromRuntime(appId, cubeName)
     }
 
@@ -624,7 +624,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         // mark sha1 as non-readable to trigger read exception
         getFileForCachedSha1(appId, cubeName).setReadable(false)
 
-        exception.expectMessage("Failed to load sha1 for cube:TestBranch from offline cache")
+        exception.expectMessage("Failed to load sha1 for cube: TestBranch from offline cache")
         getCubeFromRuntime(appId, cubeName)
     }
 
@@ -644,7 +644,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         verifyFileExistence(appId, cubeName, '', false)
         verifyFileExistence(appId, cubeName, realCube.sha1(), true)
 
-        exception.expectMessage("Failed to load cube:TestBranch from offline cache")
+        exception.expectMessage("Failed to load cube: TestBranch from offline cache")
         getCubeFromRuntime(appId, cubeName)
     }
 

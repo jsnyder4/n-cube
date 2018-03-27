@@ -77,7 +77,7 @@ class LocalFileCache {
      */
     Cache.ValueWrapper get(ApplicationID appId, String cubeName)
     {
-        boolean isSnapshot = appId.isSnapshot()
+        boolean isSnapshot = appId.snapshot
         if (!cacheDir || (isSnapshot && RELEASE_ONLY==snapshotPolicy)) {
             return null
         }
@@ -86,7 +86,7 @@ class LocalFileCache {
         Cache.ValueWrapper valueWrapper = null
         File cacheFile = checkInLocalCache(appId, cubeName)
 
-        def isFile = cacheFile.isFile()
+        boolean isFile = cacheFile.file
         if (isFile && cacheFile.length()>0) {
             try {
                 NCube ncube = null
@@ -94,7 +94,7 @@ class LocalFileCache {
                     ncube = NCube.fromSimpleJson(stream)
                 }
                 if (!ncube) {
-                    throw new IllegalStateException("Failed to build ncube:${cubeName} from file stream")
+                    throw new IllegalStateException("Failed to build ncube: ${cubeName} from file stream")
                 }
                 ncube.applicationID = appId
                 valueWrapper = new SimpleValueWrapper(ncube)
@@ -102,7 +102,7 @@ class LocalFileCache {
             catch (Exception e) {
                 LOG.warn("Unable to load ncube {} from {}", cubeName, cacheFile.path, e)
                 if (OFFLINE==snapshotPolicy) {
-                    throw new IllegalStateException("Failed to load cube:${cubeName} from offline cache")
+                    throw new IllegalStateException("Failed to load cube: ${cubeName} from offline cache")
                 }
             }
         }
@@ -110,11 +110,11 @@ class LocalFileCache {
             valueWrapper = new SimpleValueWrapper(Boolean.FALSE)
         }
         else if (OFFLINE==snapshotPolicy) {
-            throw new IllegalStateException("Failed to find cube:${cubeName} in offline cache")
+            throw new IllegalStateException("Failed to find cube: ${cubeName} in offline cache")
         }
         else {
             // allow valueWrapper to remain null so that a normal load is performed
-            LOG.debug("{} not found",cacheFile.name)
+            LOG.debug("{} not found", cacheFile.name)
         }
         return valueWrapper
     }
@@ -127,7 +127,7 @@ class LocalFileCache {
      * @param ncube An instance of NCube, if the cube exists; null, if cube does not exist
      */
     void put(ApplicationID appId, String cubeName, NCube ncube) {
-        boolean isSnapshot = appId.isSnapshot()
+        boolean isSnapshot = appId.snapshot
         if (isSnapshot && RELEASE_ONLY==snapshotPolicy) {
             return
         }
@@ -206,17 +206,17 @@ class LocalFileCache {
     private File checkInLocalCache(ApplicationID appId, String cubeName)
     {
         String sha1 = ''
-        if (appId.isSnapshot()) {
+        if (appId.snapshot) {
             File sha1File = getFileForCachedSha1(appId, cubeName)
             try {
-                if (sha1File.isFile() && sha1File.length()>0) {
+                if (sha1File.file && sha1File.length()>0) {
                     sha1 = sha1File.text
                 }
             }
             catch (Exception e) {
                 LOG.warn("Unable to read sha1 for ncube {} from {}", cubeName, sha1File?.path, e)
                 if (OFFLINE==snapshotPolicy) {
-                    throw new IllegalStateException("Failed to load sha1 for cube:${cubeName} from offline cache")
+                    throw new IllegalStateException("Failed to load sha1 for cube: ${cubeName} from offline cache")
                 }
             }
 

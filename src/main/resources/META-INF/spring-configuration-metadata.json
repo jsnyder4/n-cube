@@ -38,6 +38,20 @@
       "defaultValue": ""
     },
     {
+      "name": "ncube.cache.dir",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.ncube.util.LocalFileCache",
+      "description": "Path to cached .json NCube files. If this path points to a valid directory, the loaded NCube files will be cached here as .json files, with the folder structure matching the ApplicationID (5 levels) plus the name of the .json file will match the NCube name.",
+      "defaultValue": ""
+    },
+    {
+      "name": "ncube.cache.snapshotPolicy",
+      "type": "com.cedarsoftware.ncube.SnapshotPolicy",
+      "sourceType": "com.cedarsoftware.ncube.util.LocalFileCache",
+      "description": "Path to cached .json NCube files. If this path points to a valid directory, the loaded NCube files will be cached here as .json files, with the folder structure matching the ApplicationID (5 levels) plus the name of the .json file will match the NCube name.",
+      "defaultValue": ""
+    },
+    {
       "name": "ncube.proxy.cookiesToInclude",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.util.JsonHttpProxy",
