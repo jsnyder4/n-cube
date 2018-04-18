@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import jdk.nashorn.internal.runtime.regexp.joni.Regex
 import org.junit.Test
 
 import java.util.regex.Matcher
@@ -326,6 +325,36 @@ println 'is it going to count input.what have we got here'
     }
 
     @Test
+    void testNestedNamesWithAtSymbol()
+    {
+        def name = "@rpm.rating.mappings.product[fieldName: @rpm.rule.bogus[hello:'Dolly']]" // Legal because of square brackets
+        def m = Regexes.groovyRelRefCubeCellPatternA.matcher(name)
+        assert m.find()
+        assert m.group('cubeName') == 'rpm.rating.mappings.product'
+        // Note, ignoring additional lookup in parameters - extract that to local var ahead of call
+    }
+
+    @Test
+    void testNestedNamesWithAt()
+    {
+        def name = "at([InsurableValueRangeByDeductibleCOLState: input.name , Range: 'min'], 'rule.utility.validate')"
+        def m = Regexes.groovyExplicitAtPattern.matcher(name)
+        assert m.find()
+        assert m.group('cubeName') == 'rule.utility.validate'
+        // Note, ignoring additional lookup in parameters - extract that to local var ahead of call
+    }
+
+    @Test
+    void testNestedNames()
+    {
+        def name = "@rpm.rating.mappings.product[fieldName: @rpm.rule.bogus[hello:'Dolly']]" // Legal because of square brackets
+        def m = Regexes.groovyRelRefCubeCellPatternA.matcher(name)
+        assert m.find()
+        assert m.group('cubeName') == 'rpm.rating.mappings.product'
+        // Note, ignoring additional lookup in parameters - extract that to local var ahead of call
+    }
+
+    @Test
     void testNegativeRelativeCubeBracketAnnotations()
     {
         def name = "@PackageScope[]" // Illegal because of no colon within brackets
@@ -408,10 +437,10 @@ println 'is it going to count input.what have we got here'
         Matcher m = Regexes.groovyExplicitAtPattern.matcher(src)
 
         m.find()
-        assert 'foo' == m.group(2)
+        assert 'foo' == m.group('cubeName')
 
         m.find()
-        assert 'bar' == m.group(2)
+        assert 'bar' == m.group('cubeName')
 
         src = "if (at(coord, 'foo', null, new ApplicationID()) && at([:],'bar'))"
         m = Regexes.groovyExplicitAtPattern.matcher(src)

@@ -65,8 +65,9 @@ interface Regexes
     Pattern groovyRelRefCellPatternA = ~/([^a-zA-Z0-9_$]|^)@\s*(?<input>$bracketMatch)/
     Pattern groovyExplicitCubeRefPattern = ~/([^a-zA-Z0-9_$"']|^)getCube\s*[(]\s*['"](?<cubeName>[$validNameChars]+)['"]\s*[)]/
     Pattern groovyExplicitJumpPattern = ~/([^a-zA-Z0-9_$]|^)jump\s*[(]\s*['"](?<cubeName>[$validNameChars]+)['"].*?[)]/
-    Pattern groovyExplicitAtPattern = ~/([^a-zA-Z0-9_$'"]|^)at\s*[(][^,]+?,\s*['"](?<cubeName>[$validNameChars]+)['"].*?[)]/
-    Pattern groovyExplicitGoPattern = ~/([^a-zA-Z0-9_$'"]|^)go\s*[(][^,]+?,\s*['"](?<cubeName>[$validNameChars]+)['"].*?[)]/
+    Pattern groovyExplicitAtPattern = ~/([^a-zA-Z0-9_$'"]|^)at\s*[(].*?,\s*['"](?<cubeName>[$validNameChars]+)['"](.*?)[)]/
+    Pattern groovyExplicitGoPattern = ~/([^a-zA-Z0-9_$'"]|^)go\s*[(].*?,\s*['"](?<cubeName>[$validNameChars]+)['"](.*?)[)]/
+    Pattern groovyExplicitUsePattern = ~/([^a-zA-Z0-9_$'"]|^)use\s*[(].*?,\s*['"](?<cubeName>[$validNameChars]+)['"](.*?)[)]/
 
     Pattern cdnUrlPattern = ~/^\/dyn\/([^\/]+)\/(.*)$/
 

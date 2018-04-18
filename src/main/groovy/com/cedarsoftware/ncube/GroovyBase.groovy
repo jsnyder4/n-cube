@@ -132,7 +132,7 @@ abstract class GroovyBase extends UrlCommandCell
         {
             throw new IllegalStateException("Code cleared while cell was executing, n-cube: ${ncube.name}, app: ${ncube.applicationID}, input: ${getInput(ctx).toString()}")
         }
-        NCubeGroovyExpression exp = DefaultGroovyMethods.newInstance(code)
+        NCubeGroovyExpression exp = (NCubeGroovyExpression)DefaultGroovyMethods.newInstance(code)
         exp.input = getInput(ctx)
         exp.output = getOutput(ctx)
         exp.ncube = ncube
@@ -645,6 +645,9 @@ abstract class GroovyBase extends UrlCommandCell
         getCubeNames(m, cubeNames)
 
         m = Regexes.groovyExplicitGoPattern.matcher(text)
+        getCubeNames(m, cubeNames)
+
+        m = Regexes.groovyExplicitUsePattern.matcher(text)
         getCubeNames(m, cubeNames)
     }
 

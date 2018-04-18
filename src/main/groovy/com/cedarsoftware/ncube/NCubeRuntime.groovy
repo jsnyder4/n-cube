@@ -1279,7 +1279,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             }
         }
 
-        if (!item || (localCacheEnabled && appId.isSnapshot() && localFileCache.snapshotPolicy==FORCE)) {
+        if (!item || (localCacheEnabled && appId.snapshot && localFileCache.snapshotPolicy==FORCE)) {
             // now even items with metaProperties(cache = 'false') can be retrieved
             // and normal app processing doesn't do two queries anymore.
             // used to do getCubeInfoRecords() -> dto
@@ -1480,7 +1480,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     String getUrlContent(ApplicationID appId, String url, Map input)
     {
         URL actualUrl = getActualUrl(appId, url, input)
-        return actualUrl?.getText()
+        return actualUrl?.text
     }
 
     /**
