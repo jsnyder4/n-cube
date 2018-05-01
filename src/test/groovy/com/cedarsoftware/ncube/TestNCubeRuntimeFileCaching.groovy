@@ -53,7 +53,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         Mockito.when(callableBean.call(Mockito.eq(MOCK_BEAN_NAME),Mockito.anyString(),Mockito.anyListOf(String.class))).then(new Answer<Object>() {
             @Override
             Object answer(InvocationOnMock invocation) throws Throwable {
-                String method = invocation.getArgumentAt(1,String.class)
+                String method = invocation.getArgument(1)
                 List<Object> methodArgs = (List) invocation.arguments[2]
                 if (METHOD_LOAD_CUBE_RECORD==method ) {
                     ApplicationID appId = (ApplicationID) methodArgs[0]
@@ -624,7 +624,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         // mark sha1 as non-readable to trigger read exception
         getFileForCachedSha1(appId, cubeName).setReadable(false)
 
-        exception.expectMessage("Failed to load sha1 for cube: TestBranch from offline cache")
+        exception.expectMessage("Failed to find cube: TestBranch in offline cache")
         getCubeFromRuntime(appId, cubeName)
     }
 

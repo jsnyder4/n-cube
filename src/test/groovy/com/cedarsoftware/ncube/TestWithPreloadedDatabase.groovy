@@ -2603,10 +2603,11 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         // impersonate testUser, who shouldn't be able to commit the changed cube
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = testUser
+        String prId = mutableClient.generatePullRequestHash(BRANCH1) // should still be able to make PR
 
         try
         {
-            mutableClient.commitBranch(BRANCH1)
+            mutableClient.mergePullRequest(prId)
             fail()
         }
         catch (BranchMergeException e)
