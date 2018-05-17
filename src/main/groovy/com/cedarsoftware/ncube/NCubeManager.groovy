@@ -3,7 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.util.BranchComparator
-import com.cedarsoftware.ncube.util.CCacheManager
+import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
@@ -72,8 +72,8 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         }
     }
 
-    private ThreadLocal<CCacheManager> tempCacheManager = new ThreadLocal<CCacheManager>() {
-        CCacheManager initialValue()
+    private ThreadLocal<GCacheManager> tempCacheManager = new ThreadLocal<GCacheManager>() {
+        GCacheManager initialValue()
         {
             return null
         }
@@ -191,7 +191,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private NCubeInfoDto loadCubeRecordInternal(ApplicationID appId, String cubeName, Map options = null)
     {
-        CCacheManager cm = getTempCacheManager()
+        GCacheManager cm = getTempCacheManager()
         Cache cache
         String cubeNameLower
         if (cm != null)
@@ -1951,12 +1951,12 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return isSystemRequest.get()
     }
 
-    private void setTempCacheManager(CCacheManager cacheManager)
+    private void setTempCacheManager(GCacheManager cacheManager)
     {
         tempCacheManager.set(cacheManager)
     }
 
-    private CCacheManager getTempCacheManager()
+    private GCacheManager getTempCacheManager()
     {
         return tempCacheManager.get()
     }
@@ -2514,7 +2514,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     {
         try
         {
-            setTempCacheManager(CCacheManager.newInstance())
+            setTempCacheManager(GCacheManager.newInstance())
             return closure()
         }
         finally
@@ -2537,7 +2537,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             {
                 obsoletePullRequest(prId)
             }
-            catch (IllegalArgumentException ignore) {} // pr was rolled back
+            catch (IllegalArgumentException ignore)
+            {
+                LOG.info("${ignore.message}, pull request ID: ${prId}")
+            }
             connection.commit() // force database changes before throwing exception
             throw e
         }

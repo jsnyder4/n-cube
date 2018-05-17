@@ -2,7 +2,6 @@ package com.cedarsoftware.ncube
 
 import org.junit.Before
 import org.junit.Test
-import org.springframework.cache.caffeine.CaffeineCache
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.TestWithPreloadedDatabase.appId
@@ -36,7 +35,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
 
     static int getCacheSize(ApplicationID applicationID)
     {
-        return ((CaffeineCache) testClient.getCacheForApp(applicationID)).nativeCache.asMap().size()
+        return testClient.getCacheForApp(applicationID).cache.size()
     }
 
     @Test

@@ -1,15 +1,15 @@
 package com.cedarsoftware.ncube.util
 
 import com.cedarsoftware.ncube.NCube
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.RemovalCause
-import com.github.benmanes.caffeine.cache.RemovalListener
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.RemovalListener
+import com.google.common.cache.RemovalNotification
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
-import org.springframework.cache.caffeine.CaffeineCache
+import org.springframework.cache.guava.GuavaCache
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -33,25 +33,27 @@ import java.util.concurrent.TimeUnit
  *         limitations under the License.
  */
 @CompileStatic
-class CCacheManager implements CacheManager
+class GCacheManager implements CacheManager
 {
-    private static final Logger LOG = LoggerFactory.getLogger(CCacheManager.class)
+    private static final Logger LOG = LoggerFactory.getLogger(GCacheManager.class)
     private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<>()
+    private final int concurrencyLevel
     private final int maximumSize
     private final int evictionDuration
     private final String evictionTimeUnit
     private final String evictionType
     private final Closure removalClosure
 
-    CCacheManager(Closure removalClosure = null, int maximumSize = 0, String evictionType = 'none', int evictionDuration = 0, String evictionTimeUnit = 'hours')
+    GCacheManager(Closure removalClosure = null, int maximumSize = 0, String evictionType = 'none', int evictionDuration = 0, String evictionTimeUnit = 'hours', int concurrencyLevel = 16)
     {
         this.removalClosure = removalClosure
+        this.concurrencyLevel = concurrencyLevel
         this.maximumSize = maximumSize
         this.evictionType = evictionType
         this.evictionDuration = evictionDuration
         this.evictionTimeUnit = evictionTimeUnit
     }
-
+    
     Cache getCache(String name)
     {
         Cache cache = caches[name]  // name = ApplicationID.toString()
@@ -68,10 +70,11 @@ class CCacheManager implements CacheManager
         return cache
     }
 
-    private CaffeineCache createCache(String name)
+    private GuavaCache createCache(String name)
     {
-        Caffeine builder = Caffeine.newBuilder()
+        CacheBuilder builder = CacheBuilder.newBuilder()
         builder.removalListener(new NCubeRemovalListener(removalClosure))
+        builder.concurrencyLevel(concurrencyLevel)
         if (maximumSize > 0)
         {
             builder.maximumSize(maximumSize)
@@ -84,8 +87,8 @@ class CCacheManager implements CacheManager
         {
             builder.expireAfterAccess(evictionDuration, getTimeUnitFromString(evictionTimeUnit))
         }
-        CaffeineCache caffeineCache = new CaffeineCache(name, builder.build() as com.github.benmanes.caffeine.cache.Cache)
-        return caffeineCache
+        GuavaCache guavaCache = new GuavaCache(name, builder.build() as com.google.common.cache.Cache)
+        return guavaCache
     }
 
     private TimeUnit getTimeUnitFromString(String timeunit)
@@ -127,9 +130,9 @@ class CCacheManager implements CacheManager
         {
             return
         }
-        CaffeineCache cCache = cache as CaffeineCache
-        com.github.benmanes.caffeine.cache.Cache cafCache = cCache.nativeCache
-        Iterator i = cafCache.asMap().entrySet().iterator()
+        GuavaCache gCache = cache as GuavaCache
+        com.google.common.cache.Cache googleCache = gCache.nativeCache
+        Iterator i = googleCache.asMap().entrySet().iterator()
         while (i.hasNext())
         {
             Map.Entry entry = i.next()
@@ -144,7 +147,7 @@ class CCacheManager implements CacheManager
      * associated to cells that have generated classes dynamically.  By removing the references
      * from those caches, the dynamically generated classes can be garbage collected (Java 8+).
      */
-    private static class NCubeRemovalListener implements RemovalListener<String, Object>
+    private static class NCubeRemovalListener implements RemovalListener
     {
         private final Closure closure
         NCubeRemovalListener(Closure closure)
@@ -152,20 +155,20 @@ class CCacheManager implements CacheManager
             this.closure = closure
         }
 
-        void onRemoval(String key, Object value, RemovalCause removalCause)
+        void onRemoval(RemovalNotification removalNotification)
         {
             if (closure != null)
             {
-                if (value instanceof NCube)
+                if (removalNotification.value instanceof NCube)
                 {
-                    NCube ncube = (NCube) value
+                    NCube ncube = (NCube) removalNotification.value
                     LOG.info("Cache eviction: n-cube: ${ncube.name}, app: ${ncube.applicationID}")
                 }
                 else
                 {
-                    LOG.info("Cache eviction: key=${key}, value=${value?.toString()}")
+                    LOG.info("Cache eviction: key=${removalNotification.key}, value=${removalNotification?.value?.toString()}")
                 }
-                closure(value)
+                closure(removalNotification.value)
             }
         }
     }

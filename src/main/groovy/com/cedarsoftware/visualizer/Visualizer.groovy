@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.util.CaseInsensitiveMap
+import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 
 /**
@@ -16,6 +17,7 @@ class Visualizer
 	protected ApplicationID appId
 	protected Set<String> visited = []
 	protected Deque<VisualizerRelInfo> stack = new ArrayDeque<>()
+	protected Joiner.MapJoiner mapJoiner = Joiner.on(", ").withKeyValueSeparator(": ")
 	protected VisualizerHelper helper
 	protected static NCubeRuntimeClient runtimeClient
 
@@ -184,7 +186,7 @@ class Visualizer
 				nextRelInfo.sourceId = relInfo.targetId
 				nextRelInfo.sourceTrail = new ArrayList(relInfo.sourceTrail)
 		 		nextRelInfo.sourceTrail << relInfo.targetId
-				nextRelInfo.sourceFieldName = coordinates.toMapString()[1..-2]
+				nextRelInfo.sourceFieldName = mapJoiner.join(coordinates)
 				nextRelInfo.targetScope = new CaseInsensitiveMap(coordinates)
 				nextRelInfo.availableTargetScope = new CaseInsensitiveMap(relInfo.availableTargetScope)
 				nextRelInfo.availableTargetScope.putAll(coordinates)

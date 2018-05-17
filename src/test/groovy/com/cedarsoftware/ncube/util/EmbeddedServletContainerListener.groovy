@@ -4,20 +4,20 @@ import com.cedarsoftware.ncube.NCubeBaseTest
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.web.servlet.context.ServletWebServerInitializedEvent
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.stereotype.Component
 
 import java.util.regex.Pattern
 
 @Component
-class ServletWebServerListener implements ApplicationListener<ServletWebServerInitializedEvent>
+class EmbeddedServletContainerListener implements ApplicationListener<EmbeddedServletContainerInitializedEvent>
 {
-    private static final Logger LOG = LoggerFactory.getLogger(ServletWebServerListener.class)
+    private static final Logger LOG = LoggerFactory.getLogger(EmbeddedServletContainerListener.class)
     private static Pattern leadingSlash = ~/^[\/]?/
     private static Pattern trailingSlash = ~/[\/]?$/
 
-    @Value('${server.servlet.contextPath}')
+    @Value('${server.contextPath}')
     private String contextPath
 
     // allow for testing against a remote URL instead of embedded Tomcat (assuming static files available)
@@ -25,7 +25,7 @@ class ServletWebServerListener implements ApplicationListener<ServletWebServerIn
     private String baseRemoteUrl
 
     @Override
-    void onApplicationEvent(ServletWebServerInitializedEvent event) {
+    void onApplicationEvent(EmbeddedServletContainerInitializedEvent event) {
         if (baseRemoteUrl)
         {
             NCubeBaseTest.baseRemoteUrl = baseRemoteUrl - leadingSlash
@@ -33,7 +33,7 @@ class ServletWebServerListener implements ApplicationListener<ServletWebServerIn
         else
         {
             String host = 'localhost'
-            int port = event.webServer.port
+            int port = event.embeddedServletContainer.port
             String context = contextPath - leadingSlash - trailingSlash
             NCubeBaseTest.baseRemoteUrl = "http://${host}:${port}/${context}"
         }

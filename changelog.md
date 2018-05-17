@@ -3,6 +3,7 @@
   * Bug fix: Pull requests could not be created for users without commit permissions.
   * Updated to consume `spring-boot 1.5.12.RELEASE`
   * Updated to consume `spring 4.3.16.RELEASE`
+  * Updated to use tomcat `tomcat 8.5.31`
 * 4.3.1
   * Regexes updated to better locate NCube names in APIs that search for them in source code.  The `use()` method is now searched.  Nested calls are not searched.  Extract nested call to local variable, and then use that value in 2nd call. Relevant only if you care about searching sources for NCube names.
   * Updated to consume `groovy 2.4.15`

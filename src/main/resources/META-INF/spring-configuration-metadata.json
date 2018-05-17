@@ -132,29 +132,36 @@
       "name": "ncube.cache.max.size",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specifies the maximum number of entries the cache may contain. See Caffeine's CacheBuilder documentation.",
+      "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
       "defaultValue": "0"
     },
     {
       "name": "ncube.cache.evict.type",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Caffeine's CacheBuilder documentation.",
+      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
       "defaultValue": "expireAfterAccess"
     },
     {
       "name": "ncube.cache.evict.duration",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Duration for the ncube.cache.evict.type. See Caffeine's CacheBuilder documentation.",
+      "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
       "defaultValue": "4"
     },
     {
       "name": "ncube.cache.evict.units",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specify seconds, minutes, hours or days. See Caffeine's CacheBuilder documentation.",
+      "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
       "defaultValue": "hours"
+    },
+    {
+      "name": "ncube.cache.concurrency",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
+      "defaultValue": "16"
     },
     {
       "name": "ncube.cache.refresh.min",
@@ -167,29 +174,36 @@
       "name": "ncube.perm.cache.max.size",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specifies the maximum number of entries the cache may contain. See Caffeine's CacheBuilder documentation.",
+      "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
       "defaultValue": "100000"
     },
     {
       "name": "ncube.perm.cache.evict.type",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Caffeine's CacheBuilder documentation.",
+      "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
       "defaultValue": "expireAfterAccess"
     },
     {
       "name": "ncube.perm.cache.evict.duration",
       "type": "java.lang.Integer",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Duration for the ncube.cache.evict.type. See Caffeine's CacheBuilder documentation.",
+      "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
       "defaultValue": "2"
     },
     {
       "name": "ncube.perm.cache.evict.units",
       "type": "java.lang.String",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Specify seconds, minutes, hours or days. See Caffeine's CacheBuilder documentation.",
+      "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
       "defaultValue": "minutes"
+    },
+    {
+      "name": "ncube.perm.cache.concurrency",
+      "type": "java.lang.Integer",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
+      "defaultValue": "16"
     },
     {
       "name": "ncube.datasource.driver-class-name",

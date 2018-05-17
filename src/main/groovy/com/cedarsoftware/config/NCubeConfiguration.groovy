@@ -4,7 +4,7 @@ import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.UrlCommandCell
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.ncube.util.CCacheManager
+import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Value
@@ -44,11 +44,13 @@ class NCubeConfiguration
     @Value('${ncube.cache.evict.type:expireAfterAccess}') String typeNCubeCache
     @Value('${ncube.cache.evict.duration:4}') int durationNCubeCache
     @Value('${ncube.cache.evict.units:hours}') String unitsNCubeCache
+    @Value('${ncube.cache.concurrency:16}') int concurrencyNCubeCache
 
     @Value('${ncube.perm.cache.max.size:100000}') int maxSizePermCache
     @Value('${ncube.perm.cache.evict.type:expireAfterAccess}') String typePermCache
     @Value('${ncube.perm.cache.evict.duration:3}') int durationPermCache
     @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
+    @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
 
     @Value('${ncube.allow.mutable.methods:false}') boolean allowMutableMethods
     @Value('${ncube.accepted.domains:}') String ncubeAcceptedDomains
@@ -92,16 +94,16 @@ class NCubeConfiguration
     }
 
     @Bean(name = "ncubeCacheManager")
-    CCacheManager getNcubeCacheManager()
+    GCacheManager getNcubeCacheManager()
     {
-        CCacheManager cacheManager = new CCacheManager(ncubeRemoval, maxSizeNCubeCache, typeNCubeCache, durationNCubeCache, unitsNCubeCache)
+        GCacheManager cacheManager = new GCacheManager(ncubeRemoval, maxSizeNCubeCache, typeNCubeCache, durationNCubeCache, unitsNCubeCache, concurrencyNCubeCache)
         return cacheManager
     }
 
     @Bean(name = 'permCacheManager')
-    CCacheManager getPermCacheManager()
+    GCacheManager getPermCacheManager()
     {
-        CCacheManager cacheManager = new CCacheManager(null, maxSizePermCache, typePermCache, durationPermCache, unitsPermCache)
+        GCacheManager cacheManager = new GCacheManager(null, maxSizePermCache, typePermCache, durationPermCache, unitsPermCache, concurrencyPermCache)
         return cacheManager
     }
 

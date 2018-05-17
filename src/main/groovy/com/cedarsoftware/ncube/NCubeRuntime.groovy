@@ -2,7 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.ncube.util.CCacheManager
+import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.ncube.util.LocalFileCache
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
-import org.springframework.cache.caffeine.CaffeineCache
+import org.springframework.cache.guava.GuavaCache
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -92,7 +92,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager
-        this.adviceCacheManager = new CCacheManager()
+        this.adviceCacheManager = new GCacheManager()
         this.allowMutableMethods = allowMutableMethods
         if (StringUtilities.hasContent(beanName))
         {
@@ -107,7 +107,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             while (alive)
             {
                 Thread.sleep(1000 * 60 * cacheRefreshIntervalMin)
-                CCacheManager cacheManager = (CCacheManager) ncubeCacheManager
+                GCacheManager cacheManager = (GCacheManager) ncubeCacheManager
                 Iterator<String> i = cacheManager.cacheNames.iterator()
                 
                 while (i.hasNext())
@@ -1337,9 +1337,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         String regex = StringUtilities.wildcardToRegexString(wildcard)
         Pattern pattern = Pattern.compile(regex)
 
-        if (ncubeCacheManager instanceof CCacheManager)
+        if (ncubeCacheManager instanceof GCacheManager)
         {
-            ((CCacheManager)ncubeCacheManager).applyToEntries(appId.cacheKey(), {String key, Object value ->
+            ((GCacheManager)ncubeCacheManager).applyToEntries(appId.cacheKey(), {String key, Object value ->
                 if (value instanceof NCube)
                 {   // apply advice to hydrated cubes
                     NCube ncube = value as NCube
@@ -1382,11 +1382,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     private void applyAdvices(NCube ncube)
     {
-        if (ncube && adviceCacheManager instanceof CCacheManager)
+        if (ncube && adviceCacheManager instanceof GCacheManager)
         {
             ApplicationID appId = ncube.applicationID
             String cacheKey = appId.cacheKey()
-            CCacheManager acm = (CCacheManager)adviceCacheManager
+            GCacheManager acm = (GCacheManager)adviceCacheManager
             if (ncube.name != SYS_ADVICE)
             {
                 addSysAdviceAdvices(acm.getCache(cacheKey), appId)
@@ -1403,8 +1403,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     private void addSysAdviceAdvices(Cache cache, ApplicationID appId)
     {
-        com.github.benmanes.caffeine.cache.Cache cCache = ((CaffeineCache)cache).nativeCache
-        Iterator i = cCache.asMap().entrySet().iterator()
+        com.google.common.cache.Cache gCache = ((GuavaCache)cache).nativeCache
+        Iterator i = gCache.asMap().entrySet().iterator()
         if (i.hasNext())
         {
             return

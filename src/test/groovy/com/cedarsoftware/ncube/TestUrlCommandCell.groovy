@@ -3,9 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.util.CdnRouter
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-import org.mockito.stubbing.VoidAnswer1
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -181,11 +178,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         HttpServletResponse response = mock HttpServletResponse.class
         HttpServletRequest request = mock HttpServletRequest.class
 
-        when(request.headerNames).thenAnswer(new Answer<String>() {
-            String answer(InvocationOnMock invocation) throws Throwable {
-                throw new SocketTimeoutException()
-            }
-        })
+        when(request.headerNames).thenThrow SocketTimeoutException.class
         when(ncube.name).thenReturn 'foo-cube'
         when(ncube.version).thenReturn 'foo-version'
         when(ncube.applicationID).thenReturn(ApplicationID.testAppId)
@@ -206,11 +199,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         HttpServletResponse response = mock HttpServletResponse.class
         HttpServletRequest request = mock HttpServletRequest.class
 
-        when(request.headerNames).thenAnswer(new Answer<String>() {
-            String answer(InvocationOnMock invocation) throws Throwable {
-                throw new SocketTimeoutException()
-            }
-        })
+        when(request.headerNames).thenThrow SocketTimeoutException.class
         doThrow(IOException.class).when(response).sendError HttpServletResponse.SC_NOT_FOUND, 'File not found: http://www.google.com'
         when(ncube.name).thenReturn 'foo-cube'
         when(ncube.version).thenReturn 'foo-version'
