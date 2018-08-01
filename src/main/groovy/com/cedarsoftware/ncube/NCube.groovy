@@ -1579,7 +1579,7 @@ class NCube<T>
      */
     static RuleInfo getRuleInfo(Map output)
     {
-        final RuleInfo ruleInfo
+        RuleInfo ruleInfo
         if (output.containsKey(RULE_EXEC_INFO))
         {   // RULE_EXEC_INFO Map already exists, must be a recursive call.
             return (RuleInfo) output[RULE_EXEC_INFO]
@@ -3184,7 +3184,7 @@ class NCube<T>
                             {
                                 try
                                 {
-                                    ncube.setCellById((T)v, colIds)
+                                    ncube.setCellById(v, colIds)
                                 }
                                 catch (InvalidCoordinateException ignore)
                                 {

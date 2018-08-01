@@ -2018,7 +2018,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
 
     protected static Timestamp toTimestamp(Object value)
     {
-        return (value as Date)?.toTimestamp()
+        return Converter.convertToTimestamp(value)
     }
 
     private static String convertPattern(String pattern)

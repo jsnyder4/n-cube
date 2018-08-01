@@ -79,14 +79,14 @@
         <version.guava>25.0-jre</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
         <version.spring>4.3.16.RELEASE</version.spring>
-        <version.springboot>1.5.12.RELEASE</version.springboot>
+        <version.springboot>1.5.14.RELEASE</version.springboot>
         <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
         <version.hsqldb>2.4.1</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>
         <version.plugin.assembly>3.1.0</version.plugin.assembly>
         <version.plugin.maven-compiler>3.7.0</version.plugin.maven-compiler>
         <version.plugin.build-helper>3.0.0</version.plugin.build-helper>
-        <version.plugin.gmavenplus>1.6</version.plugin.gmavenplus>
+        <version.plugin.gmavenplus>1.6.1</version.plugin.gmavenplus>
         <version.plugin.nexus>1.6.8</version.plugin.nexus>
         <version.plugin.source>3.0.1</version.plugin.source>
         <version.plugin.gpg>1.6</version.plugin.gpg>

@@ -1157,7 +1157,7 @@ class Axis
     }
 
     /**
-     * @return SORTED (0) or DISPLAY (1) which indcates whether the getColumns() and
+     * @return SORTED (0) or DISPLAY (1) which indicates whether the getColumns() and
      * getColumnsWithoutDefault() methods will return the columns in sorted order
      * or display order (user order).
      */
