@@ -250,7 +250,7 @@ class ApplicationID
 
     ApplicationID asBootVersion()
     {
-        return this.asVersion(SYS_BOOT_VERSION)
+        return this.asVersion(SYS_BOOT_VERSION).asSnapshot()
     }
 
     /**
