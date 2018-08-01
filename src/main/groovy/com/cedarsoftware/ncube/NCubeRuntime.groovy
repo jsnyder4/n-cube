@@ -159,7 +159,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         try
         {   // Do not remove try-catch handler in favor of advice handler
-            ApplicationID bootVersionAppId = appId.asBootVersion().asSnapshot()
+            ApplicationID bootVersionAppId = appId.asBootVersion()
             NCube menuCube = getCubeInternal(bootVersionAppId, SYS_MENU)
             if (menuCube == null)
             {
