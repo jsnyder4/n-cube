@@ -2026,7 +2026,8 @@ class NCubeController implements NCubeConstants
                 }
                 else
                 {
-                    String json1 = JsonWriter.objectToJson(ncube)
+                    // TODO - if this method is too slow, add a new method to NCube to parse multiple NCubes using stream processing for the entire json
+                    String json1 = JsonWriter.objectToJson(ncube, [(JsonWriter.TYPE): false] as Map)
                     NCube nCube = NCube.fromSimpleJson(json1)
                     cubeList.add(nCube)
                     lastSuccessful = nCube.name

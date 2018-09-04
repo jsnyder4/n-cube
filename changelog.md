@@ -1,6 +1,7 @@
 ### Revision History
 * 4.3.3-SNAPSHOT
-  * Update to consume `guava 25.0-jre`
+  * Bug fix: Updated `NCubeController.saveJson()` to allow saving multiple NCubes
+  * Update to consume `guava 26.0-jre`
   * Updated pom.xml build plugins  
 * 4.3.2
   * Bug fix: Pull requests could not be created for users without commit permissions.
