@@ -250,7 +250,7 @@ class ApplicationID
 
     ApplicationID asBootVersion()
     {
-        return this.asVersion(SYS_BOOT_VERSION).asSnapshot()
+        return new ApplicationID(tenant, app, SYS_BOOT_VERSION, DEFAULT_STATUS, branch)
     }
 
     /**
