@@ -2,8 +2,6 @@ package com.cedarsoftware.ncube.formatters
 
 import com.cedarsoftware.ncube.*
 import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.io.JsonReader
-import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
@@ -100,47 +98,7 @@ class TestJsonFormatter extends NCubeBaseTest
         println "Old time: ${oldTime / 1000000.0d} ms"
         println "New time: ${newTime / 1000000.0d} ms"
     }
-
-    @Test
-    void testCanParse()
-    {
-        List<String> fileNames = allTestFiles
-        List<String> parsed = []
-        List<String> failed = []
-        List<String> equals = []
-        for (String fileName : fileNames)
-        {
-            InputStream isOld = NCubeRuntime.getResourceAsStream("/${fileName}")
-            InputStream isNew = NCubeRuntime.getResourceAsStream("/${fileName}")
-//            println "begin parse: ${fileName}"
-            try
-            {
-                NCube oldCube = NCube.fromSimpleJsonOld(isOld)
-                NCube newCube = NCube.fromSimpleJson(isNew)
-                parsed.add(fileName)
-                List<Delta> deltas = DeltaProcessor.getDeltaDescription(newCube, oldCube)
-                if (oldCube == newCube && deltas.size() == 0)
-                {
-                    equals.add(fileName)
-                }
-                else
-                {
-                    println fileName
-                    println deltas
-                }
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace()
-                failed.add(fileName)
-                println fileName
-            }
-        }
-        println "parsed: ${parsed.size()}"
-        println "failed: ${failed.size()}"
-        println "equals: ${equals.size()}"
-    }
-
+    
     @Test
     void testConvertArray()
     {
@@ -319,25 +277,6 @@ class TestJsonFormatter extends NCubeBaseTest
         assert json.contains('"axes":[{"id":1,"name":"Age"')
         assert json.contains('"columns":[{"id":2')
         assert json.contains(',"type":"string","value":"CA"}')
-    }
-
-    @Test
-    void testNCubeUsesCustomReaderWriterWithJsonIo()
-    {
-        NCube ncube = NCubeBuilder.get5DTestCube()
-        ApplicationID appId = new ApplicationID('foo', 'bar', '1.0.4', 'SNAPSHOT', 'baz')
-        ncube.applicationID = appId
-        String json = JsonWriter.objectToJson(ncube)
-        NCube cube = JsonReader.jsonToJava(json) as NCube
-        assert cube.name == 'testMerge'
-        assert cube.numDimensions == 5
-        assert cube.getAxis('age').size() == 2
-        assert cube.getAxis('salary').size() == 2
-        assert cube.getAxis('log').size() == 2
-        assert cube.getAxis('rule').size() == 2
-        assert cube.getAxis('state').size() == 3
-        assert cube.applicationID == appId
-        assert cube.metaProperties.size() == 0
     }
 
     private static class TestFilenameFilter implements FilenameFilter

@@ -95,6 +95,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         // mutable methods removed because of transformed return type (usually Object[] for Javascript clients)
         Set<String> allowedMutableMethods = [
                 'getCube(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
+                'updateCube(class com.cedarsoftware.ncube.NCube)',
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set)',
                 'getCellAnnotation(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Set, boolean)',
                 'mergeDeltas(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.List)',
@@ -627,24 +628,6 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         ncube = NCube.createCubeFromRecord(record2)
         code = ncube.getCell(coord)
         assert code == 'ABC'
-    }
-
-    @Test
-    void testGetCubeRawJson()
-    {
-        String classPathString = call('getCubeRawJson', [ApplicationID.testAppId, 'sys.classpath']) as byte[]
-        assert classPathString != null
-        String nullString = call('getCubeRawJson', [ApplicationID.testAppId, 'NonExistentCube']) as byte[]
-        assert nullString == null
-    }
-
-    @Test
-    void testGetCubeRawJsonBytes()
-    {
-        byte[] classPathBytes = call('getCubeRawJsonBytes', [ApplicationID.testAppId, 'sys.classpath']) as byte[]
-        assert classPathBytes != null
-        byte[] nullBytes = call('getCubeRawJsonBytes', [ApplicationID.testAppId, 'NonExistentCube']) as byte[]
-        assert nullBytes == null
     }
 
     private static Object call(String methodName, List args)

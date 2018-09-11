@@ -264,43 +264,11 @@ class NCubeController implements NCubeConstants
         return record
     }
 
-    @Deprecated
-    String getCubeRawJson(ApplicationID appId, String cubeName)
-    {
-        appId = addTenant(appId)
-        NCubeInfoDto record = mutableClient.loadCubeRecord(appId, cubeName, null)
-        if (record == null)
-        {
-            return null
-        }
-        String rawJson = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
-        return rawJson
-    }
-
-    @Deprecated //TODO - remove this asap, default Map options in other method when removed
-    byte[] getCubeRawJsonBytes(ApplicationID appId, String cubeName)
-    {
-        NCubeInfoDto record = loadCubeRecord(appId, cubeName, null)
-        if (record == null)
-        {
-            return null
-        }
-        byte[] bytes = record.bytes
-        return bytes
-    }
-
     String getJson(ApplicationID appId, String cubeName, Map options)
     {
         appId = addTenant(appId)
         String json = mutableClient.getJson(appId, cubeName, options)
         return json
-    }
-
-    @Deprecated
-    NCube getCube(ApplicationID appId, String cubeName)
-    {
-        NCube cube = loadCube(appId, cubeName, null)
-        return cube
     }
 
     @SuppressWarnings("GroovyUnusedDeclaration")
@@ -532,13 +500,6 @@ class NCubeController implements NCubeConstants
         }
         appId = addTenant(appId)
         mutableClient.createCube(appId, cubeName, cubeBytes)
-    }
-
-    @Deprecated
-    Boolean updateCube(NCube ncube)
-    {
-        ncube.applicationID = addTenant(ncube.applicationID)
-        return mutableClient.updateCube(ncube)
     }
 
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
@@ -1484,23 +1445,6 @@ class NCubeController implements NCubeConstants
         NCubeInfoDto record = mutableClient.loadCubeRecordById(id, null)
         NCube ncube = NCube.createCubeFromRecord(record)
         return NCube.formatCube(ncube, [mode: mode])
-    }
-
-    @Deprecated
-    NCube loadCubeById(long id, Map options = null)
-    {
-        NCubeInfoDto record = mutableClient.loadCubeRecordById(id, options)
-        NCube ncube = NCube.createCubeFromRecord(record)
-        return ncube
-    }
-
-    @Deprecated
-    NCube loadCube(ApplicationID appId, String cubeName, Map options = null)
-    {
-        appId = addTenant(appId)
-        NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
-        NCube ncube = NCube.createCubeFromRecord(record)
-        return ncube
     }
 
     /**

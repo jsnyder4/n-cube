@@ -22,7 +22,6 @@ import com.cedarsoftware.util.ReflectionUtils
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
-import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.util.io.MetaUtils
 import com.fasterxml.jackson.core.JsonFactory
@@ -110,85 +109,7 @@ class NCube<T>
         }
     }
     private static int stackEntryCoordinateValueMaxSize
-
-    /**
-     * Permanently add Custom Reader / Writer to json-io so that n-cube will use its native JSON
-     * format when written or read with json-io.
-     */
-    static
-    {
-        JsonReader.addReaderPermanent(NCube.class, new NCubeReader())
-        JsonWriter.addWriterPermanent(NCube.class, new NCubeWriter())
-    }
-
-    /**
-     * Custom reader for NCube when used with json-io
-     */
-    static class NCubeReader implements JsonReader.JsonClassReaderEx
-    {
-        Object read(Object jOb, Deque<JsonObject<String, Object>> stack, Map<String, Object> args)
-        {
-            Map map = (Map)jOb
-            if (map.size() == 1)
-            {   // If "@type" was added, then you need to extract the n-cube instance from the "ncube" field.
-                map = (Map)map.ncube
-            }
-            NCube ncube = hydrateCube(map)
-            String tenant = ncube.getMetaProperty('n-tenant')
-            String app = ncube.getMetaProperty('n-app')
-            String version = ncube.getMetaProperty('n-version')
-            String status = ncube.getMetaProperty('n-status')
-            String branch = ncube.getMetaProperty('n-branch')
-
-            ApplicationID appId = new ApplicationID(tenant, app, version, status, branch)
-            ncube.applicationID = appId
-
-            stripFoistedAppId(ncube)
-            return ncube
-        }
-    }
-
-    /**
-     * Custom writer for NCube when used with json-io
-     */
-    static class NCubeWriter implements JsonWriter.JsonClassWriterEx
-    {
-        void write(Object o, boolean showType, Writer output, Map<String, Object> args) throws IOException
-        {
-            NCube ncube = (NCube)o
-
-            // Temporarily set App ID as meta-properties before json-io serialization
-            ApplicationID appId1 = ncube.applicationID
-            ncube.setMetaProperty('n-tenant', appId1.tenant)
-            ncube.setMetaProperty('n-app', appId1.app)
-            ncube.setMetaProperty('n-version', appId1.version)
-            ncube.setMetaProperty('n-status', appId1.status)
-            ncube.setMetaProperty('n-branch', appId1.branch)
-
-            String json = ncube.toFormattedJson()
-            if (showType)
-            {   // {"@type":"com.cedarsoftware.ncube.NCube", "ncube": xxx }.  xxx = NCube's native JSON format.
-                output.write(""""ncube":${json}""")
-            }
-            else
-            {   // Write out NCube's native JSON format, minus the { and } at the beginning and end, as this is
-                // written by json-io.
-                output.write(json.substring(1, json.length() - 1))
-            }
-
-            stripFoistedAppId(ncube)
-        }
-    }
-
-    private static void stripFoistedAppId(NCube ncube)
-    {
-        ncube.removeMetaProperty('n-tenant')
-        ncube.removeMetaProperty('n-app')
-        ncube.removeMetaProperty('n-version')
-        ncube.removeMetaProperty('n-status')
-        ncube.removeMetaProperty('n-branch')
-    }
-
+    
     /**
      * Creata a new NCube instance with the passed in name
      * @param name String name to use for the NCube.
@@ -1250,7 +1171,7 @@ class NCube<T>
         Map output = options.containsKey('output') ? (Map) options.output : [:]
         Object defaultValue = options.get(MAP_REDUCE_DEFAULT_VALUE)
         Collection<Column> selectList = (Collection) options.selectList
-        Collection<Column> whereColumns = (Collection) options.whereColumns
+        Collection<Column> whereColumns = (Collection<Column>) options.whereColumns
         final TrackingMap commandInput = new TrackingMap<>(new LinkedHashMap(input))
         Set<Long> boundColumns = bindAdditionalColumns(rowAxisName, colAxisName, commandInput)
         boolean shouldExecute = options.get(MAP_REDUCE_SHOULD_EXECUTE)
@@ -2911,7 +2832,7 @@ class NCube<T>
     }
 
     /**
-     * Use this API to create NCubes from a simple JSON format.
+     * Use this API to create a single NCube from JSON.
      *
      * @param json Simple JSON format
      * @return NCube instance created from the passed in JSON.  It is
@@ -2929,31 +2850,13 @@ class NCube<T>
     }
 
     /**
-     * Use this API to create NCubes from a simple JSON format.
+     * Use this API to create NCubes from JSON.
      *
      * @param stream Simple JSON format
      * @return NCube instance created from the passed in JSON.  It is
      * not added to the static list of NCubes.  If you want that, call
      * addCube() after creating the NCube with this API.
      */
-    static <T> NCube<T> fromSimpleJsonOld(final InputStream stream)
-    {
-        try
-        {
-            Map options = [:]
-            options[JsonReader.USE_MAPS] = true
-            Map jsonNCube = (Map) JsonReader.jsonToJava(new BufferedInputStream(stream), options)
-            return hydrateCube(jsonNCube)
-        }
-        catch (RuntimeException | ThreadDeath e)
-        {
-            throw e
-        }
-        catch (Throwable e)
-        {
-            throw new IllegalStateException("Error reading cube from passed in JSON", e)
-        }
-    }
     static <T> NCube<T> fromSimpleJson(final InputStream stream)
     {
         if (stream == null)
@@ -3304,7 +3207,7 @@ class NCube<T>
             Map axisProps = (Map)input[(PARSE_AXIS_PROPS)]
             transformMetaProperties(axisProps)
             AxisType type = (AxisType)axisObj['type']
-            List<Map> tempColumns = (List)input[(PARSE_TEMP_COLS)]
+            List<Map> tempColumns = (List<Map>)input[(PARSE_TEMP_COLS)]
             Map<Object, Long> userIdToUniqueId = (Map)input[(PARSE_USERID_TO_UNIQUE)]
             boolean isRef = getBoolean(axisProps, 'isRef')
             String axisName = (String)axisObj['name']
@@ -3554,22 +3457,6 @@ class NCube<T>
         }
     }
 
-    private static <T> NCube<T> parseJsonPrint(JsonParser parser)
-    {
-        while (!parser.closed)
-        {
-            JsonToken token = parser.nextToken()
-            if (token == null)
-            {
-                break
-            }
-            println "token name: ${token.name()}"
-            println "parser text: ${parser.text}"
-            println ''
-        }
-        return null
-    }
-
     private static <T> NCube<T> parseJson(JsonParser parser)
     {
         Map state = ncubeToken
@@ -3602,325 +3489,7 @@ class NCube<T>
         parser.close()
         return ncube
     }
-
-    /**
-     * Load an n-cube from JSON format, which was read in by json-io as a Map of Maps.  This is
-     * the 'regular' JSON format that is output from the JsonFormatter with no special settings.
-     * For example, the JSON format created when indexFormat=true is not loadable by this method.
-     * @param jsonNCube Map is the regular JSON format read and returned by json-io in Map of Map format.
-     * @return NCube created from the passed in Map of Maps, created by json-io, from the regular JSON
-     * format, which was created by the JsonFormatter.
-     */
-    private static <T> NCube<T> hydrateCube(Map jsonNCube)
-    {
-        final String cubeName = getString(jsonNCube, "ncube")  // new cubes always have ncube as they key in JSON storage
-        if (StringUtilities.isEmpty(cubeName))
-        {
-            throw new IllegalArgumentException("JSON format must have a root 'ncube' field containing the String name of the cube.")
-        }
-        final NCube ncube = new NCube(cubeName)
-        ncube.metaProps = new CaseInsensitiveMap()
-        ncube.metaProps.putAll(jsonNCube)
-        ncube.metaProps.remove('ncube')
-        ncube.metaProps.remove(DEFAULT_CELL_VALUE)
-        ncube.metaProps.remove(DEFAULT_CELL_VALUE_TYPE)
-        ncube.metaProps.remove(DEFAULT_CELL_VALUE_URL)
-        ncube.metaProps.remove(DEFAULT_CELL_VALUE_CACHE)
-        ncube.metaProps.remove('ruleMode')
-        ncube.metaProps.remove('axes')
-        ncube.metaProps.remove('cells')
-        ncube.metaProps.remove('sha1')
-        transformMetaProperties(ncube.metaProps)
-
-        String defType = jsonNCube.containsKey(DEFAULT_CELL_VALUE_TYPE) ? getString(jsonNCube, DEFAULT_CELL_VALUE_TYPE) : null
-        String defUrl = jsonNCube.containsKey(DEFAULT_CELL_VALUE_URL) ? getString(jsonNCube, DEFAULT_CELL_VALUE_URL) : null
-        boolean defCache = getBoolean(jsonNCube, DEFAULT_CELL_VALUE_CACHE)
-        ncube.setDefaultCellValue(CellInfo.parseJsonValue(jsonNCube[DEFAULT_CELL_VALUE], defUrl, defType, defCache))
-        
-        Object[] axes = (Object[])jsonNCube.axes
-
-        if (axes == null)
-        {
-            axes = [] as Object[]
-        }
-
-        Map<Object, Long> userIdToUniqueId = new CaseInsensitiveMap<>()
-        long idBase = 1
-
-        // Read axes
-        for (item in axes)
-        {
-            Map jsonAxis = item as Map
-            long axisId
-            if (jsonAxis.id)
-            {
-                axisId = jsonAxis.id as Long
-            }
-            else
-            {    // Older n-cube format with no 'id' on the 'axes' in the JSON
-                axisId = idBase++
-            }
-            final String axisName = getString(jsonAxis, 'name')
-            final boolean hasDefault = getBoolean(jsonAxis, 'hasDefault')
-            boolean isRef = getBoolean(jsonAxis, 'isRef')
-
-            // Remove these so they are not kept as meta-properties
-            jsonAxis.remove('id')
-            jsonAxis.remove('name')
-            jsonAxis.remove('isRef')
-            jsonAxis.remove('hasDefault')
-            boolean hasColumnsKey = jsonAxis.containsKey('columns')
-            Object[] columns = (Object[]) jsonAxis.remove('columns')
-            transformMetaProperties(jsonAxis)
-
-            if (isRef)
-            {   // reference axis
-                ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, axisName, jsonAxis)
-                Axis newAxis = new Axis(axisName, axisId, hasDefault, refAxisLoader)
-                ncube.addAxis(newAxis)
-                for (column in newAxis.columns)
-                {
-                    userIdToUniqueId[column.id] = column.id
-                }
-
-                moveAxisMetaPropsToDefaultColumn(newAxis)
-                if (columns)
-                {
-                    columns.each { Map column ->
-                        Column col = newAxis.getColumnById((long)column['id'])
-                        if (col)
-                        {    // skip deleted columns
-                            Iterator<Map.Entry> i = column.entrySet().iterator()
-                            while (i.hasNext())
-                            {
-                                Map.Entry<String, Object> entry = i.next()
-                                String key = entry.key
-                                if ('id' != key)
-                                {
-                                    col.setMetaProperty(key, entry.value)
-                                }
-                            }
-                            transformMetaProperties(col.metaProps)
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (!hasColumnsKey)
-                {
-                    throw new IllegalArgumentException("'columns' must be specified, axis: ${axisName}, cube: ${cubeName}")
-                }
-
-                AxisType type = AxisType.valueOf(getString(jsonAxis, 'type'))
-                AxisValueType valueType = AxisValueType.valueOf(getString(jsonAxis, 'valueType'))
-                final int preferredOrder = getLong(jsonAxis, 'preferredOrder').intValue()
-                boolean fireAll = true
-                if (jsonAxis.containsKey('fireAll'))
-                {
-                    fireAll = getBoolean(jsonAxis, 'fireAll')
-                }
-
-                // Remove known fields so that they are not listed as meta properties.
-                jsonAxis.remove('type')
-                jsonAxis.remove('valueType')
-                jsonAxis.remove('preferredOrder')
-                jsonAxis.remove('multiMatch')
-                jsonAxis.remove('fireAll')
-
-                Axis axis = new Axis(axisName, type, valueType, hasDefault, preferredOrder, axisId, fireAll)
-                ncube.addAxis(axis)
-                axis.metaProps = new CaseInsensitiveMap<>()
-                axis.metaProps.putAll(jsonAxis)
-
-                if (axis.metaProps.size() < 1)
-                {
-                    axis.metaProps = null
-                }
-                else
-                {
-                    moveAxisMetaPropsToDefaultColumn(axis)
-                }
-
-                // Temporary - eventually should be removed.  Fixes rule columns with no or non-unique names
-                healUnamedRules(type, columns as List)
-
-                // Read columns
-                for (col in columns)
-                {
-                    Map jsonColumn = (Map)col
-                    Object value = jsonColumn['value']
-                    String url = (String)jsonColumn['url']
-                    String colType = (String)jsonColumn['type']
-                    Object id = jsonColumn['id']
-                    String colName = (String)jsonColumn[Column.NAME]
-
-                    if (value == null)
-                    {
-                        if (id == null)
-                        {
-                            throw new IllegalArgumentException("Missing 'value' field on column or it is null, axis: ${axisName}, cube: ${cubeName}")
-                        }
-                        else
-                        {   // Allows you to skip setting both id and value to the same value.
-                            value = id
-                        }
-                    }
-
-                    boolean cache = false
-                    if (jsonColumn.containsKey('cache'))
-                    {
-                        cache = getBoolean(jsonColumn, 'cache')
-                    }
-
-                    Column colAdded
-                    Long suggestedId = (id instanceof Long) ? (Long)id : null
-                    if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
-                    {
-                        colAdded = ncube.addColumn(axis.name, (Comparable)CellInfo.parseJsonValue(value, null, colType, false), colName, suggestedId)
-                    }
-                    else if (type == AxisType.RANGE)
-                    {
-                        Object[] rangeItems = (Object[])value
-                        if (rangeItems.length != 2)
-                        {
-                            throw new IllegalArgumentException("Range must have exactly two items, axis: ${axisName}, cube: ${cubeName}")
-                        }
-                        Comparable low = (Comparable)CellInfo.parseJsonValue(rangeItems[0], null, colType, false)
-                        Comparable high = (Comparable)CellInfo.parseJsonValue(rangeItems[1], null, colType, false)
-                        colAdded = ncube.addColumn(axis.name, new Range(low, high), colName, suggestedId)
-                    }
-                    else if (type == AxisType.SET)
-                    {
-                        Object[] rangeItems = (Object[])value
-                        RangeSet rangeSet = new RangeSet()
-                        for (pt in rangeItems)
-                        {
-                            if (pt instanceof Object[])
-                            {
-                                Object[] rangeValues = (Object[])pt
-                                if (rangeValues.length != 2)
-                                {
-                                    throw new IllegalArgumentException("Set Ranges must have two values only, range length: ${rangeValues.length}, axis: ${axisName}, cube: ${cubeName}")
-                                }
-                                Comparable low = (Comparable)CellInfo.parseJsonValue(rangeValues[0], null, colType, false)
-                                Comparable high = (Comparable)CellInfo.parseJsonValue(rangeValues[1], null, colType, false)
-                                Range range = new Range(low, high)
-                                rangeSet.add(range)
-                            }
-                            else
-                            {
-                                rangeSet.add((Comparable)CellInfo.parseJsonValue(pt, null, colType, false))
-                            }
-                        }
-                        colAdded = ncube.addColumn(axis.name, rangeSet, colName, suggestedId)
-                    }
-                    else if (type == AxisType.RULE)
-                    {
-                        Object cmd = CellInfo.parseJsonValue(value, url, colType, cache)
-                        if (!(cmd instanceof CommandCell))
-                        {
-                            cmd = new GroovyExpression('false', null, cache)
-                        }
-                        colAdded = ncube.addColumn(axis.name, (CommandCell)cmd, colName, suggestedId)
-                    }
-                    else
-                    {
-                        throw new IllegalArgumentException("Unsupported Axis Type '${type}' for simple JSON input, axis: ${axisName}, cube: ${cubeName}")
-                    }
-
-                    if (id != null)
-                    {
-                        userIdToUniqueId[id] = colAdded.id
-                    }
-
-                    colAdded.metaProps = new CaseInsensitiveMap<>()
-                    colAdded.metaProps.putAll(jsonColumn)
-                    colAdded.metaProps.remove('id')
-                    colAdded.metaProps.remove('value')
-                    colAdded.metaProps.remove('type')
-                    colAdded.metaProps.remove('url')
-                    colAdded.metaProps.remove('cache')
-
-                    if (colAdded.metaProps.size() < 1)
-                    {
-                        colAdded.metaProps = null
-                    }
-                    else
-                    {
-                        transformMetaProperties(colAdded.metaProps)
-                    }
-                }
-            }
-        }
-
-        // Read cells
-        if (jsonNCube.containsKey('cells'))
-        {   // Allow JSON to have no cells - empty cube
-            Object[] cells = (Object[]) jsonNCube['cells']
-
-            for (cell in cells)
-            {
-                JsonObject cMap = (JsonObject)cell
-                Object ids = cMap['id']
-                String type = (String)cMap['type']
-                String url = (String)cMap['url']
-                boolean cache = false
-
-                if (cMap.containsKey('cache'))
-                {
-                    cache = getBoolean(cMap, 'cache')
-                }
-
-                Object v = CellInfo.parseJsonValue(cMap['value'], url, type, cache)
-
-                if (ids instanceof Object[])
-                {   // If specified as ID array, build coordinate that way
-                    Set<Long> colIds = new LinkedHashSet<>()
-                    for (id in (Object[])ids)
-                    {
-                        if (!userIdToUniqueId.containsKey(id))
-                        {
-                            continue
-                        }
-                        colIds.add(userIdToUniqueId[id])
-                    }
-                    try
-                    {
-                        ncube.setCellById(v, colIds)
-                    }
-                    catch (InvalidCoordinateException ignore)
-                    {
-                        LOG.debug("Orphaned cell on n-cube: ${cubeName}, ids: ${colIds}")
-                    }
-                }
-                else
-                {
-                    if (!(cMap['key'] instanceof JsonObject))
-                    {
-                        throw new IllegalArgumentException("'key' must be a JSON object {}, cube: ${cubeName}")
-                    }
-
-                    JsonObject<String, Object> keys = (JsonObject<String, Object>) cMap['key']
-                    for (entry in keys.entrySet())
-                    {
-                        keys[entry.key] = CellInfo.parseJsonValue(entry.value, null, null, false)
-                    }
-                    try
-                    {
-                        ncube.setCell(v, keys)
-                    }
-                    catch (CoordinateNotFoundException ignore)
-                    {
-                        LOG.debug("Orphaned cell on n-cube: ${cubeName}, coord: ${keys}")
-                    }
-                }
-            }
-        }
-
-        return ncube
-    }
-
+    
     private static void healUnamedRules(AxisType type, List columns)
     {
         if (type != AxisType.RULE)
@@ -3953,7 +3522,7 @@ class NCube<T>
     {
         String name
         while (names.contains(name = "BR${count++}"))
-        ;
+        {}
         return new MapEntry(name, count)
     }
 
@@ -4013,17 +3582,6 @@ class NCube<T>
         }
     }
 
-    protected static String getString(Map obj, String key)
-    {
-        Object val = obj[key]
-        if (val instanceof String)
-        {
-            return (String) val
-        }
-        String clazz = val == null ? 'null' : val.class.name
-        throw new IllegalArgumentException("Expected 'String' for key '${key}' but instead found: ${clazz}")
-    }
-
     protected static Long getLong(Map obj, String key)
     {
         Object val = obj[key]
@@ -4069,7 +3627,7 @@ class NCube<T>
     NCube duplicate(String newName = name)
     {
         NCube copy = createCubeFromBytes(cubeAsGzipJsonBytes)
-        copy.setName(newName)
+        copy.name = newName
         copy.applicationID = this.applicationID
         return copy
     }
@@ -4238,7 +3796,7 @@ class NCube<T>
 
         if (numCells)
         {
-            List<String> sha1s = new ArrayList<>(cells.size()) as List
+            List<String> sha1s = new ArrayList<>(cells.size()) as List<String>
             MessageDigest tempDigest = EncryptionUtilities.SHA1Digest
 
             for (entry in cells.entrySet())
