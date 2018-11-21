@@ -1,6 +1,6 @@
 ### Revision History\
-* 4.3.4-SNAPSHOT
-  * 
+* 4.4.0
+  * Updated to consume Spring 5.1.2.RELEASE
 * 4.3.3
   * Bug fix: Updated `NCubeController.saveJson()` to allow saving multiple NCubes
   * Update to consume `guava 26.0-jre`
