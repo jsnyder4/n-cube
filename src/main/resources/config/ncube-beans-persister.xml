@@ -47,27 +47,15 @@
         variables or system properties.
     -->
 
-    <bean id="ncubeDataSource" destroy-method="close" class="org.apache.tomcat.jdbc.pool.DataSource"
-          p:driverClassName="${ncube.datasource.driver-class-name:#{'org.hsqldb.jdbcDriver'}}"
-          p:url="${ncube.datasource.url:#{'jdbc:hsqldb:mem:testdb'}}"
+    <!--p:driverClassName="${ncube.datasource.driver-class-name:#{'org.hsqldb.jdbcDriver'}}"-->
+    <bean id="ncubeDataSource" destroy-method="close" class="com.zaxxer.hikari.HikariDataSource"
+          p:jdbcUrl="${ncube.datasource.url:#{'jdbc:hsqldb:mem:testdb'}}"
           p:username="${ncube.datasource.username:#{'sa'}}"
           p:password="${ncube.datasource.password:#{''}}"
-          p:jdbcInterceptors="${ncube.datasource.tomcat.jdbc-interceptors:#{'com.cedarsoftware.util.PoolInterceptor;org.apache.tomcat.jdbc.pool.interceptor.QueryTimeoutInterceptor(queryTimeout=300000)'}}"
-          p:initialSize="${ncube.datasource.tomcat.initial-size:#{5}}"
-          p:minIdle="${ncube.datasource.tomcat.min-idle:#{5}}"
-          p:maxIdle="${ncube.datasource.tomcat.max-idle:#{10}}"
-          p:maxActive="${ncube.datasource.tomcat.max-active:#{100}}"
-          p:maxWait="${ncube.datasource.tomcat.max-wait:#{120000}}"
-          p:jmxEnabled="${ncube.datasource.tomcat.jmx-enabled:#{true}}"
-          p:removeAbandoned="${ncube.datasource.tomcat.remove-abandoned:#{true}}"
-          p:removeAbandonedTimeout="${ncube.datasource.tomcat.remove-abandoned-timeout:#{180}}"
-          p:testOnBorrow="${ncube.datasource.tomcat.test-on-borrow:#{true}}"
-          p:testOnReturn="${ncube.datasource.tomcat.test-on-return:#{false}}"
-          p:testWhileIdle="${ncube.datasource.tomcat.test-while-idle:#{false}}"
-          p:timeBetweenEvictionRunsMillis="${ncube.datasource.tomcat.time-between-eviction-runs-millis:#{30000}}"
-          p:minEvictableIdleTimeMillis="${ncube.datasource.tomcat.min-evictable-idle-time-millis:#{30000}}"
-          p:validationInterval="${ncube.datasource.tomcat.validation-interval:#{60000}}"
-          p:validationQuery="${ncube.datasource.tomcat.validation-query:#{'SELECT 1 FROM n_cube WHERE 1=0'}}">
+          p:connectionTimeout="${ncube.datasource.connection-timeout:#{'30000'}}"
+          p:maxLifetime="${ncube.datasource.max-life-time:#{14400000}}}"
+          p:poolName="${ncube.datasource.pool-name:#{'NCube JDBC Connection Pool'}}}"
+          p:maximumPoolSize="${ncube.datasource.maximum-pool-size:#{100}}">
     </bean>
-
+    
 </beans>

@@ -9,13 +9,13 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
-import org.apache.tomcat.jdbc.pool.DataSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.jdbc.datasource.DataSourceUtils
 
+import javax.sql.DataSource
 import java.sql.Connection
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap

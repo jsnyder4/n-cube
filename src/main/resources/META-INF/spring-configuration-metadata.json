@@ -206,144 +206,53 @@
       "defaultValue": "16"
     },
     {
-      "name": "ncube.datasource.driver-class-name",
-      "type": "java.lang.String",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "JDBC driver class name.",
-      "defaultValue": "org.hsqldb.jdbcDriver"
-    },
-    {
       "name": "ncube.datasource.url",
       "type": "java.lang.String",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource URL.",
       "defaultValue": "jdbc:hsqldb:mem:testdb"
     },
     {
       "name": "ncube.datasource.username",
       "type": "java.lang.String",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource username.",
       "defaultValue": "sa"
     },
     {
       "name": "ncube.datasource.password",
       "type": "",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource password.",
       "defaultValue": ""
     },
     {
-      "name": "ncube.datasource.tomcat.validation-query",
-      "type": "java.lang.String",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "Datasource validation query.",
-      "defaultValue": "SELECT 1 FROM n_cube WHERE 1=0"
-    },
-    {
-      "name": "ncube.datasource.tomcat.jdbc-interceptors",
-      "type": "java.lang.String",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "com.cedarsoftware.util.PoolInterceptor"
-    },
-    {
-      "name": "ncube.datasource.tomcat.initial-size",
+      "name": "ncube.datasource.connection-timeout",
       "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "5"
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
+      "description": "Connection timeout in milliseconds.",
+      "defaultValue": "30000"
     },
     {
-      "name": "ncube.datasource.tomcat.min-idle",
+      "name": "ncube.datasource.max-life-time",
       "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "10"
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
+      "description": "Maximum full life time of a connection in the pool in milliseconds.  Default to 4 hours.",
+      "defaultValue": "14400000"
     },
     {
-      "name": "ncube.datasource.tomcat.max-idle",
+      "name": "ncube.datasource.maximum-pool-size",
       "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "10"
-    },
-    {
-      "name": "ncube.datasource.tomcat.max-active",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
+      "description": "Maximum number of JDBC connections.",
       "defaultValue": "100"
     },
     {
-      "name": "ncube.datasource.tomcat.max-wait",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "120000"
-    },
-    {
-      "name": "ncube.datasource.tomcat.jmx-enabled",
-      "type": "java.lang.Boolean",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "true"
-    },
-    {
-      "name": "ncube.datasource.tomcat.remove-abandoned",
-      "type": "java.lang.Boolean",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "true"
-    },
-    {
-      "name": "ncube.datasource.tomcat.remove-abandoned-timeout",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "180"
-    },
-    {
-      "name": "ncube.datasource.tomcat.test-on-borrow",
-      "type": "java.lang.Boolean",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "true"
-    },
-    {
-      "name": "ncube.datasource.tomcat.test-on-return",
-      "type": "java.lang.Boolean",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "false"
-    },
-    {
-      "name": "ncube.datasource.tomcat.test-while-idle",
-      "type": "java.lang.Boolean",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "false"
-    },
-    {
-      "name": "ncube.datasource.tomcat.time-between-eviction-runs-millis",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "30000"
-    },
-    {
-      "name": "ncube.datasource.tomcat.min-evictable-idle-time-millis",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "30000"
-    },
-    {
-      "name": "ncube.datasource.tomcat.validation-interval",
-      "type": "java.lang.Integer",
-      "sourceType": "org.apache.tomcat.jdbc.pool.DataSource",
-      "description": "",
-      "defaultValue": "60000"
+      "name": "ncube.datasource.pool-name",
+      "type": "java.lang.String",
+      "sourceType": "com.zaxxer.hikari.HikariDataSource",
+      "description": "JDBC Connection pool name.",
+      "defaultValue": "NCube JDBC Connection Pool"
     }
   ]
 }

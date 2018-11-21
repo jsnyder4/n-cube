@@ -53,7 +53,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         Mockito.when(callableBean.call(Mockito.eq(MOCK_BEAN_NAME),Mockito.anyString(),Mockito.anyListOf(String.class))).then(new Answer<Object>() {
             @Override
             Object answer(InvocationOnMock invocation) throws Throwable {
-                String method = invocation.getArgumentAt(1,String.class)
+                String method = invocation.arguments[1]
                 List<Object> methodArgs = (List) invocation.arguments[2]
                 if (METHOD_LOAD_CUBE_RECORD==method ) {
                     ApplicationID appId = (ApplicationID) methodArgs[0]

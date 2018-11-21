@@ -11,8 +11,8 @@ import com.google.common.util.concurrent.AtomicDouble
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.actuate.endpoint.InfoEndpoint
-import org.springframework.boot.actuate.endpoint.MetricsEndpoint
+import org.springframework.boot.actuate.info.InfoEndpoint
+import org.springframework.boot.actuate.metrics.MetricsEndpoint
 import org.springframework.web.bind.annotation.RestController
 
 import javax.management.MBeanServer
@@ -1593,7 +1593,7 @@ class NCubeController implements NCubeConstants
             username = '--'
         }
 
-        Map info = infoEndpoint.invoke()
+        Map info = infoEndpoint.info()
         Map buildInfo = info.build as Map
         if (buildInfo)
         {
@@ -1643,43 +1643,31 @@ class NCubeController implements NCubeConstants
         putIfNotNull(serverStats, 'Heap size (-Xmx)', (maxMem.round(1)) + ' MB')
         putIfNotNull(serverStats, 'Used memory', (usedMem.round(1)) + ' MB')
         putIfNotNull(serverStats, 'Free memory', (freeMem.round(1)) + ' MB')
-
-        if (PoolInterceptor.size.get() < 1)
-        {
-            putIfNotNull(serverStats, 'JDBC Pool', 'n/a')
-        }
-        else
-        {
-            putIfNotNull(serverStats, 'JDBC Pool size', PoolInterceptor.size.get())
-            putIfNotNull(serverStats, 'JDBC Pool active', PoolInterceptor.active.get())
-            putIfNotNull(serverStats, 'JDBC Pool idle', PoolInterceptor.idle.get())
-        }
-
         putIfNotNull(serverStats, 'Tomcat Max Connections', tomcatMaxConnections)
         putIfNotNull(serverStats, 'Tomcat Max Threads', tomcatMaxThreads)
 
         serverStats['----------'] = ''
-        Map metrics = metricsEndpoint.invoke()
-
-        for (Iterator<Map.Entry<String, Object>> it = metrics.entrySet().iterator(); it.hasNext(); )
-        {
-            Map.Entry<String, Object> entry = it.next()
-            String key = entry.key
-            if (!(key.startsWith('heap') || key.startsWith('nonheap') || key.startsWith('processors') || key.startsWith('mem')))
-            {
-                if (showAll)
-                {
-                    putIfNotNull(serverStats, key, entry.value)
-                }
-                else
-                {
-                    if (!(key.startsWith('gauge') || key.startsWith('cache') || key.startsWith('counter')))
-                    {
-                        putIfNotNull(serverStats, key, entry.value)
-                    }
-                }
-            }
-        }
+//        Map metrics = metricsEndpoint.invoke()
+//
+//        for (Iterator<Map.Entry<String, Object>> it = metrics.entrySet().iterator(); it.hasNext(); )
+//        {
+//            Map.Entry<String, Object> entry = it.next()
+//            String key = entry.key
+//            if (!(key.startsWith('heap') || key.startsWith('nonheap') || key.startsWith('processors') || key.startsWith('mem')))
+//            {
+//                if (showAll)
+//                {
+//                    putIfNotNull(serverStats, key, entry.value)
+//                }
+//                else
+//                {
+//                    if (!(key.startsWith('gauge') || key.startsWith('cache') || key.startsWith('counter')))
+//                    {
+//                        putIfNotNull(serverStats, key, entry.value)
+//                    }
+//                }
+//            }
+//        }
 
         putIfNotNull(results, 'serverStats', serverStats)
         return results
