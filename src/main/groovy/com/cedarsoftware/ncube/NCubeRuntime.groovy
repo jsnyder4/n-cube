@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
-import org.springframework.cache.guava.GuavaCache
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -925,11 +924,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             boolean success = true
             Map output = new LinkedHashMap()
             Map args = [input:coord, output:output, ncube:ncube]
-            Map<String, Object> copy = new LinkedHashMap(coord)
+            Map<String, Object> copy = new LinkedHashMap<>(coord)
 
             // If any of the input values are a CommandCell, execute them.  Use the fellow (same) input as input.
             // In other words, other key/value pairs on the input map can be referenced in a CommandCell.
-            copy.each { key, value ->
+            copy.each { k, value ->
+                String key = k
                 if (value instanceof CommandCell)
                 {
                     CommandCell cmd = (CommandCell) value
@@ -1158,8 +1158,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         else
         {
-            synchronized (ncubeCacheManager)
-            {
+            synchronized (ncubeCacheManager) {
                 String cacheKey = appId.cacheKey()
                 // Clear NCube cache
                 Cache cubeCache = ncubeCacheManager.getCache(cacheKey)
@@ -1460,8 +1459,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         else
         {
             URL actualUrl
-            synchronized (url.intern())
-            {
+            synchronized (url.intern()) {
                 URLClassLoader loader = getUrlClassLoader(appId, input)
 
                 // Make URL absolute (uses URL roots added to NCubeRuntime)
@@ -1555,8 +1553,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             return params
         }
 
-        synchronized (NCubeRuntime.class)
-        {
+        synchronized (NCubeRuntime.class) {
             if (systemParams == null)
             {
                 String jsonParams = SystemUtilities.getExternalVariable(NCUBE_PARAMS)

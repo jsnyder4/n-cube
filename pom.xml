@@ -5,7 +5,7 @@
     <groupId>com.cedarsoftware</groupId>
 	<artifactId>n-cube</artifactId>
     <packaging>jar</packaging>
-	<version>4.3.4-SNAPSHOT</version>
+	<version>4.4.0-SNAPSHOT</version>
 	<description>n-cube Engine</description>
     <url>https://github.com/jdereg/n-cube</url>
     <profiles>
@@ -78,8 +78,7 @@
         <version.groovy>2.4.15</version.groovy>
         <version.guava>26.0-jre</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
-        <version.spring>4.3.16.RELEASE</version.spring>
-        <version.springboot>1.5.14.RELEASE</version.springboot>
+        <version.spring>5.1.2.RELEASE</version.spring>
         <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
         <version.hsqldb>2.4.1</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>

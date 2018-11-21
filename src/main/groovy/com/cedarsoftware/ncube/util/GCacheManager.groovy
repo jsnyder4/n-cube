@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube.util
 
 import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.util.GuavaCache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
@@ -9,7 +10,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
-import org.springframework.cache.guava.GuavaCache
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -53,7 +53,7 @@ class GCacheManager implements CacheManager
         this.evictionDuration = evictionDuration
         this.evictionTimeUnit = evictionTimeUnit
     }
-    
+
     Cache getCache(String name)
     {
         Cache cache = caches[name]  // name = ApplicationID.toString()

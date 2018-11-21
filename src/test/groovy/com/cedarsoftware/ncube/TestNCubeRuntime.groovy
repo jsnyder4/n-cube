@@ -1,8 +1,8 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.GuavaCache
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.cache.guava.GuavaCache
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 import static org.junit.Assert.fail
