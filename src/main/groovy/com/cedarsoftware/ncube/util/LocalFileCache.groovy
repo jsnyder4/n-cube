@@ -16,7 +16,6 @@ import javax.annotation.PostConstruct
 import static com.cedarsoftware.ncube.SnapshotPolicy.RELEASE_ONLY
 import static com.cedarsoftware.ncube.SnapshotPolicy.OFFLINE
 
-@Component("localFileCache")
 class LocalFileCache {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileCache.class)
 

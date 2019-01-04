@@ -238,7 +238,7 @@
       "type": "java.lang.Integer",
       "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Maximum full life time of a connection in the pool in milliseconds.  Default to 4 hours.",
-      "defaultValue": "14400000"
+      "defaultValue": 14400000
     },
     {
       "name": "ncube.datasource.maximum-pool-size",

@@ -67,12 +67,6 @@ class NCubeConfiguration
 
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
 
-    @Bean
-    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer()
-    {
-        return new PropertySourcesPlaceholderConfigurer()
-    }
-
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
     {

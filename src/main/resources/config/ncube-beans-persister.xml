@@ -53,7 +53,7 @@
           p:username="${ncube.datasource.username:#{'sa'}}"
           p:password="${ncube.datasource.password:#{''}}"
           p:connectionTimeout="${ncube.datasource.connection-timeout:#{'30000'}}"
-          p:maxLifetime="${ncube.datasource.max-life-time:#{14400000}}}"
+          p:maxLifetime="${ncube.datasource.max-life-time:#{14400000}}"
           p:poolName="${ncube.datasource.pool-name:#{'NCube JDBC Connection Pool'}}}"
           p:maximumPoolSize="${ncube.datasource.maximum-pool-size:#{100}}">
     </bean>
