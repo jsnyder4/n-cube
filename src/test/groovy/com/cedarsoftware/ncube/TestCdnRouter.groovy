@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static org.mockito.Matchers.anyString
+import static org.mockito.ArgumentMatchers.nullable
 import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.eq
 import static org.mockito.Mockito.times
@@ -169,7 +169,7 @@ class TestCdnRouter extends NCubeCleanupBaseTest
         CdnRouter router = new CdnRouter()
         router.route(request, response)
 
-        verify(response, times(1)).sendError(eq(404), anyString())
+        verify(response, times(1)).sendError(eq(404), nullable(String.class))
     }
 
     @Test

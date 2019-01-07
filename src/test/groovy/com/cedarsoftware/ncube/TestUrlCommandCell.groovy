@@ -178,7 +178,8 @@ class TestUrlCommandCell extends NCubeBaseTest
         HttpServletResponse response = mock HttpServletResponse.class
         HttpServletRequest request = mock HttpServletRequest.class
 
-        when(request.headerNames).thenThrow SocketTimeoutException.class
+        when(request.headerNames).thenReturn Collections.enumeration(new ArrayList<String>())
+        when(response.outputStream).thenThrow SocketTimeoutException.class
         when(ncube.name).thenReturn 'foo-cube'
         when(ncube.version).thenReturn 'foo-version'
         when(ncube.applicationID).thenReturn(ApplicationID.testAppId)
@@ -199,7 +200,8 @@ class TestUrlCommandCell extends NCubeBaseTest
         HttpServletResponse response = mock HttpServletResponse.class
         HttpServletRequest request = mock HttpServletRequest.class
 
-        when(request.headerNames).thenThrow SocketTimeoutException.class
+        when(request.headerNames).thenReturn Collections.enumeration(new ArrayList<String>())
+        when(response.outputStream).thenThrow SocketTimeoutException.class
         doThrow(IOException.class).when(response).sendError HttpServletResponse.SC_NOT_FOUND, 'File not found: http://www.google.com'
         when(ncube.name).thenReturn 'foo-cube'
         when(ncube.version).thenReturn 'foo-version'

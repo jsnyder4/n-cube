@@ -15,8 +15,6 @@
 
     <beans profile="ncube-client">
 
-        <bean id="localFileCache" class="com.cedarsoftware.ncube.util.LocalFileCache"/>
-
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
@@ -43,8 +41,6 @@
 
         <import resource="ncube-beans-persister.xml"/>
 
-        <bean id="localFileCache" class="com.cedarsoftware.ncube.util.LocalFileCache"/>
-
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
@@ -70,8 +66,6 @@
             <constructor-arg ref="ncubeRuntime"/>
             <constructor-arg value="true"/>
         </bean>
-
-        <bean id="localFileCache" class="com.cedarsoftware.ncube.util.LocalFileCache"/>
 
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
@@ -127,8 +121,6 @@
             <constructor-arg ref="ncubeRuntime"/>
             <constructor-arg value="true"/>
         </bean>
-
-        <bean id="localFileCache" class="com.cedarsoftware.ncube.util.LocalFileCache"/>
 
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
