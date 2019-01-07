@@ -1,6 +1,7 @@
 ### Revision History
 * 4.4.2-SNAPSHOT
-  * 
+  * Updated to consume Groovy 2.4.16
+  * Updated pom.xml to use gmavenplus 1.6.2 (from 1.6.1)
 * 4.4.1
   * Updated to consume Spring 2.1.1.RELEASE 
   * Updated to consume Spring 5.1.3.RELEASE
