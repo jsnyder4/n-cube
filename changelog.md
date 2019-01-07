@@ -1,6 +1,7 @@
 ### Revision History
-* 4.4.1-SNAPSHPOT
-  * Updated to consume Spring 2.1.0.RELEASE 
+* 4.4.1
+  * Updated to consume Spring 2.1.1.RELEASE 
+  * Updated to consume Spring 5.1.3.RELEASE
 * 4.4.0
   * Updated to consume Spring 5.1.2.RELEASE
 * 4.3.3
