@@ -725,7 +725,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     }
 
     private File writeFile(ApplicationID appId, String cubeName, String sha1, byte [] bytes) {
-        File jsonFile = getFileForCachedCube(appId, cubeName, sha1)//new File ("${cacheDir.path}/${appId.cacheKey()}${cubeName}${sha1}.json")
+        File jsonFile = getFileForCachedCube(appId, cubeName, sha1)
         writeBytes(jsonFile,bytes)
         return jsonFile
     }
@@ -747,7 +747,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
 
     private void verifySha1Existence(ApplicationID appId, String cubeName, String contents) {
         boolean exists = contents!=null
-        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName}.sha1")
+        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName.toLowerCase()}.sha1")
         assertEquals("file=${jsonFile.path} should ${exists?'':'not '}exist",exists,jsonFile.exists())
         if (exists && contents!=null) {
             assertEquals(contents,jsonFile.text)
@@ -771,12 +771,12 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
 
     private File getFileForCachedCube(ApplicationID appId, String cubeName, String sha1) {
         String suffix = sha1 ? ".${sha1}" : ''
-        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName}${suffix}.json")
+        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName.toLowerCase()}${suffix}.json")
         return jsonFile
     }
 
     private File getFileForCachedSha1(ApplicationID appId, String cubeName) {
-        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName}.sha1")
+        File jsonFile = new File("${cacheDir.path}/${appId.cacheKey()}${cubeName.toLowerCase()}.sha1")
         return jsonFile
     }
 }
