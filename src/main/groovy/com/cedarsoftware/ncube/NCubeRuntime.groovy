@@ -135,10 +135,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                 }
             }
         }
-        Thread t = new Thread(refresh)
-        t.name = "NcubeCacheRefresher${instanceCount.incrementAndGet()}"
-        t.daemon = true
-        t.start()
+        if (ncubeCacheManager instanceof GCacheManager) {
+            Thread t = new Thread(refresh)
+            t.name = "NcubeCacheRefresher${instanceCount.incrementAndGet()}"
+            t.daemon = true
+            t.start()
+        }
     }
 
     void destroy() throws Exception
