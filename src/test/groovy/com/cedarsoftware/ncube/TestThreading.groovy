@@ -111,8 +111,8 @@ class TestThreading extends NCubeCleanupBaseTest
         savedSourcesDir = GroovyBase.generatedSourcesDirectory
         savedClassesDir = CdnClassLoader.generatedClassesDirectory
 
-        File genSourcesDir = new File('target/generated-sources')
-        File genClassesDir = new File('target/generated-classes')
+        File genSourcesDir = new File('target/test-threading/generated-sources')
+        File genClassesDir = new File('target/test-threading/generated-classes')
 
         String srcDirPath = genSourcesDir.path
         String clsDirPath = genClassesDir.path
