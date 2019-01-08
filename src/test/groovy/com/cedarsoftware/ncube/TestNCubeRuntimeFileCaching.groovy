@@ -756,6 +756,16 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
 
     private void verifyFileExistence(ApplicationID appId, String cubeName, String sha1, boolean exists=true) {
         File jsonFile = getFileForCachedCube(appId, cubeName, sha1)
+
+        File parentDir = jsonFile.getParentFile()
+        if (parentDir.exists()) {
+            println "----> Verify file existence: cube:${cubeName}, sha1:${sha1}, exists:${exists}"
+            parentDir.eachFileRecurse { File it ->
+                println "    file: ${it.absolutePath}, size: ${it.length()}"
+            }
+            println "  result: ${jsonFile:exists}"
+        }
+
         assertEquals("file=${jsonFile.path} should ${exists?'':'not '}exist",exists,jsonFile.exists())
     }
 
