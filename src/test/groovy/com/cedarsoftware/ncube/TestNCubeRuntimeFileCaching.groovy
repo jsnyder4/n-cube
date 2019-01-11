@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.LocalFileCache
 import com.cedarsoftware.util.CallableBean
+import com.cedarsoftware.util.Executor
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
@@ -612,17 +613,29 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     }
 
     @Test
-    void testOfflineReadOfInvalidSha1() {
+    void testOfflineReadOfInvalidSha1()
+    {
         setSnapshotMode(OFFLINE)
         String cubeName = 'TestBranch'
         ApplicationID appId = snapshotId
 
         NCube realCube = createRuntimeCubeFromResource(appId,"test.branch.1.json")
 
-        writeSha1File(appId, cubeName, realCube.sha1())
+        String sha1 = realCube.sha1()
+        writeSha1File(appId, cubeName, sha1)
 
         // mark sha1 as non-readable to trigger read exception
-        getFileForCachedSha1(appId, cubeName).setReadable(false)
+        File file = getFileForCachedSha1(appId, cubeName)
+
+        // this doesn't seem to work on Windows.
+        boolean successFullyChangedToReadable = file.setReadable(false);
+
+        // attempt for Windows
+        if (!successFullyChangedToReadable)
+        {
+            Executor executor = new Executor();
+            executor.exec("icacls ${file.absolutePath.replace('/', '\\\\')} /deny Everyone:R");
+        }
 
         exception.expectMessage("Failed to load sha1 for cube: TestBranch from offline cache")
         getCubeFromRuntime(appId, cubeName)
