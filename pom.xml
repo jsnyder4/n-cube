@@ -73,28 +73,28 @@
 
     <properties>
         <version.json-io>4.10.0</version.json-io>
-        <version.java-util>1.34.0</version.java-util>
+        <version.java-util>1.35.0</version.java-util>
         <version.json-command-servlet>1.8.3</version.json-command-servlet>
-        <version.groovy>2.4.16</version.groovy>
-        <version.guava>26.0-jre</version.guava>
+        <version.groovy>2.4.17</version.groovy>
+        <version.guava>28.1-jre</version.guava>
         <version.httpclient>4.5.3</version.httpclient>
-        <version.spring>5.1.3.RELEASE</version.spring>
+        <version.spring>5.1.9.RELEASE</version.spring>
         <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
-        <version.hsqldb>2.4.1</version.hsqldb>
+        <version.hsqldb>2.5.0</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>
-        <version.plugin.assembly>3.1.0</version.plugin.assembly>
-        <version.plugin.maven-compiler>3.7.0</version.plugin.maven-compiler>
+        <version.plugin.assembly>3.1.1</version.plugin.assembly>
+        <version.plugin.maven-compiler>3.8.1</version.plugin.maven-compiler>
         <version.plugin.build-helper>3.0.0</version.plugin.build-helper>
-        <version.plugin.gmavenplus>1.6.2</version.plugin.gmavenplus>
+        <version.plugin.gmavenplus>1.7.1</version.plugin.gmavenplus>
         <version.plugin.nexus>1.6.8</version.plugin.nexus>
-        <version.plugin.source>3.0.1</version.plugin.source>
+        <version.plugin.source>3.1.0</version.plugin.source>
         <version.plugin.gpg>1.6</version.plugin.gpg>
-        <version.plugin.surefire>2.21.0</version.plugin.surefire>
+        <version.plugin.surefire>2.22.2</version.plugin.surefire>
         <version.servlet.api>2.5</version.servlet.api>
         <version.servlet>3.1.0</version.servlet>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <tomcat.version>8.5.32</tomcat.version>
+        <tomcat.version>8.5.45</tomcat.version>
     </properties>
 
     <repositories>
@@ -292,8 +292,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.plugin.surefire}</version>
                 <configuration>
-                    <argLine>-Xmx1500m -XX:MaxPermSize=256m</argLine>
-                    <forkCount>2</forkCount>
+                    <argLine>-Xmx1500m</argLine>
+                    <forkCount>0</forkCount>
                     <includes>
                         <include>**/*Test*</include>
                     </includes>
@@ -377,6 +377,7 @@
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
             <version>${version.groovy}</version>
+            <!--<type>pom</type>-->
             <!--<classifier>indy</classifier>-->
         </dependency>
 

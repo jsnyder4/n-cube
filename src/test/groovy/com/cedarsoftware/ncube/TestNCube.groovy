@@ -2169,7 +2169,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch (RuntimeException e)
         {
-            assert e.message.toLowerCase().contains("error occurred in cube: continents\n-> cell:continents:[continent:north america,country:usa,state:oh")
+            assertContainsIgnoreCase(e.message, 'error occurred', 'NorthAmericaCountries', 'cell:NorthAmericaCountries', 'North America', 'USA', 'OH')
         }
     }
 
@@ -3891,7 +3891,7 @@ class TestNCube extends NCubeBaseTest
     @Test
     void testGetBoolean()
     {
-        Map map = [food:null]
+        Map<String, Integer> map = [food:null] as Map
         assertFalse(NCube.getBoolean(map, "food"))
 
         try
@@ -4651,7 +4651,7 @@ class TestNCube extends NCubeBaseTest
         assert cube.populatedCellCoordinates.size() == 0
 
         cube.setCell('hi', [one:1, two:'a'] as Map)
-        List<Map> cells = cube.populatedCellCoordinates
+        List cells = cube.populatedCellCoordinates
         assert cells.size() == 1
         Map coord = cells[0]
         assert coord.one == '1'

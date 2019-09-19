@@ -758,6 +758,10 @@ class NCube<T>
                 throw e
             }
         }
+        catch (CommandCellException e)
+        {   // Throw the inner-most CommandCellException to the top
+            throw e
+        }
         catch (Throwable t)
         {
             throw new CommandCellException("Error occurred in cube: ${name}\n${stackToString()}", t)
@@ -2508,7 +2512,7 @@ class NCube<T>
 
         cells.clear()
         // change cell ids and put back into cube
-        for (Map.Entry<Set<Long>, T> entry : cellMapCopy)
+        for (Map.Entry<Set<Long>, T> entry : cellMapCopy.entrySet())
         {
             Set<Long> coord = entry.key
             // change coord to have existing ref ax value
@@ -2685,7 +2689,7 @@ class NCube<T>
     }
 
     /**
-     * @return Map<Map, Set<String>> A map keyed by cell coordinates within this specific NCube.
+     * @return Map&lt;Map, Set&lt;String&gt;&gt; A map keyed by cell coordinates within this specific NCube.
      * Each map entry contains the cube names referenced by the cell coordinate in question.
      * It is not recursive.
      */
@@ -3675,7 +3679,7 @@ class NCube<T>
     }
 
     /**
-     * @return List<Map<String, T>> which is a List of coordinates, one for each populated cell within the
+     * @return List&lt;Map&lt;String, T&gt;&gt; which is a List of coordinates, one for each populated cell within the
      * n-cube. These coordinates can be used with setCell(), removeCell(), containsCell(), and getCellNoExecute()
      * APIs.  To use with getCell(), any rule axis bindings in the coordinate would need to be removed.  This is
      * because it is expected that getCell() will run all conditions on a rule axis.
@@ -4269,8 +4273,8 @@ class NCube<T>
      * will have the String 'default column' for column ids that represent default columns.
      * If any of the columns have a name (like columns on a rule axis), the name will be
      * included in the String associated to the axis name entry.
-     * @param idCoord Set<Long> column IDs.
-     * @return Map<String, T> where the keys of the Map are axis names, and the values
+     * @param idCoord Set&lt;Long&gt; column IDs.
+     * @return Map&lt;String, T&gt; where the keys of the Map are axis names, and the values
      * are the associated values that would bind to the axes, except for default column
      * and rule axes.  This API is typically used for display purposes.
      */
