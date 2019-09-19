@@ -169,7 +169,6 @@ abstract class GroovyBase extends UrlCommandCell
 
             synchronized (L2CacheKey.intern())
             {
-                System.out.flush()
                 // check L2 cache
                 if (L2Cache.containsKey(L2CacheKey))
                 {
