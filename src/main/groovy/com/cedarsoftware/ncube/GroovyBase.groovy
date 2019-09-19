@@ -157,7 +157,7 @@ abstract class GroovyBase extends UrlCommandCell
         {
             // Double-check after lock obtained
             if (runnableCode != null)
-            {
+            {   // Found in L1 (the member variable 'runnable')
                 return
             }
 
@@ -167,30 +167,37 @@ abstract class GroovyBase extends UrlCommandCell
             }
             Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
 
-            // check L2 cache
-            if (L2Cache.containsKey(L2CacheKey))
-            {   // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
-                setRunnableCode(L2Cache[L2CacheKey])
-                return
+            synchronized (L2CacheKey.intern())
+            {
+                System.out.flush()
+                // check L2 cache
+                if (L2Cache.containsKey(L2CacheKey))
+                {
+                    // Already been compiled, re-use class (different cell, but has identical source or URL as other expression).
+                    runnableCode = L2Cache[L2CacheKey]
+                    return
+                }
+
+                // Pre-compiled check (e.g. source code was pre-compiled and instrumented for coverage)
+                Map ret = getClassLoaderAndSource(ctx)
+                if (ret.gclass instanceof Class)
+                {   // Found class matching URL fileName.groovy already in JVM
+                    runnableCode = ret.gclass as Class
+                    L2Cache[L2CacheKey] = ret.gclass as Class
+                    return
+                }
+                
+                GroovyClassLoader gcLoader = ret.loader as GroovyClassLoader
+                String groovySource = ret.source as String
+
+                // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
+                // correct class loader to use when inside a container.
+                originalClassLoader = Thread.currentThread().contextClassLoader
+                Thread.currentThread().contextClassLoader = gcLoader
+                Class root = compile(gcLoader, groovySource, ctx)
+                runnableCode = root
+                L2Cache[L2CacheKey] = root
             }
-
-            // Pre-compiled check (e.g. source code was pre-compiled and instrumented for coverage)
-            Map ret = getClassLoaderAndSource(ctx)
-            if (ret.gclass instanceof Class)
-            {   // Found class matching URL fileName.groovy already in JVM
-                setRunnableCode(ret.gclass as Class)
-                L2Cache[L2CacheKey] = ret.gclass as Class
-                return
-            }
-
-            GroovyClassLoader gcLoader = ret.loader as GroovyClassLoader
-            String groovySource = ret.source as String
-
-            // Internally, Groovy sometimes uses the Thread.currentThread().contextClassLoader, which is not the
-            // correct class loader to use when inside a container.
-            originalClassLoader = Thread.currentThread().contextClassLoader
-            Thread.currentThread().contextClassLoader = gcLoader
-            compile(gcLoader, groovySource, ctx)
         }
         finally
         {
@@ -230,7 +237,6 @@ abstract class GroovyBase extends UrlCommandCell
         compilationUnit.compile(Phases.CLASS_GENERATION)
         Map<String, Class> L2Cache = getAppL2Cache(getNCube(ctx).applicationID)
         Class generatedClass = defineClasses(gcLoader, compilationUnit.classes, L2Cache, groovySource)
-
         return generatedClass
     }
 
@@ -281,8 +287,6 @@ abstract class GroovyBase extends UrlCommandCell
 
         // Load root (main class)
         gcLoader.loadClass(ReflectionUtils.getClassNameFromByteCode(mainClassBytes), false, true, true)
-        setRunnableCode(root)
-        L2Cache[L2CacheKey] = root
         return root
     }
 
