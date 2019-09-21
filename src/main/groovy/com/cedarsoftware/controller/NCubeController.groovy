@@ -767,7 +767,8 @@ class NCubeController implements NCubeConstants
         if (cols != null)
         {
             cols.each {
-                Column column ->
+                Object col ->
+                    Column column = (Column) col
                     Object value = column.value
                     if (value == null || "".equals(value))
                     {

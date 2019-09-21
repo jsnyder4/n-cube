@@ -106,13 +106,25 @@ class CdnClassLoader extends GroovyClassLoader
      * @param byteCode byte [] of raw Class bytes
      * @return generated Class definition
      */
-    Class defineClass(String name, byte[] byteCode) {
+    Class defineClass(String name, byte[] byteCode)
+    {
+        if (name)
+        {
+            Class existing = this.findLoadedClass(name)
+            if (existing)
+            {
+                LOG.warn("Attempting to define duplicate class with name: ${name}")
+                return existing
+            }
+        }
+
+        Class definedClass = super.defineClass(name, byteCode)
         if (name && generatedClassesDir)
         {
             dumpGeneratedClass(name,byteCode)
         }
 
-        return super.defineClass(name, byteCode)
+        return definedClass
     }
 
     /**

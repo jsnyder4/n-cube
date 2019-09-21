@@ -53,7 +53,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
                     }
                     else
                     {
-                        ncube.addColumn("axis" + i, j)
+                        ncube.addColumn("axis" + i, j as Comparable)
                     }
                 }
             }
@@ -218,7 +218,7 @@ class TestAllCellsInBigCube extends NCubeBaseTest
         int max = 9000000        // 10M - largest tested thus far (using trove4j)
         for (int j = 0; j < max; j++)
         {
-            ncube.addColumn("axis", j)
+            ncube.addColumn("axis", j as Comparable)
         }
         Map coord = [:]
 
@@ -266,14 +266,14 @@ class TestAllCellsInBigCube extends NCubeBaseTest
             ncube.addAxis(axis)
             for (int j = 0; j < size; j++)
             {
-                ncube.addColumn("axis" + i, j)
+                ncube.addColumn("axis" + i, j as Comparable)
             }
         }
         Axis axis = new Axis("axis4", AxisType.DISCRETE, AxisValueType.LONG, false)
         ncube.addAxis(axis)
         for (int j = 0; j < last; j++)
         {
-            ncube.addColumn("axis4", j)
+            ncube.addColumn("axis4", j as Comparable)
         }
 
         Map coord = [:]

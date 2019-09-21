@@ -64,6 +64,7 @@ class NCubeInfoDto
     {
         return changed
     }
+
     void setChanged(boolean state)
     {
         changed = state
@@ -77,5 +78,60 @@ class NCubeInfoDto
     boolean hasTestData()
     {
         return StringUtilities.hasContent(testData)
+    }
+
+    // ----------------------------- Bug in Groovy 2.5.x is forcing need for these methods -----------------------------
+    // Groovy 2.5.x is no honoring 'public' access modifier above on these fields
+    /**
+     * Bug in Groovy 2.5.x forcing need for these methods
+     */
+    String getId()
+    {
+        return id
+    }
+
+    void setId(String id)
+    {
+        this.id = id
+    }
+
+    String getChangeType()
+    {
+        return changeType
+    }
+
+    void setChangeType(String changeType)
+    {
+        this.changeType = changeType
+    }
+
+    String getTenant()
+    {
+        return tenant
+    }
+
+    void setTenant(String tenant)
+    {
+        this.tenant = tenant
+    }
+
+    String getSha1()
+    {
+        return sha1
+    }
+
+    void setSha1(String sha1)
+    {
+        this.sha1 = sha1
+    }
+
+    String getHeadSha1()
+    {
+        return headSha1
+    }
+
+    void setHeadSha1(String headSha1)
+    {
+        this.headSha1 = headSha1
     }
 }

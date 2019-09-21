@@ -68,18 +68,17 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.1.RELEASE</version>  <!-- must be inlined, properties not allowed here -->
+        <version>2.1.8.RELEASE</version>  <!-- must be inlined, properties not allowed here -->
     </parent>
 
     <properties>
         <version.json-io>4.10.0</version.json-io>
-        <version.java-util>1.35.0</version.java-util>
+        <version.java-util>1.36.0</version.java-util>
         <version.json-command-servlet>1.8.3</version.json-command-servlet>
-        <version.groovy>2.4.17</version.groovy>
         <version.guava>28.1-jre</version.guava>
-        <version.httpclient>4.5.3</version.httpclient>
+        <version.httpclient>4.5.10</version.httpclient>
         <version.spring>5.1.9.RELEASE</version.spring>
-        <version.mysql.connector.java>6.0.6</version.mysql.connector.java>
+        <version.mysql.connector.java>8.0.17</version.mysql.connector.java>
         <version.hsqldb>2.5.0</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>
         <version.plugin.assembly>3.1.1</version.plugin.assembly>
@@ -91,10 +90,11 @@
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.surefire>2.22.2</version.plugin.surefire>
         <version.servlet.api>2.5</version.servlet.api>
-        <version.servlet>3.1.0</version.servlet>
+        <version.servlet>4.0.1</version.servlet>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <tomcat.version>8.5.45</tomcat.version>
+        <tomcat.version>8.5.46</tomcat.version>
+        <groovy.version>2.4.17</groovy.version>
     </properties>
 
     <repositories>
@@ -153,6 +153,7 @@
                 <configuration>
                     <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
                     <scope>public</scope>
+                    <targetBytecode>${java.version}</targetBytecode>
                 </configuration>
                 <executions>
                     <execution>
@@ -347,6 +348,12 @@
             <groupId>com.cedarsoftware</groupId>
             <artifactId>json-command-servlet</artifactId>
             <version>${version.json-command-servlet}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -375,11 +382,34 @@
 
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>${version.groovy}</version>
-            <!--<type>pom</type>-->
-            <!--<classifier>indy</classifier>-->
+            <artifactId>groovy</artifactId>
+            <version>${groovy.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-templates</artifactId>
+            <version>${groovy.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-sql</artifactId>
+            <version>${groovy.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-test</artifactId>
+            <version>${groovy.version}</version>
+        </dependency>
+
+        <!-- Groovy 2.5.0+ -->
+        <!--<dependency>-->
+            <!--<groupId>org.codehaus.groovy</groupId>-->
+            <!--<artifactId>groovy-dateutil</artifactId>-->
+            <!--<version>${groovy.version}</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.hsqldb</groupId>

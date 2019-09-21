@@ -764,24 +764,40 @@ class TestL3Cache extends NCubeCleanupBaseTest
     private List<Class> getLoadedClasses()
     {
         ClassLoader classLoader = cp.getCell([:]) as GroovyClassLoader
-        Field classesField = ClassLoader.class.getDeclaredField('classes')
-        classesField.accessible = true
-
-        List<Class> classes = classesField.get(classLoader) as List
+        List<Class> classes = getClassLoaderClasses(classLoader)
         while (classLoader != null)
         {
-            if (!classLoader.toString().contains('Launcher'))
+            if (['com.cedarsoftware.ncube.util.CdnClassLoader','java.net.URLClassLoader','groovy.lang.GroovyClassLoader'].contains(classLoader.class.name))
             {
                 if (classLoader instanceof GroovyClassLoader)
                 {
                     classes.addAll((classLoader as GroovyClassLoader).loadedClasses)
                 }
-                classes.addAll(classesField.get(classLoader) as List)
+                else if (classLoader instanceof URLClassLoader)
+                {
+                    classes.addAll(getClassLoaderClasses(classLoader))
+                }
             }
             classLoader=classLoader.parent
         }
 
         return classes
+    }
+
+    private static List<Class> getClassLoaderClasses(ClassLoader classLoader)
+    {
+        Class classLoaderClass = classLoader.class
+        while (classLoaderClass && classLoaderClass.name != 'java.lang.ClassLoader')
+        {
+            classLoaderClass = classLoaderClass.superclass
+        }
+        if (classLoaderClass)
+        {
+            Field f = classLoaderClass.getDeclaredField('classes')
+            f.setAccessible(true)
+            return f.get(classLoader) as List
+        }
+        return []
     }
 
 

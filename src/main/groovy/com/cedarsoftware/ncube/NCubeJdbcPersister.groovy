@@ -347,7 +347,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                            (SEARCH_INCLUDE_TEST_DATA)  : true,
                                            (SEARCH_EXACT_MATCH_NAME)   : true,
                                            (METHOD_NAME) : 'deleteCubes'] as Map
-            cubeNames.each { String cubeName ->
+            cubeNames.each { Object cname ->
+                String cubeName = (String) cname
                 if (!SYS_INFO.equalsIgnoreCase(cubeName))
                 {
                     Long revision = null
@@ -396,7 +397,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             long txId = UniqueIdGenerator.uniqueId
             final String msg = "restored, txId: [${txId}]"
 
-            names.each { String cubeName ->
+            names.each { Object cname ->
+                String cubeName = (String) cname
                 Long revision = null
                 runSelectCubesStatement(c, appId, cubeName, options, 1, { ResultSet row ->
                     revision = row.getLong('revision_number')
@@ -929,7 +931,8 @@ FROM n_cube
 WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_no_cd = :version AND status_cd = :status
 AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
 
-            names.each { String cubeName ->
+            names.each { Object cname ->
+                String cubeName = (String) cname
                 Long madMaxRev = getMaxRevision(c, appId, cubeName, 'rollbackCubes')
                 if (madMaxRev == null)
                 {

@@ -36,7 +36,7 @@ class TestObjectToMapIllegalAccessException
     @Test
     void testObjectToMapIllegalAccessException()
     {
-        MockFor mock = new MockFor(ReflectionUtils);
+        MockFor mock = new MockFor(ReflectionUtils)
         mock.demand.getDeepDeclaredFields(0..1) { throw new IllegalAccessException("foo") }
 
         mock.use

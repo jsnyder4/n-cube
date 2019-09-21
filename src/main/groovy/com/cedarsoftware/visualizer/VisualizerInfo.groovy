@@ -157,7 +157,8 @@ class VisualizerInfo
             Map.Entry<String, String> entry = allGroups.find{ String key, String value ->
                 value == type
             }
-            typesToAddMap[entry.value] = allTypes as List
+            typesToAddMap.put(entry.value, allTypes as List)
+//            typesToAddMap[entry.value] = allTypes as List     // TODO: Blows up in Groovy 2.5.8
         }
     }
 

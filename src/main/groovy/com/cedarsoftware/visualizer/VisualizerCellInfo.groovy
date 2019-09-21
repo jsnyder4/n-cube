@@ -148,4 +148,34 @@ class VisualizerCellInfo
 		sb.append("</pre>")
 		return sb.toString()
 	}
+
+	Object getCell()
+	{
+		return cell
+	}
+
+	void setCell(Object cell)
+	{
+		this.cell = cell
+	}
+
+	Exception getException()
+	{
+		return exception
+	}
+
+	void setException(Exception exception)
+	{
+		this.exception = exception
+	}
+
+	Object getNoExecuteCell()
+	{
+		return noExecuteCell
+	}
+
+	void setNoExecuteCell(Object noExecuteCell)
+	{
+		this.noExecuteCell = noExecuteCell
+	}
 }

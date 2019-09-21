@@ -605,7 +605,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
         NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
 
-        cube1.addColumn('age', new Range(30, 40))
+        cube1.addColumn('age', new Range(30, 40) as Comparable)
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
         cube1.setCell('love', coord)
         assert 'love' == getCellIgnoreRule(cube1, coord)
@@ -629,7 +629,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
         NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
 
-        cube1.addColumn('age', new Range(30, 40))
+        cube1.addColumn('age', new Range(30, 40) as Comparable)
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
         cube1.setCell('love', coord)
         assert 'love' == getCellIgnoreRule(cube1, coord)
@@ -661,7 +661,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
         NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
 
-        cube1.deleteColumn('age', 20)
+        cube1.deleteColumn('age', 20 as Comparable)
         cube1.deleteColumn('rule', 'init')
 
         assert 12 == cube1.numCells
@@ -689,7 +689,7 @@ class TestDelta extends NCubeCleanupBaseTest
         NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
 
         Column column = cube1.getAxis('rule').columns[0]
-        cube1.deleteColumn('rule', column.id)
+        cube1.deleteColumn('rule', column.id as Comparable)
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig, cube2)
@@ -711,7 +711,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
         assert cube1.numCells == 3
         Column col1 = cube1.getAxis('rule').columns[0]
-        cube1.deleteColumn('rule', col1.id)
+        cube1.deleteColumn('rule', col1.id as Comparable)
         assert cube1.numCells == 2
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig, cube1)

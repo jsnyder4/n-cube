@@ -1,12 +1,20 @@
 ### Revision History
-* 4.4.2-SNAPSHOT
-  * Updated to consume Groovy 2.4.16
-  * Updated pom.xml to use gmavenplus 1.6.2 (from 1.6.1)
+* 4.5.0-SNAPSHOT
+  * Bug fix: When compile Groovy cells, the compilation is synchronized on `L2CacheKey` - meaning that all compilation is in parallel except of the exact same cell (SHA-1 of source or SHA-1 of URL).
+  * Bug fix: No attempts to re-load a dynamic class can happen now. The compilation synchronization on same code / URL plus check of loaded classes in the `CdnClassLoader` prevent this from happening.  It was benign in `Java 1.8`, but causes JVM crash in `Java 11`.
+  * Bug fix: `CommandCellException` is no longer wrapped through each unwinding of the stackframe - meaning shorter log file entries when an exception occurs.  The originating exception is what is wrapped in `CommandCellException`.
+  * N-Cube source is now compiling in `Groovy 2.4.17` and `Groovy 2.5.8`.  Small changes were made due to stricter syntax enforcement by `Groovy 2.5.8`.
+  * Updated to consume `Groovy 2.4.17`
+  * Updated to consume `Springboot 2.1.8.RELEASE` 
+  * Updated to consume `Spring 5.1.9.RELEASE`
+  * Updated to consume `Guava 28.1-jre`
+  * Updated to consume `tomcat 8.5.46`
+  * Updated to consume `java-util 1.36.0`
 * 4.4.1
-  * Updated to consume Spring 2.1.1.RELEASE 
-  * Updated to consume Spring 5.1.3.RELEASE
+  * Updated to consume `Spring 2.1.1.RELEASE` 
+  * Updated to consume `Spring 5.1.3.RELEASE`
 * 4.4.0
-  * Updated to consume Spring 5.1.2.RELEASE
+  * Updated to consume `Spring 5.1.2.RELEASE`
 * 4.3.3
   * Bug fix: Updated `NCubeController.saveJson()` to allow saving multiple NCubes
   * Update to consume `guava 26.0-jre`

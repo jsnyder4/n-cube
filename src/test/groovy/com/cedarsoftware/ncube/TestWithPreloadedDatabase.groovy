@@ -1522,7 +1522,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch']))
+        assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch'] as Object[]))
 
         try
         {
@@ -1542,7 +1542,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(HEAD, "test.branch.1.json")
 
         assertEquals(2, mutableClient.copyBranch(HEAD, BRANCH1))
-        assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch']))
+        assertTrue(mutableClient.deleteCubes(BRANCH1, ['TestBranch'] as Object[]))
 
         try
         {
@@ -2421,7 +2421,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     {
         preloadCubes(HEAD, "test.branch.1.json")
         mutableClient.copyBranch(HEAD, BRANCH1)
-        mutableClient.deleteCubes(BRANCH1, ['TestBranch'])
+        mutableClient.deleteCubes(BRANCH1, ['TestBranch'] as Object[])
 
         assertNull(mutableClient.getCube(BRANCH1, "TestBranch"))
 
@@ -2443,7 +2443,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     {
         preloadCubes(HEAD, "test.branch.1.json")
         mutableClient.copyBranch(HEAD, BRANCH1)
-        mutableClient.deleteCubes(BRANCH1, ['TestBranch'])
+        mutableClient.deleteCubes(BRANCH1, ['TestBranch'] as Object[])
 
         assertNull(mutableClient.getCube(BRANCH1, "TestBranch"))
 
@@ -4736,7 +4736,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         preloadCubes(BRANCH2, "test.branch.1.json", 'test.branch.age.1.json')
         mutableClient.commitBranch(BRANCH2)
         mutableClient.copyBranch(HEAD, BRANCH1, true)
-        mutableClient.deleteCubes(BRANCH2, ['TestBranch'])
+        mutableClient.deleteCubes(BRANCH2, ['TestBranch'] as Object[])
 
         List<NCubeInfoDto> dtos = mutableClient.getBranchChangesForMyBranch(BRANCH1, 'BAR')
         assert dtos.size() == 1

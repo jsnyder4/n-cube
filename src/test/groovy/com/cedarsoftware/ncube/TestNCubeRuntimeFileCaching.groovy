@@ -76,7 +76,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
                     dto.name = (String) cubeName
                     dto.sha1 = resultCube.sha1()
                     if (options[SEARCH_INCLUDE_CUBE_DATA]) {
-                        dto.bytes = options[SEARCH_CHECK_SHA1]==resultCube.sha1 ? null : resultCube.toFormattedJson().bytes
+                        dto.bytes = options[SEARCH_CHECK_SHA1]==resultCube.sha1 ? (byte[])null : resultCube.toFormattedJson().bytes
                     }
                     return dto
                 }
@@ -774,7 +774,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         if (parentDir.exists()) {
 //            println "----> Verify file existence: cube:${cubeName}, sha1:${sha1}, exists:${exists}"
             parentDir.eachFileRecurse { File it ->
-                println "    file: ${it.absolutePath}, size: ${it.length()}"
+//                println "    file: ${it.absolutePath}, size: ${it.length()}"
             }
 //            println "  result: ${jsonFile:exists}"
         }

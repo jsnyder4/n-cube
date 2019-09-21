@@ -44,12 +44,12 @@ class TestTestResultsFormatter extends NCubeBaseTest
     void testResultsWithOutputAndError()
     {
         NCube<String> ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'idNoValue.json')
-        def coord = [age:18, state:'OH']
-        def output = ['foo.age':'56', 'foo.name':'John']
-        ncube.getCell coord, output
+        Map coord = [age:18, state:'OH'] as Map
+        Map output = ['foo.age':'56', 'foo.name':'John'] as Map
+        ncube.getCell(coord, output)
 
         Set<String> assertionFailures = new HashSet<>()
-        assertionFailures.add '[some assertion happened]'
+        assertionFailures.add('[some assertion happened]')
 
         RuleInfo ruleInfo = output.get(NCube.RULE_EXEC_INFO) as RuleInfo
         ruleInfo.setAssertionFailures(assertionFailures)

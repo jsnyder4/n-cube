@@ -47,7 +47,9 @@ class RpmVisualizerInfo extends VisualizerInfo implements RpmVisualizerConstants
             List<String> typesToAdd = map.findAll { String type, Boolean available ->
                 available
             }.keySet() as List
-            typesToAddMap[sourceType] = typesToAdd
+
+            typesToAddMap.put(sourceType, typesToAdd)
+//            typesToAddMap[sourceType] = typesToAdd  // TODO: blows up Groovy 2.5.8
         }
     }
 

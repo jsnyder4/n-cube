@@ -2925,13 +2925,13 @@ class NCube<T>
             }
             return method(parser)
         }
-        parserValue[JsonToken.VALUE_STRING] = { JsonParser parser -> return parser.text }
-        parserValue[JsonToken.VALUE_TRUE] = { JsonParser parser -> return true }
-        parserValue[JsonToken.VALUE_FALSE] = { JsonParser parser -> return false }
-        parserValue[JsonToken.VALUE_NUMBER_FLOAT] = { JsonParser parser -> return parser.valueAsDouble }
-        parserValue[JsonToken.VALUE_NUMBER_INT] = { JsonParser parser -> return parser.valueAsLong }
-        parserValue[JsonToken.VALUE_NULL] = { JsonParser parser -> return null }
-        parserValue[JsonToken.START_ARRAY] = { JsonParser parser ->
+        parserValue[(JsonToken) JsonToken.VALUE_STRING] = { JsonParser parser -> return parser.text }
+        parserValue[(JsonToken) JsonToken.VALUE_TRUE] = { JsonParser parser -> return true }
+        parserValue[(JsonToken) JsonToken.VALUE_FALSE] = { JsonParser parser -> return false }
+        parserValue[(JsonToken) JsonToken.VALUE_NUMBER_FLOAT] = { JsonParser parser -> return parser.valueAsDouble }
+        parserValue[(JsonToken) JsonToken.VALUE_NUMBER_INT] = { JsonParser parser -> return parser.valueAsLong }
+        parserValue[(JsonToken) JsonToken.VALUE_NULL] = { JsonParser parser -> return null }
+        parserValue[(JsonToken) JsonToken.START_ARRAY] = { JsonParser parser ->
             JsonToken token = parser.nextToken()
             Comparable low = (Comparable)getParserValue(parser, token)
             token = parser.nextToken()
@@ -2952,7 +2952,7 @@ class NCube<T>
             }
             return rangeSet
         }
-        parserValue[JsonToken.START_OBJECT] = { JsonParser parser ->
+        parserValue[(JsonToken) JsonToken.START_OBJECT] = { JsonParser parser ->
             JsonObject jsonObject = new JsonObject()
             while (true)
             {
@@ -3279,12 +3279,12 @@ class NCube<T>
 
                 axis = new Axis(axisName, (AxisType)axisObj['type'], (AxisValueType)axisObj['valueType'], (Boolean)axisObj['hasDefault'], preferredOrder, axisId, fireAll)
                 ncube.addAxis(axis)
-                axis.metaProps = new CaseInsensitiveMap<>()
-                axis.metaProps.putAll(axisProps)
+                axis.clearMetaProperties()
+                axis.addMetaProperties(axisProps)
 
-                if (axis.metaProps.size() < 1)
+                if (axis.metaProperties.size() < 1)
                 {
-                    axis.metaProps = null
+                    axis.clearMetaProperties()
                 }
                 else
                 {

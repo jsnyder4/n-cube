@@ -90,7 +90,7 @@ class TestProximity
 
         try
         {
-            Proximity.distance("yo", 16)
+            Proximity.distance("yo" as Comparable, 16)
             fail("should not make it here")
         }
         catch (IllegalArgumentException e)

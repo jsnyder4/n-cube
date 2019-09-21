@@ -663,7 +663,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         Object[] results = bean.call(beanName, 'getReferencesFrom', [appId, cubeName]) as Object[]
         Set<String> refs = new CaseInsensitiveSet()
-        results.each { String result -> refs.add(result) }
+        results.each { result -> refs.add((String)result) }
         return refs
     }
 

@@ -61,8 +61,8 @@ class TestInputKeysUsed extends NCubeBaseTest
         assert ruleInfo.getInputKeysUsed().contains('Row')
         assert ruleInfo.getInputKeysUsed().contains('smokes')
 
-        input = [column: 'B', Row: 99, SMOKES: null]
-        output = [rate: 0]
+        input = [column: 'B', Row: 99, SMOKES: null] as Map
+        output = [rate: 0] as Map
         ncube.getCell(input, output)
         ruleInfo = ncube.getRuleInfo(output)
         assert ruleInfo.getInputKeysUsed().size() == 3

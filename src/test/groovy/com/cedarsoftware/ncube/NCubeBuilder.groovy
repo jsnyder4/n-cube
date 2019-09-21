@@ -114,8 +114,8 @@ class NCubeBuilder
         Axis axis = new Axis("bigD", AxisType.RANGE, AxisValueType.BIG_DECIMAL, defCol)
         axis.addColumn(new Range(-10.0, 10.0))
         axis.addColumn(new Range("20.0", "30.0"))
-        axis.addColumn(new Range(100 as Byte, 1000 as Short))
-        axis.addColumn(new Range(10000, 100000L))
+        axis.addColumn(new Range((byte)100 as Comparable, (short)1000 as Comparable))
+        axis.addColumn(new Range(10000, 100000L as Comparable))
         axis.addColumn(new Range(100000L, 9900000L))
         return axis
     }
@@ -125,8 +125,8 @@ class NCubeBuilder
         Axis axis = new Axis("doubleRange", AxisType.RANGE, AxisValueType.DOUBLE, defCol)
         axis.addColumn(new Range(-10.0, 10.0))
         axis.addColumn(new Range("20.0", "30.0"))
-        axis.addColumn(new Range(100 as Byte, 1000 as Short))
-        axis.addColumn(new Range(10000, 100000L))
+        axis.addColumn(new Range((byte)100 as Comparable, (short)1000 as Comparable))
+        axis.addColumn(new Range(10000 as Comparable, 100000L))
         axis.addColumn(new Range(100000L, 9900000L))
         return axis
     }
@@ -136,8 +136,8 @@ class NCubeBuilder
         Axis axis = new Axis("longRange", AxisType.RANGE, AxisValueType.LONG, defCol)
         axis.addColumn(new Range(-10.0, 10.0))
         axis.addColumn(new Range("20", "30"))
-        axis.addColumn(new Range(100 as Byte, 1000 as Short))
-        axis.addColumn(new Range(10000, 100000L))
+        axis.addColumn(new Range((byte)100 as Comparable, (short)1000 as Comparable))
+        axis.addColumn(new Range(10000 as Comparable, 100000L))
         axis.addColumn(new Range(100000L, 9900000L))
         return axis
     }
@@ -158,8 +158,8 @@ class NCubeBuilder
         Calendar cal5 = Calendar.instance
         cal5.set(2014, 7, 1, 12, 59, 59)
 
-        axis.addColumn(new Range(cal, cal1.time))
-        axis.addColumn(new Range(cal1, cal2.time))
+        axis.addColumn(new Range(cal as Comparable, cal1.time as Comparable))
+        axis.addColumn(new Range(cal1 as Comparable, cal2.time as Comparable))
         axis.addColumn(new Range(cal2, cal3))
         axis.addColumn(new Range(cal4, cal5))
         return axis

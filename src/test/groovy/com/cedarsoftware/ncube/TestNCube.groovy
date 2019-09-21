@@ -46,6 +46,14 @@ class TestNCube extends NCubeBaseTest
     private static final boolean _debug = false
 
     @Test
+    void testGroovyVersion()
+    {
+        println '----------------------------------'
+        println "---> Groovy version: ${GroovySystem.version}"
+        println '----------------------------------'
+    }
+
+    @Test
     void testPopulateProductLineCube()
     {
         NCube<Object> ncube = new NCube<>("ProductLine")
@@ -781,30 +789,6 @@ class TestNCube extends NCubeBaseTest
         {
             assert e.message.toLowerCase().contains('could not be converted')
         }
-
-        // Range with bad low class type
-        try
-        {
-            axis.addColumn(new Range(new File("foo"), "999"))
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            String msg = e.message.toLowerCase()
-            assert msg.contains('could not be converted') || msg.contains("unsupported value type")
-        }
-
-        // Range with bad high
-        try
-        {
-            axis.addColumn(new Range("999", new File("foo")))
-            fail()
-        }
-        catch (IllegalArgumentException e)
-        {
-            String msg = e.message.toLowerCase()
-            assert msg.contains('could not be converted') || msg.contains("unsupported value type")
-        }
     }
 
     @Test
@@ -1146,7 +1130,7 @@ class TestNCube extends NCubeBaseTest
 
         coord.put("States", "IN")
         int numCells = ncube.numCells
-        assertTrue(ncube.deleteColumn("States", "IN"))
+        assertTrue(ncube.deleteColumn("States", "IN" as Comparable))
         assertTrue(numCells == ncube.numCells + 1i)
 
         assertTrue(ncube.getCell(coord) == 9999L)
@@ -1240,7 +1224,7 @@ class TestNCube extends NCubeBaseTest
         NCube<Boolean> ncube = new NCube("yo")
         Axis axis = NCubeBuilder.getGenderAxis(false)
         ncube.addAxis(axis)
-        assertFalse(ncube.deleteColumn("Gender", "blah"))
+        assertFalse(ncube.deleteColumn("Gender", "blah" as Comparable))
     }
 
     @Test
@@ -5394,7 +5378,7 @@ class TestNCube extends NCubeBaseTest
         String colName = axis.columns.first().value
         Closure where = { Map input -> input.get(colName) != null }
 
-        Map map = cubeFrom.mapReduce(axisName, where, [input:[three:colName]])
+        Map map = cubeFrom.mapReduce(axisName, where, [input:[three:colName]] as Map)
         assert 1 == map.size()
         assert map.containsKey(colName)
         assert ((Map)map.get(colName)).containsValue(cubeFrom.getCell([one:colName, two:colName, three:colName]))
