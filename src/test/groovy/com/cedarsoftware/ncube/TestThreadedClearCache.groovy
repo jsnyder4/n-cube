@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -95,7 +96,7 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
                     }
                     catch (Exception e)
                     {
-                        Throwable t = getDeepestException(e)
+                        Throwable t = ExceptionUtilities.getDeepestException(e)
                         if (!(t.message?.contains('cleared while cell was executing')))
                         {
                             failed.set(true)
@@ -117,20 +118,5 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
         finishedLatch.await()   // wait for all Runnables to finish
         executor.shutdown()
         assert !failed.get()
-    }
-
-    /**
-     * Get the deepest (original cause) of the exception chain.
-     * @param e Throwable exception that occurred.
-     * @return Throwable original (causal) exception
-     */
-    static Throwable getDeepestException(Throwable e)
-    {
-        while (e.cause != null)
-        {
-            e = e.cause
-        }
-
-        return e
     }
 }

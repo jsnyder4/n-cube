@@ -16,6 +16,7 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.ExceptionUtilities
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.ReflectionUtils
@@ -1233,7 +1234,7 @@ class NCube<T>
                 }
                 catch (Exception e)
                 {
-                    val = "err: ${getExceptionMessage(getDeepestException(e))}".toString()
+                    val = "err: ${getExceptionMessage(ExceptionUtilities.getDeepestException(e))}".toString()
                 }
                 whereVars.put(colKey, val)
                 ids.remove(whereId)
@@ -1769,7 +1770,7 @@ class NCube<T>
             }
             catch (Exception e)
             {
-                cellInfo = new CellInfo("err: ${getExceptionMessage(getDeepestException(e))}".toString())
+                cellInfo = new CellInfo("err: ${getExceptionMessage(ExceptionUtilities.getDeepestException(e))}".toString())
                 ret[idx++] = [coord, cellInfo as Map]
             }
         }
@@ -1781,17 +1782,7 @@ class NCube<T>
     {
         return t.message ?: t.class.name
     }
-
-    private static Throwable getDeepestException(Throwable e)
-    {
-        while (e.cause != null)
-        {
-            e = e.cause
-        }
-
-        return e
-    }
-
+    
     /**
      * This API ensures that the passed in inputMap has bindings for all axes specified by ids.
      */

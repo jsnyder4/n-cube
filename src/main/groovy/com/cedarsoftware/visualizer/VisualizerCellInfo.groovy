@@ -5,6 +5,7 @@ import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
+import com.cedarsoftware.util.ExceptionUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_EXCEPTION
@@ -104,7 +105,7 @@ class VisualizerCellInfo
 		StringBuilder sb = new StringBuilder()
 		StringBuilder mb = new StringBuilder()
 		String noExecuteValue = HtmlFormatter.getCellValueAsString(noExecuteCell)
-		Throwable t = helper.getDeepestException(exception)
+		Throwable t = ExceptionUtilities.getDeepestException(exception)
 		String listItemClassName
 		String title
 

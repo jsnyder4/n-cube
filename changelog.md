@@ -1,5 +1,5 @@
 ### Revision History
-* 4.5.0-SNAPSHOT
+* 4.4.2-SNAPSHOT
   * Bug fix: When compile Groovy cells, the compilation is synchronized on `L2CacheKey` - meaning that all compilation is in parallel except of the exact same cell (SHA-1 of source or SHA-1 of URL).
   * Bug fix: No attempts to re-load a dynamic class can happen now. The compilation synchronization on same code / URL plus check of loaded classes in the `CdnClassLoader` prevent this from happening.  It was benign in `Java 1.8`, but causes JVM crash in `Java 11`.
   * Bug fix: `CommandCellException` is no longer wrapped through each unwinding of the stackframe - meaning shorter log file entries when an exception occurs.  The originating exception is what is wrapped in `CommandCellException`.

@@ -4,6 +4,7 @@ import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
@@ -89,17 +90,8 @@ class VisualizerHelper
 
 	protected static String handleException(Throwable e)
 	{
-		Throwable t = getDeepestException(e)
+		Throwable t = ExceptionUtilities.getDeepestException(e)
 		return getExceptionMessage(t, e)
-	}
-
-	protected static Throwable getDeepestException(Throwable e)
-	{
-		while (e.cause != null)
-		{
-			e = e.cause
-		}
-		return e
 	}
 
 	private static Set<String> findMissingScope(Map<String, Object> scope, Set<String> requiredKeys, Set mandatoryScopeKeys)
