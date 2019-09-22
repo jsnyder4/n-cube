@@ -212,6 +212,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     Map mapReduce(ApplicationID appId, String cubeName, String colAxisName, String where = 'true', Map options = [:])
     {
         NCube ncube = getCubeInternal(appId, cubeName)
+        if (ncube == null)
+        {
+            throw new IllegalArgumentException("Cannot mapReduce(). Unable to load cube: ${cubeName} for app: ${appId}")
+        }
+
         Closure whereClosure = evaluateWhereClosure(where)
         Map result = ncube.mapReduce(colAxisName, whereClosure, options)
         return result
@@ -255,6 +260,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         Map output = [:]
         NCube ncube = getCubeInternal(appId, cubeName)
+        if (ncube == null)
+        {
+            throw new IllegalArgumentException("Cannot getCell(). Unable to load cube: ${cubeName} for app: ${appId}")
+        }
+
         ncube.getCell(coordinate, output, defaultValue)
         return output
     }
@@ -583,6 +593,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         try
         {
             NCube ncube = getCube(appId, cubeName)
+            if (ncube == null)
+            {
+                throw new IllegalArgumentException("Cannot get JSON.  Unable to load cube: ${cubeName} for app: ${appId}")
+            }
             return NCube.formatCube(ncube, options)
         }
         catch (IllegalStateException e)
@@ -922,6 +936,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             LOG.info("proxy server: ${server}, proxy port: ${port}".toString())
 
             NCube ncube = getCube(appId, cubeName)
+            if (ncube == null)
+            {
+                throw new IllegalArgumentException("Failed to run test. Unable to load cube: ${cubeName} for app: ${appId}")
+            }
             Map<String, Object> coord = test.coordWithValues
             boolean success = true
             Map output = new LinkedHashMap()
@@ -1537,7 +1555,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private static boolean doesMapContainKey(Map map, String key)
     {
         if (map instanceof TrackingMap)
-        {
+        {   // Bypass marking the tracking key as accessed
             Map wrappedMap = ((TrackingMap)map).getWrappedMap()
             return wrappedMap.containsKey(key)
         }
