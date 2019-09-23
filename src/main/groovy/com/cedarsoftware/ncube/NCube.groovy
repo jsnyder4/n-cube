@@ -2001,6 +2001,7 @@ class NCube<T>
     /**
      * Ensure that the Map coordinate dimensionality satisfies this nCube.
      * This method verifies that all axes are listed by name in the input coordinate.
+     * This method wraps a TrackingMap around the passed in coordinate.
      * @param coordinate Map input coordinate
      */
     private Map validateCoordinate(final Map coordinate, final Map output)
@@ -2010,26 +2011,25 @@ class NCube<T>
             throw new IllegalArgumentException("'null' passed in for coordinate Map, n-cube: ${name}")
         }
 
-        // Duplicate input coordinate
-        Map copy
-
-        if (coordinate instanceof CaseInsensitiveMap)
+        Map copy = coordinate
+        while (copy instanceof TrackingMap)
         {
-            copy = coordinate
+            copy = ((TrackingMap)coordinate).getWrappedMap()
         }
-        else
+
+        if (!(copy instanceof CaseInsensitiveMap))
         {
-            copy = new CaseInsensitiveMap<>(coordinate)
+            copy = new CaseInsensitiveMap<>(copy)
         }
 
         // Ensure required scope is supplied within the input coordinate
-        Set<String> requiredScope = getRequiredScope(coordinate, output)
+        Set<String> requiredScope = getRequiredScope(copy, output)
 
         for (scopeKey in requiredScope)
         {
             if (!copy.containsKey(scopeKey))
             {
-                Set coordinateKeys = coordinate.keySet()
+                Set coordinateKeys = copy.keySet()
                 throw new InvalidCoordinateException("Input coordinate: ${coordinateKeys}, does not contain all of the required scope keys: ${requiredScope}, cube: ${name}, appId: ${appId}",
                         name, coordinateKeys, requiredScope)
             }

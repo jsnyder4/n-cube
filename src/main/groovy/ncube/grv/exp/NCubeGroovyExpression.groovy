@@ -13,6 +13,7 @@ import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 
@@ -120,6 +121,10 @@ class NCubeGroovyExpression
      */
     def go(Map coord, String cubeName = ncube.name, def defaultValue = null)
     {
+        if (coord.is(input))
+        {
+            coord = dupe(inputWithoutTrackingMap)
+        }
         return getCube(cubeName).getCell(coord, output, defaultValue)
     }
 
@@ -133,6 +138,10 @@ class NCubeGroovyExpression
      */
     def go(Map coord, NCube cube, def defaultValue = null)
     {
+        if (coord.is(input))
+        {
+            coord = dupe(inputWithoutTrackingMap)
+        }
         return cube.getCell(coord, output, defaultValue)
     }
 
@@ -154,6 +163,10 @@ class NCubeGroovyExpression
         {
             throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
+        if (coord.is(input))
+        {
+            coord = dupe(inputWithoutTrackingMap)
+        }
         return target.getCell(coord, output, defaultValue)
     }
 
@@ -170,8 +183,10 @@ class NCubeGroovyExpression
      */
     def at(Map coord, String cubeName = ncube.name, def defaultValue = null)
     {
-        input.putAll(coord)
-        return getCube(cubeName).getCell(input, output, defaultValue)
+        Map copy = inputWithoutTrackingMap
+        copy = dupe(copy)
+        copy.putAll(coord)
+        return getCube(cubeName).getCell(copy, output, defaultValue)
     }
 
     /**
@@ -187,8 +202,10 @@ class NCubeGroovyExpression
      */
     def at(Map coord, NCube cube, def defaultValue = null)
     {
-        input.putAll(coord)
-        return cube.getCell(input, output, defaultValue)
+        Map copy = inputWithoutTrackingMap
+        copy = dupe(copy)
+        copy.putAll(coord)
+        return cube.getCell(copy, output, defaultValue)
     }
 
     /**
@@ -211,8 +228,10 @@ class NCubeGroovyExpression
         {
             throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
-        input.putAll(coord)
-        return target.getCell(input, output, defaultValue)
+        Map copy = inputWithoutTrackingMap
+        copy = dupe(copy)
+        copy.putAll(coord)
+        return target.getCell(copy, output, defaultValue)
     }
 
     /**
@@ -229,9 +248,11 @@ class NCubeGroovyExpression
      */
     def use(Map altInput, String cubeName = ncube.name, def defaultValue = null)
     {
-        Map origInput = new CaseInsensitiveMap(input)
-        input.putAll(altInput)
-        return getCube(cubeName).use(input, origInput, output, defaultValue)
+        Map copy = inputWithoutTrackingMap
+        Map origInput = dupe(copy)
+        Map modInput = dupe(copy)
+        modInput.putAll(altInput)
+        return getCube(cubeName).use(modInput, origInput, output, defaultValue)
     }
 
     /**
@@ -255,9 +276,27 @@ class NCubeGroovyExpression
         {
             throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
         }
-        Map origInput = new CaseInsensitiveMap(input)
-        input.putAll(altInput)
-        return target.use(input, origInput, output, defaultValue)
+
+        Map copy = inputWithoutTrackingMap
+        Map origInput = dupe(copy)
+        Map modInput = dupe(copy)
+        modInput.putAll(altInput)
+        return target.use(modInput, origInput, output, defaultValue)
+    }
+
+    private Map getInputWithoutTrackingMap()
+    {
+        Map copy = input
+        while (copy instanceof TrackingMap)
+        {
+            copy = ((TrackingMap)input).getWrappedMap()
+        }
+        return copy
+    }
+
+    private Map dupe(Map map)
+    {
+        return new CaseInsensitiveMap(map)
     }
 
     /**
