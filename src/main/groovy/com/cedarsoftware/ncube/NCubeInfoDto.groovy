@@ -27,23 +27,23 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class NCubeInfoDto
 {
-    public String id
-    public String tenant
-    public String app
-    public String version
-    public String status
-    public String branch
-    public String name
-    public String sha1
-    public String headSha1
-    public String revision
-    public Date createDate
-    public String createHid
-    public String notes
-    public boolean changed
-    public String changeType
-    public byte[] bytes
-    public String testData
+    String id
+    String tenant
+    String app
+    String version
+    String status
+    String branch
+    String name
+    String sha1
+    String headSha1
+    String revision
+    Date createDate
+    String createHid
+    String notes
+    boolean changed
+    String changeType
+    byte[] bytes
+    String testData
 
     ApplicationID getApplicationID()
 	{
@@ -60,16 +60,6 @@ class NCubeInfoDto
 		return "${tenant}/${app}/${version}/${status}/${br}/${name}/${sha1}/${revision}/${createDate}/${createHid}/${notes}"
 	}
 
-    boolean isChanged()
-    {
-        return changed
-    }
-
-    void setChanged(boolean state)
-    {
-        changed = state
-    }
-
     boolean hasCubeData()
     {
         return !ArrayUtilities.isEmpty(bytes)
@@ -78,60 +68,5 @@ class NCubeInfoDto
     boolean hasTestData()
     {
         return StringUtilities.hasContent(testData)
-    }
-
-    // ----------------------------- Bug in Groovy 2.5.x is forcing need for these methods -----------------------------
-    // Groovy 2.5.x is no honoring 'public' access modifier above on these fields
-    /**
-     * Bug in Groovy 2.5.x forcing need for these methods
-     */
-    String getId()
-    {
-        return id
-    }
-
-    void setId(String id)
-    {
-        this.id = id
-    }
-
-    String getChangeType()
-    {
-        return changeType
-    }
-
-    void setChangeType(String changeType)
-    {
-        this.changeType = changeType
-    }
-
-    String getTenant()
-    {
-        return tenant
-    }
-
-    void setTenant(String tenant)
-    {
-        this.tenant = tenant
-    }
-
-    String getSha1()
-    {
-        return sha1
-    }
-
-    void setSha1(String sha1)
-    {
-        this.sha1 = sha1
-    }
-
-    String getHeadSha1()
-    {
-        return headSha1
-    }
-
-    void setHeadSha1(String headSha1)
-    {
-        this.headSha1 = headSha1
     }
 }
