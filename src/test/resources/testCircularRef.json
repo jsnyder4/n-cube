@@ -1,0 +1,63 @@
+{
+  "ncube":"ncube.testCircularReference",
+  "default_value":{
+    "type":"exp",
+    "value":"use([accessType:null])"
+  },
+  "axes":[
+    {
+      "id":1,
+      "name":"accessType",
+      "hasDefault":true,
+      "type":"DISCRETE",
+      "valueType":"CISTRING",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":1001873745765,
+          "type":"string",
+          "value":"use"
+        },
+        {
+          "id":1000294213194,
+          "type":"string",
+          "value":"at"
+        },
+        {
+          "id":1001554360974,
+          "type":"string",
+          "value":"recursion"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[],
+      "type":"exp",
+      "value":"at([accessType: null])"
+    },
+    {
+      "id":[
+        1001873745765
+      ],
+      "type":"exp",
+      "value":"use([accessType: null])"
+    },
+    {
+      "id":[
+        1000294213194
+      ],
+      "type":"exp",
+      "value":"at([accessType: null])"
+    },
+    {
+      "id":[
+        1001554360974
+      ],
+      "type":"exp",
+      "value":"def myClosure; myClosure = { def x -> myClosure(x) }; myClosure(5)"
+    }
+  ]
+}
