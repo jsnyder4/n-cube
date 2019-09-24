@@ -2168,7 +2168,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long headRev = (long) Converter.convert(head.revision, long.class)
+            long headRev = Converter.convert(head.revision, Long.TYPE)
             boolean activeStatusMatches = (revision < 0) == (headRev < 0)
             boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(updateCube.sha1, head.sha1)
             boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(updateCube.headSha1, head.sha1)
@@ -2264,7 +2264,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             otherBranchCube.branch = appId.branch  // using other branch's DTO as return value, therefore setting the branch to the passed in AppId's branch
             NCubeInfoDto info = branchRecordMap[otherBranchCube.name]
-            long otherBranchCubeRev = (long) Converter.convert(otherBranchCube.revision, long.class)
+            long otherBranchCubeRev = Converter.convert(otherBranchCube.revision, Long.TYPE)
 
             if (info == null)
             {   // Other branch has cube that my branch does not have
@@ -2280,7 +2280,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long infoRev = (long) Converter.convert(info.revision, long.class)
+            long infoRev = Converter.convert(info.revision, Long.TYPE)
             boolean activeStatusMatches = (infoRev < 0) == (otherBranchCubeRev < 0)
             boolean myBranchSha1MatchesOtherBranchSha1 = StringUtilities.equalsIgnoreCase(info.sha1, otherBranchCube.sha1)
 
@@ -2430,7 +2430,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                     // Fast-Forward branch
                     // Update HEAD SHA-1 on branch directly (no need to insert)
                     NCubeInfoDto branchCube = getCubeInfo(appId, updateCube)
-                    persister.updateBranchCubeHeadSha1((Long) Converter.convert(branchCube.id, Long.class), branchCube.sha1, updateCube.sha1, getUserId())
+                    persister.updateBranchCubeHeadSha1(Converter.convert(branchCube.id, Long.class), branchCube.sha1, updateCube.sha1, getUserId())
                     fastforwards.add(updateCube)
                     break
                 case ChangeType.CONFLICT.code:
@@ -2555,10 +2555,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     {
         NCube prCube = loadPullRequestCube(prId)
 
-        String status = prCube.getCell([(PR_PROP):PR_STATUS])
+        String status = (String) prCube.getCell([(PR_PROP):PR_STATUS])
         String appIdString = prCube.getCell([(PR_PROP):PR_APP])
         ApplicationID prAppId = ApplicationID.convert(appIdString)
-        String requestUser = prCube.getCell([(PR_PROP): PR_REQUESTER])
+        String requestUser = (String) prCube.getCell([(PR_PROP): PR_REQUESTER])
         String commitUser = prCube.getCell([(PR_PROP): PR_MERGER])
         String prNotes = prCube.getCell([(PR_PROP): PR_ID])
 
@@ -2573,11 +2573,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
         String prInfoJson = prCube.getCell([(PR_PROP):PR_CUBES]) as String
 
-        Object[] prDtos = null
+        Collection prDtos = null
         if (prInfoJson != null)
         {
             List<Map<String, String>> prInfo = JsonReader.jsonToJava(prInfoJson) as List
-            Object[] allDtos = getBranchChangesForHead(prAppId)
+            Collection allDtos = getBranchChangesForHead(prAppId)
             prDtos = allDtos.findAll {
                 NCubeInfoDto dto = it as NCubeInfoDto
                 prInfo.find { Map<String, String> info ->
@@ -2591,7 +2591,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                     }
                 }
             }
-            prInfo.any { Map<String, String> info ->
+            prInfo.any { Object o ->
+                Map<String, String> info = (Map<String, String>) o
                 Object foundDto = prDtos.find {
                     NCubeInfoDto dto = it as NCubeInfoDto
                     info.name == dto.name
@@ -2603,7 +2604,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             }
         }
 
-        Map ret = commitBranchFromRequest(prAppId, prDtos, requestUser, prId, prNotes)
+        Map ret = commitBranchFromRequest(prAppId, prDtos.toArray(), requestUser, prId, prNotes)
         validateReferenceAxesAppIds(prAppId.asHead())
         ret[PR_APP] = prAppId
         ret[PR_CUBE] = prCube.name
@@ -3032,8 +3033,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     protected NCube mergeCubesIfPossible(NCubeInfoDto branchInfo, NCubeInfoDto headInfo, boolean headToBranch)
     {
-        long branchCubeId = (long) Converter.convert(branchInfo.id, long.class)
-        long headCubeId = (long) Converter.convert(headInfo.id, long.class)
+        long branchCubeId = Converter.convert(branchInfo.id, Long.TYPE)
+        long headCubeId = Converter.convert(headInfo.id, Long.TYPE)
         NCube branchCube = loadCubeById(branchCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube headCube = loadCubeById(headCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube baseCube, headBaseCube

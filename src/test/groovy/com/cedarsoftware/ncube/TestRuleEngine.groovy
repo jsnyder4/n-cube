@@ -1206,4 +1206,16 @@ class TestRuleEngine extends NCubeBaseTest
         ncube.getCell(input, output)
         assert output.total == 'garply'
     }
+
+    @Test
+    void testUseAndAtWithinRuleCube()
+    {
+        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'useWithinRules.json')
+        Map input = [businessDivisionCode:'USE']
+        Map output = [:]
+        def x = ncube.getCell(input, output)
+        println x
+        println "------- output -------"
+        println output
+    }
 }

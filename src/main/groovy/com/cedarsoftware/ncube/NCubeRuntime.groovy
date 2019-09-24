@@ -122,7 +122,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                                 boolean evict = true
                                 if (cube.containsMetaProperty(CUBE_EVICT))
                                 {
-                                    evict = Converter.convert(cube.getMetaProperty(CUBE_EVICT), boolean.class)
+                                    evict = Converter.convert(cube.getMetaProperty(CUBE_EVICT), Boolean.class).booleanValue()
                                 }
 
                                 if (cube.name == SYS_CLASSPATH || !evict)

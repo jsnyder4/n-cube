@@ -1450,43 +1450,43 @@ class TestAxis extends NCubeBaseTest
     void testNearestDate()
     {
         Axis points = new Axis("Date", AxisType.NEAREST, AxisValueType.DATE, false)
-        points.addColumn(Converter.convert("2000/01/01", Date.class) as Date)
-        points.addColumn(Converter.convert("2016/06/06", Date.class) as Date)
-        points.addColumn(Converter.convert("1970/01/01", Date.class) as Date)
-        points.addColumn(Converter.convert("2005/05/31", Date.class) as Date)
-        points.addColumn(Converter.convert("1991/10/05", Date.class) as Date)
+        points.addColumn(Converter.convert("2000/01/01", Date.class))
+        points.addColumn(Converter.convert("2016/06/06", Date.class))
+        points.addColumn(Converter.convert("1970/01/01", Date.class))
+        points.addColumn(Converter.convert("2005/05/31", Date.class))
+        points.addColumn(Converter.convert("1991/10/05", Date.class))
 
-        Column col = points.findColumn(Converter.convert("1930/07/09", Date.class) as Date)
+        Column col = points.findColumn(Converter.convert("1930/07/09", Date.class))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1969/12/31", Date.class) as Date)
+        col = points.findColumn(Converter.convert("1969/12/31", Date.class))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1970/01/01", Date.class) as Date)
+        col = points.findColumn(Converter.convert("1970/01/01", Date.class))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1970/01/02", Date.class) as Date)
+        col = points.findColumn(Converter.convert("1970/01/02", Date.class))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1980/11/17", Date.class) as Date)
+        col = points.findColumn(Converter.convert("1980/11/17", Date.class))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1980/11/18", Date.class) as Date)
+        col = points.findColumn(Converter.convert("1980/11/18", Date.class))
         assert col.toString() == '1991-10-05'
 
-        col = points.findColumn(Converter.convert("2010/08/10", Date.class) as Date)
+        col = points.findColumn(Converter.convert("2010/08/10", Date.class))
         assert col.toString() == '2005-05-31'
 
-        col = points.findColumn(Converter.convert("2016/06/05", Date.class) as Date)
+        col = points.findColumn(Converter.convert("2016/06/05", Date.class))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2016/06/06", Date.class) as Date)
+        col = points.findColumn(Converter.convert("2016/06/06", Date.class))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2016/06/07", Date.class) as Date)
+        col = points.findColumn(Converter.convert("2016/06/07", Date.class))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2316/12/25", Date.class) as Date)
+        col = points.findColumn(Converter.convert("2316/12/25", Date.class))
         assert col.toString() == '2016-06-06'
     }
 
@@ -2423,7 +2423,7 @@ class TestAxis extends NCubeBaseTest
         assert set.size() == 4
         assert set.get(0) == Converter.convert("10 Dec 1995", Date.class)
         assert set.get(1) == Converter.convert("25 Dec 1995", Date.class)
-        assert set.get(2) == new Range((Comparable) Converter.convert("1996 dec 17", Date.class), (Comparable) Converter.convert('2001-01-31', Date.class))
+        assert set.get(2) == new Range(Converter.convert("1996 dec 17", Date.class), Converter.convert('2001-01-31', Date.class))
         assert set.get(3) == Converter.convert("Jun 10th 2010", Date.class)
     }
 

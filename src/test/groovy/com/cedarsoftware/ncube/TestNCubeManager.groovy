@@ -196,10 +196,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.deleteCubes(appId, [name2].toArray())
 
         Map options = [(SEARCH_ACTIVE_RECORDS_ONLY) : true, (SEARCH_EXACT_MATCH_NAME) : true]
-        Object[] cubeInfo = mutableClient.search(appId, name1, null, options)
-        assertEquals(0, cubeInfo.length)
+        List cubeInfo = mutableClient.search(appId, name1, null, options)
+        assertEquals(0, cubeInfo.size())
         cubeInfo = mutableClient.search(appId, name2, null, options)
-        assertEquals(0, cubeInfo.length)
+        assertEquals(0, cubeInfo.size())
     }
 
     @Test
@@ -634,10 +634,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.createCube(ncube1)
         mutableClient.createCube(ncube2)
 
-        Object[] cubeList = mutableClient.search(defaultSnapshotApp, 'test.%', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List cubeList = mutableClient.search(defaultSnapshotApp, 'test.%', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
         assertTrue(cubeList != null)
-        assertTrue(cubeList.length == 2)
+        assertTrue(cubeList.size() == 2)
 
         assertTrue(ncube1.numDimensions == 3)
         assertTrue(ncube2.numDimensions == 2)
@@ -652,7 +652,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         ApplicationID next = defaultSnapshotApp.createNewSnapshotId('1.2.3')
         cubeList = mutableClient.search(next, 'test.*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         // Two cubes at the new 1.2.3 SNAPSHOT version.
-        assert cubeList.length == 2
+        assert cubeList.size() == 2
 
         String notes1 = mutableClient.getNotes(next, cube1.name)
         assertContainsIgnoreCase(notes1, 'updated')
@@ -674,10 +674,10 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         NCube cube = ncubeRuntime.getNCubeFromResource(defaultSnapshotApp, 'latlon.json')
         mutableClient.createCube(cube)
-        Object[] cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertNotNull(cubeInfos)
-        assertEquals(2, cubeInfos.length)
-        mutableClient.commitBranch(defaultSnapshotApp, cubeInfos)
+        assertEquals(2, cubeInfos.size())
+        mutableClient.commitBranch(defaultSnapshotApp, cubeInfos.toArray())
 
         try
         {
@@ -756,9 +756,9 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.createCube(ncube2)
 
         // This proves that null is turned into '%' (no exception thrown)
-        Object[] cubeList = mutableClient.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List cubeList = mutableClient.search(defaultSnapshotApp, null, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
 
-        assertEquals(3, cubeList.length)
+        assertEquals(3, cubeList.size())
     }
 
     @Test
@@ -1142,11 +1142,11 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testRestoreDeletedCube()
     {
         NCube cube = createCube()
-        Object[] records = mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        assertEquals(2, records.length) // 2 (because of sys.classpath)
+        List records = mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        assertEquals(2, records.size()) // 2 (because of sys.classpath)
 
         records = mutableClient.search(defaultSnapshotApp, cube.name, null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        assertEquals(1, records.length)
+        assertEquals(1, records.size())
         String sha1 = (records[0] as NCubeInfoDto).sha1
 
         assertEquals(0, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
@@ -1156,11 +1156,11 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assertEquals(1, getDeletedCubesFromDatabase(defaultSnapshotApp, '').size())
 
         records = mutableClient.search(defaultSnapshotApp, '', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        assertEquals(1, records.length)
+        assertEquals(1, records.size())
 
         mutableClient.restoreCubes(defaultSnapshotApp, cube.name)
         records = mutableClient.search(defaultSnapshotApp, 'test*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
-        assertEquals(1, records.length)
+        assertEquals(1, records.size())
 
         NCube ncube = mutableClient.getCube(defaultSnapshotApp, cube.name)
         assertNotNull ncube
@@ -1253,8 +1253,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testRevisionHistory()
     {
         NCube cube = createCube()
-        Object[] his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[]) his
+        List<NCubeInfoDto> his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
+        NCubeInfoDto[] history = (NCubeInfoDto[])his.toArray(new NCubeInfoDto[0])
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
@@ -1266,15 +1266,15 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         mutableClient.updateCube(cube)
         his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        history = (NCubeInfoDto[]) his
+        history = (NCubeInfoDto[])his.toArray(new NCubeInfoDto[0])
         assertEquals(2, history.length)
         assert history[1].name == 'test.Age-Gender'
         assert history[0].revision == '1'
         assert history[1].revision == '0'
         assert history[1].notes == 'notes follow'
 
-        long rev0Id = Converter.convert(history[1].id, long.class) as long
-        long rev1Id = Converter.convert(history[0].id, long.class) as long
+        long rev0Id = Converter.convert(history[1].id, Long.TYPE)
+        long rev1Id = Converter.convert(history[0].id, Long.TYPE)
         NCubeInfoDto record0 = mutableClient.loadCubeRecordById(rev0Id, null)
         NCubeInfoDto record1 = mutableClient.loadCubeRecordById(rev1Id, null)
         NCube rev0 = NCube.createCubeFromBytes(record0.bytes as byte[])
@@ -1288,8 +1288,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     void testRevisionHistoryIgnoreVersion()
     {
         NCube cube = createCube()
-        Object[] his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[]) his
+        List<NCubeInfoDto> his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
+        NCubeInfoDto[] history = (NCubeInfoDto[]) his.toArray(new NCubeInfoDto[0])
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
@@ -1695,9 +1695,9 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         assertNotNull(mutableClient.getCube(defaultBootApp, SYS_LOCK))
         NCube cube = createCubeFromResource(defaultSnapshotApp, 'latlon.json')
-        Object[] cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
+        List cubeInfos = mutableClient.search(defaultSnapshotApp, '*', null, [(SEARCH_ACTIVE_RECORDS_ONLY):true])
         assertNotNull(cubeInfos)
-        assertEquals(2, cubeInfos.length)
+        assertEquals(2, cubeInfos.size())
         mutableClient.releaseCubes(defaultSnapshotApp, "1.2.3")
         try
         {
@@ -1962,8 +1962,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.updateCube(sysLockCube)
 
         // commit sys lock to HEAD
-        Object[] cubeInfos = mutableClient.search(branchBootAppId, SYS_LOCK, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true])
-        Map<String, Object> commitResult = mutableClient.commitBranch(branchBootAppId, cubeInfos)
+        List cubeInfos = mutableClient.search(branchBootAppId, SYS_LOCK, null, [(SEARCH_ACTIVE_RECORDS_ONLY): true])
+        Map<String, Object> commitResult = mutableClient.commitBranch(branchBootAppId, cubeInfos.toArray())
         assertEquals(1, (commitResult[mutableClient.BRANCH_UPDATES] as Map).size())
 
         // make sure HEAD took the lock

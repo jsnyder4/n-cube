@@ -334,9 +334,9 @@ class TestTransforms extends NCubeCleanupBaseTest
     private static List<Date> getStandardDates()
     {
         List dates = [
-                Converter.convert('1/1/2017', Date.class) as Date,
-                Converter.convert('2/1/2017', Date.class) as Date,
-                Converter.convert('3/1/2017', Date.class) as Date,
+                Converter.convert('1/1/2017', Date.class),
+                Converter.convert('2/1/2017', Date.class),
+                Converter.convert('3/1/2017', Date.class),
         ]
         return dates
     }

@@ -116,34 +116,34 @@ class TestCellTypes extends NCubeBaseTest
                     result = false ? new StringUrlCmd('foo', false) : 'foo'
 
                 case 'date':
-                    result = Converter.convert('foo', java.util.Date.class)
+                    result = Converter.convert('foo', Date.class)
 
                 case 'boolean':
-                    result = Converter.convert('foo', boolean.class)
+                    result = Converter.convert('foo', Boolean.TYPE)
 
                 case 'byte':
-                    result = Converter.convert('foo', byte.class)
+                    result = Converter.convert('foo', Byte.TYPE)
 
                 case 'short':
-                    result = Converter.convert('foo', short.class)
+                    result = Converter.convert('foo', Short.TYPE)
 
                 case 'int':
-                    result = Converter.convert('foo', int.class)
+                    result = Converter.convert('foo', Integer.TYPE)
 
                 case 'long':
-                    result = Converter.convert('foo', long.class)
+                    result = Converter.convert('foo', Long.TYPE)
 
                 case 'float':
-                    result = Converter.convert('foo', float.class)
+                    result = Converter.convert('foo', Float.TYPE)
 
                 case 'double':
-                    result = Converter.convert('foo', double.class)
+                    result = Converter.convert('foo', Double.TYPE)
 
                 case 'bigdec':
-                    result = Converter.convert('foo', java.math.BigDecimal.class)
+                    result = Converter.convert('foo', BigDecimal.class)
 
                 case 'bigint':
-                    result = Converter.convert('foo', java.math.BigInteger.class)
+                    result = Converter.convert('foo', BigInteger.class)
 
                 case 'binary':
                     result = false ? new BinaryUrlCmd('foo', false) : StringUtilities.decode('foo')
@@ -208,28 +208,28 @@ class TestCellTypes extends NCubeBaseTest
                     result = false ? new StringUrlCmd('foo', false) : 'foo'
 
                 case 'date':
-                    result = Converter.convert('foo', java.util.Date.class)
+                    result = Converter.convert('foo', Date.class)
 
                 case 'boolean':
-                    result = Converter.convert('foo', boolean.class)
+                    result = Converter.convert('foo', Boolean.TYPE)
 
                 case 'byte':
-                    result = Converter.convert('foo', byte.class)
+                    result = Converter.convert('foo', Byte.TYPE)
 
                 case 'short':
-                    result = Converter.convert('foo', short.class)
+                    result = Converter.convert('foo', Short.TYPE)
 
                 case 'int':
-                    result = Converter.convert('foo', int.class)
+                    result = Converter.convert('foo', Integer.TYPE)
 
                 case 'long':
-                    result = Converter.convert('foo', long.class)
+                    result = Converter.convert('foo', Long.TYPE)
 
                 case 'float':
-                    result = Converter.convert('foo', float.class)
+                    result = Converter.convert('foo', Float.TYPE)
 
                 case 'double':
-                    result = Converter.convert('foo', double.class)
+                    result = Converter.convert('foo', Double.TYPE)
 
                 case 'bigdec':
                     result = Converter.convert('foo', BigDecimal.class)
@@ -255,7 +255,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Lat/Long value (%s)", 'foo'))
                     }
-                    result = new LatLon((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new LatLon(Converter.convert(m.group(1), Double.class), Converter.convert(m.group(2), Double.class))
 
                 case 'point2d':
                     Matcher m = Regexes.valid2Doubles.matcher('foo')
@@ -263,7 +263,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point2D value (%s)", 'foo'))
                     }
-                    result = new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new Point2D(Converter.convert(m.group(1), Double.class), Converter.convert(m.group(2), Double.class))
 
                 case 'point3d':
                     Matcher m = Regexes.valid3Doubles.matcher('foo')
@@ -271,9 +271,9 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point3D value (%s)", 'foo'))
                     }
-                    result = new Point3D((double) Converter.convert(m.group(1), double.class),
-                            (double) Converter.convert(m.group(2), double.class),
-                            (double) Converter.convert(m.group(3), double.class))
+                    result = new Point3D(Converter.convert(m.group(1), Double.class),
+                            Converter.convert(m.group(2), Double.class),
+                            Converter.convert(m.group(3), Double.class))
 
                 case 'null':
                     result = null
@@ -303,25 +303,25 @@ class TestCellTypes extends NCubeBaseTest
                     result = Converter.convert('foo', Date.class)
 
                 case 'boolean':
-                    result = Converter.convert('foo', boolean.class)
+                    result = Converter.convert('foo', Boolean.TYPE)
 
                 case 'byte':
-                    result = Converter.convert('foo', byte.class)
+                    result = Converter.convert('foo', Byte.TYPE)
 
                 case 'short':
-                    result = Converter.convert('foo', short.class)
+                    result = Converter.convert('foo', Short.TYPE)
 
                 case 'int':
-                    result = Converter.convert('foo', int.class)
+                    result = Converter.convert('foo', Integer.TYPE)
 
                 case 'long':
-                    result = Converter.convert('foo', long.class)
+                    result = Converter.convert('foo', Long.TYPE)
 
                 case 'float':
-                    result = Converter.convert('foo', float.class)
+                    result = Converter.convert('foo', Float.TYPE)
 
                 case 'double':
-                    result = Converter.convert('foo', double.class)
+                    result = Converter.convert('foo', Double.TYPE)
 
                 case 'bigdec':
                     result = Converter.convert('foo', BigDecimal.class)
@@ -347,7 +347,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Lat/Long value (%s)", 'foo'))
                     }
-                    result = new LatLon((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new LatLon(Converter.convert(m.group(1), Double.class), Converter.convert(m.group(2), Double.class))
 
                 case 'point2d':
                     Matcher m = Regexes.valid2Doubles.matcher('foo')
@@ -355,7 +355,7 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point2D value (%s)", 'foo'))
                     }
-                    result = new Point2D((double) Converter.convert(m.group(1), double.class), (double) Converter.convert(m.group(2), double.class))
+                    result = new Point2D(Converter.convert(m.group(1), Double.class), Converter.convert(m.group(2), Double.class))
 
                 case 'point3d':
                     Matcher m = Regexes.valid3Doubles.matcher('foo')
@@ -363,9 +363,9 @@ class TestCellTypes extends NCubeBaseTest
                     {
                         throw new IllegalArgumentException(String.format("Invalid Point3D value (%s)", 'foo'))
                     }
-                    result = new Point3D((double) Converter.convert(m.group(1), double.class),
-                            (double) Converter.convert(m.group(2), double.class),
-                            (double) Converter.convert(m.group(3), double.class))
+                    result = new Point3D(Converter.convert(m.group(1), Double.class),
+                            Converter.convert(m.group(2), Double.class),
+                            Converter.convert(m.group(3), Double.class))
 
                 case 'null':
                     result = null

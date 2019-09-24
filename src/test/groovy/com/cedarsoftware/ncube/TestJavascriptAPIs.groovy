@@ -286,13 +286,13 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> cubes = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
-        long origId = Converter.convert(origDto.id, long.class) as long
+        long origId = Converter.convert(origDto.id, Long.TYPE)
         NCube foo = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         mutableClient.updateCube(foo)
         List<NCubeInfoDto> cubes2 = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
-        long newId = Converter.convert(newDto.id, long.class) as long
+        long newId = Converter.convert(newDto.id, Long.TYPE)
 
         List<Delta> result = call('fetchJsonRevDiffs', [newId, origId]) as List
         assert result.size() == 4
@@ -310,13 +310,13 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> cubes = ncubeRuntime.search(acme1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
-        long origId = Converter.convert(origDto.id, long.class) as long
+        long origId = Converter.convert(origDto.id, Long.TYPE)
         NCube foo = ncubeRuntime.getNCubeFromResource(acme1, 'test.branch.2.json')
         mutableClient.updateCube(foo)
         List<NCubeInfoDto> cubes2 = ncubeRuntime.search(acme1, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
-        long newId = Converter.convert(newDto.id, long.class) as long
+        long newId = Converter.convert(newDto.id, Long.TYPE)
 
         try
         {
@@ -620,7 +620,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List
         assert revisions.size() == 2
         NCubeInfoDto record0 = revisions.find { it.revision == '0' }
-        long id = Converter.convert(record0.id, Long.class) as long
+        long id = Converter.convert(record0.id, Long.TYPE)
         call('promoteRevision', [id])
         revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List
         assert revisions.size() == 3
