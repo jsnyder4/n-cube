@@ -56,7 +56,7 @@ class TestJsonFormatter extends NCubeBaseTest
         long oldTime = 0
         long newTime = 0
 
-        NCube<String> states2 = (NCube<String>) NCubeBuilder.discrete1D
+        NCube states2 = NCubeBuilder.discrete1D
         states2.applicationID = ApplicationID.testAppId.asVersion('1.0.0').asHead().asRelease()
         ncubeRuntime.addCube(states2)
 //        File file = new File('/Users/jsnyder4/Development/IdeaProjects/n-cube/src/test/resources/sys.bootstrap.multi.api.json')

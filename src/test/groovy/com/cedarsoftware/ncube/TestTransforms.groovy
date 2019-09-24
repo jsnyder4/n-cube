@@ -41,7 +41,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     @Test
     void testAddStringThenRemoveTransform()
     {
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -67,7 +67,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     @Test
     void testRemoveString()
     {
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'remove', value: 'OH, TX'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'remove', value: 'OH, TX'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -78,7 +78,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     @Test
     void testSubsetString()
     {
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'subset', value: 'OH, TX'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'subset', value: 'OH, TX'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -91,7 +91,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testAddAxisString()
     {
         createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, ['CA', 'WA'], 'Reference2')
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addAxis', value: 'Library, 1.0.0, Reference2, reference'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addAxis', value: 'Library, 1.0.0, Reference2, reference'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -107,10 +107,10 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testMultipleTransforms()
     {
         List<Map<String, Object>> transformSpec = [
-                [transform: 1, type: 'add', value: 'GA'] as Map,
-                [transform: 2, type: 'add', value: 'WI'] as Map,
-                [transform: 3, type: 'remove', value: 'NJ, WI'] as Map,
-                [transform: 4, type: 'subset', value: 'OH, GA'] as Map
+                [transform: 1, type: 'add', value: 'GA'] as Map<String, Object>,
+                [transform: 2, type: 'add', value: 'WI'] as Map<String, Object>,
+                [transform: 3, type: 'remove', value: 'NJ, WI'] as Map<String, Object>,
+                [transform: 4, type: 'subset', value: 'OH, GA'] as Map<String, Object>
         ]
         setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
@@ -123,7 +123,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     @Test
     void testAddDate()
     {
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: '4/1/2017'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: '4/1/2017'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.DATE, standardDates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -137,7 +137,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     @Test
     void testRemoveDate()
     {
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'remove', value: '2/1/2017'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'remove', value: '2/1/2017'] as Map<String, Object>]
         setupDatabase(AxisType.DISCRETE, AxisValueType.DATE, standardDates, transformSpec)
         NCube appCube = ncubeClient.getCube(appId, cubeName)
         Axis reference = appCube.getAxis(refAxisName)
@@ -150,7 +150,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testImproperTransformCube()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map]
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map<String, Object>]
         NCube transformCube = createTransformCube(transformSpec, false)
 
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
@@ -170,7 +170,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testEmptyTransformType()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: '', value: 'GA'] as Map] // empty type
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: '', value: 'GA'] as Map<String, Object>] // empty type
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)
@@ -189,7 +189,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testInvalidTransformType()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'foo', value: 'GA'] as Map] // invalid type
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'foo', value: 'GA'] as Map<String, Object>] // invalid type
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)
@@ -208,7 +208,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testEmptyTransformValue()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: ''] as Map] // empty value
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: ''] as Map<String, Object>] // empty value
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)
@@ -227,7 +227,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testAddMultiple()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA, FL'] as Map] // empty value
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA, FL'] as Map<String, Object>] // empty value
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)
@@ -246,7 +246,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testAddAxisError()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addaxis', value: 'Library, 1.0.0, Reference2'] as Map] // empty value
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addaxis', value: 'Library, 1.0.0, Reference2'] as Map<String, Object>] // empty value
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name)
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)
@@ -298,7 +298,7 @@ class TestTransforms extends NCubeCleanupBaseTest
     void testNoReferenceAxis()
     {
         NCube libraryCube = createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, standardStates)
-        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map] // empty value
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'add', value: 'GA'] as Map<String, Object>] // empty value
         NCube transformCube = createTransformCube(transformSpec)
         Map<String, Object> args = buildArgs(libraryCube.name, transformCube.name, 'noReferenceAxis')
         ReferenceAxisLoader refAxisLoader = new ReferenceAxisLoader(cubeName, refAxisName, args)

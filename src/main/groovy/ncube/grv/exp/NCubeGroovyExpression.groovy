@@ -289,7 +289,7 @@ class NCubeGroovyExpression
         Map copy = input
         while (copy instanceof TrackingMap)
         {
-            copy = ((TrackingMap)input).getWrappedMap()
+            copy = ((TrackingMap)copy).getWrappedMap()
         }
         return copy
     }
