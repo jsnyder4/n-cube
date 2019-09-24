@@ -55,6 +55,11 @@
           "id":2001314780026,
           "type":"long",
           "value":3
+        },
+        {
+          "id":2001497053275,
+          "type":"long",
+          "value":4
         }
       ]
     }
@@ -66,7 +71,15 @@
         2001314780026
       ],
       "type":"template",
-      "value":"use: ${input.text}<%\noutput.premium = 5000\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwritten by use template'\n%>"
+      "value":"use: ${input.text}<%\noutput.premium = 5000\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwritten by use template'\noutput.useTransitive = use([column:'C', row:4])\n%>"
+    },
+    {
+      "id":[
+        1001670237329,
+        2001314780026
+      ],
+      "type":"exp",
+      "value":"input.column = 'Z'\ninput.row = 16"
     },
     {
       "id":[
@@ -74,7 +87,15 @@
         2000454398165
       ],
       "type":"template",
-      "value":"at: ${input.text}<%\noutput.deductible = 500\ninput.foo = 'bar'\ninput.remove('text')\noutput.text = 'overwritten by at template'\n%>"
+      "value":"at: ${input.text}<%\noutput.deductible = 500\ninput.foo = 'bar'\ninput.remove('text')\noutput.text = 'overwritten by at template'\noutput.atTransitive = at([column:'B', row:3])\n%>"
+    },
+    {
+      "id":[
+        1000203236536,
+        2001497053275
+      ],
+      "type":"exp",
+      "value":"input.column = 'Y'\ninput.row = 42"
     },
     {
       "id":[

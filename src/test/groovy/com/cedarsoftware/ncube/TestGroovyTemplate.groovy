@@ -73,5 +73,7 @@ class TestGroovyTemplate extends NCubeBaseTest
         assert output.deductible == 500
         assert output.useTemplate == 'use: hello, world'
         assert output.atTemplate == 'at: hello, world'
+        assert output.useTransitive == 42
+        assert output.atTransitive == 16
     }
 }
