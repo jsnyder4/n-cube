@@ -29,41 +29,6 @@
           "id":1000203236536,
           "type":"string",
           "value":"C"
-        },
-        {
-          "id":1000834835285,
-          "type":"string",
-          "value":"D"
-        },
-        {
-          "id":1000277187062,
-          "type":"string",
-          "value":"E"
-        },
-        {
-          "id":1000534601951,
-          "type":"string",
-          "value":"F"
-        },
-        {
-          "id":1001000479842,
-          "type":"string",
-          "value":"G"
-        },
-        {
-          "id":1000179220714,
-          "type":"string",
-          "value":"H"
-        },
-        {
-          "id":1001227304150,
-          "type":"string",
-          "value":"I"
-        },
-        {
-          "id":1001339520299,
-          "type":"string",
-          "value":"J"
         }
       ]
     },
@@ -90,41 +55,6 @@
           "id":2001314780026,
           "type":"long",
           "value":3
-        },
-        {
-          "id":2000227741095,
-          "type":"long",
-          "value":4
-        },
-        {
-          "id":2001533947314,
-          "type":"long",
-          "value":5
-        },
-        {
-          "id":2000762516329,
-          "type":"long",
-          "value":6
-        },
-        {
-          "id":2000455525382,
-          "type":"long",
-          "value":7
-        },
-        {
-          "id":2000043824736,
-          "type":"long",
-          "value":8
-        },
-        {
-          "id":2001015692331,
-          "type":"long",
-          "value":9
-        },
-        {
-          "id":2001575002143,
-          "type":"long",
-          "value":10
         }
       ]
     }
@@ -133,10 +63,10 @@
     {
       "id":[
         1000203236536,
-        2000658905041
+        2001314780026
       ],
       "type":"template",
-      "value":"use: ${input.text}. <%\noutput.premium = 50.1\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwrite hello, world'\n%>"
+      "value":"use: ${input.text}<%\noutput.premium = 5000\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwritten by use template'\n%>"
     },
     {
       "id":[
@@ -144,7 +74,7 @@
         2000454398165
       ],
       "type":"template",
-      "value":"at: ${input.text}<%\noutput.deductible = 100.00\ninput.foo = 'bar'\ninput.remove('text')\n%>"
+      "value":"at: ${input.text}<%\noutput.deductible = 500\ninput.foo = 'bar'\ninput.remove('text')\noutput.text = 'overwritten by at template'\n%>"
     },
     {
       "id":[
@@ -152,7 +82,7 @@
         2000658905041
       ],
       "type":"exp",
-      "value":"output.useTemplateResult = use([column:\"C\",row:1])\nprintln input\nassert input.column == 'C'\noutput.atTemplateResult = at([column:\"B\", row:2])\nprintln input\nassert input.column == 'B'\nassert input.row == 2\nassert input.text == 'hello, world'\nreturn true"
+      "value":"output.useTemplate = use([column:\"C\",row:3])\nassert input.newKey == null\nassert input.column == 'A'\nassert input.row == 1\n\noutput.atTemplate = at([column:\"B\", row:2])\nassert input.foo == null\nassert input.column == 'A'\nassert input.row == 1\nassert input.text == 'hello, world'\nreturn true"
     }
   ]
 }

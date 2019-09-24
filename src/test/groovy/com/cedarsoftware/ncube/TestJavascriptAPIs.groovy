@@ -346,6 +346,44 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testGetCellBadInput()
+    {
+        try
+        {
+            createCubeFromResource(BRANCH1, 'test.branch.1.json')
+            NCube foo = ncubeRuntime.getCube(BRANCH1, 'TestBranch')
+            assert foo != null  // Prove we have stored a valid n-cube
+
+            // Prove that bad AppId causes an exception that is better than NPE.
+            ncubeRuntime.getCell(BRANCH1.asBranch('quux'), 'test.branch.1.json', [:], null)
+            fail()
+        }
+        catch(IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'cannot getCell', 'unable', 'load')
+        }
+    }
+
+    @Test
+    void testGetCellsBadInput()
+    {
+        try
+        {
+            createCubeFromResource(BRANCH1, 'test.branch.1.json')
+            NCube foo = ncubeRuntime.getCube(BRANCH1, 'TestBranch')
+            assert foo != null  // Prove we have stored a valid n-cube
+
+            // Prove that bad AppId causes an exception that is better than NPE.
+            ncubeRuntime.getCells(BRANCH1.asBranch('quux'), 'test.branch.1.json', [] as Object[], [:])
+            fail()
+        }
+        catch(IllegalArgumentException e)
+        {
+            assertContainsIgnoreCase(e.message, 'unable', 'fetch', 'requested', 'cells')
+        }
+    }
+
+    @Test
     void testGetCellNoExecuteByCoordinate()
     {
         NCube cube = createCubeFromResource(BRANCH1, 'test.branch.1.json')
@@ -584,6 +622,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
     {
         try
         {
+            // Validate test when combined
             createCubeFromResource(BRANCH1, 'sys.classpath.tests.json')
             createCubeFromResource(BRANCH1, 'selectQueryTest.json')
             Map queryResult = call('mapReduce', [BRANCH1, 'Test.Select', 'query', "{ Map input -> input.foo == 'AL' }", [:]]) as Map
@@ -595,7 +634,27 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
             assert row['bar'] == 123
         }
         catch (IllegalStateException e)
+        {   // When running as separate client and server processes...
+            assertContainsIgnoreCase(e.message, 'user code', 'cannot', 'executed', 'attempted', 'mapReduce')
+        }
+    }
+
+    @Test
+    void testMapReduceBadInput()
+    {
+        try
         {
+            createCubeFromResource(BRANCH1, 'sys.classpath.tests.json')
+            createCubeFromResource(BRANCH1, 'selectQueryTest.json')
+            call('mapReduce', [BRANCH1.asBranch('garply'), 'Test.Select', 'query', "{ Map input -> input.foo == 'AL' }", [:]]) as Map
+            fail("should not make it here")
+        }
+        catch (IllegalArgumentException e)
+        {   // When running combined...
+            assertContainsIgnoreCase(e.message, 'Cannot mapReduce', 'Unable', 'load cube')
+        }
+        catch (IllegalStateException e)
+        {   // When running as separate client and server processes
             assertContainsIgnoreCase(e.message, 'user code', 'cannot', 'executed', 'attempted', 'mapReduce')
         }
     }

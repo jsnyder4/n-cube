@@ -62,4 +62,16 @@ class TestGroovyTemplate extends NCubeBaseTest
         String text = template.getCell([testType:'expressionTest'] as Map)
         assert text.contains('Hello, world."')
     }
+
+    @Test
+    void testGroovyTemplateThatUsesAtandUse()
+    {
+        NCube template = createRuntimeCubeFromResource(ApplicationID.testAppId, 'templateAtUseTest.json')
+        Map output =[:]
+        template.getCell([column:'A', row:1, text:'hello, world'] as Map, output)
+        assert output.premium == 5000
+        assert output.deductible == 500
+        assert output.useTemplate == 'use: hello, world'
+        assert output.atTemplate == 'at: hello, world'
+    }
 }
