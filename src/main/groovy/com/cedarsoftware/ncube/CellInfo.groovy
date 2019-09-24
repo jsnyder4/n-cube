@@ -247,7 +247,8 @@ class CellInfo
         }
         else if (cell instanceof BigDecimal)
         {
-            value = ((BigDecimal)cell).stripTrailingZeros().toPlainString()
+            BigDecimal bigDec = cell as BigDecimal
+            value = bigDec.stripTrailingZeros().toPlainString()
             dataType = 'bigdec'
         }
         else if (cell instanceof BigInteger)
@@ -676,7 +677,7 @@ class CellInfo
             }
             else if ('bigdec' == type)
             {
-                return new BigDecimal((double)val)
+                return new BigDecimal(val)
             }
             else if ('float' == type)
             {
@@ -742,7 +743,7 @@ class CellInfo
         }
         else if (o instanceof Boolean)
         {
-            builder.append(((Boolean)o) ? 'true' : 'false')
+            builder.append(o ? 'true' : 'false')
         }
         else if (o instanceof Double)
         {
@@ -805,7 +806,7 @@ class CellInfo
         }
         else if (val instanceof BigDecimal)
         {
-            BigDecimal x = (BigDecimal)val
+            BigDecimal x = val as BigDecimal
             String s = x.stripTrailingZeros().toPlainString()
             if (s.contains("."))
             {

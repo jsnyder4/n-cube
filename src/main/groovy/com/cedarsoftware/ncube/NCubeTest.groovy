@@ -48,7 +48,7 @@ class NCubeTest
         List<String> inputs = new ArrayList(new CaseInsensitiveSet<>(coord.keySet()))
         Collections.sort(inputs)
         Map<String, CellInfo> retCoord = new CaseInsensitiveMap<>()
-        for (key in inputs)
+        for (String key : inputs)
         {
             retCoord[key] = coord[key]
         }

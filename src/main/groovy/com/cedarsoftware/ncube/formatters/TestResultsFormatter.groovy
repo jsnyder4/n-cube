@@ -88,7 +88,7 @@ class TestResultsFormatter
         builder.append(newLine)
 
         Set<String> failures = ruleInfo.getAssertionFailures()
-        if (failures.isEmpty())
+        if (failures.empty)
         {
             builder.append("No assertion failures")
             builder.append(newLine)
@@ -100,7 +100,7 @@ class TestResultsFormatter
                 builder.append(entry)
                 builder.append(newLine)
             }
-            builder.setLength(builder.length()-1)
+            builder.length = builder.length()-1
         }
         builder.append("</pre>")
     }

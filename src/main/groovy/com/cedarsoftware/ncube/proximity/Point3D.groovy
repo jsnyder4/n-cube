@@ -47,7 +47,7 @@ class Point3D implements Distance<Point3D>
 			return false
 		}
 
-		Point3D that = (Point3D) obj;
+		Point3D that = (Point3D) obj
 		return x == that.x && y == that.y && z == that.z
 	}
 

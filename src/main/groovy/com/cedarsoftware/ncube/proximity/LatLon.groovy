@@ -103,7 +103,7 @@ class LatLon implements Distance<LatLon>
 	 */
 	double distance(LatLon that)
 	{
-        double earthRadius = EARTH_RADIUS;
+        double earthRadius = EARTH_RADIUS
         double dLat = toRadians(that.lat - lat)
         double dLng = toRadians(that.lon - lon)
         double sinDlat2 = sin(dLat / 2.0d)

@@ -143,7 +143,10 @@ class DeltaProcessor
     {
         // Step 0: Merge ncube-level changes
         Map<String, Map<String, Object>> ncubeDeltas = deltaSet[DELTA_NCUBE] as Map
-        ncubeDeltas.each {String metaPropName, Map<String, Object> ncubeDelta ->
+        ncubeDeltas.each { name, delta ->
+            String metaPropName = name as String
+            Map<String, Object> ncubeDelta = delta as Map<String, Object>
+
             if (DELTA_NCUBE_META_PUT == ncubeDelta.changeType)
             {
                 mergeTarget.setMetaProperty(metaPropName, (ncubeDelta.destVal as MapEntry).value)
@@ -156,7 +159,10 @@ class DeltaProcessor
 
         // Step 1: Merge axis-level changes
         Map<String, Map<String, Object>> axisDeltas = deltaSet[DELTA_AXES] as Map
-        axisDeltas.each { String axisName, Map<String, Object> axisChanges ->
+        axisDeltas.each { name, changes ->
+            String axisName = name as String
+            Map<String, Object> axisChanges = changes as Map<String, Object>
+
             if (axisChanges.size() > 0)
             {   // There exist changes on the Axis itself, not including possible column changes (sorted, reference, etc)
                 Axis axis = mergeTarget.getAxis(axisName)
@@ -185,8 +191,11 @@ class DeltaProcessor
 
         // Step 2: Merge column-level changes
         Map<String, Map<Long, ColumnDelta>> deltaMap = deltaSet[DELTA_AXES_COLUMNS] as Map
-        deltaMap.each { String axisName, Map<Long, ColumnDelta> colChanges ->
+        deltaMap.each { name, changes ->
+            String axisName = name as String
+            Map<String, ColumnDelta> colChanges = changes as Map<String, ColumnDelta>
             Axis axis = mergeTarget.getAxis(axisName)
+
             if (!axis.reference)
             {
                 for (ColumnDelta colDelta : colChanges.values())
@@ -839,8 +848,8 @@ class DeltaProcessor
 
         List<Delta> metaChanges = compareMetaProperties(oldCube.metaProperties, newCube.metaProperties, Delta.Location.NCUBE_META, "n-cube '${newCube.name}'", null)
         changes.addAll(metaChanges)
-        Object[] oldAxes = oldCube.axisNames
-        Object[] newAxes = newCube.axisNames
+        Object[] oldAxes = oldCube.axisNames as Object[]
+        Object[] newAxes = newCube.axisNames as Object[]
         Set<String> newAxisNames = newCube.axisNames
         Set<String> oldAxisNames = oldCube.axisNames
         newAxisNames.removeAll(oldAxisNames)
@@ -1057,7 +1066,8 @@ class DeltaProcessor
     private static void getCellChanges(NCube newCube, NCube oldCube, Map<Long, Long> idMap, List<Delta> changes)
     {
         Map<Set<Long>, Object> cellMap = newCube.cellMap
-        cellMap.each { Set<Long> colIds, value ->
+        cellMap.each { ids, value ->
+            Set<Long> colIds = ids as Set<Long>
             Set<Long> coord = adjustCoord(colIds, oldCube.cellMap, idMap)
             if (oldCube.cellMap.containsKey(coord))
             {
@@ -1078,7 +1088,8 @@ class DeltaProcessor
         }
 
         Map<Set<Long>, Object> srcCellMap = oldCube.cellMap
-        srcCellMap.each { Set<Long> colIds, value ->
+        srcCellMap.each { ids, value ->
+            Set<Long> colIds = ids as Set<Long>
             Set<Long> coord = adjustCoord(colIds, newCube.cellMap, idMap)
             if (!newCube.cellMap.containsKey(coord))
             {

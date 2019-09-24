@@ -131,7 +131,7 @@ class NCube<T>
      * Modifications to this Map do not modify the actual meta properties of n-cube.  To do that,
      * you need to use setMetaProperty(), addMetaProperty(), or remoteMetaProperty()
      */
-    Map getMetaProperties()
+    Map<String, Object> getMetaProperties()
     {
         return Collections.unmodifiableMap(metaProps)
     }

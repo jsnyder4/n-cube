@@ -129,7 +129,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         }
 
         // Bring over columns
-        List<Column> columns = output.columns as List
+        List<Column> columns = output.columns as List<Column>
         for (Column column : columns)
         {
             Column colAdded = axis.addColumn(column)
@@ -147,7 +147,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 
     private void transform(NCube transformCube, Map<String, Object> input, Map<String, Object> output, Axis axis)
     {
-        List<Column> columns = input.columns as List
+        List<Column> columns = input.columns as List<Column>
         transformCube.getAxis('transform').columnsWithoutDefault.each { Column column ->
             def typeCell = transformCube.getCellNoExecute([transform: column.value, property: 'type'])
             if (!(typeCell instanceof String) || StringUtilities.isEmpty(typeCell as String))
@@ -188,7 +188,7 @@ ${getTransformInfo(axis)}. Transform type 'add' only supports adding one column 
                     }
                     break
                 case 'subset':
-                    Set<Column> columnsToKeep = new LinkedHashSet()
+                    Set<Column> columnsToKeep = new LinkedHashSet<>()
                     columns.each { Column col ->
                         for (String val : values)
                         {

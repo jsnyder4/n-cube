@@ -44,7 +44,7 @@ class Point2D implements Distance<Point2D>
 			return false
 		}
 
-		Point2D that = (Point2D) obj;
+		Point2D that = (Point2D) obj
 		return x == that.x && y == that.y
 	}
 

@@ -489,7 +489,7 @@ class CdnClassLoader extends GroovyClassLoader
     static class PreferClassNodeResolver extends ClassNodeResolver
     {
         // Map to store cached classes
-        private Map<String,ClassNode> cachedClasses = new ConcurrentHashMap<>();
+        private Map<String,ClassNode> cachedClasses = new ConcurrentHashMap<>()
 
         /**
          * Method adapted from ClassNodeResolver.tryAsLoaderClassOrScript, only looking up source if class doesn't exist
@@ -498,46 +498,59 @@ class CdnClassLoader extends GroovyClassLoader
          * @return
          */
         @Override
-        ClassNodeResolver.LookupResult findClassNode(String name, CompilationUnit compilationUnit) {
-            GroovyClassLoader loader = compilationUnit.getClassLoader();
-            Class cls;
+        LookupResult findClassNode(String name, CompilationUnit compilationUnit)
+        {
+            GroovyClassLoader loader = compilationUnit.classLoader
+            Class cls
             try {
                 // NOTE: it's important to do no lookup against script files
                 // here since the GroovyClassLoader would create a new CompilationUnit
-                cls = loader.loadClass(name, false, true);
-            } catch (ClassNotFoundException cnfe) {
+                cls = loader.loadClass(name, false, true)
+            } catch (ClassNotFoundException ignore) {
                 return tryAsScript(name, compilationUnit)
             } catch (CompilationFailedException cfe) {
-                throw new GroovyBugError("The lookup for "+name+" caused a failed compilaton. There should not have been any compilation from this call.", cfe);
+                throw new GroovyBugError("The lookup for "+name+" caused a failed compilaton. There should not have been any compilation from this call.", cfe)
             }
 
-            ClassNode cn = ClassHelper.make(cls);
-            return new ClassNodeResolver.LookupResult(null,cn);
+            ClassNode cn = ClassHelper.make(cls)
+            return new LookupResult(null,cn)
         }
 
         /**
          * Method adapted from ClassNodeResolver.tryAsScript, only doing script lookup
          */
-        private static ClassNodeResolver.LookupResult tryAsScript(String name, CompilationUnit compilationUnit) {
-            ClassNodeResolver.LookupResult lr = null;
+        private static LookupResult tryAsScript(String name, CompilationUnit compilationUnit)
+        {
+            LookupResult lr = null
 
-            if (name.startsWith("java.")) return lr;
+            if (name.startsWith("java."))
+            {
+                return lr
+            }
+
             //TODO: don't ignore inner static classes completely
-            if (name.indexOf('$') != -1) return lr;
+            if (name.indexOf('$') != -1)
+            {
+                return lr
+            }
 
             // try to find a script from classpath*/
-            GroovyClassLoader gcl = compilationUnit.getClassLoader();
-            URL url = null;
-            try {
-                url = gcl.getResourceLoader().loadGroovySource(name);
-            } catch (MalformedURLException e) {
+            GroovyClassLoader gcl = compilationUnit.classLoader
+            URL url = null
+            try
+            {
+                url = gcl.resourceLoader.loadGroovySource(name)
+            }
+            catch (MalformedURLException e)
+            {
                 // fall through and let the URL be null
             }
-            if (url != null) {
-                SourceUnit su = compilationUnit.addSource(url);
-                return new ClassNodeResolver.LookupResult(su,null);
+            if (url != null)
+            {
+                SourceUnit su = compilationUnit.addSource(url)
+                return new LookupResult(su,null)
             }
-            return lr;
+            return lr
         }
 
         /**
@@ -545,8 +558,9 @@ class CdnClassLoader extends GroovyClassLoader
          * @param name - the name of the class
          * @param res - the ClassNode for that name
          */
-        void cacheClass(String name, ClassNode res) {
-            cachedClasses.put(name, res);
+        void cacheClass(String name, ClassNode res)
+        {
+            cachedClasses.put(name, res)
         }
 
         /**
@@ -554,12 +568,13 @@ class CdnClassLoader extends GroovyClassLoader
          * @param name - the name of the class
          * @return the result of the lookup, which may be null
          */
-        ClassNode getFromClassCache(String name) {
+        ClassNode getFromClassCache(String name)
+        {
             // We use here the class cache cachedClasses to prevent
             // calls to ClassLoader#loadClass. Disabling this cache will
             // cause a major performance hit.
-            ClassNode cached = cachedClasses.get(name);
-            return cached;
+            ClassNode cached = cachedClasses.get(name)
+            return cached
         }
     }
 }

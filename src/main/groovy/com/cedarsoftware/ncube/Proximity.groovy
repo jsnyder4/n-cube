@@ -66,7 +66,7 @@ final class Proximity
         else if (source instanceof BigDecimal)
         {
             BigDecimal v = source as BigDecimal
-            BigDecimal thatValue = (BigDecimal) target
+            BigDecimal thatValue = target as BigDecimal
             return v.subtract(thatValue).abs().doubleValue()
         }
         else if (source instanceof String)

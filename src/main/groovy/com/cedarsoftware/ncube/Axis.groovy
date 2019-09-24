@@ -226,7 +226,8 @@ class Axis
         columns.each { Column column ->
             if (metaMap.containsKey(column.id))
             {
-                column.addMetaProperties(metaMap[column.id])
+                Map map = metaMap[column.id]
+                column.addMetaProperties(map)
             }
         }
     }
