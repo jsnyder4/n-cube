@@ -1,6 +1,6 @@
 n-cube
 ======
-[![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube)
+<!-- [![Build Status](https://travis-ci.org/jdereg/n-cube.svg?branch=master)](https://travis-ci.org/jdereg/n-cube) -->
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.cedarsoftware/n-cube)
 [![Javadoc](https://javadoc.io/badge/com.cedarsoftware/n-cube.svg)](http://www.javadoc.io/doc/com.cedarsoftware/n-cube)
 
