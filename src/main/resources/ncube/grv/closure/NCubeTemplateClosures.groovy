@@ -7,6 +7,7 @@ import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
@@ -41,44 +42,72 @@ Column getColumn(Comparable value, String axisName, String cubeName = ncube.name
 
 def at(Map coord, String cubeName = ncube.name, def defaultValue = null)
 {
-    input.putAll(coord)
-    return getCube(cubeName).getCell(input, output, defaultValue)
+    Map copy = inputWithoutTrackingMap
+    copy = dupe(copy)
+    copy.putAll(coord)
+    return getCube(cubeName).getCell(copy, output, defaultValue)
 }
 
 def at(Map coord, NCube cube, def defaultValue = null)
 {
-    input.putAll(coord)
-    return cube.getCell(input, output, defaultValue)
+    Map copy = inputWithoutTrackingMap
+    copy = dupe(copy)
+    copy.putAll(coord)
+    return cube.getCell(copy, output, defaultValue)
 }
 
 def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = ncubeRuntime.getCube(appId, cubeName)
-    input.putAll(coord)
-    return target.getCell(input, output, defaultValue)
+    if (target == null)
+    {
+        throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+    }
+    Map copy = inputWithoutTrackingMap
+    copy = dupe(copy)
+    copy.putAll(coord)
+    return target.getCell(copy, output, defaultValue)
 }
 
 def go(Map coord, String cubeName = ncube.name, def defaultValue = null)
 {
+    if (coord.is(input))
+    {
+        coord = dupe(inputWithoutTrackingMap)
+    }
     return getCube(cubeName).getCell(coord, output, defaultValue)
 }
 
 def go(Map coord, NCube cube, def defaultValue = null)
 {
+    if (coord.is(input))
+    {
+        coord = dupe(inputWithoutTrackingMap)
+    }
     return cube.getCell(coord, output, defaultValue)
 }
 
 def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = ncubeRuntime.getCube(appId, cubeName)
+    if (target == null)
+    {
+        throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+    }
+    if (coord.is(input))
+    {
+        coord = dupe(inputWithoutTrackingMap)
+    }
     return target.getCell(coord, output, defaultValue)
 }
 
 def use(Map altInput, String cubeName = ncube.name, def defaultValue = null)
 {
-    Map origInput = new CaseInsensitiveMap(input)
-    input.putAll(altInput)
-    return getCube(cubeName).use(input, origInput, output, defaultValue)
+    Map copy = inputWithoutTrackingMap
+    Map origInput = dupe(copy)
+    Map modInput = dupe(copy)
+    modInput.putAll(altInput)
+    return getCube(cubeName).use(modInput, origInput, output, defaultValue)
 }
 
 def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
@@ -88,9 +117,27 @@ def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
     {
         throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
     }
-    Map origInput = new CaseInsensitiveMap(input)
-    input.putAll(altInput)
-    return getCube(cubeName).use(input, origInput, output, defaultValue)
+
+    Map copy = inputWithoutTrackingMap
+    Map origInput = dupe(copy)
+    Map modInput = dupe(copy)
+    modInput.putAll(altInput)
+    return getCube(cubeName).use(modInput, origInput, output, defaultValue)
+}
+
+Map getInputWithoutTrackingMap()
+{
+    Map copy = input
+    while (copy instanceof TrackingMap)
+    {
+        copy = ((TrackingMap)input).getWrappedMap()
+    }
+    return copy
+}
+
+Map dupe(Map map)
+{
+    return new CaseInsensitiveMap(map)
 }
 
 Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], String cubeName = null, ApplicationID appId = null)
