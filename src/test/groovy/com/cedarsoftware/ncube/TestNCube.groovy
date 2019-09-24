@@ -5825,6 +5825,64 @@ class TestNCube extends NCubeBaseTest
         assert ruleInfo.getInputKeysUsed().size() == 2
     }
 
+    @Test
+    void testCircularRefWithUse()
+    {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'testCircularRef.json')
+        try {
+            def x = ncube.getCell([accessType:'use'])
+        }
+        catch(Throwable t)
+        {
+            assert t instanceof CommandCellException
+            assert t.cause instanceof StackOverflowError
+
+            // Enforces order
+            assertContainsIgnoreCase(t.message,
+                    'error occurred',
+                    'ncube.testcircularreference',
+                    'cell:ncube.testcircularreference:[accesstype:use',
+                    'cell:ncube.testcircularreference:[accesstype:null'
+            )
+        }
+    }
+
+    @Test
+    void testCircularRefWithAt()
+    {
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'testCircularRef.json')
+        try {
+            def x = ncube.getCell([accessType:'at'])
+        }
+        catch(Throwable t)
+        {
+            assert t instanceof CommandCellException
+            assert t.cause instanceof StackOverflowError
+
+            assertContainsIgnoreCase(t.message,
+                    'error occurred',
+                    'ncube.testcircularreference',
+                    'cell:ncube.testcircularreference:[accesstype:at',
+                    'cell:ncube.testcircularreference:[accesstype:null')
+        }
+    }
+
+    @Test
+    void testCircularRefWithRecursion()
+    {
+        try {
+            NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'testCircularRef.json')
+            def x = ncube.getCell([accessType:'recursion'])
+            fail('exception should have been thrown')
+        }
+        catch (CommandCellException cce) {
+            assertTrue(cce.cause instanceof StackOverflowError)
+        }
+        catch (Throwable t) {
+            fail('CommandCellException should have been thrown')
+        }
+    }
+
     // ---------------------------------------------------------------------------------
     // ---------------------------------------------------------------------------------
 

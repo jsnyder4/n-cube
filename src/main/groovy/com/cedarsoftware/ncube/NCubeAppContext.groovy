@@ -30,6 +30,8 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_CLIENT_BEAN
 class NCubeAppContext implements ApplicationContextAware
 {
     private static ApplicationContext ctx
+    private static NCubeClient client
+    private static NCubeRuntimeClient runtime
 
     static Object getBean(String beanName)
     {
@@ -43,13 +45,21 @@ class NCubeAppContext implements ApplicationContextAware
 
     static NCubeClient getNcubeClient()
     {
+        if (client) {
+            return client
+        }
+
         String beanName = ctx.containsBean(RUNTIME_BEAN) ? RUNTIME_BEAN : MANAGER_BEAN
-        return ctx.getBean(beanName) as NCubeClient
+        return client = ctx.getBean(beanName) as NCubeClient
     }
 
     static NCubeRuntimeClient getNcubeRuntime()
     {
-        return getBean(RUNTIME_BEAN) as NCubeRuntimeClient
+        if (runtime) {
+            return runtime
+        }
+
+        return runtime = getBean(RUNTIME_BEAN) as NCubeRuntimeClient
     }
     
     static NCubeTestServer getTestServer()
@@ -70,5 +80,7 @@ class NCubeAppContext implements ApplicationContextAware
     void setApplicationContext(ApplicationContext applicationContext)
     {
         ctx = applicationContext
+        client = null
+        runtime = null
     }
 }

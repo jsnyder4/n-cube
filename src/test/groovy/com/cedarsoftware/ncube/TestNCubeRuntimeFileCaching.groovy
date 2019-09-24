@@ -42,7 +42,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     public final ExpectedException exception = ExpectedException.none();
 
     @Before
-    public void setup()
+    void setup()
     {
         cubeFileNameMap.clear()
         cubeFileNameMap.putAll(['TestBranch':'test.branch.1','TestAge':'test.branch.age.1'])
@@ -56,13 +56,15 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
             Object answer(InvocationOnMock invocation) throws Throwable {
                 String method = invocation.arguments[1]
                 List<Object> methodArgs = (List) invocation.arguments[2]
-                if (METHOD_LOAD_CUBE_RECORD==method ) {
+                if (METHOD_LOAD_CUBE_RECORD == method)
+                {
                     ApplicationID appId = (ApplicationID) methodArgs[0]
                     String cubeName = (String) methodArgs[1]
                     Map options = (Map) methodArgs[2] ?: [(SEARCH_INCLUDE_CUBE_DATA):true]
 
                     String fileName = cubeFileNameMap[cubeName]
-                    if (!fileName) {
+                    if (!fileName)
+                    {
                         return null
                     }
                     NCube resultCube = createRuntimeCubeFromResource(appId,"${fileName}.json")
@@ -75,7 +77,8 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
                     dto.branch = appId.branch
                     dto.name = (String) cubeName
                     dto.sha1 = resultCube.sha1()
-                    if (options[SEARCH_INCLUDE_CUBE_DATA]) {
+                    if (options[SEARCH_INCLUDE_CUBE_DATA])
+                    {
                         dto.bytes = options[SEARCH_CHECK_SHA1]==resultCube.sha1 ? (byte[])null : resultCube.toFormattedJson().bytes
                     }
                     return dto
@@ -94,7 +97,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     }
 
     @After
-    public void tearDown()
+    void tearDown()
     {
     }
 

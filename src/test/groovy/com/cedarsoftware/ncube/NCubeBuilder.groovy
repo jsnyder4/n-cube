@@ -933,7 +933,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube getDiscrete1D()
+    static NCube<?> getDiscrete1D()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -976,7 +976,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube getDiscrete1DAlt()
+    static NCube<?> getDiscrete1DAlt()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1019,7 +1019,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube getDiscrete1DEmpty()
+    static NCube<?> getDiscrete1DEmpty()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1171,7 +1171,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube getTestRuleCube()
+    static NCube<?> getTestRuleCube()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1233,7 +1233,7 @@ class NCubeBuilder
     }
 
 
-    static NCube  getCubeWithDefaultColumns()
+    static NCube<?> getCubeWithDefaultColumns()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1323,7 +1323,7 @@ class NCubeBuilder
     }
 
 
-    static NCube  getCubeWithAllDefaults()
+    static NCube<?> getCubeWithAllDefaults()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1432,7 +1432,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube  getCubeCallingCubeWithDefaultColumn()
+    static NCube<?> getCubeCallingCubeWithDefaultColumn()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1502,7 +1502,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube  getCubeWithDefaultColumn()
+    static NCube<?> getCubeWithDefaultColumn()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1579,7 +1579,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube  getCubeWithMultipleRefCubesPerCoord()
+    static NCube<?> getCubeWithMultipleRefCubesPerCoord()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1649,7 +1649,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube  getRuleCubeWithDefaultColumn()
+    static NCube<?> getRuleCubeWithDefaultColumn()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1705,7 +1705,7 @@ class NCubeBuilder
 ''')
     }
 
-    static NCube  getRuleCubeWithAllDefaults()
+    static NCube<?> getRuleCubeWithAllDefaults()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1801,7 +1801,7 @@ class NCubeBuilder
 }''')
     }
 
-    static NCube  getCubeWithColumnDefault()
+    static NCube<?> getCubeWithColumnDefault()
     {
         return NCube.fromSimpleJson('''\
 {
@@ -1876,7 +1876,7 @@ class NCubeBuilder
     }
 
 
-    static NCube  getCubeWithCubeDefault()
+    static NCube<?> getCubeWithCubeDefault()
     {
         return NCube.fromSimpleJson('''\
 {

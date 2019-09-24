@@ -113,8 +113,8 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteChangeSameColumnDifferentlyOld()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube cube1 = NCubeBuilder.discrete1D
+        NCube cube2 = NCubeBuilder.discrete1DAlt
         assert cube1 == cube2
 
         Axis state1 = cube1.getAxis('state')
@@ -130,8 +130,8 @@ class TestDelta extends NCubeCleanupBaseTest
 
         assert cube1 != cube2
 
-        NCube<String> orig1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> orig2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube orig1 = NCubeBuilder.discrete1D
+        NCube orig2 = NCubeBuilder.discrete1DAlt
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig1, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig2, cube2)
@@ -143,8 +143,8 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteChangeSameColumnDifferently()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube cube1 = NCubeBuilder.discrete1D
+        NCube cube2 = NCubeBuilder.discrete1DAlt
         assert cube1 == cube2
 
         Axis state1 = cube1.getAxis('state')
@@ -160,8 +160,8 @@ class TestDelta extends NCubeCleanupBaseTest
 
         assert cube1 != cube2
 
-        NCube<String> orig1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> orig2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube orig1 = NCubeBuilder.discrete1D
+        NCube orig2 = NCubeBuilder.discrete1DAlt
 
         List<Delta> delta1 = DeltaProcessor.getDeltaDescription(cube1, orig1)
         List<Delta> delta2 = DeltaProcessor.getDeltaDescription(cube2, orig2)
@@ -174,8 +174,8 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteRemoveSameColumnDifferently()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube cube1 = NCubeBuilder.discrete1D
+        NCube cube2 = NCubeBuilder.discrete1DAlt
         assert cube1 == cube2
 
         Axis state1 = cube1.getAxis('state')
@@ -185,8 +185,8 @@ class TestDelta extends NCubeCleanupBaseTest
 
         assert cube1 != cube2
 
-        NCube<String> orig1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> orig2 = (NCube<String>) NCubeBuilder.discrete1DAlt
+        NCube orig1 = NCubeBuilder.discrete1D
+        NCube orig2 = NCubeBuilder.discrete1DAlt
 
         Map<String, Object> delta1 = DeltaProcessor.getDelta(orig1, cube1)
         Map<String, Object> delta2 = DeltaProcessor.getDelta(orig2, cube2)  // Other guy made no changes
@@ -198,9 +198,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteMergeAddCol()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         // Verify addition occurred
         int count = cube1.cellMap.size()
@@ -274,9 +274,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeAddColumnWithName()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         cube1.addColumn('rule', 'false', 'jones')
@@ -312,9 +312,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeAddColumnWithoutName()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         int numCols = cube1.getAxis('rule').columns.size()
         cube1.addColumn('rule', 'true', 'init-rule')
@@ -334,9 +334,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteMergeAddAddUniqueColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         // Verify addition occurred
         int count = cube1.cellMap.size()
@@ -373,9 +373,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteMergeAddAddSameColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         // Verify addition occurred
         int count = cube1.cellMap.size()
@@ -412,9 +412,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteMergeRemoveRemoveUniqueColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         cube1.deleteColumn('state', 'OH')
@@ -441,9 +441,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteMergeRemoveRemoveSameColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         cube1.deleteColumn('state', 'OH')
@@ -470,9 +470,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeAddAddUniqueColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         assert cube2.cellMap.size() == 48
@@ -502,9 +502,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeAddAddSameColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         assert cube2.cellMap.size() == 48
@@ -534,9 +534,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeAddAddSameColumnConflict()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.cellMap.size() == 48
         assert cube2.cellMap.size() == 48
@@ -558,9 +558,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeRemoveRemoveUniqueColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         cube1.deleteColumn('rule', 'init')
         cube2.deleteColumn('rule', 'process')
@@ -579,9 +579,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeRemoveRemoveSameColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         cube1.deleteColumn('rule', 'init')
         cube2.deleteColumn('rule', 'init')
@@ -601,9 +601,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRangeAdd()
     {   // Change 2 axes
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         cube1.addColumn('age', new Range(30, 40) as Comparable)
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
@@ -625,9 +625,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleRangeAddBoth()
     {   // Change 2 axes
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         cube1.addColumn('age', new Range(30, 40) as Comparable)
         Map coord = [age: 35, salary: 60000, log: 1000, state: 'OH', rule: 'init'] as Map
@@ -657,9 +657,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleRangeRemoveColumnBoth()
     {   // Change 2 axes
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         cube1.deleteColumn('age', 20 as Comparable)
         cube1.deleteColumn('rule', 'init')
@@ -684,9 +684,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleMergeRemoveColumnWithNoName()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         Column column = cube1.getAxis('rule').columns[0]
         cube1.deleteColumn('rule', column.id as Comparable)
@@ -705,9 +705,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDeleteColumnWithNoNameFromRuleAxis()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.testRuleCube
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.testRuleCube
-        NCube<String> orig = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube cube1 = NCubeBuilder.testRuleCube
+        NCube cube2 = NCubeBuilder.testRuleCube
+        NCube orig = NCubeBuilder.testRuleCube
 
         assert cube1.numCells == 3
         Column col1 = cube1.getAxis('rule').columns[0]
@@ -731,9 +731,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testChangeColumnWithNoNameOnRuleAxis()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.testRuleCube
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.testRuleCube
-        NCube<String> orig = (NCube<String>) NCubeBuilder.testRuleCube
+        NCube cube1 = NCubeBuilder.testRuleCube
+        NCube cube2 = NCubeBuilder.testRuleCube
+        NCube orig = NCubeBuilder.testRuleCube
 
         assert cube1.numCells == 3
         Column col1 = cube1.getAxis('rule').columns[0]
@@ -754,9 +754,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testChangeColumnWithNameOnRuleAxis()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get5DTestCube()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get5DTestCube()
+        NCube cube1 = NCubeBuilder.get5DTestCube()
+        NCube cube2 = NCubeBuilder.get5DTestCube()
+        NCube orig = NCubeBuilder.get5DTestCube()
 
         assert cube1.numCells == 48
         Map coord = [age: 17, salary: 60000, log: 1000, state: 'OH', rule: 'init']
@@ -781,9 +781,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteAddDefaultColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.discrete1D
-        NCube<String> orig = (NCube<String>) NCubeBuilder.discrete1D
+        NCube cube1 = NCubeBuilder.discrete1D
+        NCube cube2 = NCubeBuilder.discrete1D
+        NCube orig = NCubeBuilder.discrete1D
 
         Axis state = (Axis) cube1.getAxis('state')
         assert state.size() == 2
@@ -805,12 +805,12 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testDiscreteRemoveDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.discrete1D
+        NCube orig = NCubeBuilder.discrete1D
         orig.addColumn('state', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
-        NCube<String> cube1 = orig.duplicate('cube')
-        NCube<String> cube2 = orig.duplicate('cube')
+        NCube cube1 = orig.duplicate('cube')
+        NCube cube2 = orig.duplicate('cube')
 
         assert cube1.numCells == 3
         assert '3' == cube1.getCell([:])
@@ -855,9 +855,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleAddDefaultColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.rule1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
-        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
+        NCube cube1 = NCubeBuilder.rule1D
+        NCube cube2 = NCubeBuilder.rule1D
+        NCube orig = NCubeBuilder.rule1D
 
         Axis rules = (Axis) cube1.getAxis('rule')
         assert rules.size() == 2
@@ -879,12 +879,12 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRuleRemoveDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
+        NCube orig = NCubeBuilder.rule1D
         orig.addColumn('rule', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
-        NCube<String> cube1 = orig.duplicate('cube')
-        NCube<String> cube2 = orig.duplicate('cube')
+        NCube cube1 = orig.duplicate('cube')
+        NCube cube2 = orig.duplicate('cube')
 
         assert cube1.numCells == 3
         assert '3' == getCellIgnoreRule(cube1, [:])
@@ -920,9 +920,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testUpdateRemoveRuleColumn()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.rule1D
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.rule1D
-        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
+        NCube cube1 = NCubeBuilder.rule1D
+        NCube cube2 = NCubeBuilder.rule1D
+        NCube orig = NCubeBuilder.rule1D
 
         Axis rule = (Axis) cube1.getAxis('rule')
         Column process = rule.findColumn('process')
@@ -940,12 +940,12 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testUpdateRemoveRuleDefaultColumn()
     {
-        NCube<String> orig = (NCube<String>) NCubeBuilder.rule1D
+        NCube orig = NCubeBuilder.rule1D
         orig.addColumn('rule', null)
         orig.setCell('3', [:])  // associate '3' to default col
 
-        NCube<String> cube1 = orig.duplicate('cube')
-        NCube<String> cube2 = orig.duplicate('cube')
+        NCube cube1 = orig.duplicate('cube')
+        NCube cube2 = orig.duplicate('cube')
 
         assert cube1.numCells == 3
         assert '3' == getCellIgnoreRule(cube1, [:])
@@ -1004,9 +1004,9 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testMergeSortedToNonSorted()
     {
-        NCube<String> cube1 = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
-        NCube<String> cube2 = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
-        NCube<String> orig = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
+        NCube cube1 = NCubeBuilder.get3StatesNotSorted()
+        NCube cube2 = NCubeBuilder.get3StatesNotSorted()
+        NCube orig = NCubeBuilder.get3StatesNotSorted()
 
         Axis state = cube1.getAxis('state') as Axis
         assert state.columnOrder == Axis.DISPLAY
@@ -1349,7 +1349,7 @@ class TestDelta extends NCubeCleanupBaseTest
     @Test
     void testRefAxisWithColumnMetaProps()
     {
-        NCube<String> states = (NCube<String>) NCubeBuilder.discrete1DEmptyWithDefault
+        NCube states = NCubeBuilder.discrete1DEmptyWithDefault
         ApplicationID appId = ApplicationID.testAppId.asVersion('1.0.0')
         states.applicationID = appId
         mutableClient.createCube(states)
@@ -2434,9 +2434,9 @@ class TestDelta extends NCubeCleanupBaseTest
 
     static void setupLibrary()
     {
-        NCube<String> states4 = (NCube<String>) NCubeBuilder.get4StatesNotSorted()
-        NCube<String> states3 = (NCube<String>) NCubeBuilder.get3StatesNotSorted()
-        NCube<String> states2 = (NCube<String>) NCubeBuilder.discrete1D
+        NCube states4 = NCubeBuilder.get4StatesNotSorted()
+        NCube states3 = NCubeBuilder.get3StatesNotSorted()
+        NCube states2 = NCubeBuilder.discrete1D
 
         ApplicationID appId = ApplicationID.testAppId.asVersion('1.0.0')
         states2.applicationID = appId
@@ -2462,7 +2462,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
     static void setupLibraryReference()
     {
-        NCube<String> statesRef = NCubeBuilder.stateReferrer
+        NCube statesRef = NCubeBuilder.stateReferrer
 
         ApplicationID appId = ApplicationID.testAppId.asVersion('2.0.0')
         statesRef.applicationID = appId
@@ -2481,7 +2481,7 @@ class TestDelta extends NCubeCleanupBaseTest
 
     static ApplicationID setupBranch(String branch, String refVer)
     {
-        NCube<String> states = (NCube<String>) NCubeBuilder.stateReferrer
+        NCube states = NCubeBuilder.stateReferrer
         Axis state = states.getAxis('state')
         state.setMetaProperty(REF_VERSION, refVer)
         ApplicationID appId = ApplicationID.testAppId.asBranch(branch).asSnapshot().asVersion('2.0.0')

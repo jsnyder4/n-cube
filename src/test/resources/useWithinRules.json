@@ -1,0 +1,121 @@
+{
+  "ncube":"rulesNCube",
+  "_testData":"[{\"name\":\"Test-USE\",\"coord\":[{\"businessDivisionCode\":{\"type\":\"string\",\"isUrl\":false,\"value\":\"USE\"}}],\"assertions\":[{\"type\":\"exp\",\"isUrl\":false,\"value\":\"output.return\"}]},{\"name\":\"Test-AT\",\"coord\":[{\"businessDivisionCode\":{\"type\":\"string\",\"isUrl\":false,\"value\":\"AT\"}}],\"assertions\":[{\"type\":\"exp\",\"isUrl\":false,\"value\":\"output.return\"}]},{\"name\":\"Test-Default\",\"coord\":[],\"assertions\":[{\"type\":\"exp\",\"isUrl\":false,\"value\":\"output.return\"}]}]",
+  "testUpdated":{
+    "type":"long",
+    "value":155985862079335799
+  },
+  "axes":[
+    {
+      "id":5,
+      "name":"ruleName",
+      "hasDefault":true,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":5000379389478,
+          "type":"exp",
+          "name":"Rule1",
+          "value":"true"
+        },
+        {
+          "id":5000097623635,
+          "type":"exp",
+          "name":"Rule2",
+          "value":"true"
+        }
+      ]
+    },
+    {
+      "id":3,
+      "name":"businessDivisionCode",
+      "hasDefault":true,
+      "type":"DISCRETE",
+      "valueType":"STRING",
+      "preferredOrder":1,
+      "fireAll":false,
+      "columns":[
+        {
+          "id":3001939705047,
+          "type":"string",
+          "value":"USE"
+        },
+        {
+          "id":3001637855593,
+          "type":"string",
+          "value":"AT"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[],
+      "type":"exp",
+      "value":"println 'Default: Default, businessDivisionCode: ' + input.businessDivisionCode\n'Default: Default, businessDivisionCode: ' + input.businessDivisionCode"
+    },
+    {
+      "id":[
+        5000379389478,
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'Rule1: USE'\nuse([businessDivisionCode:null])"
+    },
+    {
+      "id":[
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'Default: USE'\nuse([businessDivisionCode:null])"
+    },
+    {
+      "id":[
+        5000379389478,
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'Rule1: AT'\nat([businessDivisionCode:null])"
+    },
+    {
+      "id":[
+        5000379389478
+      ],
+      "type":"exp",
+      "value":"println 'Rule1: Default, businessDivisionCode: ' + input.businessDivisionCode\n'Rule1: Default, businessDivisionCode: ' + input.businessDivisionCode"
+    },
+    {
+      "id":[
+        5000097623635,
+        3001939705047
+      ],
+      "type":"exp",
+      "value":"println 'Rule2: USE'\nuse([businessDivisionCode:null])"
+    },
+    {
+      "id":[
+        5000097623635,
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'Rule2: AT'\nat([businessDivisionCode:null])"
+    },
+    {
+      "id":[
+        5000097623635
+      ],
+      "type":"exp",
+      "value":"println 'Rule2: Default, businessDivisionCode: ' + input.businessDivisionCode\n'Rule2: Default, businessDivisionCode: ' + input.businessDivisionCode"
+    },
+    {
+      "id":[
+        3001637855593
+      ],
+      "type":"exp",
+      "value":"println 'Default: AT'\nat([businessDivisionCode:null])"
+    }
+  ]
+}
