@@ -1517,7 +1517,7 @@ class NCubeController implements NCubeConstants
         return true
     }
 
-    NCube mergeDeltas(ApplicationID appId, String cubeName, Object[] deltas)
+    Boolean mergeDeltas(ApplicationID appId, String cubeName, Object[] deltas)
     {
         appId = addTenant(appId)
         List<Delta> deltaList = deltas as List<Delta>

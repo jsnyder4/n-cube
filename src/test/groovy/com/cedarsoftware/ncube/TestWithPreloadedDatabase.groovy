@@ -5883,7 +5883,9 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
         List<Delta> deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
         assertEquals(1, deltas.size())
-        cube = mutableClient.mergeDeltas(BRANCH1, 'TestBranch', deltas)
+        boolean merged = mutableClient.mergeDeltas(BRANCH1, 'TestBranch', deltas)
+        assert merged
+        cube = mutableClient.getCube(BRANCH1, 'TestBranch')
         assert cube.getAxis('Axis') != null // Verify axis added
 
         // test for delete axis
@@ -5894,7 +5896,10 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
         mutableClient.updateCube(cube)
         deltas = DeltaProcessor.getDeltaDescription(cube, headCube)
         assertEquals(1, deltas.size())
-        cube = mutableClient.mergeDeltas(BRANCH1, 'TestBranch', deltas)
+        merged = mutableClient.mergeDeltas(BRANCH1, 'TestBranch', deltas)
+        assert merged
+
+        cube = mutableClient.getCube(BRANCH1, 'TestBranch')
         assert null == cube.getAxis('Axis')
     }
 
@@ -6809,8 +6814,11 @@ return ints''', null, false)
 
         NCube consumerCube = mutableClient.getCube(BRANCH1, 'merge')
         List<Delta> deltas = DeltaProcessor.getDeltaDescription(producerCube, consumerCube)
-        NCube merged = mutableClient.mergeDeltas(BRANCH1, 'merge', deltas)
-        Axis axis = merged.getAxis('Column')
+
+        boolean merged = mutableClient.mergeDeltas(BRANCH1, 'merge', deltas)
+        assert merged
+        NCube n1 = mutableClient.getCube(BRANCH1, 'merge')
+        Axis axis = n1.getAxis('Column')
         assert axis.hasDefaultColumn()
         assert axis.size() == 4
     }
@@ -6823,14 +6831,16 @@ return ints''', null, false)
         mutableClient.copyBranch(HEAD, BRANCH1)
 
         NCube producerCube = mutableClient.getCube(BRANCH2, 'merge')
+        assert producerCube.axes[0].columns.size() == 3
         producerCube.addColumn('Column', 'D')
 
         NCube consumerCube = mutableClient.getCube(BRANCH1, 'merge')
         List<Delta> deltas = DeltaProcessor.getDeltaDescription(producerCube, consumerCube)
-        NCube merged = mutableClient.mergeDeltas(BRANCH1, 'merge', deltas)
-        Axis axis = merged.getAxis('Column')
-        assert axis.size() == 4
-        assert axis.findColumn('D') instanceof Column
+        boolean merged = mutableClient.mergeDeltas(BRANCH1, 'merge', deltas)
+        assert merged
+
+        NCube n1 = mutableClient.getCube(BRANCH1, 'merge')
+        assert n1.axes[0].size() == 4
     }
     
     /**

@@ -635,12 +635,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return result
     }
 
-    NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
+    Boolean mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
     {
         verifyAllowMutable('mergeDeltas')
-        NCube ncube = bean.call(beanName, 'mergeDeltas', [appId, cubeName, deltas]) as NCube
-        ncube = cacheCube(ncube)
-        return ncube
+        Boolean result = bean.call(beanName, 'mergeDeltas', [appId, cubeName, deltas])
+        clearCache(appId, [cubeName])
+        return result
     }
 
     Boolean deleteCubes(ApplicationID appId, Object[] cubeNames)

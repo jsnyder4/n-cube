@@ -502,7 +502,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Update the passed in NCube.  Only SNAPSHOT cubes can be updated.
      *
-     * @param ncube      NCube to be updated.
+     * @param ncube NCube to be updated.
      * @return boolean true on success, false otherwise
      */
     Boolean updateCube(NCube ncube, boolean updateHead = false)
@@ -587,7 +587,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param deltas List of Delta instances
      * @return the NCube t
      */
-    NCube mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
+    Boolean mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
     {
         assertPermissions(appId, cubeName)
         NCube ncube = loadCubeInternal(appId, cubeName, [(SEARCH_INCLUDE_TEST_DATA):true])
@@ -626,8 +626,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         }
 
         ncube.mergeDeltas(deltas)
-        updateCube(ncube)
-        return ncube
+        return updateCube(ncube)
     }
 
     /**

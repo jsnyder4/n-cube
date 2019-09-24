@@ -1,5 +1,6 @@
-package com.cedarsoftware.ncube;
+package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.IOUtilities
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
@@ -146,7 +147,10 @@ class GroovyTemplate extends ContentCmdCell
             }
         }
 
-        // Do normal Groovy substitutions.
+        Map input = new CaseInsensitiveMap(getInput(ctx))
+
+        // Copy input before running template.  Protects input Map from being modified.
+        ctx.input = input
         String result = resolvedTemplate.make(ctx).toString()
         return result
     }

@@ -7,7 +7,6 @@ import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.TrackingMap
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
@@ -92,21 +91,6 @@ def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
     Map origInput = new CaseInsensitiveMap(input)
     input.putAll(altInput)
     return getCube(cubeName).use(input, origInput, output, defaultValue)
-}
-
-Map getInputWithoutTrackingMap()
-{
-    Map copy = input
-    while (copy instanceof TrackingMap)
-    {
-        copy = ((TrackingMap)copy).getWrappedMap()
-    }
-    return copy
-}
-
-Map dupe(Map map)
-{
-    return new CaseInsensitiveMap(map)
 }
 
 Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], String cubeName = null, ApplicationID appId = null)

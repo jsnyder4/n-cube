@@ -1,6 +1,8 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.servlet.JsonCommandServlet
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -8,12 +10,10 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.ImportResource
+import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.filter.GenericFilterBean
 import org.springframework.web.filter.HiddenHttpMethodFilter
-import org.springframework.web.filter.HttpPutFormContentFilter
 import org.springframework.web.filter.RequestContextFilter
-import org.slf4j.LoggerFactory
-import org.slf4j.Logger
 
 /**
  * This class defines allowable actions against persisted n-cubes
@@ -59,14 +59,17 @@ class NCubeApplication
     }
 
     @Bean
-    ServletRegistrationBean servletRegistrationBean()
+    ServletRegistrationBean servletRegistrationBean1()
     {
-        ServletRegistrationBean bean = new ServletRegistrationBean(new JsonCommandServlet(), "/cmd/*")
+        ServletRegistrationBean bean = new ServletRegistrationBean(new JsonCommandServlet(), '/cmd/*')
+        bean.enabled = true
+        bean.loadOnStartup = 1
+        bean.order = 1
         return bean
     }
 
     @Bean
-    FilterRegistrationBean filterRegistrationBean1()
+    FilterRegistrationBean filterRegistrationBean2()
     {
         GenericFilterBean filter = new HiddenHttpMethodFilter()
         FilterRegistrationBean registration = new FilterRegistrationBean(filter)
@@ -75,16 +78,16 @@ class NCubeApplication
     }
 
     @Bean
-    FilterRegistrationBean filterRegistrationBean2()
+    FilterRegistrationBean filterRegistrationBean3()
     {
-        GenericFilterBean filter = new HttpPutFormContentFilter()
+        GenericFilterBean filter = new FormContentFilter()
         FilterRegistrationBean registration = new FilterRegistrationBean(filter)
         registration.enabled = false
         return registration
     }
 
     @Bean
-    FilterRegistrationBean filterRegistrationBean3()
+    FilterRegistrationBean filterRegistrationBean4()
     {
         GenericFilterBean filter = new RequestContextFilter()
         FilterRegistrationBean registration = new FilterRegistrationBean(filter)
