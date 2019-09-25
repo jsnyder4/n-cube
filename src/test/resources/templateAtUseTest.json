@@ -71,7 +71,7 @@
         2001314780026
       ],
       "type":"template",
-      "value":"use: ${input.text}<%\noutput.premium = 5000\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwritten by use template'\noutput.useTransitive = use([column:'C', row:4])\n%>"
+      "value":"use: ${input.text}<%\noutput.colCx = input.column\noutput.row3x = input.row\noutput.premium = 5000\ninput.newKey = 'Can I stuff a new key on input'\ninput.text = 'overwritten by use template'\noutput.useTransitive = use([column:'C', row:4])\n%>"
     },
     {
       "id":[
@@ -79,7 +79,7 @@
         2001314780026
       ],
       "type":"exp",
-      "value":"input.column = 'Z'\ninput.row = 16"
+      "value":"output.colBq = input.column\noutput.row3q = input.row\ninput.column = 'Z'\ninput.row = 16"
     },
     {
       "id":[
@@ -87,7 +87,7 @@
         2000454398165
       ],
       "type":"template",
-      "value":"at: ${input.text}<%\noutput.deductible = 500\ninput.foo = 'bar'\ninput.remove('text')\noutput.text = 'overwritten by at template'\noutput.atTransitive = at([column:'B', row:3])\n%>"
+      "value":"at: ${input.text}<%\noutput.colBz = input.column\noutput.row2z = input.row\noutput.deductible = 500\ninput.foo = 'bar'\ninput.remove('text')\noutput.text = 'overwritten by at template'\noutput.atTransitive = at([column:'B', row:3])\n%>"
     },
     {
       "id":[
@@ -95,7 +95,7 @@
         2001497053275
       ],
       "type":"exp",
-      "value":"input.column = 'Y'\ninput.row = 42"
+      "value":"output.colCy=input.column\noutput.row4y=input.row\ninput.column = 'Y'\ninput.row = 42"
     },
     {
       "id":[

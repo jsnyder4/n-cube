@@ -75,5 +75,15 @@ class TestGroovyTemplate extends NCubeBaseTest
         assert output.atTemplate == 'at: hello, world'
         assert output.useTransitive == 42
         assert output.atTransitive == 16
+
+        assert output.colCx == 'A'
+        assert output.row3x == 1
+        assert output.colCy == 'A'
+        assert output.row4y == 1
+
+        assert output.colBz == 'B'
+        assert output.row2z == 2
+        assert output.colBq == 'B'
+        assert output.row3q == 3
     }
 }
