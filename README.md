@@ -94,7 +94,7 @@ Use either the Simple JSON format to create n-cubes, or the nCubeEditor to editi
 These are read in using the `NCubeManager.getNCubeFromResource()` API.  You can also call `ncube.fromSimpleJson(String json)`.
 
 #### Licensing
-Copyright 2012-2017 Cedar Software, LLC
+Copyright 2012-2019 Cedar Software, LLC
 
 Licensed under the Apache License, Version 2.0
 
