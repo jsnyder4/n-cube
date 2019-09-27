@@ -35,7 +35,7 @@ class TestRuleEngineIntegration extends NCubeCleanupBaseTest
 
         Map input = ['Age': 10]
         Map output = [:]
-        ncube.getCell input, output
+        ncube.getCell(input, output)
         assert output.isAxis
         assert output.isColumn
         assert output.isRange

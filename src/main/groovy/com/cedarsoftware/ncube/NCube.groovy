@@ -561,7 +561,8 @@ class NCube<T>
      */
     T use(Map altInput, Map input, Map output, def defaultCellValue)
     {
-        T value = getCellById(getCoordinateKey(altInput, output), input, output, defaultCellValue)
+        Map safeCoord = wrapCoordinate(validateCoordinate(altInput, output))
+        T value = getCellById(getCoordinateKey(safeCoord, output), input, output, defaultCellValue)
         RuleInfo info = getRuleInfo(output)
         info.setLastExecutedStatement(value)
         output.return = value
@@ -613,7 +614,7 @@ class NCube<T>
     T getCell(final Map coordinate, final Map output = [:], Object defaultValue = null)
     {
         final RuleInfo ruleInfo = getRuleInfo(output)
-        Map input = validateCoordinate(coordinate, output)
+        Map input = wrapCoordinate(validateCoordinate(coordinate, output))
         T lastStatementValue = null
 
         if (!hasRuleAxis())
@@ -1116,8 +1117,9 @@ class NCube<T>
     Map<Object, T> getMap(final Map coordinate, Map output = [:], Object defaultValue = null)
     {
         final Map coord = validateCoordinate(coordinate, [:])
-        final Axis wildcardAxis = getWildcardAxis(coord)
-        final List<Column> columns = getWildcardColumns(wildcardAxis, coord)
+        final Map<String, Object> answers = getWildcardInfo(coord)
+        Axis wildcardAxis = (Axis)answers.axis
+        final List<Column> columns = getWildcardColumns(wildcardAxis, (Set<Comparable>)answers.set, coord)
         final Map<Object, T> result = [:]
         final String axisName = wildcardAxis.name
 
@@ -1904,21 +1906,22 @@ class NCube<T>
 
     /**
      * @param coordinate passed in coordinate for accessing this n-cube
-     * @return Axis the axis that has a Set specified for it rather than a non-Set value.
-     * The Set associated to the input coordinate field indicates that the caller is
-     * matching more than one value against this axis.
+     * @return Map with two keys.  One key is the String 'axis' with the associated value being the Axis instance
+     * that matches the coordinate which has a Set associated to it.  The other key is the String 'set' which has
+     * the Set of values (or empty Set) to match against the axis.
      */
-    private Axis getWildcardAxis(final Map<String, Object> coordinate)
+    private Map<String, Object> getWildcardInfo(final Map<String, Object> coordinate)
     {
+        Map<String, Object> answers = [:]
         int count = 0
-        Axis wildcardAxis = null
 
         for (entry in coordinate.entrySet())
         {
             if (entry.value instanceof Set)
             {
                 count++
-                wildcardAxis = axisList[entry.key]      // intentional case insensitive match
+                answers.axis = axisList[entry.key]      // intentional case insensitive match
+                answers.set = entry.value
             }
         }
 
@@ -1932,7 +1935,7 @@ class NCube<T>
             throw new IllegalArgumentException("More than one 'Set' found as value within input coordinate, cube: ${name}")
         }
 
-        return wildcardAxis
+        return answers
     }
 
     /**
@@ -2001,7 +2004,6 @@ class NCube<T>
     /**
      * Ensure that the Map coordinate dimensionality satisfies this nCube.
      * This method verifies that all axes are listed by name in the input coordinate.
-     * This method wraps a TrackingMap around the passed in coordinate.
      * @param coordinate Map input coordinate
      */
     private Map validateCoordinate(final Map coordinate, final Map output)
@@ -2011,31 +2013,54 @@ class NCube<T>
             throw new IllegalArgumentException("'null' passed in for coordinate Map, n-cube: ${name}")
         }
 
-        Map copy = coordinate
-        while (copy instanceof TrackingMap)
-        {
-            copy = ((TrackingMap)coordinate).getWrappedMap()
-        }
-
-        if (!(copy instanceof CaseInsensitiveMap))
-        {
-            copy = new CaseInsensitiveMap<>(copy)
-        }
-
         // Ensure required scope is supplied within the input coordinate
-        Set<String> requiredScope = getRequiredScope(copy, output)
+        Set<String> requiredScope = getRequiredScope(coordinate, output)
+        requiredScope.removeAll(coordinate.keySet())
 
-        for (scopeKey in requiredScope)
+        if (!requiredScope.empty)
         {
-            if (!copy.containsKey(scopeKey))
+            Set<String> missingScope = new LinkedHashSet<>()
+            for (String key : requiredScope)
             {
-                Set coordinateKeys = copy.keySet()
-                throw new InvalidCoordinateException("Input coordinate: ${coordinateKeys}, does not contain all of the required scope keys: ${requiredScope}, cube: ${name}, appId: ${appId}",
-                        name, coordinateKeys, requiredScope)
+                Axis axis = getAxis(key)
+                if (axis == null || !axis.hasDefaultColumn())
+                {
+                    missingScope.add(key)
+                }
+            }
+
+            if (!missingScope.empty)
+            {
+                // Message below intentionally only shows the required scope keys left in the requireScope Set, as opposed
+                // to showing all required keys.  Note that the InvalidateCoordinateException does store the full set
+                // of required scope keys.
+                throw new InvalidCoordinateException("Input coordinate: ${coordinate.keySet()}, missing required scope key(s): ${missingScope}, cube: ${name}, appId: ${appId}",
+                        name, coordinate.keySet(), getRequiredScope(coordinate, output))
+
             }
         }
 
-        return new TrackingMap(copy)
+        return coordinate
+    }
+
+    /**
+     * Ensure the input coordinate Map is protected from overwrites and that the
+     * input coordinate Map is case-insensitive.
+     * @param coordinate Map input coordinate
+     * @return Map new input coordinate (safely wrapped and tracking keys accessed).
+     */
+    private Map wrapCoordinate(final Map coordinate)
+    {
+        Map rootCoord = coordinate
+        while (rootCoord instanceof TrackingMap)
+        {
+            TrackingMap trackingMap = (TrackingMap) coordinate
+            rootCoord = trackingMap.getWrappedMap()
+        }
+
+        // 1. Ensure the input coordinate Map is protected from overwrites.
+        // 2. Esnure the input coordinate Map is case-insensitive.
+        return new TrackingMap(new CaseInsensitiveMap<>(rootCoord))
     }
 
     /**
@@ -2049,10 +2074,9 @@ class NCube<T>
      * @return a List of all columns that match the values in the Set, or in the
      * case of an empty Set, all columns on the axis.
      */
-    private List<Column> getWildcardColumns(final Axis wildcardAxis, final Map coordinate)
+    private List<Column> getWildcardColumns(final Axis wildcardAxis, final Set<Comparable> wildcardSet, final Map coordinate)
     {
         final List<Column> columns = []
-        final Set<Comparable> wildcardSet = (Set<Comparable>) coordinate[wildcardAxis.name]
 
         // To support '*', an empty Set is bound to the axis such that all columns are returned.
         if (wildcardSet.empty)

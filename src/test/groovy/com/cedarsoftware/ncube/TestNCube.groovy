@@ -924,8 +924,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch (CoordinateNotFoundException e)
         {
-            assertTrue(e.message.contains("null"))
-            assertTrue(e.message.contains("not found"))
+            assertContainsIgnoreCase(e.message, 'null', 'not found')
         }
 
         // Empty Map
@@ -2496,7 +2495,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch (InvalidCoordinateException e)
         {
-            assert e.message.toLowerCase().contains('does not contain all of the required scope keys')
+            assertContainsIgnoreCase(e.message,'missing required scope', 'attribute', 'businessDivisionCode', 'test.WildcardSet')
             assert ncube.name == e.cubeName
             assert coord.keySet() == e.coordinateKeys
             assert ["attribute", "businessDivisionCode"] as Set == e.requiredKeys
@@ -3944,10 +3943,7 @@ class TestNCube extends NCubeBaseTest
         }
         catch (Exception e)
         {
-            assertTrue(e.message.contains("not"))
-            assertTrue(e.message.contains("contain"))
-            assertTrue(e.message.contains("scope"))
-            assertTrue(e.message.contains("key"))
+            assertContainsIgnoreCase(e.message, 'code', 'missing required scope', 'state', 'bu')
         }
 
         input.put("bU", "blah")
@@ -5397,7 +5393,7 @@ class TestNCube extends NCubeBaseTest
         Map map = cubeFrom.mapReduce(axisName, where)
         assert 1 == map.size()
         assert map.containsKey(colName)
-        assertContainsIgnoreCase(((Map)map.get(colName)).get(colName) as String, 'does not contain all of the required scope keys', 'three')
+        assertContainsIgnoreCase(((Map)map.get(colName)).get(colName) as String, 'two', 'one','missing required scope', 'three')
     }
 
     @Test
