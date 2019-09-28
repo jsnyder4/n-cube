@@ -148,6 +148,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         alive = false
     }
 
+    boolean isReadonly()
+    {
+        return !allowMutableMethods
+    }
+
     Map getMenu(ApplicationID appId)
     {
         Map appMenu = [:]
@@ -1573,7 +1578,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             return params
         }
 
-        synchronized (NCubeRuntime.class) {
+        synchronized (NCubeRuntime.class)
+        {
             if (systemParams == null)
             {
                 String jsonParams = SystemUtilities.getExternalVariable(NCUBE_PARAMS)

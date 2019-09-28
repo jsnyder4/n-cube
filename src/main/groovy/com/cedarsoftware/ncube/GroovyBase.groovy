@@ -454,7 +454,7 @@ abstract class GroovyBase extends UrlCommandCell
 
             if (Regexes.hasClassDefPattern.matcher(cmd).find())
             {
-                ret.source = expandNCubeShortCuts(cmd)
+                ret.source = expandNCubeShortCuts(getCmd())  // TODO: Groovy error in IDE if accessor not used.
                 return ret
             }
             else if (Regexes.grabPattern.matcher(cmd).find() || Regexes.grapePattern.matcher(cmd).find())

@@ -3841,7 +3841,7 @@ class TestNCube extends NCubeBaseTest
         assertTrue((Boolean) ncube.metaProperties.get("test"))
         assertEquals(1, ncube.metaProperties.size())
 
-        Map metaProps = [:]
+        Map<String, Object> metaProps = [:]
         metaProps.put("foo", "bar")
         ncube.addMetaProperties(metaProps)
         assertTrue((Boolean) ncube.metaProperties.get("test"))

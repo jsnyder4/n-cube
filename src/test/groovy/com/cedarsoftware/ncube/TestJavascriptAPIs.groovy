@@ -88,6 +88,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
                 'getUrlContent(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, interface java.util.Map)',
                 'clearCache(class com.cedarsoftware.ncube.ApplicationID, interface java.util.Collection)',
                 'isCached(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String)',
+                'isReadonly()',
                 'getCells(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class [Ljava.lang.Object;, interface java.util.Map, interface java.util.Map)',
                 'getCells(class com.cedarsoftware.ncube.ApplicationID, class java.lang.String, class [Ljava.lang.Object;, interface java.util.Map, interface java.util.Map, class java.lang.Object)'
         ] as Set
@@ -676,7 +677,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         assert code == 'XYZ'
 
         // get revisions, promote original revision and verify cell value
-        List<NCubeInfoDto> revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List
+        List<NCubeInfoDto> revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List<NCubeInfoDto>
         assert revisions.size() == 2
         NCubeInfoDto record0 = revisions.find { it.revision == '0' }
         long id = Converter.convert(record0.id, Long.TYPE)

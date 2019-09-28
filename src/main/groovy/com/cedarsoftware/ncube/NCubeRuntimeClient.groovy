@@ -23,6 +23,13 @@ import groovy.transform.CompileStatic
 @CompileStatic
 interface NCubeRuntimeClient extends NCubeClient
 {
+    /**
+     * This JVM is running NCube in a read-only mode, meaning that it is not configured to be allowed to make calls
+     * to the mutable APIs (CRUD APIs against the NCube storage server).
+     * @return false if configured to allow mutable method calls (not readonly) or true (readonly) otherwise.
+     */
+    boolean isReadonly()
+    
     void clearCache(ApplicationID appId)
 
     void clearCache(ApplicationID appId, Collection<String> cubeNames)

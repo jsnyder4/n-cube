@@ -167,7 +167,7 @@ class TestLongHashSet
     void testAddRemoveAll()
     {
         LongHashSet set = new LongHashSet()
-        set.addAll([7, 8, 9] as Set)
+        set.addAll([7, 8, 9] as Set<Long>)
         assert set.size() == 3
         assert set.contains(7)
         assert set.contains(8)
@@ -200,11 +200,11 @@ class TestLongHashSet
         assert set.size() == 1
         assert set.contains(7)
 
-        set = new LongHashSet([1, 2, 3, 3, 4, 5] as Set)
+        set = new LongHashSet([1, 2, 3, 3, 4, 5] as Set<Long>)
         assert set.size() == 5
 
         set = new LongHashSet()
-        set.addAll([1, 2, 3, 3, 4, 5] as Set)
+        set.addAll([1, 2, 3, 3, 4, 5] as Set<Long>)
         assert set.size() == 5
     }
 

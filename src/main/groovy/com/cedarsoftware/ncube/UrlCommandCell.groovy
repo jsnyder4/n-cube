@@ -34,7 +34,6 @@ abstract class UrlCommandCell implements CommandCell
 {
     private static final Logger LOG = LoggerFactory.getLogger(UrlCommandCell.class)
     private String cmd
-    private volatile transient String errorMsg = null
     private final String url
     private int hash
     public static final char EXTENSION_SEPARATOR = '.'
@@ -95,7 +94,7 @@ abstract class UrlCommandCell implements CommandCell
         }
         finally
         {
-            hasBeenCachedLock.unlock();
+            hasBeenCachedLock.unlock()
         }
     }
     
@@ -110,7 +109,7 @@ abstract class UrlCommandCell implements CommandCell
             catch(Exception e)
             {
                 NCube cube = getNCube(ctx)
-                String where = "url: ${getUrl()}, cube: ${cube.name}, app: ${cube.applicationID}"
+                String where = "url: ${url}, cube: ${cube.name}, app: ${cube.applicationID}"
                 if (i == 1)
                 {   // Note: Error is marked, it will not be retried in the future
                     LOG.warn("${getClass().simpleName}: failed 2nd attempt [will NOT retry in future] getActualUrl() - unable to resolve against sys.classpath, ${where}")
@@ -161,7 +160,7 @@ abstract class UrlCommandCell implements CommandCell
             return false
         }
 
-        return url == that.getUrl()
+        return url == that.url
     }
 
     int hashCode()
@@ -177,17 +176,6 @@ abstract class UrlCommandCell implements CommandCell
     String toString()
     {
         return url == null ? cmd : url
-    }
-
-
-    void setErrorMessage(String msg)
-    {
-        errorMsg = msg
-    }
-
-    String getErrorMessage()
-    {
-        return errorMsg
     }
 
     int compareTo(CommandCell cmdCell)
@@ -217,11 +205,6 @@ abstract class UrlCommandCell implements CommandCell
 
     def execute(Map<String, Object> ctx)
     {
-        if (errorMsg != null)
-        {
-            throw new IllegalStateException(errorMsg)
-        }
-
         if (!cacheable)
         {
             return fetchResult(ctx)
@@ -246,7 +229,7 @@ abstract class UrlCommandCell implements CommandCell
         }
         finally
         {
-            hasBeenCachedLock.unlock();
+            hasBeenCachedLock.unlock()
         }
     }
 

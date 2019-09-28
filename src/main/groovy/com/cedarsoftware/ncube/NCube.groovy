@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import groovy.transform.CompileStatic
+import org.checkerframework.checker.units.qual.K
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.util.FastByteArrayOutputStream
@@ -41,6 +42,8 @@ import java.util.concurrent.ConcurrentMap
 import java.util.regex.Matcher
 import java.util.zip.Deflater
 import java.util.zip.GZIPInputStream
+
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
 /**
  * Implements an n-cube.  This is a hyper (n-dimensional) cube
@@ -613,23 +616,32 @@ class NCube<T>
      */
     T getCell(final Map coordinate, final Map output = [:], Object defaultValue = null)
     {
-        final RuleInfo ruleInfo = getRuleInfo(output)
         Map input = wrapCoordinate(validateCoordinate(coordinate, output))
-        T lastStatementValue = null
 
-        if (!hasRuleAxis())
+        if (hasRuleAxis())
+        {
+            return runRules(coordinate, input, output, defaultValue)
+        }
+        else
         {   // Perform fast bind and execute.
-            lastStatementValue = getCellById(getCoordinateKey(input, output), input, output, defaultValue)
+            T lastStatementValue = getCellById(getCoordinateKey(input, output), input, output, defaultValue)
+            final RuleInfo ruleInfo = getRuleInfo(output)
             ruleInfo.setLastExecutedStatement(lastStatementValue)
             return output.return = lastStatementValue
         }
+    }
 
+    private T runRules(final Map coordinate, Map input, final Map output = [:], Object defaultValue = null)
+    {
+        final RuleInfo ruleInfo = getRuleInfo(output)
+        final boolean isReadonly = ncubeRuntime.readonly
         boolean run = true
         final List<Binding> bindings = ruleInfo.getAxisBindings()
         final int depth = executionStack.get().size()
         final int dimensions = numDimensions
         final String[] axisNames = axisList.keySet().toArray(new String[dimensions])
         Map ctx = prepareExecutionContext(input, output)
+        T lastStatementValue = null
 
         while (run)
         {
@@ -704,7 +716,10 @@ class NCube<T>
                     // Step #2 Execute cell and store return value, associating it to the Axes and Columns it bound to
                     if (binding.numBoundAxes == dimensions)
                     {   // Conditions on rule axes that do not evaluate to true, do not generate complete coordinates (intentionally skipped)
-                        bindings.add(binding)
+                        if (!isReadonly)
+                        {   // Don't add the bindings to the output map when running on readonly (non-editor) mode.
+                            bindings.add(binding)
+                        }
                         lastStatementValue = executeAssociatedStatement(input, output, ruleInfo, binding)
                     }
 
@@ -719,8 +734,7 @@ class NCube<T>
                 ensureAllRuleAxesBound(coordinate, conditionsFiredCountPerAxis)
             }
             catch (RuleStop ignored)
-            {
-                // ends this execution cycle
+            {   // ends this execution cycle
                 ruleInfo.ruleStopThrown()
             }
             catch (RuleJump e)
@@ -1190,11 +1204,11 @@ class NCube<T>
 
         if (rowAxis.type!=AxisType.RULE)
         {
-            commandInput.informAdditionalUsage([rowAxisName])
+            commandInput.informAdditionalUsage([rowAxisName] as Collection<Object>)
         }
         if (colAxis.type!=AxisType.RULE)
         {
-            commandInput.informAdditionalUsage([colAxisName])
+            commandInput.informAdditionalUsage([colAxisName] as Collection<Object>)
         }
         trackInputKeysUsed(commandInput,output)
 
@@ -2044,23 +2058,26 @@ class NCube<T>
     }
 
     /**
-     * Ensure the input coordinate Map is protected from overwrites and that the
-     * input coordinate Map is case-insensitive.
+     * Ensure the input coordinate Map is in the structure of TrackingMap --> CaseInsensitiveMap --> MapEntries.
+     * If not, the passed in Map will be converted to a CaseInsensitiveMap, wrapped by a TrackingMap.
      * @param coordinate Map input coordinate
-     * @return Map new input coordinate (safely wrapped and tracking keys accessed).
+     * @return Map new input coordinate (if needed) or the original Map passed in.
      */
     private Map wrapCoordinate(final Map coordinate)
     {
-        Map rootCoord = coordinate
-        while (rootCoord instanceof TrackingMap)
+        if (coordinate instanceof TrackingMap)
         {
             TrackingMap trackingMap = (TrackingMap) coordinate
-            rootCoord = trackingMap.getWrappedMap()
+            if (trackingMap.getWrappedMap() instanceof CaseInsensitiveMap)
+            {   // Already wrapped (called from 'inside' - a GroovyExpression or GroovyTemplate using at() ,go(), or use()
+                return coordinate
+            }
+            return new TrackingMap(new CaseInsensitiveMap<>(trackingMap.getWrappedMap()))
         }
 
         // 1. Ensure the input coordinate Map is protected from overwrites.
         // 2. Esnure the input coordinate Map is case-insensitive.
-        return new TrackingMap(new CaseInsensitiveMap<>(rootCoord))
+        return new TrackingMap(new CaseInsensitiveMap<>(coordinate))
     }
 
     /**
@@ -3699,13 +3716,13 @@ class NCube<T>
      * APIs.  To use with getCell(), any rule axis bindings in the coordinate would need to be removed.  This is
      * because it is expected that getCell() will run all conditions on a rule axis.
      */
-    List<Map<String, T>> getPopulatedCellCoordinates()
+    List<Map<String, Object>> getPopulatedCellCoordinates()
     {
-        List<Map<String, T>> coords = []
+        List<Map<String, Object>> coords = []
         for (entry in cells.entrySet())
         {
             Set<Long> colIds = entry.key
-            Map<String, T> coord = (Map<String, T>) getCoordinateFromIds(colIds)
+            Map<String, Object> coord = getCoordinateFromIds(colIds)
             coords.add(coord)
         }
 
@@ -4336,9 +4353,9 @@ class NCube<T>
      * and getCellNoExecute() APIs.  To use with getCell(), remove the entry or entries
      * that have rule axis names.
      */
-    Map getCoordinateFromIds(Set<Long> idCoord)
+    Map<String, Object> getCoordinateFromIds(Set<Long> idCoord)
     {
-        Map coord = new CaseInsensitiveMap<>()
+        Map<String, Object> coord = new CaseInsensitiveMap<>()
         for (colId in idCoord)
         {
             Axis axis = getAxisFromColumnId(colId)
