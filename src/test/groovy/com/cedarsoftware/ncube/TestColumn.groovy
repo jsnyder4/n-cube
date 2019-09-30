@@ -26,7 +26,7 @@ import static org.junit.Assert.assertNull
  *         limitations under the License.
  */
 @CompileStatic
-class TestColumn extends NCubeBaseTest
+class TestColumn
 {
     @Test
     void testSetValue()

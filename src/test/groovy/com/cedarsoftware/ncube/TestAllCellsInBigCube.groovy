@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue
  *         limitations under the License.
  */
 @CompileStatic
-class TestAllCellsInBigCube extends NCubeBaseTest
+class TestAllCellsInBigCube
 {
     @Test
     void testAllCellsInBigCube()

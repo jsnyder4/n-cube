@@ -33,7 +33,7 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestCellInfo extends NCubeBaseTest
+class TestCellInfo
 {
     @Test
     void testFormatForEditing()

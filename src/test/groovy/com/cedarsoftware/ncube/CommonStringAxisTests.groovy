@@ -6,7 +6,8 @@ import org.junit.Test
 
 import static org.junit.Assert.fail
 
-abstract class CommonStringAxisTests extends NCubeBaseTest {
+abstract class CommonStringAxisTests
+{
     public NCube<Integer> ncube
     public Axis genderAxis
 

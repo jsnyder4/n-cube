@@ -70,7 +70,7 @@
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="true"/>
+            <constructor-arg value="${ncube.allow.mutable.methods:#{true}}"/>
         </bean>
 
         <bean id="ncubeHost" class="org.apache.http.HttpHost">
@@ -125,7 +125,7 @@
         <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
             <constructor-arg ref="callableBean"/>
             <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="true"/>
+            <constructor-arg value="${ncube.allow.mutable.methods:#{true}}"/>
         </bean>
 
         <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>

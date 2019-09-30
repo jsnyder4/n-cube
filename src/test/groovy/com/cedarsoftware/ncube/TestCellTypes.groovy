@@ -35,7 +35,7 @@ import static org.junit.Assert.fail
  *         limitations under the License.
  */
 @CompileStatic
-class TestCellTypes extends NCubeBaseTest
+class TestCellTypes
 {
     @Test
     void testInvalidCellType()
