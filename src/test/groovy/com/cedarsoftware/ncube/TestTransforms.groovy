@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.Converter
 import groovy.transform.CompileStatic
 import org.junit.Test
+import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeClient
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -28,7 +29,7 @@ import static org.junit.Assert.fail
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-
+@SpringBootTest(properties= [])
 @CompileStatic
 class TestTransforms extends NCubeCleanupBaseTest
 {

@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
 import org.junit.Test
+import org.springframework.boot.test.context.SpringBootTest
 
 import java.lang.reflect.Method
 
@@ -27,6 +28,7 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@SpringBootTest(properties= [])
 @CompileStatic
 class AdviceTest extends NCubeCleanupBaseTest
 {

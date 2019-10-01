@@ -33,7 +33,7 @@ import static org.junit.Assert.assertTrue
  */
 @CompileStatic
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = [NCubeApplication.class, NCubeAppContext.class], initializers = ConfigFileApplicationContextInitializer.class)
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 //@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
 @ActiveProfiles(profiles = ['combined-server','test-database'])
