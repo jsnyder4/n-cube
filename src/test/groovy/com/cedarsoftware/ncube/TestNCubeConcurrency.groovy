@@ -3,6 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 import org.junit.Test
+import org.springframework.boot.test.context.SpringBootTest
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CompileStatic
 class TestNCubeConcurrency extends NCubeBaseTest
 {

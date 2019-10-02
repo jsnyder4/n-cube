@@ -4,7 +4,7 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.CompilationFailedException
 import org.junit.*
-import org.springframework.test.context.TestPropertySource
+import org.springframework.boot.test.context.SpringBootTest
 
 import java.lang.reflect.Field
 
@@ -28,8 +28,8 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties = ['ncube.accepted.domains=org.apache.'])
 @CompileStatic
-@TestPropertySource(properties="ncube.accepted.domains=org.apache.")
 class TestL3Cache extends NCubeCleanupBaseTest
 {
     private NCube cp

@@ -2076,7 +2076,7 @@ class NCube<T>
         }
 
         // 1. Ensure the input coordinate Map is protected from overwrites.
-        // 2. Esnure the input coordinate Map is case-insensitive.
+        // 2. Ensure the input coordinate Map is case-insensitive.
         return new TrackingMap(new CaseInsensitiveMap<>(coordinate))
     }
 

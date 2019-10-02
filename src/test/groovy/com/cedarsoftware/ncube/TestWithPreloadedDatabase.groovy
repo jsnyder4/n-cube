@@ -8,9 +8,7 @@ import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.springframework.test.context.TestPropertySource
-import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
@@ -33,9 +31,8 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT, properties=['ncube.accepted.domains=org.apache.', 'ncube.allow.mutable.methods=true'])
 @CompileStatic
-@RunWith(SpringRunner.class)
-@TestPropertySource(properties=["ncube.accepted.domains=org.apache."])
 class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 {
     public static ApplicationID appId = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'preloaded', ApplicationID.DEFAULT_VERSION, ApplicationID.DEFAULT_STATUS, ApplicationID.TEST_BRANCH)

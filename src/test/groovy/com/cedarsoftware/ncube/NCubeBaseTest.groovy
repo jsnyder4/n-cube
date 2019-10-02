@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.config.NCubeConfiguration
 import com.cedarsoftware.controller.NCubeController
 import groovy.transform.CompileStatic
 import org.junit.After
@@ -33,15 +34,14 @@ import static org.junit.Assert.assertTrue
  */
 @CompileStatic
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = [NCubeApplication.class, NCubeAppContext.class], initializers = ConfigFileApplicationContextInitializer.class)
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
 //@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
 @ActiveProfiles(profiles = ['combined-server','test-database'])
 @Ignore
 class NCubeBaseTest implements NCubeConstants
 {
     static String baseRemoteUrl
-
+    
     @After
     void teardown()
     {

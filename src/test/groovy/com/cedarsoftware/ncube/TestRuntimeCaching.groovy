@@ -1,6 +1,6 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.config.NCubeConfiguration
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
@@ -9,7 +9,6 @@ import org.springframework.boot.test.context.ConfigFileApplicationContextInitial
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 
 import java.lang.reflect.Method
@@ -34,8 +33,8 @@ import java.lang.reflect.Method
  *         limitations under the License.
  */
 @RunWith(SpringRunner.class)
-@TestPropertySource(properties = ['ncube.allow.mutable.methods=false'])
-@ContextConfiguration(classes = NCubeApplication.class, initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
+@SpringBootTest(properties = ['ncube.allow.mutable.methods=false'])
 @ActiveProfiles(profiles = ['ncube-client'])
 @CompileStatic
 @Ignore // Undo to run this test by itself.  This test messes up the Spring App Context for the rests of the tests.

@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.config.NCubeConfiguration
 import groovy.transform.CompileStatic
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,7 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = [NCubeApplication.class, NCubeAppContext.class], initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
 @ActiveProfiles(profiles = ['combined-server','test-database'])
 @SpringBootTest(properties= ["ncube.allow.mutable.methods=false"] )
 @CompileStatic

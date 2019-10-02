@@ -28,7 +28,7 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(properties= [])
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties = [])
 @CompileStatic
 class AdviceTest extends NCubeCleanupBaseTest
 {
