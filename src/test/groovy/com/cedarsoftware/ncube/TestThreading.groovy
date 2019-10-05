@@ -2,10 +2,10 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.util.StringUtilities
+import groovy.transform.CompileStatic
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull
  *         limitations under the License.
  */
 @RunWith(Parameterized.class)
+@CompileStatic
 class TestThreading extends NCubeCleanupBaseTest
 {
     // TestContextManager is used because @RunWith(Parameterized.class) is overriding @RunWith(SpringRunner.class)
@@ -49,7 +50,7 @@ class TestThreading extends NCubeCleanupBaseTest
     private static String savedClassesDir
 
     @Parameterized.Parameters(name = "{0}")
-    static Collection<Object[]> data() {
+    static Object[][] data() {
         def data = []
 
         int sleep = 0L
@@ -179,14 +180,14 @@ class TestThreading extends NCubeCleanupBaseTest
 //        }
 //    }
 
-    private List<Exception> runTest( Map args ) {
+    private List<Throwable> runTest( Map args ) {
 
         int load = args.get('load',1)
         int maxThreads = args.get('threads',5)
         int count = args.get('count',100)
         int loopCount = args.get('loopCount',1)
         int loopTest = args.get('loopTest',1)
-        int sleepTime = args.get('sleep',0L)
+        int sleepTime = args.get('sleep',0)
         boolean warm = args.get('warm',false)
         boolean remove = args.get('remove',false)
         boolean sync = args.get('sync',false)
@@ -195,11 +196,11 @@ class TestThreading extends NCubeCleanupBaseTest
         boolean ifc = args.get('interface',false)
 
         LOG.info "Running test with load=${load}, threads=${maxThreads}, count=${count}, loopCount=${loopCount}, clearCache=${clearCache}, loopTest=${loopTest}, preCache=${preCache}, sleep=${sleepTime}, sync=${sync}, remove=${remove}, warm=${warm}"
-        buildAccessCube(maxThreads,count,warm)
+        Queue<Throwable> allFailures = new ConcurrentLinkedQueue<Throwable>()
+        buildAccessCube(maxThreads,count,warm, allFailures)
         NCube cube = ncubeRuntime.getCube(ApplicationID.testAppId, 'thread')
         NCube supportingCube = ncubeRuntime.getCube(ApplicationID.testAppId, 'threadCount')
 
-        def allFailures = new ConcurrentLinkedQueue<Exception>()
         long totalDuration = 0
         loopTest.times { i ->
             long start = System.currentTimeMillis()
@@ -227,19 +228,19 @@ class TestThreading extends NCubeCleanupBaseTest
             }
 
             LOG.debug '==>creating threads'
-            def threads = new ConcurrentLinkedQueue<>()
-            def failures = new ConcurrentLinkedQueue<>()
+            Queue<Thread> threads = new ConcurrentLinkedQueue<>()
+            Queue<Throwable> failures = new ConcurrentLinkedQueue<>()
             load.times {
                 maxThreads.times { tid ->
-                    def t = new Thread({
+                    Thread t = new Thread({
                         loopCount.times {
                             count.times { cnt ->
-                                def nm = 'test-' + tid + '-' + cnt
-                                def output = [:]
+                                String nm = "test-${tid}-${cnt}"
+                                Map output = [:]
                                 try {
                                     def val = cube.getCell(['tid': tid, 'cnt': cnt, 'sleep':sleepTime, 'sync':sync, 'remove':remove, 'interface':ifc], output)
                                     if (nm != val) {
-                                        throw new RuntimeException("Cell value=" + val + " does not match expected")
+                                        throw new RuntimeException("Cell value=${val} does not match expected")
                                     }
                                 }
                                 catch (Exception e)
@@ -264,24 +265,27 @@ class TestThreading extends NCubeCleanupBaseTest
             }
 
             LOG.debug '==>waiting for threads'
-            def aliveCount = threads.size()
+            int aliveCount = threads.size()
             while (aliveCount > 0) {
                 aliveCount = 0
                 threads.each { thread ->
-                    if (thread.isAlive()) aliveCount++
+                    if (thread.alive)
+                    {
+                        aliveCount++
+                    }
                 }
             }
 
             validateRunnableCode(maxThreads,count,failures)
 
-            long duration = System.currentTimeMillis()-start
+            long duration = System.currentTimeMillis() - start
             totalDuration += duration
-            LOG.info "Loop ${i} took " + duration + "ms with failure rate of " + failures.size() + "/" + (maxThreads*count*loopCount*load)
+            LOG.info "Loop ${i} took ${duration}ms with failure rate of ${failures.size()}/${maxThreads * count*loopCount * load}"
             dumpFailures(failures)
             allFailures.addAll(failures)
         }
 
-        LOG.info "total time of " + totalDuration + "ms and average of " + (totalDuration/loopTest) + "ms with failure rate of " + allFailures.size() + "/" + (loopTest*(maxThreads*count*loopCount*load))
+        LOG.info "total time of ${totalDuration}ms and average of ${totalDuration/loopTest}ms with failure rate of ${allFailures.size()}/${loopTest * (maxThreads * count * loopCount * load)}"
         dumpFailures(allFailures)
         assertEquals(0,allFailures.size())
         return allFailures as List
@@ -296,7 +300,7 @@ class TestThreading extends NCubeCleanupBaseTest
                 GroovyBase cell = threadCube.getCellNoExecute(['tid':tid,'cnt':cnt,'sleep':0L]) as GroovyBase
                 ClassLoader cellLoader = cell.runnableCode.classLoader
                 if (cdnLoader != cellLoader && cdnLoader.parent != cellLoader) {
-                    def nm = "test-${tid}-${cnt}"
+                    String nm = "test-${tid}-${cnt}"     // Not used?
                     failures.add( new IllegalStateException("ClassLoader did not match for cell"))
                 }
             }
@@ -304,10 +308,10 @@ class TestThreading extends NCubeCleanupBaseTest
 
     }
 
-    private static void dumpFailures(ConcurrentLinkedQueue<Exception> failures) {
-        def uniqueFailures = [:]
+    private static void dumpFailures(Queue<Throwable> failures) {
+        Map<String, Long> uniqueFailures = [:]
         failures.each { f ->
-            def msg = f.message
+            String msg = f.message
             if (StringUtilities.hasContent(msg))
             {
                 if (msg.contains('@'))
@@ -316,7 +320,8 @@ class TestThreading extends NCubeCleanupBaseTest
                 }
                 if (uniqueFailures.containsKey(msg))
                 {
-                    uniqueFailures[msg]++
+                    long count = uniqueFailures[msg]
+                    uniqueFailures[msg] = count + 1
                 }
                 else
                 {
@@ -329,7 +334,8 @@ class TestThreading extends NCubeCleanupBaseTest
         }
     }
 
-    private NCube buildAccessCube(int maxThreads, int maxCount, boolean warm) {
+    private NCube buildAccessCube(int maxThreads, int maxCount, boolean warm, Queue<Throwable> failures)
+    {
         LOG.info '==>Creating cube...'
         NCube threadCube = NCube.fromSimpleJson(threadDef)
         assertNotNull(threadCube)
@@ -379,7 +385,7 @@ class TestThreading extends NCubeCleanupBaseTest
             LOG.info 'warming...'
             maxThreads.times { int tid ->
                 maxCount.times { int cnt ->
-                    def nm = "test-${tid}-${cnt}"
+                    String nm = "test-${tid}-${cnt}"
                     try
                     {
                         assertEquals(nm,threadCube.getCell(['tid':tid,'cnt':cnt,'sleep':0L]))
@@ -390,6 +396,7 @@ class TestThreading extends NCubeCleanupBaseTest
                         if (!rootCause.message.toLowerCase().contains('code cleared while'))
                         {
                             failures.add(rootCause)
+                            LOG.error("Outer Exception (${e.class.name}, msg=${e.message}) occurred in TestThreading, root cause:", rootCause)
                         }
                     }
                 }
