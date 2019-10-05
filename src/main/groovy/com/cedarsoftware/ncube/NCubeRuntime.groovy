@@ -298,7 +298,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     private Closure evaluateWhereClosure(String where)
     {
-        Object whereClosure = getGroovyShell().evaluate(where)
+        Object whereClosure = groovyShell.evaluate(where)
         if (!(whereClosure instanceof Closure))
         {
             throw new IllegalArgumentException("Passed in 'where' clause: ${where}, is not evaluating to a Closure.  Make sure it is in the form (example): { Map input -> input.state == 'AZ' }")
@@ -1132,11 +1132,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     String getTestCauses(Throwable t)
     {
-        LinkedList<Map<String, Object>> stackTraces = new LinkedList<>()
+        LinkedList<?> stackTraces = new LinkedList<>()
 
         while (true)
         {
-            stackTraces.push([msg: t.localizedMessage, trace: t.stackTrace] as Map)
+            stackTraces.push([msg: t.localizedMessage, trace: t.stackTrace])
             t = t.cause
             if (t == null)
             {
@@ -1145,18 +1145,18 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
 
         // Convert from LinkedList to direct access list
-        List<Map<String, Object>> stacks = new ArrayList<>(stackTraces)
+        List<?> stacks = new ArrayList<>(stackTraces)
         StringBuilder s = new StringBuilder()
         int len = stacks.size()
 
         for (int i=0; i < len; i++)
         {
-            Map<String, Object> map = stacks[i]
+            Map map = (Map)stacks[i]
             s.append("""<b style="color:darkred">${map.msg}</b><br>""")
 
             if (i != len - 1i)
             {
-                Map nextStack = stacks[i + 1i]
+                Map nextStack = (Map)stacks[i + 1i]
                 StackTraceElement[] nextStackElementArray = (StackTraceElement[]) nextStack.trace
                 s.append(trace(map.trace as StackTraceElement[], nextStackElementArray))
                 s.append('<hr style="border-top: 1px solid #aaa;margin:8px"><b>Called by:</b><br>')
@@ -1652,7 +1652,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             if (systemParams == null)
             {
                 String jsonParams = SystemUtilities.getExternalVariable(NCUBE_PARAMS)
-                ConcurrentMap sysParamMap = new ConcurrentHashMap<>()
+                ConcurrentMap<String, Object> sysParamMap = new ConcurrentHashMap<>()
 
                 if (StringUtilities.hasContent(jsonParams))
                 {

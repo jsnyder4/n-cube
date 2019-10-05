@@ -1188,7 +1188,7 @@ transform app: ${transformApp}/${transformVersion}/${transformStatus}/${transfor
             String cubeName = axisRef.srcCubeName
             if (!appIdCubeNames.containsKey(appId))
             {
-                appIdCubeNames[appId] = new CaseInsensitiveMap<>()
+                appIdCubeNames[appId] = new CaseInsensitiveMap<String, Set<AxisRef>>()
             }
             if (!appIdCubeNames[appId].containsKey(cubeName))
             {

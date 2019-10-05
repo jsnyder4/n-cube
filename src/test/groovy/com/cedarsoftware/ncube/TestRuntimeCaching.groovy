@@ -30,12 +30,8 @@ import java.lang.reflect.Method
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@ContextConfiguration(classes = [NCubeApplication, NCubeConfiguration])
-@TestPropertySource(properties = ['ncube.allow.mutable.methods=false', 'ncube.accepted.domains='])
-@ActiveProfiles(profiles = ['ncube-client'])
-@DirtiesContext
-@CompileStatic
 @Ignore // Undo to run this test by itself.  This test messes up the Spring App Context for the rests of the tests.
+@CompileStatic
 class TestRuntimeCaching extends NCubeBaseTest
 {
     @Test
