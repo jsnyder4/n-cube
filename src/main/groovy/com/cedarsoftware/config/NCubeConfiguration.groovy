@@ -49,15 +49,7 @@ class NCubeConfiguration
     @Value('${ncube.perm.cache.evict.duration:3}') int durationPermCache
     @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
     @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
-
-    @Value('${ncube.target.scheme:http}') String scheme
-    @Value('${ncube.target.host:localhost}') String host
-    @Value('${ncube.target.port:9000}') int port
-    @Value('${ncube.target.context:ncube}') String context
-    @Value('${ncube.target.username:#{null}}') String username
-    @Value('${ncube.target.password:#{null}}') String password
-    @Value('${ncube.target.numConnections:100}') int numConnections
-
+    
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
 
