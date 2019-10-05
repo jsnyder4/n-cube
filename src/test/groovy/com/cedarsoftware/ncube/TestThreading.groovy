@@ -291,7 +291,7 @@ class TestThreading extends NCubeCleanupBaseTest
         return allFailures as List
     }
 
-    private void validateRunnableCode(int maxThreads, int maxCount, Collection failures) {
+    private void validateRunnableCode(int maxThreads, int maxCount, Collection<Throwable> failures) {
         NCube threadCube = ncubeRuntime.getCube(ApplicationID.testAppId, 'threadCount')
         ClassLoader cdnLoader = ncubeRuntime.getCube(ApplicationID.testAppId,cp.name).getCell([:],[:])
 
