@@ -1,5 +1,8 @@
 package com.cedarsoftware.ncube.util
 
+import com.cedarsoftware.ncube.NCubeRuntime
+
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.GroovyBugError
 import org.codehaus.groovy.ast.ClassHelper
@@ -44,7 +47,6 @@ class CdnClassLoader extends GroovyClassLoader
     private ClassNodeResolver classNodeResolver = new PreferClassNodeResolver()
 
     private static String generatedClassesDir = ''
-    private static String ncubeAcceptedDomains
     private static final Logger LOG = LoggerFactory.getLogger(CdnClassLoader.class)
 
     /**
@@ -58,9 +60,10 @@ class CdnClassLoader extends GroovyClassLoader
 
         if (acceptedDomains == null)
         {
-            if (ncubeAcceptedDomains)
+            String domains = (ncubeRuntime as NCubeRuntime).acceptedDomains
+            if (domains)
             {
-                whiteList = Arrays.asList(ncubeAcceptedDomains.split(";"))
+                whiteList = Arrays.asList(domains.split(';'))
             }
             else
             {
@@ -448,16 +451,6 @@ class CdnClassLoader extends GroovyClassLoader
     static String getGeneratedClassesDirectory()
     {
         return generatedClassesDir
-    }
-
-    static String setNcubeAcceptedDomains(String acceptedDomains)
-    {
-        ncubeAcceptedDomains = acceptedDomains
-    }
-
-    static String getNcubeAcceptedDomains()
-    {
-        return ncubeAcceptedDomains
     }
 
     /**

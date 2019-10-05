@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Before
@@ -24,7 +25,6 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-
 @CompileStatic
 @Ignore
 class NCubeCleanupBaseTest extends NCubeBaseTest
@@ -50,7 +50,11 @@ class NCubeCleanupBaseTest extends NCubeBaseTest
      */
     NCube createCubeFromResource(ApplicationID appId = ApplicationID.testAppId, String fileName)
     {
-        String json = NCubeRuntime.getResourceAsString(fileName).replaceAll('\\$\\{baseRemoteUrl\\}',baseRemoteUrl)
+        String json = NCubeRuntime.getResourceAsString(fileName)
+        if (StringUtilities.hasContent(baseRemoteUrl))
+        {
+            json = json.replaceAll('\\$\\{baseRemoteUrl\\}', baseRemoteUrl)
+        }
         NCube ncube = NCube.fromSimpleJson(json)
         ncube.applicationID = appId
         mutableClient.createCube(ncube)

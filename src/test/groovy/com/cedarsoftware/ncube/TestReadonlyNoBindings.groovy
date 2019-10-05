@@ -1,24 +1,28 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.config.NCubeConfiguration
 import groovy.transform.CompileStatic
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.junit4.SpringRunner
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
-@ActiveProfiles(profiles = ['combined-server','test-database'])
-@SpringBootTest(properties= ["ncube.allow.mutable.methods=false"] )
 @CompileStatic
-class TestReadonlyNoBindings
+class TestReadonlyNoBindings extends NCubeBaseTest
 {
+    @Before
+    void setup()
+    {
+        (ncubeRuntime as NCubeRuntime).readonly = true
+    }
+
+    @After
+    void tearDown()
+    {
+        // Restore original spring configured state.
+        (ncubeRuntime as NCubeRuntime).readonly = null
+    }
+
     @Test
     void testOneRuleSetCallsAnotherRuleSet()
     {

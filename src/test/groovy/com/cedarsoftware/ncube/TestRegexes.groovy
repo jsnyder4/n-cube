@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import groovy.transform.CompileStatic
 import org.junit.Test
 
 import java.util.regex.Matcher
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertFalse
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestRegexes
 {
     @Test
@@ -269,7 +271,7 @@ println 'is it going to count input.what have we got here'
     @Test
     void testNCubeNameParser()
     {
-        String name = "['Less than \$10,000':['startIncurredAmount':'0','endIncurredAmount':'10000'],'\$10,000 - \$25,000':['startIncurredAmount':'10000','endIncurredAmount':'25000'],'\$25,000 - \$50,000':['startIncurredAmount':'25000','endIncurredAmount':'50000'],'More than \$50,000':['startIncurredAmount':'50000','endIncurredAmount':'0']]";
+        String name = "['Less than \$10,000':['startIncurredAmount':'0','endIncurredAmount':'10000'],'\$10,000 - \$25,000':['startIncurredAmount':'10000','endIncurredAmount':'25000'],'\$25,000 - \$50,000':['startIncurredAmount':'25000','endIncurredAmount':'50000'],'More than \$50,000':['startIncurredAmount':'50000','endIncurredAmount':'0']]"
         Matcher m = Regexes.groovyRelRefCubeCellPatternA.matcher(name)
         assertFalse(m.find())
 

@@ -25,7 +25,7 @@ import java.lang.reflect.Modifier
  *         limitations under the License.
  */
 @CompileStatic
-class TestStringUrlCmd extends NCubeBaseTest
+class TestStringUrlCmd
 {
     @Test
     void testDefaultConstructorIsPrivateForSerialization()

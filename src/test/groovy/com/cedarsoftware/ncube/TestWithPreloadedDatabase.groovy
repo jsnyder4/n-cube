@@ -1,11 +1,13 @@
 package com.cedarsoftware.ncube
 
+
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.springframework.boot.test.context.SpringBootTest
@@ -31,7 +33,6 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT, properties=['ncube.accepted.domains=org.apache.', 'ncube.allow.mutable.methods=true'])
 @CompileStatic
 class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
 {
@@ -43,7 +44,16 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     private static final ApplicationID BRANCH3 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.29.0', ReleaseStatus.SNAPSHOT.name(), 'FOO')
 
     @Before
-    void setup() {}
+    void setup()
+    {
+        (ncubeRuntime as NCubeRuntime).acceptedDomains = 'org.apache.'
+    }
+
+    @After
+    void tearDown()
+    {
+        (ncubeRuntime as NCubeRuntime).acceptedDomains = null
+    }
 
     @Test
     void testCoordinateNotFoundExceptionThrown()

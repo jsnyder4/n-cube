@@ -2,7 +2,6 @@ package com.cedarsoftware.ncube
 
 import org.junit.Before
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.TestWithPreloadedDatabase.appId
@@ -27,7 +26,6 @@ import static org.junit.Assert.fail
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TestUrlClassLoader extends NCubeCleanupBaseTest
 {
     @Before

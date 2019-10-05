@@ -1,8 +1,10 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.config.NCubeConfiguration
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.TestPropertySource
 
 import java.lang.reflect.Method
 
@@ -28,7 +30,6 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties = [])
 @CompileStatic
 class AdviceTest extends NCubeCleanupBaseTest
 {

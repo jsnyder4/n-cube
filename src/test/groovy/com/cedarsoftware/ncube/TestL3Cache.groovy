@@ -1,10 +1,10 @@
 package com.cedarsoftware.ncube
 
+
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.CompilationFailedException
 import org.junit.*
-import org.springframework.boot.test.context.SpringBootTest
 
 import java.lang.reflect.Field
 
@@ -28,7 +28,6 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT, properties = ['ncube.accepted.domains=org.apache.'])
 @CompileStatic
 class TestL3Cache extends NCubeCleanupBaseTest
 {
@@ -56,6 +55,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @Before
     void setUp()
     {
+        (ncubeRuntime as NCubeRuntime).acceptedDomains = 'org.apache.'   // Override value in spring environment
         sourcesDir = new File("${targetDir.path}/TestL3Cache-sources")
         classesDir = new File("${targetDir.path}/TestL3Cache-classes")
         singleDir = new File ("${targetDir.path}/single-l3cache")
@@ -79,6 +79,7 @@ class TestL3Cache extends NCubeCleanupBaseTest
     @After
     void tearDown()
     {
+        (ncubeRuntime as NCubeRuntime).acceptedDomains = null  // restored value from Spring environment
         GroovyBase.generatedSourcesDirectory = savedSourcesDir
         CdnClassLoader.generatedClassesDirectory = savedClassesDir
         super.teardown()

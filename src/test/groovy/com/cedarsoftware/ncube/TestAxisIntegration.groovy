@@ -1,14 +1,10 @@
 package com.cedarsoftware.ncube
 
+
 import groovy.transform.CompileStatic
 import org.junit.Test
 
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_AXIS_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_BRANCH
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_CUBE_NAME
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_STATUS
-import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_VERSION
+import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static org.junit.Assert.fail
 
 @CompileStatic

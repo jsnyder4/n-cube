@@ -23,7 +23,7 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  *         limitations under the License.
  */
 @CompileStatic
-class TestDynamicProperties extends NCubeBaseTest
+class TestDynamicProperties
 {
     public static Map getCprMap(String prop, String bu, String env)
     {

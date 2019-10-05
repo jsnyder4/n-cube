@@ -22,7 +22,7 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestMetaProperties extends NCubeBaseTest
+class TestMetaProperties
 {
     @Test
     void testComplexMetaProperties()

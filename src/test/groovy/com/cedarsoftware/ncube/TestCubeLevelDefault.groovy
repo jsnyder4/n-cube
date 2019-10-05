@@ -23,7 +23,7 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  *         limitations under the License.
  */
 @CompileStatic
-class TestCubeLevelDefault extends NCubeBaseTest
+class TestCubeLevelDefault
 {
     @Test
     void testDefaultExpression()

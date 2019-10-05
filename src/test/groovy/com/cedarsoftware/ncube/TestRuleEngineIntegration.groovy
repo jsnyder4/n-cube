@@ -1,8 +1,8 @@
 package com.cedarsoftware.ncube
 
+
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
@@ -25,7 +25,6 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(properties=[])
 @CompileStatic
 class TestRuleEngineIntegration extends NCubeCleanupBaseTest
 {

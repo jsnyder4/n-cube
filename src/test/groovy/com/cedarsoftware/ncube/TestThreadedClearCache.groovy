@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 import java.security.SecureRandom
 import java.util.concurrent.CountDownLatch
@@ -31,7 +30,6 @@ import static org.junit.Assert.assertEquals
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 @CompileStatic
 class TestThreadedClearCache extends NCubeCleanupBaseTest
 {

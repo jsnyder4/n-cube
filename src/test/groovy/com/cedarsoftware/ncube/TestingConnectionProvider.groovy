@@ -1,5 +1,7 @@
 package com.cedarsoftware.ncube
 
+import groovy.transform.CompileStatic
+
 import java.sql.Connection
 import java.sql.DriverManager
 
@@ -20,13 +22,14 @@ import java.sql.DriverManager
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@CompileStatic
 class TestingConnectionProvider implements JdbcConnectionProvider
 {
     private String databaseUrl
     private String user
     private String password
 
-    public TestingConnectionProvider(String driverClass, String databaseUrl, String user, String password)
+    TestingConnectionProvider(String driverClass, String databaseUrl, String user, String password)
     {
         if (driverClass != null)
         {
@@ -45,7 +48,7 @@ class TestingConnectionProvider implements JdbcConnectionProvider
         this.password = password
     }
 
-    public Connection getConnection()
+    Connection getConnection()
     {
         try
         {
@@ -57,7 +60,7 @@ class TestingConnectionProvider implements JdbcConnectionProvider
         }
     }
 
-    public void releaseConnection(Connection c)
+    void releaseConnection(Connection c)
     {
         try
         {

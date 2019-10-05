@@ -4,12 +4,10 @@ import com.cedarsoftware.config.NCubeConfiguration
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.junit4.SpringRunner
+import org.springframework.test.context.TestPropertySource
 
 import java.lang.reflect.Method
 
@@ -32,13 +30,13 @@ import java.lang.reflect.Method
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
-@SpringBootTest(properties = ['ncube.allow.mutable.methods=false'])
+@ContextConfiguration(classes = [NCubeApplication, NCubeConfiguration])
+@TestPropertySource(properties = ['ncube.allow.mutable.methods=false', 'ncube.accepted.domains='])
 @ActiveProfiles(profiles = ['ncube-client'])
+@DirtiesContext
 @CompileStatic
 @Ignore // Undo to run this test by itself.  This test messes up the Spring App Context for the rests of the tests.
-class TestRuntimeCaching
+class TestRuntimeCaching extends NCubeBaseTest
 {
     @Test
     void testBar()

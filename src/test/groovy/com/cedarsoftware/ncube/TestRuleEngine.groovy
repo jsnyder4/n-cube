@@ -1,11 +1,11 @@
 package com.cedarsoftware.ncube
 
+
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static org.junit.Assert.*
@@ -29,7 +29,6 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@SpringBootTest(properties=['ncube.accepted.domains=org.apache.'])
 @CompileStatic
 class TestRuleEngine extends NCubeBaseTest
 {

@@ -20,8 +20,6 @@ import static SnapshotPolicy.*
 import static com.cedarsoftware.ncube.ApplicationID.testAppId
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 import static org.junit.Assert.*
-import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_INCLUDE_CUBE_DATA
-import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_CHECK_SHA1
 
 @CompileStatic
 class TestNCubeRuntimeFileCaching extends NCubeBaseTest
@@ -44,6 +42,8 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     @Before
     void setup()
     {
+        // Otherwise NPE - this test does not setup spring fully, so Spring Environment is null inside the NCubeRuntime.
+        (ncubeRuntime as NCubeRuntime).readonly = true
         cubeFileNameMap.clear()
         cubeFileNameMap.putAll(['TestBranch':'test.branch.1','TestAge':'test.branch.age.1'])
 
@@ -60,7 +60,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
                 {
                     ApplicationID appId = (ApplicationID) methodArgs[0]
                     String cubeName = (String) methodArgs[1]
-                    Map options = (Map) methodArgs[2] ?: [(SEARCH_INCLUDE_CUBE_DATA):true]
+                    Map options = (Map) methodArgs[2] ?: [(NCubeConstants.SEARCH_INCLUDE_CUBE_DATA):true] as Map
 
                     String fileName = cubeFileNameMap[cubeName]
                     if (!fileName)
@@ -77,9 +77,9 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
                     dto.branch = appId.branch
                     dto.name = (String) cubeName
                     dto.sha1 = resultCube.sha1()
-                    if (options[SEARCH_INCLUDE_CUBE_DATA])
+                    if (options[NCubeConstants.SEARCH_INCLUDE_CUBE_DATA])
                     {
-                        dto.bytes = options[SEARCH_CHECK_SHA1]==resultCube.sha1 ? (byte[])null : resultCube.toFormattedJson().bytes
+                        dto.bytes = options[NCubeConstants.SEARCH_CHECK_SHA1]==resultCube.sha1 ? (byte[])null : resultCube.toFormattedJson().bytes
                     }
                     return dto
                 }
@@ -93,12 +93,16 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
 
         cacheRuntime = new NCubeRuntime(callableBean, cacheManager, false, MOCK_BEAN_NAME)
         cacheRuntime.localFileCache = new LocalFileCache(cacheDir.path,RELEASE_ONLY)
+        
+        // Otherwise NPE - this test does not setup spring fully, so Spring Environment is null inside the NCubeRuntime.
+        cacheRuntime.readonly = true
         cacheClient = cacheRuntime
     }
 
     @After
     void tearDown()
     {
+        (ncubeRuntime as NCubeRuntime).readonly = null
     }
 
     @Test

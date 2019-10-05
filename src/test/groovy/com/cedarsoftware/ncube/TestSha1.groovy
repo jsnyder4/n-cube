@@ -23,7 +23,7 @@ import org.junit.Test
  *         limitations under the License.
  */
 @CompileStatic
-class TestSha1 extends NCubeBaseTest
+class TestSha1
 {
     @Test
     void testSha1CellColumnMattersSorted()

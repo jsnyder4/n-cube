@@ -5,12 +5,12 @@ import com.cedarsoftware.util.StringUtilities
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestContextManager
 
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -37,7 +37,6 @@ import static org.junit.Assert.assertNotNull
  *         limitations under the License.
  */
 @RunWith(Parameterized.class)
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TestThreading extends NCubeCleanupBaseTest
 {
     // TestContextManager is used because @RunWith(Parameterized.class) is overriding @RunWith(SpringRunner.class)

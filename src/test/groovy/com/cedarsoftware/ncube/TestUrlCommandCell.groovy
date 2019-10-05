@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnRouter
+import com.cedarsoftware.util.TestUtil
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -154,7 +155,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         catch (Throwable e)
         {
             e = e.cause
-            assertContainsIgnoreCase(e.message, 'invalid url in cell', 'unable to resolve', 'sys.classpath', 'qtp://files/foo.html')
+            TestUtil.assertContainsIgnoreCase(e.message, 'invalid url in cell', 'unable to resolve', 'sys.classpath', 'qtp://files/foo.html')
         }
 
         coord['content.name'] = 'badRelative'

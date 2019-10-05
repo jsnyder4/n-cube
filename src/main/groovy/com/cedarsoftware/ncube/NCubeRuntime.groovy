@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
+import org.springframework.core.env.Environment
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -46,7 +47,6 @@ import static SnapshotPolicy.FORCE
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-
 @CompileStatic
 class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestClient, DisposableBean
 {
@@ -60,12 +60,19 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     protected volatile ConcurrentMap<String, Object> systemParams = null
     protected final CallableBean bean
     private volatile boolean alive = true
-    private final boolean allowMutableMethods
     private final String beanName
     @Value('${ncube.cache.refresh.min:75}') int cacheRefreshIntervalMin
 
     @Autowired(required = false)
     private LocalFileCache localFileCache
+
+    @Autowired
+    Environment env
+
+    // Test overrideable. When set to null, these values reflect the spring environment settings.
+    // When set to not-null, the value set (by a test) is the value used.
+    private Boolean allowMutable = null
+    private String acceptedDomains = null
 
     private final ThreadLocal<GroovyShell> groovyShellThreadLocal = new ThreadLocal<GroovyShell>() {
         GroovyShell initialValue()
@@ -92,7 +99,6 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager
         this.adviceCacheManager = new GCacheManager()
-        this.allowMutableMethods = allowMutableMethods
         if (StringUtilities.hasContent(beanName))
         {
             this.beanName = beanName
@@ -148,9 +154,72 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         alive = false
     }
 
+    /**
+     * @return String of accepted domains in format acceptable for grapes.  Example: "org.apache."  This method
+     * returns the value set in Spring context when the member variable is null, otherwise the member variable
+     * 'acceptedDomains' value is returned.  This allows tests to override it, and then restore it (by setting
+     * this value to null).  Spring environment property of 'ncube.accepted.domains'
+     */
+    String getAcceptedDomains()
+    {
+        if (acceptedDomains == null)
+        {
+            return env.getProperty('ncube.accepted.domains', (String)null)
+        }
+        else
+        {
+            return acceptedDomains
+        }
+    }
+
+    /**
+     * Override the acceptedDomains property from the Spring context.  The property is 'ncube.accepted.domains'.
+     * @param domains String list of accepted domains to force (e.g. "org.apache."), or null to have the
+     * values configured in Spring be returned.
+     */
+    void setAcceptedDomains(String domains)
+    {
+        if (domains == null)
+        {
+            acceptedDomains = null
+        }
+        else
+        {
+            acceptedDomains = domains
+        }
+    }
+
+    /**
+     * @return boolean true if running in readOnly mode (no mutable methods allowed to be called), or false if
+     * running in !readOnly mode, or allow mutable methods to be called.
+     */
     boolean isReadonly()
     {
-        return !allowMutableMethods
+        if (allowMutable == null)
+        {
+            return !env.getProperty('ncube.allow.mutable.methods', (String)'true')
+        }
+        else
+        {
+            return !allowMutable
+        }
+    }
+
+    /**
+     * @param state Boolean - 3 state value: null = use Spring Environment property, true = readOnly (do not allow
+     * mutable methods to be called), false = !readOnly or allow mutable methods to be called.  This should only
+     * be called by testing code.
+     */
+    void setReadonly(Boolean state)
+    {
+        if (state == null)
+        {
+            allowMutable = null
+        }
+        else
+        {
+            allowMutable = !state
+        }
     }
 
     Map getMenu(ApplicationID appId)
@@ -884,7 +953,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     private void verifyAllowMutable(String methodName)
     {
-        if (!allowMutableMethods)
+        if (readonly)
         {
             throw new IllegalStateException("${MUTABLE_ERROR} ${methodName}()")
         }
@@ -1257,8 +1326,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             Cache cubeCache = ncubeCacheManager.getCache(ncube.applicationID.cacheKey())
             String loName = ncube.name.toLowerCase()
 
-            if (allowMutableMethods || force)
-            {
+            if (!readonly || force)
+            {   // !readonly means 'allow mutable methods to be called.'
                 cubeCache.put(loName, ncube)
             }
             else

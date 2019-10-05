@@ -40,13 +40,13 @@ import org.springframework.web.filter.RequestContextFilter
 @SpringBootApplication()
 class NCubeApplication
 {
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeApplication.class)
+    private static final Logger LOG = LoggerFactory.getLogger(NCubeApplication)
 
     static void main(String[] args)
     {
         try
         {
-            SpringApplication.run(NCubeApplication.class, args)
+            SpringApplication.run(NCubeApplication, args)
         }
         catch (Throwable t)
         {

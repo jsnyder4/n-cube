@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+
 import groovy.transform.CompileStatic
 import org.junit.Assert
 import org.junit.Test

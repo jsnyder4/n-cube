@@ -2,14 +2,15 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.config.NCubeConfiguration
 import com.cedarsoftware.controller.NCubeController
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Ignore
 import org.junit.runner.RunWith
-import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
@@ -34,7 +35,9 @@ import static org.junit.Assert.assertTrue
  */
 @CompileStatic
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = [NCubeApplication.class, NCubeConfiguration.class], initializers = ConfigFileApplicationContextInitializer.class)
+@ContextConfiguration(classes = [NCubeApplication, NCubeConfiguration])
+@TestPropertySource(properties = ['ncube.allow.mutable.methods=true', 'ncube.accepted.domains='])
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 //@ActiveProfiles(profiles = [NCubeConstants.NCUBE_CLIENT_BEAN])  // requires server running
 @ActiveProfiles(profiles = ['combined-server','test-database'])
 @Ignore
@@ -100,7 +103,11 @@ class NCubeBaseTest implements NCubeConstants
      */
     static NCube createRuntimeCubeFromResource(ApplicationID appId = ApplicationID.testAppId, String fileName)
     {
-        String json = NCubeRuntime.getResourceAsString(fileName).replaceAll('\\$\\{baseRemoteUrl\\}',baseRemoteUrl)
+        String json = NCubeRuntime.getResourceAsString(fileName)
+        if (StringUtilities.hasContent(baseRemoteUrl))
+        {
+            json = json.replaceAll('\\$\\{baseRemoteUrl\\}',baseRemoteUrl)
+        }
         NCube ncube = NCube.fromSimpleJson(json)
         ncube.applicationID = appId
         ncubeRuntime.addCube(ncube)

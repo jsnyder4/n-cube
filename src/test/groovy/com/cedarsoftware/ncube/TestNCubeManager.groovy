@@ -33,7 +33,6 @@ import static org.junit.Assert.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-
 @CompileStatic
 class TestNCubeManager extends NCubeCleanupBaseTest
 {
@@ -1294,7 +1293,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
         assert history[0].notes == 'notes follow'
-        assertNotNull history[0].toString()
+        assertNotNull(history[0].toString())
 
         Axis oddAxis = NCubeBuilder.getOddAxis(true)
         cube.addAxis(oddAxis)
