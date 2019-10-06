@@ -25,7 +25,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
-import org.apache.http.util.EntityUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -176,7 +175,7 @@ class JsonHttpProxy implements CallableBean
             
             if (envelope.exception != null)
             {
-                throw envelope.exception
+                throw (Exception)envelope.exception
             }
             if (!envelope.status)
             {
