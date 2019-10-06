@@ -1,0 +1,8 @@
+# Comments
+
+POST http://localhost:9000/ncube/cmd/ncubeController/getAppNames
+Content-Type: application/json
+
+[]
+
+###

@@ -179,14 +179,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
      */
     void setAcceptedDomains(String domains)
     {
-        if (domains == null)
-        {
-            acceptedDomains = null
-        }
-        else
-        {
-            acceptedDomains = domains
-        }
+        acceptedDomains = domains
     }
 
     /**
@@ -1195,7 +1188,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                 {
                     if (element.fileName)
                     {
-                        s.append("""${element.fileName}:${element.lineNumber}""")
+                        s.append("${element.fileName}:${element.lineNumber}")
                     }
                     else
                     {

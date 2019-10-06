@@ -1,0 +1,8 @@
+# Comments
+
+POST http://localhost:9000/ncube/cmd/ncubeController/isCubeUpToDate
+Content-Type: application/json
+
+[{"app":"DEFAULT_APP","version":"1.0.0","status":"SNAPSHOT","branch":"john"},"x"]
+
+###
