@@ -1,6 +1,7 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -8,6 +9,7 @@ import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.google.common.util.concurrent.AtomicDouble
+import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -1866,7 +1868,7 @@ class NCubeController implements NCubeConstants
     private static Set<Long> getCoordinate(Object[] ids)
     {
         // Convert String column IDs to Longs
-        Set<Long> colIds = new HashSet<>()
+        Set<Long> colIds = new THashSet()
         for (Object id : ids)
         {
             colIds.add(Converter.convertToLong(id))

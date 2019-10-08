@@ -5,6 +5,8 @@ import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.StringUtilities
+import gnu.trove.THashMap
+import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 
 import java.util.regex.Matcher
@@ -166,7 +168,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 			}
 
 			// gather traits for current field that haven't already been populated
-			Map<String, Object> coord = new HashMap<>(scope);
+			Map<String, Object> coord = new THashMap<>(scope);
 			coord.put(axisName,fieldName);
 			loadTraitsForField(classCube, traitNames, fieldTraits, coord, output);
 
@@ -209,12 +211,12 @@ class RpmVisualizerHelper extends VisualizerHelper
 	{
 		String classType = cubeType==RPM_CLASS ? "RpmClass" : "RpmEnum";
 		LinkedList<String> defsToProcess = new LinkedList<String>();
-		Set<String> visited = new HashSet<String>();	// list of visited definitions pulled from traits using class_name or class_name[field_name] format
-		Set<String> fqVisited = new HashSet<String>();	// list of visited definitions which have been fully qualified, e.g. class_name[field_name]
+		Set<String> visited = new THashSet<String>();	// list of visited definitions pulled from traits using class_name or class_name[field_name] format
+		Set<String> fqVisited = new THashSet<String>();	// list of visited definitions which have been fully qualified, e.g. class_name[field_name]
 		final String exceptionFormat = "%s for field='%s' of %s='%s': definition(s)='%s'";
 
 		defsToProcess.add(masterDefinition);
-		while (!defsToProcess.isEmpty()) {
+		while (!defsToProcess.empty) {
 			String fieldToMerge = defsToProcess.pop();
 			visited.add(fieldToMerge);
 
@@ -497,7 +499,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 			return;
 		}
 
-		Map<String, Object> coord = new HashMap<>(scope);
+		Map<String, Object> coord = new THashMap<>(scope);
 		coord.put(TRAIT_AXIS, R_EXISTS);
 		for (Column c : classCube.getAxis(axisName).getColumns()) {
 			String fieldName = (String) c.getValue();

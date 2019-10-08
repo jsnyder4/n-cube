@@ -2,6 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.StringUtilities
 import com.google.common.base.Joiner
+import gnu.trove.THashMap
 import groovy.transform.CompileStatic
 import ncube.grv.exp.NCubeGroovyExpression
 import org.slf4j.Logger
@@ -130,7 +131,7 @@ class ${className} extends ${expClassName}
         {
             StringBuilder text = new StringBuilder()
             Map<String, Object> input = getInput(ctx)
-            Map<String, Object> copy = new HashMap<>(input)
+            Map<String, Object> copy = new THashMap<>(input)
             copy[SYS_PROPERTY] = EXP_IMPORTS
             Object importList = prototype.getCell(copy)
             if (importList instanceof Collection)
@@ -156,7 +157,7 @@ class ${className} extends ${expClassName}
     {
         try
         {
-            Map input = new HashMap(getInput(ctx))
+            Map input = new THashMap(getInput(ctx))
             input[SYS_PROPERTY] = EXP_CLASS
             Object className = prototype.getCell(input)
             if (className instanceof String && StringUtilities.hasContent((String)className))

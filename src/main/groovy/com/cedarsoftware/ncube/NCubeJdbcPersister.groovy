@@ -11,6 +11,7 @@ import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
+import gnu.trove.THashSet
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
@@ -1745,7 +1746,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         map.tenant = padTenant(c, appId.tenant)
         map.sysinfo = SYS_INFO
         Sql sql = getSql(c)
-        Set<String> branches = new HashSet<>()
+        Set<String> branches = new THashSet<>()
 
         sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND n_cube_nm = :sysinfo", map, { ResultSet row ->
             branches.add(row.getString('branch_id'))
@@ -1828,7 +1829,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
             if (includeFilter || excludeFilter)
             {
                 Matcher tagMatcher = cubeData =~ /"$CUBE_TAGS"\s*:\s*(?:"|\{.*?value":")?(?<tags>.*?)"/
-                Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new HashSet<String>()
+                Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new THashSet<String>()
 
                 Closure tagsMatchFilter = { Set<String> filter ->
                     Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)

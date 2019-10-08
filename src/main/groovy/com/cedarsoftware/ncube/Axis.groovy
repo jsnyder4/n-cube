@@ -8,6 +8,9 @@ import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
 import com.google.common.collect.TreeRangeMap
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import gnu.trove.TLongObjectHashMap
 import groovy.transform.CompileStatic
 
 import java.security.SecureRandom
@@ -66,8 +69,8 @@ class Axis
     private boolean isRef
 
     // Internal indexes
-    private final transient Map<Long, Column> idToCol = new HashMap<>()
-    private final transient Map<String, Column> colNameToCol = new CaseInsensitiveMap<>()
+    private final transient TLongObjectHashMap<Column> idToCol = new TLongObjectHashMap<>()
+    private final transient Map<String, Column> colNameToCol = new TreeMap<>(String.CASE_INSENSITIVE_ORDER)
     private final transient SortedMap<Integer, Column> displayOrder = new TreeMap<>()
     private transient NavigableMap<Comparable, Column> valueToCol
     protected transient RangeMap<Comparable, Column> rangeToCol = TreeRangeMap.create()
@@ -215,7 +218,7 @@ class Axis
             reloadReferenceAxis(cubeName, newMetaProperties)
         }
 
-        Set<Long> colIds = new HashSet()
+        Set<Long> colIds = new THashSet()
         columns.each { Column column ->
             colIds.add(column.id)
         }
@@ -865,7 +868,10 @@ class Axis
     {
         // Remove from col id to column map
         idToCol.remove(col.id)
-        colNameToCol.remove(col.columnName)
+        if (col.columnName)
+        {
+            colNameToCol.remove(col.columnName)
+        }
         displayOrder.remove(col.displayOrder)
         if (col.value == null || type == AxisType.RULE)
         {   // Default Column is not indexed by value/range (null), so we are done.
@@ -1261,7 +1267,8 @@ class Axis
             value = promoteValue(valueType, value)
             if (!columnsWithoutDefault.empty)
             {
-                Column col = (Column) idToCol.values().first()
+                Object[] values = idToCol.values
+                Column col = (Column) values[0]
                 if (value.class != col.value.class)
                 {
                     throw new IllegalArgumentException("Value '${value.class.name}' cannot be added to axis '${name}' where the values are of type: ${col.value.class.name}")

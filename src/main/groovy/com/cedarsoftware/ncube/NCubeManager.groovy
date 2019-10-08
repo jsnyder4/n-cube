@@ -8,6 +8,7 @@ import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
+import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -1068,7 +1069,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private static Set<ApplicationID> getReferenceAxesAppIds(Object[] axisRefs, boolean source)
     {
-        Set<ApplicationID> uniqueAppIds = new HashSet()
+        Set<ApplicationID> uniqueAppIds = new THashSet()
         for (Object obj : axisRefs)
         {
             AxisRef axisRef = obj as AxisRef
@@ -1584,7 +1585,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     private Set<String> getRolesForUser(NCube userGroups)
     {
         Axis role = userGroups.getAxis(AXIS_ROLE)
-        Set<String> groups = new HashSet()
+        Set<String> groups = new THashSet<>()
         for (Column column : role.columns)
         {
             if (userGroups.getCell([(AXIS_ROLE): column.value, (AXIS_USER): getUserId()]))

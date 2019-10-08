@@ -4,6 +4,8 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.DeepEquals
 import com.cedarsoftware.util.StringUtilities
+import gnu.trove.THashMap
+import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 /**
  * This class is used for comparing n-cubes, generating delta objects that
@@ -663,8 +665,8 @@ class DeltaProcessor
      */
     private static <T> Map<Map<String, Object>, T> getCellDelta(NCube<T> thisCube, NCube<T> other)
     {
-        Map<Map<String, Object>, T> delta = new HashMap<>()
-        Set<Map<String, Object>> copyCells = new HashSet<>()
+        Map<Map<String, Object>, T> delta = new THashMap<>()
+        Set<Map<String, Object>> copyCells = new THashSet<>()
 
         thisCube.cellMap.each { Set<Long> colIds, T value ->
             copyCells.add(thisCube.getCoordinateFromIds(colIds))

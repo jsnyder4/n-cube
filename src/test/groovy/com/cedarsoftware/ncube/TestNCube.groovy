@@ -936,10 +936,10 @@ class TestNCube extends NCubeBaseTest
         }
         catch (CoordinateNotFoundException e)
         {
-            assertTrue(e.message.contains("not found"))
+            assertTrue(e.message.contains('not found'))
             assertEquals(ncube.name, e.cubeName)
             assertEquals(coord, e.coordinate)
-            assertEquals("Gender", e.axisName)
+            assertTrue(['Age', 'Gender'].contains(e.axisName))
             assertNull(e.value)
         }
 
@@ -1011,7 +1011,7 @@ class TestNCube extends NCubeBaseTest
             assertTrue(e.message.contains("not found on axis"))
             assertEquals(ncube.name, e.cubeName)
             assertEquals(coord, e.coordinate)
-            assertEquals("Trailers", e.axisName)
+            assertTrue(['Trailers', 'Vehicles', 'BU'].contains(e.axisName))
             assertNull(e.value)
 
         }

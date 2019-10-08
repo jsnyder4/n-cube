@@ -1,35 +1,22 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.CommandCellException
-import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
-import com.cedarsoftware.ncube.exception.InvalidCoordinateException
-import com.cedarsoftware.ncube.exception.RuleJump
-import com.cedarsoftware.ncube.exception.RuleStop
+import com.cedarsoftware.ncube.exception.*
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
-import com.cedarsoftware.util.AdjustableGZIPOutputStream
-import com.cedarsoftware.util.ByteUtilities
-import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.ExceptionUtilities
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.MapUtilities
-import com.cedarsoftware.util.ReflectionUtils
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.TrackingMap
+import com.cedarsoftware.ncube.util.LongHashSet
+import com.cedarsoftware.util.*
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.util.io.MetaUtils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
+import gnu.trove.THashSet
+import gnu.trove.TLongObjectHashMap
 import groovy.transform.CompileStatic
-import org.checkerframework.checker.units.qual.K
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.util.FastByteArrayOutputStream
@@ -98,7 +85,7 @@ class NCube<T>
     private String name
     private String sha1
     private final Map<String, Axis> axisList = new CaseInsensitiveMap<>()
-    private final Map<Long, Axis> idToAxis = new HashMap<>(16, 0.8f)
+    private final TLongObjectHashMap idToAxis = new TLongObjectHashMap<>()
     protected final Map<Set<Long>, T> cells = new CellMap<T>()
     private T defaultCellValue
     private final Map<String, Advice> advices = [:]
@@ -1477,7 +1464,7 @@ class NCube<T>
             }
         }
 
-        Set<Long> boundColumns = [] as Set
+        Set<Long> boundColumns = new LongHashSet<>()
         for (String axisName : otherAxisNames)
         {
             Axis otherAxis = getAxis(axisName)
@@ -1700,9 +1687,9 @@ class NCube<T>
     {
         if (coordinate == null)
         {
-            coordinate = new LinkedHashSet<>()
+            coordinate = new LongHashSet()
         }
-        Set<Long> ids = new LinkedHashSet<>()
+        Set<Long> ids = new LongHashSet()
         Iterator<Long> i = coordinate.iterator()
         Map<Long, Long> axisToCoord = [:]
 
@@ -1762,7 +1749,7 @@ class NCube<T>
 
         for (coord in idArrays)
         {
-            Set<Long> key = new HashSet<>()
+            Set<Long> key = new THashSet<>()
             for (item in coord)
             {
                 key.add(Converter.convertToLong(item))
@@ -1990,7 +1977,7 @@ class NCube<T>
             safeCoord = (coordinate == null) ? new CaseInsensitiveMap<>() : new CaseInsensitiveMap<>(coordinate)
         }
 
-        Set<Long> ids = new LinkedHashSet<>()
+        Set<Long> ids = new LongHashSet()
         Iterator<Axis> i = axisList.values().iterator()
 
         while (i.hasNext())
@@ -2334,7 +2321,7 @@ class NCube<T>
      */
     Axis getAxisFromColumnId(long id, boolean columnMustExist = true)
     {
-        Axis axis = idToAxis[id.intdiv(Axis.BASE_AXIS_ID).longValue()]
+        Axis axis = idToAxis.get(id.intdiv(Axis.BASE_AXIS_ID).longValue())
         if (axis == null)
         {
             return null
@@ -2448,7 +2435,7 @@ class NCube<T>
         }
 
         axisList[axisName] = axis
-        idToAxis[axis.id] = axis
+        idToAxis.put(axis.id, axis)
         clearSha1()
     }
 
@@ -3882,7 +3869,7 @@ class NCube<T>
     {
         Deque<Object> stack = new LinkedList<>()
         stack.addFirst(value)
-        Set<Object> visited = new HashSet<>()
+        Set<Object> visited = new THashSet<>()
 
         while (!stack.empty)
         {

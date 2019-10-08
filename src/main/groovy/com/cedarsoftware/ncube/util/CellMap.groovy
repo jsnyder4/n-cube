@@ -1,9 +1,10 @@
 package com.cedarsoftware.ncube.util
 
+import gnu.trove.THashMap
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class CellMap<V> extends HashMap<Set<Long>, V>
+class CellMap<V> extends THashMap<Set<Long>, V>
 {
     CellMap() { }
 

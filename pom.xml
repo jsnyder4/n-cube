@@ -81,6 +81,7 @@
         <version.mysql.connector.java>8.0.17</version.mysql.connector.java>
         <version.hsqldb>2.5.0</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>
+        <version.trove4j>1.0.20190514</version.trove4j>
         <version.plugin.assembly>3.1.1</version.plugin.assembly>
         <version.plugin.maven-compiler>3.8.1</version.plugin.maven-compiler>
         <version.plugin.build-helper>3.0.0</version.plugin.build-helper>
@@ -453,6 +454,12 @@
             <version>${version.java-util}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jetbrains.intellij.deps</groupId>
+            <artifactId>trove4j</artifactId>
+            <version>${version.trove4j}</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.apache.ivy</groupId>
             <artifactId>ivy</artifactId>

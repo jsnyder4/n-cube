@@ -110,11 +110,11 @@ class TestAllCellsInBigCube
     }
 
     // Uncomment for mapReduce() performance testing
-    @Ignore
     @Test
+    @Ignore
     void testMapReduceLarge()
     {
-        final int timesToRun = 20
+        final int timesToRun = 30
         long start = System.nanoTime()
         NCube ncube = new NCube("bigCube")
         Axis row = new Axis('row', AxisType.DISCRETE, AxisValueType.LONG, false)
@@ -215,13 +215,19 @@ class TestAllCellsInBigCube
         NCube<Boolean> ncube = new NCube("bigCube")
         Axis axis = new Axis("axis", AxisType.DISCRETE, AxisValueType.LONG, false)
         ncube.addAxis(axis)
-        int max = 3000000        // 10M - largest tested thus far (using trove4j)
+        int max = 5000000        // 10M - largest tested thus far (using trove4j)
+        println 'adding columns...'
         for (int j = 0; j < max; j++)
         {
             ncube.addColumn("axis", j as Comparable)
+            if (j % 1000000 == 0)
+            {
+                println j
+            }
         }
         Map coord = [:]
 
+        println 'setting cells...'
         for (int e = 0; e < max; e++)
         {
             coord.axis = e
@@ -239,14 +245,14 @@ class TestAllCellsInBigCube
         double diff = (stop - start) / 1000000.0
         println("time to test large 1D = " + diff)
 
-        axis = new Axis("gender", AxisType.DISCRETE, AxisValueType.STRING, true)
-        axis.addColumn('M')
-        axis.addColumn('F')
-        start = System.nanoTime()
-        ncube.addAxis(axis)
-        stop = System.nanoTime()
-        diff = (stop - start) / 1000000.0
-        println("time to add axis to big cube = " + diff)
+//        axis = new Axis("gender", AxisType.DISCRETE, AxisValueType.STRING, true)
+//        axis.addColumn('M')
+//        axis.addColumn('F')
+//        start = System.nanoTime()
+//        ncube.addAxis(axis)
+//        stop = System.nanoTime()
+//        diff = (stop - start) / 1000000.0
+//        println("time to add axis to big cube = " + diff)
     }
 
     // Uncomment for memory size testing

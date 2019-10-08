@@ -10,6 +10,8 @@ import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.visualizer.RpmVisualizer
 import com.cedarsoftware.visualizer.Visualizer
+import gnu.trove.THashMap
+import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 import ncube.grv.method.NCubeGroovyController
 import org.slf4j.Logger
@@ -778,7 +780,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             throw new IllegalStateException("Missing ${SYS_BOOTSTRAP} cube in the 0.0.0 version for the app: ${app}")
         }
 
-        Map copy = new HashMap(coord)
+        Map copy = new THashMap(coord)
         ApplicationID bootAppId = (ApplicationID) bootCube.getCell(copy, [:])
         String version = bootAppId.version
         String status = bootAppId.status
@@ -1507,7 +1509,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         for (Column column : adviceAxis.columns)
         {
-            Map map = sysAdviceCube.getMap([advice: column.value, attribute: new HashSet()])
+            Map map = sysAdviceCube.getMap([advice: column.value, attribute: new THashSet()])
             addAdvice(appId, (String)map.pattern, (Advice)map.expression)
         }
     }
@@ -1582,7 +1584,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
 
         // duplicate input coordinate - no need to validate, that will be done inside cpCube.getCell() later.
-        Map copy = new HashMap(input)
+        Map copy = new THashMap(input)
 
         final String envLevel = SystemUtilities.getExternalVariable('ENV_LEVEL')
         if (StringUtilities.hasContent(envLevel) && !doesMapContainKey(copy, 'env'))
