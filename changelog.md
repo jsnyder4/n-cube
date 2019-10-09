@@ -1,5 +1,6 @@
 ### Revision History
-* 4.4.2-SNAPSHOT
+* 4.5.0
+  * Bug fix: When using `at()`, if the destination cell changed values on the input `Map`, then those changes were reflected on the input `Map` upon return.  Going forward, all calls to `at()`, `go()`, and `use()` all protect input from being modified by the target cell (unpon return) - no side effects to input `Map` keys or values.  Keep in mind, that although the value associated to a key cannot be changed, fields on a structured value-side object could be changed.
   * Bug fix: When compile Groovy cells, the compilation is synchronized on `L2CacheKey` - meaning that all compilation is in parallel except of the exact same cell (SHA-1 of source or SHA-1 of URL).
   * Bug fix: No attempts to re-load a dynamic class can happen now. The compilation synchronization on same code / URL plus check of loaded classes in the `CdnClassLoader` prevent this from happening.  It was benign in `Java 1.8`, but causes JVM crash in `Java 11`.
   * Bug fix: `CommandCellException` is no longer wrapped through each unwinding of the stackframe - meaning shorter log file entries when an exception occurs.  The originating exception is what is wrapped in `CommandCellException`.
