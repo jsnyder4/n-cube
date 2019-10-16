@@ -36,7 +36,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testExpression()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
 
         // These methods are called more than you think.  Internally, these cube call
         // themselves, and those calls too go through the Advice.
@@ -92,7 +92,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testExpressionStopExpressionWithBeforeAdvice()
     {
-        final NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
+        final NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
 
         assert 6 == ncube.getCell([code:'simpleExp'] as Map, [:])
 
@@ -123,7 +123,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testExpressionAfterAdviceThrows()
     {
-        final NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
+        final NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
 
         assert 6 == ncube.getCell([code:'simpleExp'] as Map, [:])
 
@@ -161,7 +161,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testExpressionThatThrows()
     {
-        final NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
+        final NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "simpleJsonExpression.json")
 
         // These methods are called more than you think.  Internally, these cube call
         // themselves, and those calls too go through the Advice.
@@ -209,7 +209,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testAdvice()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
+        final NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
 
         Advice advice1 = new Advice() {
             String getName()
@@ -290,7 +290,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testAdviceSubsetMatching()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'testGroovyMethods.json')
+        final NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'testGroovyMethods.json')
 
         Advice advice1 = new Advice() {
             String getName()
@@ -451,7 +451,7 @@ class AdviceTest extends NCubeCleanupBaseTest
         ncubeRuntime.addAdvice(ApplicationID.testAppId, "*.ba*()", advice1)
 
         // Note: advice is added to the manager *ahead* of any cubes being loaded.
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
 
         Map output = [:]
         Map coord = [method:'foo', state:'OH'] as Map
@@ -516,7 +516,7 @@ class AdviceTest extends NCubeCleanupBaseTest
         // These methods are called more than you think.  Internally, these cube call
         // themselves, and those calls too go through the Advice.
         ncubeRuntime.addAdvice(ApplicationID.testAppId, "*.run()", advice1)
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, "debugExp.json")
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, "debugExp.json")
 
         def output = [:]
         ncube.getCell([Age:10] as Map, output)
@@ -530,7 +530,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testAdviceNoCallForward()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, "testGroovyMethods.json")
 
         Advice advice1 = new Advice() {
             String getName()
@@ -559,7 +559,7 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testMultiAdvice()
     {
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
 
         Advice advice1 = new Advice() {
             String getName()
@@ -676,7 +676,7 @@ class AdviceTest extends NCubeCleanupBaseTest
         // themselves, and those calls too go through the Advice.
         ncubeRuntime.addAdvice(TestNCubeManager.defaultSnapshotApp, "Test*()", advice2)
 
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
 
         def output = [:]
         ncube.getCell([method:'foo', state:'OH'] as Map, output)
@@ -747,7 +747,7 @@ class AdviceTest extends NCubeCleanupBaseTest
         // themselves, and those calls too go through the Advice.
         ncubeRuntime.addAdvice(TestNCubeManager.defaultSnapshotApp, "Test*()", advice2)
 
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "testGroovyMethods.json")
 
         def output = [:]
         try
@@ -779,11 +779,12 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testExpressionFromSysAdvice()
     {
-        ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "sysAdviceTest.json")
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
+        createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, 'sysAdviceTest.json')
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
 
         Map output = [:]
-        ncube.getCell([env_level:'local', protocol:'http',content:'95'] as Map, output)
+        def x = ncube.getCell([env_level:'local', protocol:'http',content:'95'] as Map, output)
+        assert 95 == x
 
         assert ((long)output._atime1) > ((long)output._btime1)
     }
@@ -791,8 +792,8 @@ class AdviceTest extends NCubeCleanupBaseTest
     @Test
     void testMultipleExpressionFromSysAdvice()
     {
-        ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "sysAdviceTest2.json")
-        NCube ncube = ncubeRuntime.getNCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
+        createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "sysAdviceTest2.json")
+        NCube ncube = createRuntimeCubeFromResource(TestNCubeManager.defaultSnapshotApp, "urlWithNcubeRefs.json")
 
         Map output = [:]
         ncube.getCell([env_level:'local', protocol:'http',content:'95'] as Map, output)

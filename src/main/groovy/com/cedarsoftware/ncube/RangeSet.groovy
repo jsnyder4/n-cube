@@ -181,7 +181,7 @@ class RangeSet implements Comparable<RangeSet>
             }
             if (i.hasNext())
             {
-                s.append(", ")
+                s.append(', ')
             }
         }
         return s.toString()

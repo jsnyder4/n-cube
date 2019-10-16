@@ -31,8 +31,8 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
     @Test
     void testTemplateFromUrl()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
 
         def coord = [:]
         coord.put("env_level", "local")
@@ -69,7 +69,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
     void testExpressionFromUrl()
     {
         createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
 
         def coord = [:]
         coord["env_level"] = "local"
@@ -98,8 +98,8 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
     @Test
     void testExpandableUrlRef()
     {
-        ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
-        NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
+        createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlPieces.json')
+        NCube ncube = createRuntimeCubeFromResource(ApplicationID.testAppId, 'urlWithNcubeRefs.json')
 
         def coord = [:]
         coord.put("env_level", "local")

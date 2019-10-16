@@ -20,6 +20,10 @@
     {
       "name": "ncube.datascource",
       "description": "NCube datasource properties."
+    },
+    {
+      "name": "ncube.test",
+      "description": "NCube testing properties."
     }
   ],
   "properties": [
@@ -253,6 +257,13 @@
       "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "JDBC Connection pool name.",
       "defaultValue": "NCube JDBC Connection Pool"
+    },
+    {
+      "name": "ncube.test.baseRemoteUrl",
+      "type": "java.lang.String",
+      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
+      "description": "Set to URL containing files to support JUnit tests.",
+      "defaultValue": ""
     }
   ]
 }

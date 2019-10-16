@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.ImportResource
 import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.filter.GenericFilterBean
@@ -35,7 +34,7 @@ import org.springframework.web.filter.RequestContextFilter
  *         limitations under the License.
  */
 @ImportResource("classpath:config/ncube-beans.xml")
-@SpringBootApplication()
+@SpringBootApplication
 class NCubeApplication
 {
     private static final Logger LOG = LoggerFactory.getLogger(NCubeApplication)
