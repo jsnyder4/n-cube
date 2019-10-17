@@ -446,6 +446,10 @@ abstract class GroovyBase extends UrlCommandCell
 
             URL groovySourceUrl = getActualUrl(ctx)
             ret.source = StringUtilities.createUtf8String(UrlUtilities.getContentFromUrl(groovySourceUrl, true))
+            if (StringUtilities.isEmpty((String)ret.source))
+            {
+                throw new RuntimeException("Unable to fetch groovy source from url: ${groovySourceUrl}, app: ${cube.applicationID}, n-cube: ${cube.name}")
+            }
         }
         else
         {   // inline code

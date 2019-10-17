@@ -10,6 +10,9 @@ import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
+import org.codehaus.groovy.transform.stc.TypeCheckingContext
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -4994,6 +4997,7 @@ class TestNCube extends NCubeBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testNullCell()
     {
         NCube ncube = NCubeBuilder.discrete1D

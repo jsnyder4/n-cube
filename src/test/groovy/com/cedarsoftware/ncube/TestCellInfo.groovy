@@ -322,7 +322,7 @@ class TestCellInfo
     }
 
     @TypeChecked(TypeCheckingMode.SKIP)
-    public void performRecreateAssertion(Object o)
+    void performRecreateAssertion(Object o)
     {
         if (o instanceof Float || o instanceof Double)
         {
@@ -334,12 +334,12 @@ class TestCellInfo
         }
     }
 
-    public static void performArrayRecreateAssertion(byte[] o)
+    static void performArrayRecreateAssertion(byte[] o)
     {
         assertArrayEquals o, new CellInfo(o).recreate() as byte[]
     }
 
-    public static class UnrecognizedConstructorObject
+    static class UnrecognizedConstructorObject
     {
     }
 }

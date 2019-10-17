@@ -1464,7 +1464,7 @@ class NCube<T>
             }
         }
 
-        Set<Long> boundColumns = new LongHashSet<>()
+        Set<Long> boundColumns = new LongHashSet()
         for (String axisName : otherAxisNames)
         {
             Axis otherAxis = getAxis(axisName)

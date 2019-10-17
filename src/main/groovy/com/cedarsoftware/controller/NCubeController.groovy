@@ -1,7 +1,6 @@
 package com.cedarsoftware.controller
 
 import com.cedarsoftware.ncube.*
-import com.cedarsoftware.ncube.util.LongHashSet
 import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.*
@@ -48,8 +47,6 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 @RestController
 class NCubeController implements NCubeConstants
 {
-    @Autowired
-    private MetricsEndpoint metricsEndpoint
     @Autowired
     private InfoEndpoint infoEndpoint
 
@@ -1650,27 +1647,6 @@ class NCubeController implements NCubeConstants
         putIfNotNull(serverStats, 'Tomcat Max Threads', tomcatMaxThreads)
 
         serverStats['----------'] = ''
-//        Map metrics = metricsEndpoint.invoke()
-//
-//        for (Iterator<Map.Entry<String, Object>> it = metrics.entrySet().iterator(); it.hasNext(); )
-//        {
-//            Map.Entry<String, Object> entry = it.next()
-//            String key = entry.key
-//            if (!(key.startsWith('heap') || key.startsWith('nonheap') || key.startsWith('processors') || key.startsWith('mem')))
-//            {
-//                if (showAll)
-//                {
-//                    putIfNotNull(serverStats, key, entry.value)
-//                }
-//                else
-//                {
-//                    if (!(key.startsWith('gauge') || key.startsWith('cache') || key.startsWith('counter')))
-//                    {
-//                        putIfNotNull(serverStats, key, entry.value)
-//                    }
-//                }
-//            }
-//        }
 
         putIfNotNull(results, 'serverStats', serverStats)
         return results

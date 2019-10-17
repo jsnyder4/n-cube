@@ -68,7 +68,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.9.RELEASE</version>  <!-- must be inlined, properties not allowed here -->
+        <version>2.2.0.RELEASE</version>  <!-- must be inlined, properties not allowed here -->
     </parent>
 
     <properties>
@@ -397,11 +397,11 @@
         </dependency>
 
         <!-- Groovy 2.5.0+ -->
-        <!--<dependency>-->
-            <!--<groupId>org.codehaus.groovy</groupId>-->
-            <!--<artifactId>groovy-dateutil</artifactId>-->
-            <!--<version>${groovy.version}</version>-->
-        <!--</dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.codehaus.groovy</groupId>-->
+<!--            <artifactId>groovy-dateutil</artifactId>-->
+<!--            <version>${groovy.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.hsqldb</groupId>

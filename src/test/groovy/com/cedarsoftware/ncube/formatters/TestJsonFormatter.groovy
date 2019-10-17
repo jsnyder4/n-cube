@@ -299,6 +299,8 @@ class TestJsonFormatter extends NCubeBaseTest
         URL u = getClass().classLoader.getResource('')
         File dir = new File(u.file)
         File[] files = dir.listFiles(new TestFilenameFilter())
+        if (files == null)
+            return []
         List<String> names = new ArrayList<>(files.length)
 
         for (File f : files)

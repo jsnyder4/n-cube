@@ -1,6 +1,8 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
@@ -55,6 +57,7 @@ class TestCubeLevelDefault
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testGetCellDefault()
     {
         NCube cube = NCubeBuilder.discrete1DEmpty

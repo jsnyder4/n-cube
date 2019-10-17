@@ -4,6 +4,8 @@ import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
@@ -779,6 +781,7 @@ class TestDelta extends NCubeCleanupBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testDiscreteAddDefaultColumn()
     {
         NCube cube1 = NCubeBuilder.discrete1D
@@ -803,6 +806,7 @@ class TestDelta extends NCubeCleanupBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testDiscreteRemoveDefaultColumn()
     {
         NCube orig = NCubeBuilder.discrete1D
@@ -1329,6 +1333,7 @@ class TestDelta extends NCubeCleanupBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testDefaultCellDelta()
     {
         NCube ncube1 = NCubeBuilder.discrete1D
@@ -2203,6 +2208,7 @@ class TestDelta extends NCubeCleanupBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testChangedFlag()
     {
         // create 2 branches (and HEAD) with simple n-cube

@@ -7,6 +7,8 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
+import groovy.transform.TypeCheckingMode
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -6747,6 +6749,7 @@ class TestWithPreloadedDatabase extends NCubeCleanupBaseTest
     }
 
     @Test
+    @TypeChecked(TypeCheckingMode.SKIP)
     void testDynamicallyLoadedCode()
     {
         NCube ncube = NCubeBuilder.discrete1DEmpty
