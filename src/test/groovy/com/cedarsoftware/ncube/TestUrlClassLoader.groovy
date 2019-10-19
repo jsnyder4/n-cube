@@ -1,5 +1,6 @@
 package com.cedarsoftware.ncube
 
+import com.cedarsoftware.util.TestUtil
 import org.junit.Before
 import org.junit.Test
 
@@ -226,7 +227,10 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
 
         // Test HtmlFormatter - that it properly handles the URLClassLoader in the sys.classpath cube
         String html = cp1.toHtml()
-        assert html.contains("${baseRemoteUrl}")
+
+        // Two instances of the replaceable string ${baseRemoteUrl} are inside the n-cube (json).
+        // Ensure they exist, in the replaced (http://locahost:xxxxx) format.
+        TestUtil.assertContainsIgnoreCase(html, "${baseRemoteUrl}", "${baseRemoteUrl}")
     }
 
     @Test

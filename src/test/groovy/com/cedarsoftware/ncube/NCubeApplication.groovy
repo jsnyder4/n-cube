@@ -1,6 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.servlet.JsonCommandServlet
+import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
@@ -13,6 +14,10 @@ import org.springframework.web.filter.FormContentFilter
 import org.springframework.web.filter.GenericFilterBean
 import org.springframework.web.filter.HiddenHttpMethodFilter
 import org.springframework.web.filter.RequestContextFilter
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.web.servlet.resource.EncodedResourceResolver
+import org.springframework.web.servlet.resource.PathResourceResolver
 
 /**
  * This class defines allowable actions against persisted n-cubes
@@ -35,7 +40,8 @@ import org.springframework.web.filter.RequestContextFilter
  */
 @ImportResource("classpath:config/ncube-beans.xml")
 @SpringBootApplication
-class NCubeApplication
+@CompileStatic
+class NCubeApplication implements WebMvcConfigurer
 {
     private static final Logger LOG = LoggerFactory.getLogger(NCubeApplication)
 
@@ -53,6 +59,17 @@ class NCubeApplication
         {
             LOG.info('NCUBE server started.')
         }
+    }
+
+    void addResourceHandlers(ResourceHandlerRegistry registry)
+    {
+        registry
+                .addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(3600)
+                .resourceChain(true)
+                .addResolver(new EncodedResourceResolver())
+                .addResolver(new PathResourceResolver())
     }
 
     @Bean

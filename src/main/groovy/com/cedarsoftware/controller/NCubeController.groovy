@@ -13,7 +13,6 @@ import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.actuate.info.InfoEndpoint
-import org.springframework.boot.actuate.metrics.MetricsEndpoint
 import org.springframework.web.bind.annotation.RestController
 
 import javax.management.MBeanServer
