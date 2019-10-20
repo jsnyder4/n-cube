@@ -980,7 +980,7 @@ class NCube<T>
         compileInfo.setCubeName(this.name)
 
         cells.each { ids, cell ->
-            if(cell instanceof GroovyBase) {
+            if (cell instanceof GroovyBase) {
                 compileCell(getCoordinateFromIds(ids), (GroovyBase)cell, compileInfo)
             }
         }

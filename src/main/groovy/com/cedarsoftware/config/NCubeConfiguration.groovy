@@ -1,5 +1,8 @@
 package com.cedarsoftware.config
 
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.Axis
+import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.UrlCommandCell
@@ -49,14 +52,6 @@ class NCubeConfiguration
     @Value('${ncube.perm.cache.evict.duration:3}') int durationPermCache
     @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
     @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
-
-    @Value('${ncube.target.scheme:http}') String scheme
-    @Value('${ncube.target.host:localhost}') String host
-    @Value('${ncube.target.port:9000}') int port
-    @Value('${ncube.target.context:ncube}') String context
-    @Value('${ncube.target.username:#{null}}') String username
-    @Value('${ncube.target.password:#{null}}') String password
-    @Value('${ncube.target.numConnections:100}') int numConnections
     
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
@@ -65,17 +60,42 @@ class NCubeConfiguration
 
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
-    {
-        return { Object value ->
-            if (value instanceof NCube)
+    {   // Clear all compiled classes associated to this n-cube (so ClassLoader may be freed).
+        return { Object obj ->
+            if (obj instanceof NCube)
             {
-                NCube ncube = value as NCube
-                for (Object cellValue : ncube.cellMap.values())
-                {
-                    if (cellValue instanceof UrlCommandCell)
-                    {
-                        UrlCommandCell cell = cellValue as UrlCommandCell
-                        cell.clearClassLoaderCache(ncube.applicationID)
+                NCube ncube = (NCube)obj
+                ApplicationID appId = ncube.applicationID
+
+                ncube.cellMap.each { ids, cell ->
+                    if (cell instanceof UrlCommandCell) {
+                        cell.clearClassLoaderCache(appId)
+                    }
+                }
+
+                ncube.metaProperties.each { key, value ->
+                    if (value instanceof UrlCommandCell) {
+                        value.clearClassLoaderCache(appId)
+                    }
+                }
+
+                ncube.axes.each { Axis axis ->
+                    axis.columns.each { Column column ->
+                        if (column.value instanceof UrlCommandCell) {
+                            ((GroovyBase)column.value).clearClassLoaderCache(appId)
+                        }
+
+                        column.metaProperties.each { key, value ->
+                            if (value instanceof GroovyBase) {
+                                ((GroovyBase)value).clearClassLoaderCache(appId)
+                            }
+                        }
+                    }
+
+                    axis.metaProperties.each { key, value ->
+                        if (value instanceof GroovyBase) {
+                            ((GroovyBase)value).clearClassLoaderCache(appId)
+                        }
                     }
                 }
             }

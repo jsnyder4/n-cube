@@ -38,7 +38,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@ImportResource("classpath:config/ncube-beans.xml")
+@ImportResource('classpath:config/ncube-beans.xml')
 @SpringBootApplication
 @CompileStatic
 class NCubeApplication implements WebMvcConfigurer
@@ -58,14 +58,15 @@ class NCubeApplication implements WebMvcConfigurer
         finally
         {
             LOG.info('NCUBE server started.')
+            LOG.info("Groovy version: ${GroovySystem.version}")
         }
     }
 
     void addResourceHandlers(ResourceHandlerRegistry registry)
     {
         registry
-                .addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/")
+                .addResourceHandler('/**')
+                .addResourceLocations('classpath:/static/')
                 .setCachePeriod(3600)
                 .resourceChain(true)
                 .addResolver(new EncodedResourceResolver())
