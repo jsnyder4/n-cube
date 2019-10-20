@@ -368,35 +368,35 @@
 
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy</artifactId>
-            <version>${groovy.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-templates</artifactId>
-            <version>${groovy.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-sql</artifactId>
-            <version>${groovy.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-test</artifactId>
-            <version>${groovy.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-groovydoc</artifactId>
+            <artifactId>groovy-all</artifactId>
             <version>${groovy.version}</version>
         </dependency>
 
         <!-- Groovy 2.5.0+ -->
+<!--        <dependency>-->
+<!--            <groupId>org.codehaus.groovy</groupId>-->
+<!--            <artifactId>groovy-templates</artifactId>-->
+<!--            <version>${groovy.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.codehaus.groovy</groupId>-->
+<!--            <artifactId>groovy-sql</artifactId>-->
+<!--            <version>${groovy.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.codehaus.groovy</groupId>-->
+<!--            <artifactId>groovy-test</artifactId>-->
+<!--            <version>${groovy.version}</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.codehaus.groovy</groupId>-->
+<!--            <artifactId>groovy-groovydoc</artifactId>-->
+<!--            <version>${groovy.version}</version>-->
+<!--        </dependency>-->
+
 <!--        <dependency>-->
 <!--            <groupId>org.codehaus.groovy</groupId>-->
 <!--            <artifactId>groovy-dateutil</artifactId>-->
