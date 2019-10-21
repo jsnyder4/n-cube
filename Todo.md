@@ -6,8 +6,6 @@ n-cube 'ToDo' list
 * Cell Prototype
  * For cube BAR in app FOO, the prototype could be specified as BAR.prototype - meaning that there is a prototype specific to the cube, -or-
    FOO.prototype meaning that this is the prototype for all expression cells in the app 'FOO' 
-* MetaCommandCell
- * These are used for non-compiled commands.  First one needed, a 'cell pointer' that does not modify the input map in order to point.
 * Bring difficult computer science problems to non-programmers / business people:
  * AI / Optimizations / Solvers (Artificial Intelligence, Machine Learning, Predictive)
   * Add new train() and predict() APIs to make it dirt-simple for business folks to have access to a neural net
