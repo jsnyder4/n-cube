@@ -52,8 +52,8 @@
       "name": "ncube.cache.snapshotPolicy",
       "type": "com.cedarsoftware.ncube.SnapshotPolicy",
       "sourceType": "com.cedarsoftware.ncube.util.LocalFileCache",
-      "description": "Path to cached .json NCube files. If this path points to a valid directory, the loaded NCube files will be cached here as .json files, with the folder structure matching the ApplicationID (5 levels) plus the name of the .json file will match the NCube name.",
-      "defaultValue": ""
+      "description": "Must be one of RELEASE_ONLY (safe), FORCE (safe - SHA1 is checked against server), OFFLINE (will only load from cache), or UPDATE (always loads from cache if there - not safe but faster during development).",
+      "defaultValue": "RELEASE_ONLY"
     },
     {
       "name": "ncube.proxy.cookiesToInclude",
@@ -66,7 +66,7 @@
       "name": "ncube.allow.mutable.methods",
       "type": "java.lang.Boolean",
       "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
-      "description": "Allow NCubeRuntime to perform mutable methods.",
+      "description": "Allow NCubeRuntime to perform mutable methods. Must be false on storage-server.",
       "defaultValue": "false"
     },
     {

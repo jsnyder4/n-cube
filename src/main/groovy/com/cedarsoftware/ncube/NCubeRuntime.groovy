@@ -28,9 +28,9 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
-import static com.cedarsoftware.visualizer.RpmVisualizerConstants.*
 import static SnapshotPolicy.FORCE
+import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.visualizer.RpmVisualizerConstants.RPM_CLASS
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -63,7 +63,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     protected final CallableBean bean
     private volatile boolean alive = true
     private final String beanName
-    @Value('${ncube.cache.refresh.min:75}') int cacheRefreshIntervalMin
+    @Value('${ncube.cache.refresh.min:90}') int cacheRefreshIntervalMin
 
     @Autowired(required = false)
     private LocalFileCache localFileCache
@@ -110,6 +110,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
         }
 
+        // This thread below is periodically accessing particular NCube's in the cache so that they are not evicted
+        // by Guava's cache (which evicts 4 hours after last access).  The SYS_CLASSPATH cube is always accessed to
+        // prevent eviction, and any NCube with the meta property "evict":false will not be evicted.
         def refresh = {
             while (alive)
             {

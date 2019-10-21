@@ -37,25 +37,6 @@
 
     </beans>
 
-    <beans profile="combined-client">
-
-        <import resource="ncube-beans-persister.xml"/>
-
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="callableBean"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
-        </bean>
-
-        <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
-
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
-    </beans>
-
     <beans profile="runtime-server">
 
         <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
@@ -101,6 +82,26 @@
             <constructor-arg ref="ncubeManager"/>
             <constructor-arg value="false"/>
         </bean>
+
+        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
+            <constructor-arg ref="persister"/>
+            <constructor-arg ref="permCacheManager"/>
+        </bean>
+
+    </beans>
+
+    <!-- Developer profiles, not for production -->
+    <beans profile="combined-client">
+
+        <import resource="ncube-beans-persister.xml"/>
+
+        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
+            <constructor-arg ref="callableBean"/>
+            <constructor-arg ref="ncubeCacheManager"/>
+            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
+        </bean>
+
+        <bean id="callableBean" class="com.cedarsoftware.util.ReflectiveProxy"/>
 
         <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
             <constructor-arg ref="persister"/>
