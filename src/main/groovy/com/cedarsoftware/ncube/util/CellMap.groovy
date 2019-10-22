@@ -4,7 +4,7 @@ import gnu.trove.THashMap
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class CellMap<V> extends THashMap<LongHashSet, V>
+class CellMap<V> extends THashMap<Set<Long>, V>
 {
     CellMap() { }
 

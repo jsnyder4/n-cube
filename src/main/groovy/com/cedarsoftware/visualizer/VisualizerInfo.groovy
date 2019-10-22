@@ -7,19 +7,7 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.visualizer.VisualizerConstants.JSON_FILE_PREFIX
-import static com.cedarsoftware.visualizer.VisualizerConstants.JSON_FILE_SUFFIX
-import static com.cedarsoftware.visualizer.VisualizerConstants.VISUALIZER_CONFIG_CUBE_NAME
-import static com.cedarsoftware.visualizer.VisualizerConstants.VISUALIZER_CONFIG_NETWORK_OVERRIDES_CUBE_NAME
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_ITEM
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_ALL_TYPES
-import static com.cedarsoftware.visualizer.VisualizerConstants.CUBE_TYPE
-import static com.cedarsoftware.visualizer.VisualizerConstants.CUBE_TYPE_DEFAULT
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_NETWORK_OVERRIDES_BASIC
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_NETWORK_OVERRIDES_FULL
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_ALL_GROUPS
-import static com.cedarsoftware.visualizer.VisualizerConstants.CONFIG_GROUP_SUFFIX
-
+import static com.cedarsoftware.visualizer.VisualizerConstants.*
 
 /**
  * Provides information to visualize n-cubes.
@@ -152,7 +140,7 @@ class VisualizerInfo
     protected void loadTypesToAddMap(NCube configCube)
     {
         typesToAddMap = [:]
-        Set<String> allTypes = configCube.getCell([(CONFIG_ITEM): CONFIG_ALL_TYPES, (CUBE_TYPE): cubeType]) as Set
+        Set<String> allTypes = configCube.getCell([(CONFIG_ITEM): CONFIG_ALL_TYPES, (CUBE_TYPE): cubeType]) as Set<String>
         allTypes.each{String type ->
             Map.Entry<String, String> entry = allGroups.find{ String key, String value ->
                 value == type

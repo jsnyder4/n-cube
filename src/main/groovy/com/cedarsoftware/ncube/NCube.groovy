@@ -2646,7 +2646,7 @@ class NCube<T>
         }
 
         Collection<String> declaredOptionalScope = (Collection<String>) extractMetaPropertyValue(getMetaProperty(NCubeConstants.OPTIONAL_SCOPE), input, output)
-        optionalScope.addAll(declaredOptionalScope == null ? new CaseInsensitiveSet<String>() : new CaseInsensitiveSet<>(declaredOptionalScope))
+        optionalScope.addAll(declaredOptionalScope == null ? new CaseInsensitiveSet<String>() : new CaseInsensitiveSet<String>(declaredOptionalScope) as Collection<? extends String>)
         return optionalScope
     }
 
