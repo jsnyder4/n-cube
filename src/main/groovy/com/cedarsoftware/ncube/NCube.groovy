@@ -4546,4 +4546,44 @@ class NCube<T>
     {
         stackEntryCoordinateValueMaxSize = maxSize
     }
+
+    /**
+     * Unload any dynamically generated classes.  This looks at not only cells that may be GroovyExpressions,
+     * but also rule Columns, and metaProperties [value-side] for ncube, axis, and column, which can also contain
+     * GroovyExpressions.
+     */
+    void unloadAnyGeneratedClasses()
+    {
+        cellMap.each { ids, cell ->
+            if (cell instanceof GroovyBase) {
+                cell.clearClassLoaderCache(appId)
+            }
+        }
+
+        metaProps.each { key, value ->
+            if (value instanceof GroovyBase) {
+                value.clearClassLoaderCache(appId)
+            }
+        }
+
+        axes.each { Axis axis ->
+            axis.columns.each { Column column ->
+                if (column.value instanceof GroovyBase) {
+                    ((GroovyBase)column.value).clearClassLoaderCache(appId)
+                }
+
+                column.metaProperties.each { key, value ->
+                    if (value instanceof GroovyBase) {
+                        ((GroovyBase)value).clearClassLoaderCache(appId)
+                    }
+                }
+            }
+
+            axis.metaProperties.each { key, value ->
+                if (value instanceof GroovyBase) {
+                    ((GroovyBase)value).clearClassLoaderCache(appId)
+                }
+            }
+        }
+    }
 }

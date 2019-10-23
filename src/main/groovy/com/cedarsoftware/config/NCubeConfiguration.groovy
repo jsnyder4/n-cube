@@ -1,15 +1,16 @@
 package com.cedarsoftware.config
 
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.Axis
-import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.UrlCommandCell
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
+import com.cedarsoftware.util.JsonHttpProxy
+import com.cedarsoftware.util.ReflectiveProxy
 import groovy.transform.CompileStatic
+import org.apache.http.HttpHost
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -41,22 +42,39 @@ import javax.annotation.PostConstruct
 @Configuration
 class NCubeConfiguration
 {
+    // Target server (storage-server)
+    @Value('${ncube.target.host:localhost}') String host
+    @Value('${ncube.target.port:9000}') int port
+    @Value('${ncube.target.scheme:http}') String scheme
+
+    // JsonHttpProxy
+    @Value('${ncube.target.context:ncube}') String context
+    @Value('${ncube.target.username:#{null}}') String username
+    @Value('${ncube.target.password:#{null}}') String password
+    @Value('${ncube.target.numConnections:200}') int numConnections
+
+    // NCubeRuntime's cache
     @Value('${ncube.cache.max.size:0}') int maxSizeNCubeCache
     @Value('${ncube.cache.evict.type:expireAfterAccess}') String typeNCubeCache
     @Value('${ncube.cache.evict.duration:4}') int durationNCubeCache
     @Value('${ncube.cache.evict.units:hours}') String unitsNCubeCache
     @Value('${ncube.cache.concurrency:16}') int concurrencyNCubeCache
 
+    // Permissions cache
     @Value('${ncube.perm.cache.max.size:100000}') int maxSizePermCache
     @Value('${ncube.perm.cache.evict.type:expireAfterAccess}') String typePermCache
     @Value('${ncube.perm.cache.evict.duration:3}') int durationPermCache
     @Value('${ncube.perm.cache.evict.units:minutes}') String unitsPermCache
     @Value('${ncube.perm.cache.concurrency:16}') int concurrencyPermCache
-    
+
+    // Location for generated source (optional) and compiled classes (optional)
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
 
+    // Limit size of coordinate displayed in each CommandCell exception list (--> [coordinate])
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
+    
+    private static final Logger LOG = LoggerFactory.getLogger(NCubeConfiguration)
 
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
@@ -65,39 +83,7 @@ class NCubeConfiguration
             if (obj instanceof NCube)
             {
                 NCube ncube = (NCube)obj
-                ApplicationID appId = ncube.applicationID
-
-                ncube.cellMap.each { ids, cell ->
-                    if (cell instanceof UrlCommandCell) {
-                        cell.clearClassLoaderCache(appId)
-                    }
-                }
-
-                ncube.metaProperties.each { key, value ->
-                    if (value instanceof UrlCommandCell) {
-                        value.clearClassLoaderCache(appId)
-                    }
-                }
-
-                ncube.axes.each { Axis axis ->
-                    axis.columns.each { Column column ->
-                        if (column.value instanceof UrlCommandCell) {
-                            ((GroovyBase)column.value).clearClassLoaderCache(appId)
-                        }
-
-                        column.metaProperties.each { key, value ->
-                            if (value instanceof GroovyBase) {
-                                ((GroovyBase)value).clearClassLoaderCache(appId)
-                            }
-                        }
-                    }
-
-                    axis.metaProperties.each { key, value ->
-                        if (value instanceof GroovyBase) {
-                            ((GroovyBase)value).clearClassLoaderCache(appId)
-                        }
-                    }
-                }
+                ncube.unloadAnyGeneratedClasses()
             }
             return true
         }
@@ -115,6 +101,27 @@ class NCubeConfiguration
     {
         GCacheManager cacheManager = new GCacheManager(null, maxSizePermCache, typePermCache, durationPermCache, unitsPermCache, concurrencyPermCache)
         return cacheManager
+    }
+    
+    @Bean(name = "ncubeHost")
+    @Profile(['ncube-client','runtime-server'])
+    HttpHost getHttpHost()
+    {
+        return new HttpHost(host, port, scheme)
+    }
+
+    @Bean(name = "callableBean")
+    @Profile(['ncube-client','runtime-server'])
+    JsonHttpProxy getJsonHttpProxy()
+    {
+        return new JsonHttpProxy(getHttpHost(), context, username, password, numConnections)
+    }
+
+    @Bean(name = "callableBean")
+    @Profile(['combined-client','combined-server'])
+    ReflectiveProxy getReflectiveProxy()
+    {
+        return new ReflectiveProxy()
     }
 
     @PostConstruct

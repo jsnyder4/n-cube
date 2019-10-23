@@ -1,9 +1,5 @@
 package com.cedarsoftware.util
 
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.impl.client.StandardHttpRequestRetryHandler
-import org.springframework.util.FastByteArrayOutputStream
-
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -15,20 +11,18 @@ import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.AuthCache
 import org.apache.http.client.CredentialsProvider
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.conn.routing.HttpRoute
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.BasicAuthCache
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.*
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.PropertySource
+import org.springframework.util.FastByteArrayOutputStream
 
 import javax.servlet.http.Cookie
 import javax.servlet.http.HttpServletRequest
@@ -57,7 +51,6 @@ import static org.apache.http.entity.ContentType.APPLICATION_JSON
  */
 
 @CompileStatic
-@PropertySource(value='classpath:application.properties')
 class JsonHttpProxy implements CallableBean
 {
     @Value("#{\${ncube.proxy.cookiesToInclude:'JSESSIONID'}.split(',')}")
@@ -237,6 +230,7 @@ class JsonHttpProxy implements CallableBean
 
     private void createAuthCache()
     {
+        LOG.info("NCUBE storage-server: ${httpHost.schemeName}://${httpHost.hostName}:${httpHost.port}/${context}")
         if (username && password)
         {
             credsProvider = new BasicCredentialsProvider()

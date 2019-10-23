@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
 
-import static com.cedarsoftware.ncube.SnapshotPolicy.RELEASE_ONLY
 import static com.cedarsoftware.ncube.SnapshotPolicy.OFFLINE
+import static com.cedarsoftware.ncube.SnapshotPolicy.RELEASE_ONLY
 
 @Component
 class LocalFileCache {
@@ -35,11 +35,11 @@ class LocalFileCache {
     void init()
     {
         if (cacheDir) {
-            LOG.info("NCube file cache configured to use dir: {}", cacheDir)
-            LOG.info("NCube file cache snapshot policy set to: {}", snapshotPolicy.name())
+            LOG.info("NCUBE file cache configured to use dir: {}", cacheDir)
+            LOG.info("NCUBE file cache snapshot policy set to: {}", snapshotPolicy.name())
         }
         else {
-            LOG.info("NCube file cache disabled")
+            LOG.info("NCUBE file cache disabled")
         }
     }
 
