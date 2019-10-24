@@ -16,9 +16,9 @@ import org.springframework.cache.Cache
 import org.springframework.cache.concurrent.ConcurrentMapCache
 import org.springframework.cache.support.SimpleCacheManager
 
-import static SnapshotPolicy.*
 import static com.cedarsoftware.ncube.ApplicationID.testAppId
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
+import static com.cedarsoftware.ncube.SnapshotPolicy.*
 import static org.junit.Assert.*
 
 @CompileStatic
@@ -43,7 +43,8 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     void setup()
     {
         // Otherwise NPE - this test does not setup spring fully, so Spring Environment is null inside the NCubeRuntime.
-        (ncubeRuntime as NCubeRuntime).readonly = true
+        (ncubeRuntime as NCubeRuntime).allowMutable = true
+        (ncubeRuntime as NCubeRuntime).trackBindings = true
         cubeFileNameMap.clear()
         cubeFileNameMap.putAll(['TestBranch':'test.branch.1','TestAge':'test.branch.age.1'])
 
@@ -95,14 +96,16 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         cacheRuntime.localFileCache = new LocalFileCache(cacheDir.path,RELEASE_ONLY)
         
         // Otherwise NPE - this test does not setup spring fully, so Spring Environment is null inside the NCubeRuntime.
-        cacheRuntime.readonly = true
+        cacheRuntime.allowMutable = true
+        cacheRuntime.trackBindings = true
         cacheClient = cacheRuntime
     }
 
     @After
     void tearDown()
     {
-        (ncubeRuntime as NCubeRuntime).readonly = null
+        (ncubeRuntime as NCubeRuntime).allowMutable = null
+        (ncubeRuntime as NCubeRuntime).trackBindings = null
     }
 
     @Test

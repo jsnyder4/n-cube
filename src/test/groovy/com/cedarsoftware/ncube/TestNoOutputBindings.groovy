@@ -8,26 +8,24 @@ import org.junit.Test
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 
 @CompileStatic
-class TestReadonlyNoBindings extends NCubeBaseTest
+class TestNoOutputBindings extends NCubeBaseTest
 {
     @Before
     void setup()
     {
-        (ncubeRuntime as NCubeRuntime).readonly = true
+        (ncubeRuntime as NCubeRuntime).trackBindings = false
     }
 
     @After
     void tearDown()
     {
         // Restore original spring configured state.
-        (ncubeRuntime as NCubeRuntime).readonly = null
+        (ncubeRuntime as NCubeRuntime).trackBindings = null
     }
 
     @Test
     void testOneRuleSetCallsAnotherRuleSet()
     {
-        assert ncubeRuntime.readonly
-
         ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ruleSet2.json')
         NCube ncube = ncubeRuntime.getNCubeFromResource(ApplicationID.testAppId, 'ruleSet1.json')
         Map input = [age: 10]

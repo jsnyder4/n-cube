@@ -1,23 +1,13 @@
 package ncube.grv.exp
 
-import com.cedarsoftware.ncube.ApplicationID
-import com.cedarsoftware.ncube.Axis
-import com.cedarsoftware.ncube.Column
-import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeAppContext
-import com.cedarsoftware.ncube.NCubeInfoDto
-import com.cedarsoftware.ncube.NCubeMutableClient
-import com.cedarsoftware.ncube.NCubeRuntimeClient
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
-import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.TrackingMap
-import com.cedarsoftware.util.UrlUtilities
+import com.cedarsoftware.util.*
 import groovy.transform.CompileStatic
 
-import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
+import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
 
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
@@ -63,7 +53,7 @@ class NCubeGroovyExpression
         NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
         if (cube == null && !quiet)
         {
-            throw new IllegalArgumentException("n-cube: ${name} not found.")
+            throw new IllegalArgumentException("getCube() call within cell attempted, n-cube: ${name} not found.")
         }
         return cube
     }
@@ -161,7 +151,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+            throw new IllegalArgumentException("go() attempted from cell, n-cube: ${cubeName} not found, app: ${appId}")
         }
         if (coord.is(input))
         {
@@ -226,7 +216,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+            throw new IllegalArgumentException("at() attempted from cell, n-cube: ${cubeName} not found, app: ${appId}")
         }
         Map copy = inputWithoutTrackingMap
         copy = dupe(copy)
@@ -274,7 +264,7 @@ class NCubeGroovyExpression
         NCube target = ncubeRuntime.getCube(appId, cubeName)
         if (target == null)
         {
-            throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+            throw new IllegalArgumentException("use() attempted in cell, n-cube: ${cubeName} not found, app: ${appId}")
         }
 
         Map copy = inputWithoutTrackingMap
@@ -342,6 +332,10 @@ class NCubeGroovyExpression
         {
             appId = appId ?: applicationID
             target = ncubeRuntime.getCube(appId, cubeName)
+            if (target == null)
+            {
+                throw new IllegalArgumentException("mapReduce() attempted within cell, but n-cube: ${cubeName} not found in app: ${appId}")
+            }
         }
         else
         {

@@ -6,9 +6,7 @@ import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.TestWithPreloadedDatabase.appId
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.fail
+import static org.junit.Assert.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -221,9 +219,7 @@ class TestUrlClassLoader extends NCubeCleanupBaseTest
         NCube cp2 = NCube.fromSimpleJson(json)
         cp1.clearSha1()
         cp2.clearSha1()
-        String json1 = cp1.toFormattedJson()
-        String json2 = cp2.toFormattedJson()
-        assertEquals(json1, json2)
+        assert cp1.equals(cp2)
 
         // Test HtmlFormatter - that it properly handles the URLClassLoader in the sys.classpath cube
         String html = cp1.toHtml()

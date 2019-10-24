@@ -28,7 +28,7 @@ interface NCubeRuntimeClient extends NCubeClient
      * to the mutable APIs (CRUD APIs against the NCube storage server).
      * @return false if configured to allow mutable method calls (not readonly) or true (readonly) otherwise.
      */
-    boolean isReadonly()
+    boolean isTrackBindingsOn()
     
     void clearCache(ApplicationID appId)
 

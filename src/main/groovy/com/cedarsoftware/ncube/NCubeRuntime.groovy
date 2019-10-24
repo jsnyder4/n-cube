@@ -74,6 +74,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     // Test overrideable. When set to null, these values reflect the spring environment settings.
     // When set to not-null, the value set (by a test) is the value used.
     private Boolean allowMutable = null
+    private Boolean trackBindings = null
     private String acceptedDomains = null
 
     private final ThreadLocal<GroovyShell> groovyShellThreadLocal = new ThreadLocal<GroovyShell>() {
@@ -169,12 +170,9 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     {
         if (acceptedDomains == null)
         {
-            return env.getProperty('ncube.accepted.domains', (String)null)
+            acceptedDomains = env.getProperty('ncube.accepted.domains', '')
         }
-        else
-        {
-            return acceptedDomains
-        }
+        return acceptedDomains
     }
 
     /**
@@ -188,36 +186,46 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     }
 
     /**
-     * @return boolean true if running in readOnly mode (no mutable methods allowed to be called), or false if
-     * running in !readOnly mode, or allow mutable methods to be called.
+     * @return boolean true if running ncube.allow.mutable.methods is set to true or null, false otherwise.
      */
-    boolean isReadonly()
+    boolean isAllowMutableOn()
     {
         if (allowMutable == null)
         {
-            return !env.getProperty('ncube.allow.mutable.methods', (String)'true')
+            allowMutable = env.getProperty('ncube.allow.mutable.methods', (String) 'true')
         }
-        else
-        {
-            return !allowMutable
-        }
+        return allowMutable
     }
 
     /**
-     * @param state Boolean - 3 state value: null = use Spring Environment property, true = readOnly (do not allow
-     * mutable methods to be called), false = !readOnly or allow mutable methods to be called.  This should only
-     * be called by testing code.
+     * @param state Boolean - 3 state value: null = use Spring Environment property, true = allow mutable on,
+     * false = allow mutable turned off.  Used by testing.
      */
-    void setReadonly(Boolean state)
+    void setAllowMutable(Boolean state)
     {
-        if (state == null)
+        allowMutable = state
+    }
+
+    /**
+     * @return Boolean that indicates whether the output will tracking all cell bindings throughout an n-cube
+     * execution path.  The default is true, but can be turned off to save memory during execution.
+     */
+    boolean isTrackBindingsOn()
+    {
+        if (trackBindings == null)
         {
-            allowMutable = null
+            trackBindings = env.getProperty('ncube.track.bindings', (String)'true')
         }
-        else
-        {
-            allowMutable = !state
-        }
+        return trackBindings
+    }
+
+    /**
+     * @param state Boolean - 3 state value: null = use Spring Environment property, true = track binding is on,
+     * false = track binding has been turned off.  Used by testing.
+     */
+    void setTrackBindings(Boolean state)
+    {
+        trackBindings = state
     }
 
     Map getMenu(ApplicationID appId)
@@ -951,7 +959,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     private void verifyAllowMutable(String methodName)
     {
-        if (readonly)
+        if (!allowMutableOn)
         {
             throw new IllegalStateException("${MUTABLE_ERROR} ${methodName}()")
         }
@@ -1324,8 +1332,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             Cache cubeCache = ncubeCacheManager.getCache(ncube.applicationID.cacheKey())
             String loName = ncube.name.toLowerCase()
 
-            if (!readonly || force)
-            {   // !readonly means 'allow mutable methods to be called.'
+            if (allowMutableOn || force)
+            {
                 cubeCache.put(loName, ncube)
             }
             else

@@ -1,11 +1,6 @@
 {
   "groups": [
     {
-      "name": "ncube",
-      "type": "com.cedarsoftware.config.NCubeConfiguration",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration"
-    },
-    {
       "name": "ncube.target",
       "description": "JsonHttpProxy properties."
     },
@@ -18,7 +13,7 @@
       "description": "Permissions caching properties."
     },
     {
-      "name": "ncube.datascource",
+      "name": "ncube.datasource",
       "description": "NCube datasource properties."
     },
     {
@@ -30,240 +25,212 @@
     {
       "name": "ncube.sources.dir",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Path to generated source files. If this path points to a valid directory, the source from cell values that are inline (non URL-based) Groovy expressions will be dumped as cells are compiled.",
       "defaultValue": ""
     },
     {
       "name": "ncube.classes.dir",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Path to generated class files. If this path points to a valid directory, the generated class files from cell values that are inline (non URL-based) Groovy expressions will be written as cells are compiled and then used for class caching.",
       "defaultValue": ""
     },
     {
       "name": "ncube.cache.dir",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.ncube.util.LocalFileCache",
       "description": "Path to cached .json NCube files. If this path points to a valid directory, the loaded NCube files will be cached here as .json files, with the folder structure matching the ApplicationID (5 levels) plus the name of the .json file will match the NCube name.",
       "defaultValue": ""
     },
     {
       "name": "ncube.cache.snapshotPolicy",
       "type": "com.cedarsoftware.ncube.SnapshotPolicy",
-      "sourceType": "com.cedarsoftware.ncube.util.LocalFileCache",
       "description": "Must be one of RELEASE_ONLY (safe), FORCE (safe - SHA1 is checked against server), OFFLINE (will only load from cache), or UPDATE (always loads from cache if there - not safe but faster during development).",
       "defaultValue": "RELEASE_ONLY"
     },
     {
       "name": "ncube.proxy.cookiesToInclude",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.util.JsonHttpProxy",
       "description": "Cookies to include in JsonHttpProxy when making proxy request (comma separated list, all lowercase).",
       "defaultValue": "JSESSIONID"
     },
     {
       "name": "ncube.allow.mutable.methods",
       "type": "java.lang.Boolean",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Allow NCubeRuntime to perform mutable methods. Must be false on storage-server.",
       "defaultValue": "false"
     },
     {
       "name": "ncube.accepted.domains",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Allow access to external domains.",
       "defaultValue": ""
     },
     {
       "name": "ncube.stackEntry.coordinate.value.max",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Abbreviate coordinate value strings on StackEntry to a max size.",
       "defaultValue": "1000"
     },
     {
       "name": "ncube.target.scheme",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Scheme for JsonHttpProxy connection (http or https).",
       "defaultValue": "http"
     },
     {
       "name": "ncube.target.host",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Hostname for JsonHttpProxy connection (IP or DNS name).",
       "defaultValue": "localhost"
     },
     {
       "name": "ncube.target.port",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Port for JsonHttpProxy connection.",
       "defaultValue": "9000"
     },
     {
       "name": "ncube.target.context",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Context for JsonHttpProxy connection.",
       "defaultValue": "ncube"
     },
     {
       "name": "ncube.target.username",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Username for JsonHttpProxy connection. If not set, headers will be passes along for authentication.",
       "defaultValue": ""
     },
     {
       "name": "ncube.target.password",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Password for JsonHttpProxy connection. If not set, headers will be passed along for authentication.",
       "defaultValue": ""
     },
     {
       "name": "ncube.target.numConnections",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Number of connections allowed through JsonHttpPoxy.",
       "defaultValue": "10"
     },
     {
       "name": "ncube.cache.max.size",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
       "defaultValue": "0"
     },
     {
       "name": "ncube.cache.evict.type",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
       "defaultValue": "expireAfterAccess"
     },
     {
       "name": "ncube.cache.evict.duration",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
       "defaultValue": "4"
     },
     {
       "name": "ncube.cache.evict.units",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
       "defaultValue": "hours"
     },
     {
       "name": "ncube.cache.concurrency",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
       "defaultValue": "16"
     },
     {
       "name": "ncube.cache.refresh.min",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.ncube.NCubeRuntime",
       "description": "Frequency (in minutes) that non-evictable n-cubes are refreshed (Set to 1/3 or less of ncube.cache.evict.duration).",
       "defaultValue": "75"
     },
     {
       "name": "ncube.perm.cache.max.size",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specifies the maximum number of entries the cache may contain. See Guava's CacheBuilder documentation.",
       "defaultValue": "100000"
     },
     {
       "name": "ncube.perm.cache.evict.type",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specify either expireAfterWrite or expireAfterAccess to be called on cache builder. See Guava's CacheBuilder documentation.",
       "defaultValue": "expireAfterAccess"
     },
     {
       "name": "ncube.perm.cache.evict.duration",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Duration for the ncube.cache.evict.type. See Guava's CacheBuilder documentation.",
       "defaultValue": "2"
     },
     {
       "name": "ncube.perm.cache.evict.units",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Specify seconds, minutes, hours or days. See Guava's CacheBuilder documentation.",
       "defaultValue": "minutes"
     },
     {
       "name": "ncube.perm.cache.concurrency",
       "type": "java.lang.Integer",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
       "defaultValue": "16"
     },
     {
       "name": "ncube.datasource.url",
       "type": "java.lang.String",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource URL.",
       "defaultValue": "jdbc:hsqldb:mem:testdb"
     },
     {
       "name": "ncube.datasource.username",
       "type": "java.lang.String",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource username.",
       "defaultValue": "sa"
     },
     {
       "name": "ncube.datasource.password",
       "type": "",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Datasource password.",
       "defaultValue": ""
     },
     {
       "name": "ncube.datasource.connection-timeout",
       "type": "java.lang.Integer",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Connection timeout in milliseconds.",
       "defaultValue": "30000"
     },
     {
       "name": "ncube.datasource.max-life-time",
       "type": "java.lang.Integer",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Maximum full life time of a connection in the pool in milliseconds.  Default to 4 hours.",
       "defaultValue": 14400000
     },
     {
       "name": "ncube.datasource.maximum-pool-size",
       "type": "java.lang.Integer",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "Maximum number of JDBC connections.",
       "defaultValue": "100"
     },
     {
       "name": "ncube.datasource.pool-name",
       "type": "java.lang.String",
-      "sourceType": "com.zaxxer.hikari.HikariDataSource",
       "description": "JDBC Connection pool name.",
       "defaultValue": "NCube JDBC Connection Pool"
     },
     {
       "name": "ncube.test.baseRemoteUrl",
       "type": "java.lang.String",
-      "sourceType": "com.cedarsoftware.config.NCubeConfiguration",
       "description": "Set to URL containing files to support JUnit tests.",
       "defaultValue": ""
+    },
+    {
+      "name": "ncube.track.bindings",
+      "type": "java.lang.Boolean",
+      "description": "Turn on to include all input bindings per cell hop within an n-cube execution path.",
+      "defaultValue": "true"
     }
   ]
 }

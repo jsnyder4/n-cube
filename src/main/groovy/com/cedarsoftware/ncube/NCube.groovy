@@ -621,7 +621,7 @@ class NCube<T>
     private T runRules(final Map coordinate, Map input, final Map output = [:], Object defaultValue = null)
     {
         final RuleInfo ruleInfo = getRuleInfo(output)
-        final boolean isReadonly = ncubeRuntime.readonly
+        final boolean trackBindings = ncubeRuntime.trackBindingsOn
         boolean run = true
         final List<Binding> bindings = ruleInfo.getAxisBindings()
         final int depth = executionStack.get().size()
@@ -703,8 +703,8 @@ class NCube<T>
                     // Step #2 Execute cell and store return value, associating it to the Axes and Columns it bound to
                     if (binding.numBoundAxes == dimensions)
                     {   // Conditions on rule axes that do not evaluate to true, do not generate complete coordinates (intentionally skipped)
-                        if (!isReadonly)
-                        {   // Don't add the bindings to the output map when running on readonly (non-editor) mode.
+                        if (trackBindings)
+                        {   // Add bindings to output map when running ncube.track.bindings = true (default)
                             bindings.add(binding)
                         }
                         lastStatementValue = executeAssociatedStatement(input, output, ruleInfo, binding)

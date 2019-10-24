@@ -19,7 +19,7 @@ NCube getCube(String name = ncube.name, boolean quiet = false)
     NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
     if (cube == null && !quiet)
     {
-        throw new IllegalArgumentException("n-cube: ${name} not found.")
+        throw new IllegalArgumentException("getCube() in templated cell, n-cube: ${name} not found.")
     }
     return cube
 }
@@ -54,6 +54,10 @@ def at(Map coord, NCube cube, def defaultValue = null)
 def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = ncubeRuntime.getCube(appId, cubeName)
+    if (target == null)
+    {
+        throw new IllegalArgumentException("at() within template cell attempted, n-cube: ${name} not found, app: ${appId}.")
+    }
     input.putAll(coord)
     return target.getCell(input, output, defaultValue)
 }
@@ -71,6 +75,10 @@ def go(Map coord, NCube cube, def defaultValue = null)
 def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
     NCube target = ncubeRuntime.getCube(appId, cubeName)
+    if (target == null)
+    {
+        throw new IllegalArgumentException("go() within template cell attempted, n-cube: ${name} not found, app: ${appId}.")
+    }
     return target.getCell(coord, output, defaultValue)
 }
 
@@ -86,7 +94,7 @@ def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
     NCube target = ncubeRuntime.getCube(appId, cubeName)
     if (target == null)
     {
-        throw new IllegalArgumentException("n-cube: ${cubeName} not found, app: ${appId}")
+        throw new IllegalArgumentException("use() within template cell attempted, n-cube: ${cubeName} not found, app: ${appId}")
     }
     Map origInput = new CaseInsensitiveMap(input)
     input.putAll(altInput)
@@ -100,6 +108,10 @@ Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], S
     {
         appId = appId ?: applicationID
         target = ncubeRuntime.getCube(appId, cubeName)
+        if (target == null)
+        {
+            throw new IllegalArgumentException("mapReduce() attempted within template cell, but n-cube: ${cubeName} not found in app: ${appId}")
+        }
     }
     else
     {
