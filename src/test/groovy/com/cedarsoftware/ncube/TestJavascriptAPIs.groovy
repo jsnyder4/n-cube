@@ -41,7 +41,7 @@ import static org.junit.Assert.fail
 @CompileStatic
 class TestJavascriptAPIs extends NCubeCleanupBaseTest
 {
-    private static final ApplicationID SYSAPP = new ApplicationID(ApplicationID.DEFAULT_TENANT, SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), 'FOO')
+    private static final ApplicationID SYSAPP = new ApplicationID(ApplicationID.DEFAULT_TENANT, NCubeConstants.SYS_APP, ApplicationID.SYS_BOOT_VERSION, ReleaseStatus.SNAPSHOT.name(), 'FOO')
     private static final ApplicationID BRANCH1 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'FOO')
     private static final ApplicationID BRANCH2 = new ApplicationID(ApplicationID.DEFAULT_TENANT, 'test', '1.28.0', ReleaseStatus.SNAPSHOT.name(), 'BAR')
 
