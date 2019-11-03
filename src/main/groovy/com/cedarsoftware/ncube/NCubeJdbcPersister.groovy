@@ -7,7 +7,6 @@ import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.SafeSimpleDateFormat
-import com.cedarsoftware.util.UniqueIdGenerator
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
@@ -29,6 +28,7 @@ import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.util.Converter.*
 import static com.cedarsoftware.util.IOUtilities.uncompressBytes
 import static com.cedarsoftware.util.StringUtilities.*
+import static com.cedarsoftware.util.UniqueIdGenerator.uniqueId
 
 /**
  * SQL Persister for n-cubes.  Manages all reads and writes of n-cubes to an SQL database.
@@ -195,7 +195,7 @@ ORDER BY ${orderByVersion} abs(revision_number) DESC
 INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, branch_id, n_cube_nm, revision_number,
 sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, ${TEST_DATA_BIN}, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
-            long uniqueId = UniqueIdGenerator.uniqueId
+            long uniqueId = uniqueId
             s.setLong(1, uniqueId)
             s.setString(2, appId.tenant)
             s.setString(3, appId.app)
@@ -247,7 +247,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
     static NCubeInfoDto insertCube(Connection c, ApplicationID appId, NCube cube, Long revision, byte[] testData, String notes,
                                    boolean changed, String headSha1, String username, String methodName)
     {
-        long uniqueId = UniqueIdGenerator.uniqueId
+        long uniqueId = uniqueId
         Timestamp now = nowAsTimestamp()
         final Blob blob = c.createBlob()
         OutputStream out = blob.setBinaryStream(1L)
@@ -340,7 +340,7 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
 sha1, head_sha1, create_dt, create_hid, ${CUBE_VALUE_BIN}, test_data_bin, notes_bin, changed)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
-            long txId = UniqueIdGenerator.uniqueId
+            long txId = uniqueId
             Map<String, Object> options = [(SEARCH_ACTIVE_RECORDS_ONLY): true,
                                            (SEARCH_INCLUDE_CUBE_DATA)  : true,
                                            (SEARCH_INCLUDE_TEST_DATA)  : true,
@@ -393,7 +393,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                                            (SEARCH_EXACT_MATCH_NAME)    : true,
                                            (METHOD_NAME) : 'restoreCubes'] as Map
             int count = 0
-            long txId = UniqueIdGenerator.uniqueId
+            long txId = uniqueId
             final String msg = "restored, txId: [${txId}]"
 
             names.each { Object cname ->
@@ -429,7 +429,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         String sha1 = row.getString('sha1')
         String headSha1 = row.getString('head_sha1')
 
-        long uniqueId = UniqueIdGenerator.uniqueId
+        long uniqueId = uniqueId
         stmt.setLong(1, uniqueId)
         stmt.setString(2, appId.tenant)
         stmt.setString(3, appId.app)
@@ -541,7 +541,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 byte[] updatedTestData = getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
                 if ((updatedTestData || testData) && updatedTestData != testData)
                 {
-                    cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
+                    cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, uniqueId)
                     testData = updatedTestData
                 }
             }
@@ -919,7 +919,7 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
 
             Map map = appId as Map
             map.tenant = padTenant(c, appId.tenant)
-            long txId = UniqueIdGenerator.uniqueId
+            long txId = uniqueId
             Timestamp now = nowAsTimestamp()
             String note = createNote(username, now, "rolled back, txId: [${txId}]")
             byte[] noteBytes = getUTF8Bytes(note)
@@ -953,7 +953,7 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
                         String sha1 = row.getString('sha1')
                         String headSha1 = row.getString('head_sha1')
                         long nextRev = Math.abs(maxRev) + 1
-                        long uniqueId = UniqueIdGenerator.uniqueId
+                        long uniqueId = uniqueId
 
                         ins.setLong(1, uniqueId)
                         ins.setString(2, appId.tenant)
@@ -1331,7 +1331,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
             runSelectCubesStatement(c, srcAppId, null, options, { ResultSet row ->
                 byte[] notes = row.getBytes(NOTES_BIN)
                 String oldNotes = removePreviousNotesCopyMessage(notes)
-                insert.setLong(1, UniqueIdGenerator.uniqueId)
+                insert.setLong(1, uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, nowAsTimestamp())
@@ -1413,7 +1413,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 byte[] notes = row.getBytes(NOTES_BIN)
                 String oldNotes = removePreviousNotesCopyMessage(notes)
                 String sha1 = row.getString('sha1')
-                insert.setLong(1, UniqueIdGenerator.uniqueId)
+                insert.setLong(1, uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, nowAsTimestamp())
@@ -1471,7 +1471,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 String sha1 = row.getString('sha1')
                 byte[] notes = row.getBytes(NOTES_BIN)
                 String oldNotes = removePreviousNotesCopyMessage(notes)
-                insert.setLong(1, UniqueIdGenerator.uniqueId)
+                insert.setLong(1, uniqueId)
                 insert.setString(2, row.getString('n_cube_nm'))
                 insert.setBytes(3, row.getBytes(CUBE_VALUE_BIN))
                 insert.setTimestamp(4, row.getTimestamp('create_dt'))

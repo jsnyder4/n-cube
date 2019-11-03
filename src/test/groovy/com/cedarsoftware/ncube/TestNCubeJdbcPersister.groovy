@@ -1,11 +1,15 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
-import com.cedarsoftware.util.UniqueIdGenerator
 import org.junit.Test
 
-import java.sql.*
+import java.sql.Connection
+import java.sql.DatabaseMetaData
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.SQLException
 
+import static com.cedarsoftware.util.UniqueIdGenerator.uniqueId
 import static org.junit.Assert.*
 import static org.mockito.Matchers.anyInt
 import static org.mockito.Matchers.anyString
@@ -95,7 +99,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
         preloadCubes(branch1, 'test.branch.1.json', 'test.branch.age.1.json')
 
         String origUser = mutableClient.userId
-        String otherUser = UniqueIdGenerator.uniqueId
+        String otherUser = uniqueId
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         manager.userId = otherUser
 
@@ -331,7 +335,7 @@ class TestNCubeJdbcPersister extends NCubeCleanupBaseTest
     @Test
     void testUpdateBranchCubeWithNull()
     {
-        List<NCubeInfoDto> list = new NCubeJdbcPersister().pullToBranch((Connection)null, (ApplicationID) null,(Object[]) null, null, UniqueIdGenerator.uniqueId)
+        List<NCubeInfoDto> list = new NCubeJdbcPersister().pullToBranch((Connection)null, (ApplicationID) null,(Object[]) null, null, uniqueId)
         assert 0 == list.size()
     }
 }

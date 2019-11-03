@@ -1,9 +1,10 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
-import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import static com.cedarsoftware.util.UrlUtilities.getContentFromUrl
 
 /**
  * Process a binary type (byte[]) that is specified at a URL.
@@ -38,6 +39,6 @@ class BinaryUrlCmd extends ContentCmdCell
 
     protected Object grab(URL u)
     {
-        return UrlUtilities.getContentFromUrl(u, true)
+        return getContentFromUrl(u, true)
     }
 }

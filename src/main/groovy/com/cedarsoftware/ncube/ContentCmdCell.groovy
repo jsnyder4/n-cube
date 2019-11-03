@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnRouter
-import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.util.FastByteArrayOutputStream
@@ -12,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import static com.cedarsoftware.util.IOUtilities.close
 import static com.cedarsoftware.util.IOUtilities.transfer
+import static com.cedarsoftware.util.UrlUtilities.getContentFromUrlAsString
+import static com.cedarsoftware.util.UrlUtilities.readErrorResponse
 
 /**
  * This class represents any cell that needs to return content from a URL.
@@ -129,7 +130,7 @@ abstract class ContentCmdCell extends UrlCommandCell
 
     protected Object grab(URL u)
     {
-        return UrlUtilities.getContentFromUrlAsString(u, true)
+        return getContentFromUrlAsString(u, true)
     }
 
     protected Object proxyFetch(Map ctx)
@@ -173,7 +174,7 @@ abstract class ContentCmdCell extends UrlCommandCell
             }
             else
             {
-                UrlUtilities.readErrorResponse(conn)
+                readErrorResponse(conn)
                 response.sendError(resCode, conn.responseMessage)
                 return null
             }
@@ -192,7 +193,7 @@ abstract class ContentCmdCell extends UrlCommandCell
             try
             {
                 log.error("Error occurred fetching: " + actualUrl, e)
-                UrlUtilities.readErrorResponse(conn)
+                readErrorResponse(conn)
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.message)
             }
             catch (IOException ignored) { }

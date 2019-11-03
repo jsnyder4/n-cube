@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
-import com.cedarsoftware.util.UniqueIdGenerator
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -14,6 +13,7 @@ import static com.cedarsoftware.util.Converter.convertToLong
 import static com.cedarsoftware.util.DeepEquals.deepEquals
 import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static com.cedarsoftware.util.TestUtil.checkContainsIgnoreCase
+import static com.cedarsoftware.util.UniqueIdGenerator.uniqueId
 import static org.junit.Assert.*
 
 /**
@@ -1944,7 +1944,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = UniqueIdGenerator.uniqueId
+        String otherUser = uniqueId
         ApplicationID branchBootAppId = defaultBootApp.asBranch(origUser)
         Map lockCoord = [(AXIS_SYSTEM): null]
 
@@ -2013,7 +2013,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // assert other user can't read prcube
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-        manager.userId = UniqueIdGenerator.uniqueId as String
+        manager.userId = uniqueId as String
         try
         {
             assert !mutableClient.checkPermissions(sysAppId, "tx.${prId}".toString(), Action.READ)
@@ -2098,7 +2098,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         try
         {
-            manager.userId = UniqueIdGenerator.uniqueId as String
+            manager.userId = uniqueId as String
             testCube.setCell('testval', [(testAxisName): null])
             mutableClient.updateCube(testCube)
             fail()
@@ -2157,7 +2157,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         String origUser = manager.userId
         assertNotNull(mutableClient.getCube(defaultBootApp, SYS_USERGROUPS))
-        manager.userId = UniqueIdGenerator.uniqueId as String
+        manager.userId = uniqueId as String
         try
         {
             assert !mutableClient.isAppAdmin(defaultSnapshotApp)
@@ -2176,7 +2176,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = UniqueIdGenerator.uniqueId
+        String otherUser = uniqueId
         String testAxisName = 'testAxis'
         ApplicationID branchBootApp = defaultBootApp.asBranch(ApplicationID.TEST_BRANCH)
 

@@ -8,7 +8,6 @@ import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
@@ -30,6 +29,7 @@ import static com.cedarsoftware.util.Converter.convertToLong
 import static com.cedarsoftware.util.EncryptionUtilities.calculateSHA1Hash
 import static com.cedarsoftware.util.IOUtilities.uncompressBytes
 import static com.cedarsoftware.util.StringUtilities.*
+import static com.cedarsoftware.util.UniqueIdGenerator.uniqueId
 import static java.lang.Math.abs
 
 /**
@@ -2376,7 +2376,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         List<NCubeInfoDto> fastforwards = []
         List<NCubeInfoDto> rejects = []
         List<NCubeInfoDto> finalUpdates
-        long txId = UniqueIdGenerator.uniqueId
+        long txId = uniqueId
         Map<String, NCubeInfoDto> newDtos = new CaseInsensitiveMap<>()
         List<NCubeInfoDto> newDtoList = getHeadChangesForBranch(appId)
         List<NCubeInfoDto> cubesToUpdate = []

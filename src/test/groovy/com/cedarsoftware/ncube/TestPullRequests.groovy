@@ -1,12 +1,12 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.exception.BranchMergeException
-import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
+import static com.cedarsoftware.util.UniqueIdGenerator.uniqueId
 import static org.junit.Assert.fail
 
 /**
@@ -84,7 +84,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
 
         NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
         String origUser = manager.userId
-        manager.userId = UniqueIdGenerator.uniqueId as String
+        manager.userId = uniqueId as String
         try
         {
             mutableClient.commitBranch(appId)
@@ -228,7 +228,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
         String prId = mutableClient.generatePullRequestHash(appId, dtos.toArray())
 
         // test permissions for other user
-        manager.userId = UniqueIdGenerator.uniqueId as String
+        manager.userId = uniqueId as String
         try
         {
             mutableClient.assertPermissions(appId, null, Action.COMMIT)
@@ -300,7 +300,7 @@ class TestPullRequests extends NCubeCleanupBaseTest
             return
         }
         String origUser = mutableClient.userId
-        String otherUser = UniqueIdGenerator.uniqueId as String
+        String otherUser = uniqueId as String
 
         // give other user branch permissions
         ApplicationID tripZero = appId.asVersion('0.0.0')
