@@ -31,7 +31,7 @@ class TestGroovyMethod
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
     {
-        Class c = GroovyMethod.class;
+        Class c = GroovyMethod.class
         Constructor<GroovyMethod> con = c.getDeclaredConstructor()
         Assert.assertEquals Modifier.PRIVATE, con.modifiers & Modifier.PRIVATE
         con.accessible = true

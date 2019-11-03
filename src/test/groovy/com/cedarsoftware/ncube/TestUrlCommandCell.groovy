@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnRouter
-import com.cedarsoftware.util.TestUtil
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -11,15 +10,11 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 import static org.mockito.Matchers.anyString
-import static org.mockito.Mockito.doThrow
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.never
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.when
+import static org.mockito.Mockito.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -155,7 +150,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         catch (Throwable e)
         {
             e = e.cause
-            TestUtil.assertContainsIgnoreCase(e.message, 'invalid url in cell', 'unable to resolve', 'sys.classpath', 'qtp://files/foo.html')
+            assertContainsIgnoreCase(e.message, 'invalid url in cell', 'unable to resolve', 'sys.classpath', 'qtp://files/foo.html')
         }
 
         coord['content.name'] = 'badRelative'

@@ -22,9 +22,7 @@ import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.InetAddressUtilities
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.ThreadAwarePrintStream
 import com.cedarsoftware.util.ThreadAwarePrintStreamErr
 import com.cedarsoftware.util.io.JsonObject
@@ -44,7 +42,8 @@ import java.lang.management.ManagementFactory
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
-import static com.cedarsoftware.util.Converter.convertToLong
+import static com.cedarsoftware.util.Converter.*
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * NCubeController API.
@@ -111,7 +110,7 @@ class NCubeController implements NCubeConstants
             }
         }
 
-        if (StringUtilities.isEmpty(user))
+        if (isEmpty(user))
         {
             user = System.getProperty('user.name')
         }
@@ -619,7 +618,7 @@ class NCubeController implements NCubeConstants
         appId = addTenant(appId)
         String resourceName = "${cubeName}/${axisName}"
         mutableClient.assertPermissions(appId, resourceName, Action.UPDATE)
-        if (StringUtilities.isEmpty(axisName))
+        if (isEmpty(axisName))
         {
             throw new IllegalArgumentException("Axis name cannot be empty.")
         }
@@ -650,7 +649,7 @@ class NCubeController implements NCubeConstants
         appId = addTenant(appId)
         NCube nCube = getCubeInternal(appId, cubeName)
 
-        if (StringUtilities.isEmpty(axisName))
+        if (isEmpty(axisName))
         {
             axisName = refAxisName
         }
@@ -937,7 +936,7 @@ class NCubeController implements NCubeConstants
         appId = addTenant(appId)
         NCube ncube = getCubeInternal(appId, cubeName)
 
-        if (StringUtilities.isEmpty(testName))
+        if (isEmpty(testName))
         {
             throw new IllegalArgumentException("Test name cannot be empty, cube: ${cubeName}, app: ${appId}")
         }
@@ -1198,7 +1197,7 @@ class NCubeController implements NCubeConstants
             throw new IllegalArgumentException("Could not paste cells, cube: ${cubeName} not found for app: ${appId}")
         }
 
-        int len = clipboard.length;
+        int len = clipboard.length
         for (int i=0; i < len; i++)
         {
             Object[] cell = clipboard[i] as Object[]
@@ -1743,7 +1742,7 @@ class NCubeController implements NCubeConstants
 
     private static Object convertStringToValue(String origValue)
     {
-        if (StringUtilities.isEmpty(origValue))
+        if (isEmpty(origValue))
         {
             return null
         }
@@ -1785,7 +1784,7 @@ class NCubeController implements NCubeConstants
         // Try as a date (the code below supports numerous different date formats)
         try
         {
-            return Converter.convertToDate(value)
+            return convertToDate(value)
         }
         catch (Exception ignored) { }
 
@@ -1829,7 +1828,7 @@ class NCubeController implements NCubeConstants
     private static Map columnToMap(Column col)
     {
         Map map = [:]
-        map.id = Converter.convertToString(col.id)  // Stringify Long ID (Javascript safe if quoted)
+        map.id = convertToString(col.id)  // Stringify Long ID (Javascript safe if quoted)
         map.'@type' = Column.class.name
         if (col.metaProperties.size() > 0)
         {

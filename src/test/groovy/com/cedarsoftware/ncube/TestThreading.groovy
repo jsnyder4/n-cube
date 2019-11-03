@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.codehaus.groovy.runtime.StackTraceUtils
@@ -15,6 +14,7 @@ import org.springframework.test.context.TestContextManager
 import java.util.concurrent.ConcurrentLinkedQueue
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.StringUtilities.hasContent
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
@@ -311,7 +311,7 @@ class TestThreading extends NCubeCleanupBaseTest
         Map<String, Long> uniqueFailures = [:]
         failures.each { f ->
             String msg = f.message
-            if (StringUtilities.hasContent(msg))
+            if (hasContent(msg))
             {
                 if (msg.contains('@'))
                 {

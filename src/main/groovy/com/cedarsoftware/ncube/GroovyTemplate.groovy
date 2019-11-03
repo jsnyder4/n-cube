@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.IOUtilities
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
 import groovy.transform.CompileStatic
@@ -10,6 +9,8 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.IOUtilities.inputStreamToBytes
 
 /**
  * Process NCube template cells.  A template cell contains a String that may have both
@@ -134,8 +135,8 @@ class GroovyTemplate extends ContentCmdCell
             NCube ncube = getNCube(ctx)
             URLClassLoader urlLoader = ncubeRuntime.getUrlClassLoader(ncube.applicationID, getInput(ctx))
             InputStream inStream = urlLoader.getResourceAsStream("ncube/grv/closure/NCubeTemplateClosures.groovy")
-            String groovyClosures = new String(IOUtilities.inputStreamToBytes(inStream))
-            IOUtilities.close(inStream)
+            String groovyClosures = new String(inputStreamToBytes(inStream))
+            close(inStream)
 
             cmd = "<% ${groovyClosures} %>${cmd}"
 

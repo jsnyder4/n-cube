@@ -25,12 +25,12 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 @CompileStatic
 class TestDynamicProperties
 {
-    public static Map getCprMap(String prop, String bu, String env)
+    static Map getCprMap(String prop, String bu, String env)
     {
         return [cprName:prop, env:env, bu:bu]
     }
 
-    public static String getCellAsString(NCube ncube, Map input)
+    static String getCellAsString(NCube ncube, Map input)
     {
         return (String) ncube.getCell(input)
     }

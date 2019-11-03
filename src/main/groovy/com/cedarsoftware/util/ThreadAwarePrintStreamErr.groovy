@@ -1,8 +1,10 @@
 package com.cedarsoftware.util
 
 import groovy.transform.CompileStatic
-
 import org.springframework.util.FastByteArrayOutputStream
+
+import static com.cedarsoftware.util.StringUtilities.createUTF8String
+
 /**
  * Thread-aware PrintStream.  Use to separate different threads' output
  * to System.output, System.err so that this output can be captured per
@@ -82,6 +84,6 @@ class ThreadAwarePrintStreamErr extends PrintStream
     {
         byte[] contents = output.get().toByteArrayUnsafe()
         output.get().reset()
-        return StringUtilities.createString(contents, "UTF-8")
+        return createUTF8String(contents)
     }
 }

@@ -12,6 +12,7 @@ import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXES
 import static com.cedarsoftware.ncube.DeltaProcessor.DELTA_AXIS_REF_CHANGE
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.*
 
 /**

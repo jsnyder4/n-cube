@@ -8,10 +8,6 @@ import com.cedarsoftware.ncube.util.VersionComparator
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
@@ -29,7 +25,11 @@ import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToDate
 import static com.cedarsoftware.util.Converter.convertToLong
+import static com.cedarsoftware.util.EncryptionUtilities.calculateSHA1Hash
+import static com.cedarsoftware.util.IOUtilities.uncompressBytes
+import static com.cedarsoftware.util.StringUtilities.*
 import static java.lang.Math.abs
 
 /**
@@ -919,7 +919,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private static Object[] convertTests(String s)
     {
-        if (StringUtilities.isEmpty(s))
+        if (isEmpty(s))
         {
             return null
         }
@@ -1034,7 +1034,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
         Map<String, Object> jsonReaderOpts = [(JsonReader.USE_MAPS):(Object)true]
         Closure getRefAxes = { NCubeInfoDto dto, List<AxisRef> refAxes ->
-            String json = StringUtilities.createUTF8String(IOUtilities.uncompressBytes((byte[])dto.bytes))
+            String json = createUTF8String(uncompressBytes((byte[])dto.bytes))
             Map jsonNCube = (Map)JsonReader.jsonToJava(json, jsonReaderOpts)
             Object[] axes = (Object[])jsonNCube.axes
             for (Object axisEntry : axes)
@@ -1103,7 +1103,7 @@ referenced app: ${destApp}/${destVersion}/${destStatus}/${destBranch}/""", e)
                 uniqueAppIds.add(destAppId)
             }
 
-            if (StringUtilities.hasContent(axisRef.transformApp) || StringUtilities.hasContent(axisRef.transformVersion) || StringUtilities.hasContent(axisRef.transformStatus) || StringUtilities.hasContent(axisRef.transformBranch))
+            if (hasContent(axisRef.transformApp) || hasContent(axisRef.transformVersion) || hasContent(axisRef.transformStatus) || hasContent(axisRef.transformBranch))
             {
                 try
                 {
@@ -1215,7 +1215,7 @@ transform app: ${transformApp}/${transformVersion}/${transformStatus}/${transfor
             {
                 String cubeName = cubeNameRefAxEntry.key
                 NCubeInfoDto record = loadCubeRecordInternal(appId, cubeName, null)
-                String json = new String(IOUtilities.uncompressBytes(record.bytes), "UTF-8")
+                String json = new String(uncompressBytes(record.bytes), "UTF-8")
 
                 //TODO - fix asap!!! call loadCube() which will use new parser
                 Map jsonNCube = (Map) JsonReader.jsonToJava(json, [(JsonReader.USE_MAPS): true as Object])
@@ -1650,7 +1650,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             return p.matcher(text).matches()
         }
 
-        String regexString = '(?i)' + StringUtilities.wildcardToRegexString(pattern)
+        String regexString = '(?i)' + wildcardToRegexString(pattern)
         p = Pattern.compile(regexString)
         wildcards[pattern] = p
         return p.matcher(text).matches()
@@ -2034,8 +2034,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
             long infoRev = (long) convertToLong(info.revision)
             boolean activeStatusMatches = (infoRev < 0) == (headRev < 0)
-            boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1)
-            boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.sha1, head.sha1)
+            boolean branchHeadSha1MatchesHeadSha1 = equalsIgnoreCase(info.headSha1, head.sha1)
+            boolean branchSha1MatchesHeadSha1 = equalsIgnoreCase(info.sha1, head.sha1)
 
             // Did branch cube change?
             if (!info.changed)
@@ -2112,7 +2112,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                     {
                         if (activeStatusMatches)
                         {
-                            if (StringUtilities.equalsIgnoreCase(cube.sha1(), info.sha1))
+                            if (equalsIgnoreCase(cube.sha1(), info.sha1))
                             {   // NOTE: could be different category
                                 head.changeType = ChangeType.FASTFORWARD.code
                             }
@@ -2175,10 +2175,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long headRev = Converter.convert(head.revision, Long.TYPE)
+            long headRev = convertToLong(head.revision)
             boolean activeStatusMatches = (revision < 0) == (headRev < 0)
-            boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(updateCube.sha1, head.sha1)
-            boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(updateCube.headSha1, head.sha1)
+            boolean branchSha1MatchesHeadSha1 = equalsIgnoreCase(updateCube.sha1, head.sha1)
+            boolean branchHeadSha1MatchesHeadSha1 = equalsIgnoreCase(updateCube.headSha1, head.sha1)
 
             if (branchHeadSha1MatchesHeadSha1)
             {   // branch in sync with HEAD (not considering delete/restore status)
@@ -2215,7 +2215,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 {   // merge-able
                     if (activeStatusMatches)
                     {
-                        if (StringUtilities.equalsIgnoreCase(cube.sha1(), head.sha1))
+                        if (equalsIgnoreCase(cube.sha1(), head.sha1))
                         {   // no show (fast-forward)
                         }
                         else
@@ -2271,7 +2271,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             otherBranchCube.branch = appId.branch  // using other branch's DTO as return value, therefore setting the branch to the passed in AppId's branch
             NCubeInfoDto info = branchRecordMap[otherBranchCube.name]
-            long otherBranchCubeRev = Converter.convert(otherBranchCube.revision, Long.TYPE)
+            long otherBranchCubeRev = convertToLong(otherBranchCube.revision)
 
             if (info == null)
             {   // Other branch has cube that my branch does not have
@@ -2287,9 +2287,9 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long infoRev = Converter.convert(info.revision, Long.TYPE)
+            long infoRev = convertToLong(info.revision)
             boolean activeStatusMatches = (infoRev < 0) == (otherBranchCubeRev < 0)
-            boolean myBranchSha1MatchesOtherBranchSha1 = StringUtilities.equalsIgnoreCase(info.sha1, otherBranchCube.sha1)
+            boolean myBranchSha1MatchesOtherBranchSha1 = equalsIgnoreCase(info.sha1, otherBranchCube.sha1)
 
             // No change on my branch cube
             if (activeStatusMatches)
@@ -2437,7 +2437,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                     // Fast-Forward branch
                     // Update HEAD SHA-1 on branch directly (no need to insert)
                     NCubeInfoDto branchCube = getCubeInfo(appId, updateCube)
-                    persister.updateBranchCubeHeadSha1(Converter.convert(branchCube.id, Long.class), branchCube.sha1, updateCube.sha1, getUserId())
+                    persister.updateBranchCubeHeadSha1(convertToLong(branchCube.id), branchCube.sha1, updateCube.sha1, getUserId())
                     fastforwards.add(updateCube)
                     break
                 case ChangeType.CONFLICT.code:
@@ -2475,7 +2475,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
         commitRecords.sort(true, {Map it -> it.id})
         String prInfoJson = JsonWriter.objectToJson(commitRecords)
-        String sha1 = EncryptionUtilities.calculateSHA1Hash(prInfoJson.getBytes('UTF-8'))
+        String sha1 = calculateSHA1Hash(prInfoJson.getBytes('UTF-8'))
 
         if (runSystemRequest {getCube(sysAppId, 'tx.' + sha1) })
         {
@@ -2718,8 +2718,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             results.add(prInfo)
         }
         results.sort(true, { Map a, Map b ->
-            Converter.convertToDate(b[PR_REQUEST_TIME]) <=> Converter.convertToDate(a[PR_REQUEST_TIME]) ?:
-                    Converter.convertToDate(b[PR_MERGE_TIME]) <=> Converter.convertToDate(a[PR_MERGE_TIME])
+            convertToDate(b[PR_REQUEST_TIME]) <=> convertToDate(a[PR_REQUEST_TIME]) ?: convertToDate(b[PR_MERGE_TIME]) <=> convertToDate(a[PR_MERGE_TIME])
         })
         return results as Object[]
     }
@@ -2784,9 +2783,9 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                     break
                 case ChangeType.UPDATED.code:
                     NCubeInfoDto headCube = getCubeInfo(appId.asHead(), updateCube)
-                    if (StringUtilities.equalsIgnoreCase(updateCube.headSha1, headCube.sha1))
+                    if (equalsIgnoreCase(updateCube.headSha1, headCube.sha1))
                     {
-                        if (!StringUtilities.equalsIgnoreCase(updateCube.sha1, headCube.sha1))
+                        if (!equalsIgnoreCase(updateCube.sha1, headCube.sha1))
                         {   // basic update case
                             updates.add(updateCube)
                         }
@@ -3006,7 +3005,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
 
         NCubeInfoDto headDto = list.first()     // only 1 because we used exact match
-        return StringUtilities.equalsIgnoreCase(branchDto.headSha1, headDto.sha1)
+        return equalsIgnoreCase(branchDto.headSha1, headDto.sha1)
     }
 
     void clearCache(ApplicationID appId)
@@ -3044,8 +3043,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
 
     protected NCube mergeCubesIfPossible(NCubeInfoDto branchInfo, NCubeInfoDto headInfo, boolean headToBranch)
     {
-        long branchCubeId = Converter.convert(branchInfo.id, Long.TYPE)
-        long headCubeId = Converter.convert(headInfo.id, Long.TYPE)
+        long branchCubeId = convertToLong(branchInfo.id)
+        long headCubeId = convertToLong(headInfo.id)
         NCube branchCube = loadCubeById(branchCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube headCube = loadCubeById(headCubeId, [(SEARCH_INCLUDE_TEST_DATA):true])
         NCube baseCube, headBaseCube

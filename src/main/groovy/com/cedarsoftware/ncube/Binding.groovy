@@ -1,8 +1,9 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.hasContent
 
 /**
  * This class represents a binding to a Set of columns, and the associated
@@ -106,7 +107,7 @@ class Binding
             s.append(entry.key)
             s.append(': ')
             String name = (String) column.getMetaProperty('name')
-            if (StringUtilities.hasContent(name))
+            if (hasContent(name))
             {
                 s.append(name)
                 s.append(' / ')

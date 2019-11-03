@@ -2,7 +2,6 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.config.NCubeConfiguration
 import com.cedarsoftware.controller.NCubeController
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Ignore
@@ -14,7 +13,7 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit4.SpringRunner
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
-import static org.junit.Assert.assertTrue
+import static com.cedarsoftware.util.StringUtilities.hasContent
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -72,39 +71,13 @@ class NCubeBaseTest implements NCubeConstants
         return NCubeAppContext.getBean(CONTROLLER_BEAN) as NCubeController
     }
 
-    static void assertContainsIgnoreCase(String source, String... contains)
-    {
-        String lowerSource = source.toLowerCase()
-        for (String contain : contains)
-        {
-            int idx = lowerSource.indexOf(contain.toLowerCase())
-            assertTrue("'${contain}' not found in '${lowerSource}'", idx >= 0)
-            lowerSource = lowerSource.substring(idx)
-        }
-    }
-
-    static boolean checkContainsIgnoreCase(String source, String... contains)
-    {
-        String lowerSource = source.toLowerCase()
-        for (String contain : contains)
-        {
-            int idx = lowerSource.indexOf(contain.toLowerCase())
-            if (idx == -1)
-            {
-                return false
-            }
-            lowerSource = lowerSource.substring(idx)
-        }
-        return true
-    }
-
     /**
      * Loads ncube into the runtimeClient, replacing references to ${baseRemoteUrl}, if found in the json
      */
     static NCube createRuntimeCubeFromResource(ApplicationID appId = ApplicationID.testAppId, String fileName)
     {
         String json = NCubeRuntime.getResourceAsString(fileName)
-        if (StringUtilities.hasContent(baseRemoteUrl))
+        if (hasContent(baseRemoteUrl))
         {
             json = json.replaceAll('\\$\\{baseRemoteUrl\\}',baseRemoteUrl)
         }

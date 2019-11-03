@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-
 import com.cedarsoftware.ncube.exception.BranchMergeException
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
@@ -12,10 +11,10 @@ import groovy.transform.TypeCheckingMode
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.springframework.boot.test.context.SpringBootTest
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.*
 
 /**

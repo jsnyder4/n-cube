@@ -12,17 +12,11 @@ import com.cedarsoftware.util.CaseInsensitiveMap
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import org.codehaus.groovy.transform.stc.TypeCheckingContext
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertNotEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
+import static org.junit.Assert.*
 
 /**
  * NCube tests.
@@ -2747,7 +2741,7 @@ class TestNCube extends NCubeBaseTest
 
     static class CallJavaTest
     {
-        public static Object testInput(Map input, Map output, String type)
+        static Object testInput(Map input, Map output, String type)
         {
             if ("good".equalsIgnoreCase(type))
             {

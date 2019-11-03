@@ -5,13 +5,14 @@ import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.NCubeAppContext
 import com.cedarsoftware.ncube.NCubeClient
 import com.cedarsoftware.ncube.Regexes
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Matcher
+
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * Accept inbound requests for static content, route via n-cube.
@@ -105,27 +106,27 @@ class CdnRouter
             String cubeName = (String) coord[CUBE_NAME]
             String msg = null
 
-            if (StringUtilities.isEmpty(tenant))
+            if (isEmpty(tenant))
             {
                 msg = TENANT
             }
-            else if (StringUtilities.isEmpty(app))
+            else if (isEmpty(app))
             {
                 msg = APP
             }
-            else if (StringUtilities.isEmpty(version))
+            else if (isEmpty(version))
             {
                 msg = CUBE_VERSION
             }
-            else if (StringUtilities.isEmpty(status))
+            else if (isEmpty(status))
             {
                 msg = STATUS
             }
-            else if (StringUtilities.isEmpty(branch))
+            else if (isEmpty(branch))
             {
                 msg = BRANCH
             }
-            else if (StringUtilities.isEmpty(cubeName))
+            else if (isEmpty(cubeName))
             {
                 msg = CUBE_NAME
             }

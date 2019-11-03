@@ -4,10 +4,10 @@ import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
-import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
 import static com.cedarsoftware.visualizer.VisualizerConstants.DOUBLE_BREAK
 
 /**
@@ -90,7 +90,7 @@ class VisualizerHelper
 
 	protected static String handleException(Throwable e)
 	{
-		Throwable t = ExceptionUtilities.getDeepestException(e)
+		Throwable t = getDeepestException(e)
 		return getExceptionMessage(t, e)
 	}
 

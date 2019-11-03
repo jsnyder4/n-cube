@@ -3,7 +3,6 @@ package com.cedarsoftware.util
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
-import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.apache.http.HttpHost
@@ -32,6 +31,7 @@ import javax.servlet.http.HttpServletRequest
 import java.util.zip.Deflater
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
+import static com.cedarsoftware.util.io.MetaUtils.getLogMessage
 import static org.apache.http.HttpHeaders.*
 import static org.apache.http.entity.ContentType.APPLICATION_JSON
 
@@ -138,7 +138,7 @@ class JsonHttpProxy implements CallableBean
 
         if (log.debugEnabled)
         {
-            log.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
+            log.debug("${bean}.${getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
         }
 
         HttpClientContext clientContext = HttpClientContext.create()
@@ -200,7 +200,7 @@ class JsonHttpProxy implements CallableBean
         {
             if (!parsedJsonOk)
             {
-                log.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}")
+                log.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}")
             }
             throw e
         }

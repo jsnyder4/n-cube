@@ -1,7 +1,8 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * This class records information about the delta (difference) between
@@ -128,7 +129,7 @@ class Delta implements Comparable
 
     int hashCode()
     {
-        if (StringUtilities.isEmpty(desc))
+        if (isEmpty(desc))
         {
             return 0
         }
@@ -178,9 +179,9 @@ class Delta implements Comparable
         }
 
         // Location and Type are the same, order by description
-        if (StringUtilities.isEmpty(desc))
+        if (isEmpty(desc))
         {
-            if (StringUtilities.isEmpty(that.desc))
+            if (isEmpty(that.desc))
             {
                 return 0
             }

@@ -1,9 +1,10 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
 import com.google.common.base.Splitter
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * This class loads an reference axis.  This entails loading the cube containing
@@ -150,7 +151,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         List<Column> columns = input.columns as List<Column>
         transformCube.getAxis('transform').columnsWithoutDefault.each { Column column ->
             def typeCell = transformCube.getCellNoExecute([transform: column.value, property: 'type'])
-            if (!(typeCell instanceof String) || StringUtilities.isEmpty(typeCell as String))
+            if (!(typeCell instanceof String) || isEmpty(typeCell as String))
             {
                 throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
@@ -159,7 +160,7 @@ ${getTransformInfo(axis)}. Please enter a String for type in transform id: ${col
             String type = (typeCell as String).toLowerCase()
 
             def valueCell = transformCube.getCellNoExecute([transform: column.value, property: 'value'])
-            if (!(valueCell instanceof String) || StringUtilities.isEmpty(valueCell as String))
+            if (!(valueCell instanceof String) || isEmpty(valueCell as String))
             {
                 throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \

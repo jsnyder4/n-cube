@@ -15,17 +15,10 @@ import com.cedarsoftware.util.AdjustableGZIPOutputStream
 import com.cedarsoftware.util.ByteUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.ExceptionUtilities
-import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.MapUtilities
-import com.cedarsoftware.util.ReflectionUtils
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonWriter
-import com.cedarsoftware.util.io.MetaUtils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
@@ -44,6 +37,14 @@ import java.util.zip.Deflater
 import java.util.zip.GZIPInputStream
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.Converter.convertToLong
+import static com.cedarsoftware.util.EncryptionUtilities.SHA1Digest
+import static com.cedarsoftware.util.EncryptionUtilities.calculateSHA1Hash
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.ReflectionUtils.getDeepDeclaredFields
+import static com.cedarsoftware.util.StringUtilities.*
+import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive
 
 /**
  * Implements an n-cube.  This is a hyper (n-dimensional) cube
@@ -826,7 +827,7 @@ class NCube<T>
                 t = t.cause
             }
             String msg = t.message
-            if (StringUtilities.isEmpty(msg))
+            if (isEmpty(msg))
             {
                 msg = t.class.name
             }
@@ -939,7 +940,7 @@ class NCube<T>
 //                    log.info("  Columns:")
 //                    for (Column column : axis.getColumns())
 //                    {
-//                        if (StringUtilities.hasContent(column.getColumnName()))
+//                        if (hasContent(column.getColumnName()))
 //                        {
 //                            log.info("    column name: " + column.getColumnName())
 //                        }
@@ -1250,7 +1251,7 @@ class NCube<T>
                 }
                 catch (Exception e)
                 {
-                    val = "err: ${getExceptionMessage(ExceptionUtilities.getDeepestException(e))}".toString()
+                    val = "err: ${getExceptionMessage(getDeepestException(e))}".toString()
                 }
                 whereVars.put(colKey, val)
                 ids.remove(whereId)
@@ -1389,7 +1390,7 @@ class NCube<T>
         }
         else
         {
-            if (StringUtilities.isEmpty(row.columnName))
+            if (isEmpty(row.columnName))
             {
                 throw new IllegalStateException("Non-discrete axis columns must have a meta-property 'name' set in order to use them for mapReduce().  Cube: ${name}, Axis: ${rowAxis.name}")
             }
@@ -1416,7 +1417,7 @@ class NCube<T>
             {
                 for (Column column : axis.columns)
                 {
-                    if (StringUtilities.isEmpty(column.columnName))
+                    if (isEmpty(column.columnName))
                     {
                         throw new IllegalStateException("Non-discrete axis columns must have a meta-property name set in order to use them for mapReduce().  Cube: ${name}, Axis: ${axis.name}")
                     }
@@ -1437,7 +1438,7 @@ class NCube<T>
         {
             for (Object value : valuesMatchingColumns)
             {
-                if (StringUtilities.isEmpty((String)value))
+                if (isEmpty((String)value))
                 {
                     throw new IllegalStateException("Non-discrete axis columns must have a meta-property name set in order to use them for mapReduce().  Cube: ${name}, Axis: ${axis.name}")
                 }
@@ -1765,7 +1766,7 @@ class NCube<T>
             Set<Long> key = new LinkedHashSet<>()
             for (item in coord)
             {
-                key.add(Converter.convertToLong(item))
+                key.add(convertToLong(item))
             }
             key = ensureFullCoordinate(key)
             ensureInputBindings(commandInput, key)
@@ -1786,7 +1787,7 @@ class NCube<T>
             }
             catch (Exception e)
             {
-                cellInfo = new CellInfo("err: ${getExceptionMessage(ExceptionUtilities.getDeepestException(e))}".toString())
+                cellInfo = new CellInfo("err: ${getExceptionMessage(getDeepestException(e))}".toString())
                 ret[idx++] = [coord, cellInfo as Map]
             }
         }
@@ -1840,7 +1841,7 @@ class NCube<T>
 
         try
         {
-            final Collection<Field> fields = ReflectionUtils.getDeepDeclaredFields(o.class)
+            final Collection<Field> fields = getDeepDeclaredFields(o.class)
             final Iterator<Field> i = fields.iterator()
             final Map newCoord = new CaseInsensitiveMap<>()
 
@@ -2459,7 +2460,7 @@ class NCube<T>
      */
     void renameAxis(final String oldName, final String newName)
     {
-        if (StringUtilities.isEmpty(oldName) || StringUtilities.isEmpty(newName))
+        if (isEmpty(oldName) || isEmpty(newName))
         {
             throw new IllegalArgumentException("Axis name cannot be empty or blank")
         }
@@ -2877,7 +2878,7 @@ class NCube<T>
      */
     static <T> NCube<T> fromSimpleJson(final String json)
     {
-        if (StringUtilities.isEmpty(json))
+        if (isEmpty(json))
         {
             throw new IllegalArgumentException("JSON String cannot be null or empty.")
         }
@@ -3737,14 +3738,14 @@ class NCube<T>
     {
         // Check if the SHA1 is already calculated.  If so, return it.
         // In order to cache it successfully, all mutable operations on n-cube must clear the SHA1.
-        if (StringUtilities.hasContent(sha1))
+        if (hasContent(sha1))
         {
             return sha1
         }
 
         Map<String, String> axisNameMap = [:]
         final byte sep = 0
-        MessageDigest sha1Digest = EncryptionUtilities.SHA1Digest
+        MessageDigest sha1Digest = SHA1Digest
         sha1Digest.update(name == null ? ''.bytes : name.bytes)
         sha1Digest.update(sep)
 
@@ -3833,14 +3834,14 @@ class NCube<T>
         if (numCells)
         {
             List<String> sha1s = new ArrayList<>(cells.size()) as List<String>
-            MessageDigest tempDigest = EncryptionUtilities.SHA1Digest
+            MessageDigest tempDigest = SHA1Digest
 
             for (entry in cells.entrySet())
             {
                 String keySha1 = columnIdsToString(axisNameMap, entry.key)
                 deepSha1(tempDigest, entry.value, sep)
-                String valueSha1 = StringUtilities.encode(tempDigest.digest())
-                sha1s.add(EncryptionUtilities.calculateSHA1Hash((keySha1 + valueSha1).bytes))
+                String valueSha1 = encode(tempDigest.digest())
+                sha1s.add(calculateSHA1Hash((keySha1 + valueSha1).bytes))
                 tempDigest.reset()
             }
 
@@ -3851,7 +3852,7 @@ class NCube<T>
                 sha1Digest.update(sha_1.bytes)
             }
         }
-        sha1 = StringUtilities.encode(sha1Digest.digest())
+        sha1 = encode(sha1Digest.digest())
         return sha1
     }
 
@@ -4411,7 +4412,7 @@ class NCube<T>
      */
     static void validateCubeName(String cubeName)
     {
-        if (StringUtilities.isEmpty(cubeName))
+        if (isEmpty(cubeName))
         {
             throw new IllegalArgumentException("n-cube name cannot be null or empty")
         }
@@ -4450,7 +4451,7 @@ class NCube<T>
         }
         finally
         {
-            IOUtilities.close(stream)
+            close(stream)
         }
     }
 
@@ -4494,7 +4495,7 @@ class NCube<T>
         }
         finally
         {
-            IOUtilities.close(gzipOut)
+            close(gzipOut)
         }
         return byteOut.toByteArrayUnsafe()
     }
@@ -4533,7 +4534,7 @@ class NCube<T>
             return null
         }
 
-        if (!MetaUtils.isLogicalPrimitive(value.class))
+        if (!isLogicalPrimitive(value.class))
         {   // don't attempt to intern null (NPE) or non-primitive instances
             return value
         }

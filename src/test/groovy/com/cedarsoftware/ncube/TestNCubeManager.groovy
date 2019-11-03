@@ -3,8 +3,6 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.exception.CommandCellException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.DeepEquals
 import com.cedarsoftware.util.UniqueIdGenerator
 import groovy.transform.CompileStatic
 import org.junit.Test
@@ -12,6 +10,10 @@ import org.junit.Test
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static com.cedarsoftware.ncube.TestUrlClassLoader.getCacheSize
+import static com.cedarsoftware.util.Converter.convertToLong
+import static com.cedarsoftware.util.DeepEquals.deepEquals
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
+import static com.cedarsoftware.util.TestUtil.checkContainsIgnoreCase
 import static org.junit.Assert.*
 
 /**
@@ -225,19 +227,19 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         // reading from cache.
         List<NCubeTest> data = loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
-        assert DeepEquals.deepEquals(expectedTests, data)
+        assert deepEquals(expectedTests, data)
 
         // reload from db
         ncubeRuntime.clearCache(defaultSnapshotApp)
         data = loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
-        assert DeepEquals.deepEquals(expectedTests, data)
+        assert deepEquals(expectedTests, data)
 
         //  update cube
         cube.testData = [new NCubeTest('different test', [:], [] as CellInfo[])] as Object[]
         mutableClient.updateCube(cube)
         cube = loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true])
         data = cube.testData
-        assert !DeepEquals.deepEquals(expectedTests, data)
+        assert !deepEquals(expectedTests, data)
         assert cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_UPDATED)
         String testUpdated = cube.metaProperties[NCube.METAPROPERTY_TEST_UPDATED]
 
@@ -247,7 +249,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         cube = loadCube(defaultSnapshotApp, cube.name, [(SEARCH_INCLUDE_TEST_DATA):true])
         List<NCubeTest> newData = cube.testData
         String newTestUpdated = cube.metaProperties[NCube.METAPROPERTY_TEST_UPDATED]
-        assert DeepEquals.deepEquals(data, newData)
+        assert deepEquals(data, newData)
         assert testUpdated == newTestUpdated
     }
 
@@ -577,7 +579,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         mutableClient.updateCube(ncube1)
         List<NCubeTest> testData = loadCube(defaultSnapshotApp, ncube1.name, [(SEARCH_INCLUDE_TEST_DATA):true]).testData
         List<NCubeTest> expectedTests = createTests().toList() as List<NCubeTest>
-        assertTrue(DeepEquals.deepEquals(expectedTests, testData))
+        assertTrue(deepEquals(expectedTests, testData))
     }
 
     @Test
@@ -1272,8 +1274,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
         assert history[1].revision == '0'
         assert history[1].notes == 'notes follow'
 
-        long rev0Id = Converter.convert(history[1].id, Long.TYPE)
-        long rev1Id = Converter.convert(history[0].id, Long.TYPE)
+        long rev0Id = convertToLong(history[1].id)
+        long rev1Id = convertToLong(history[0].id)
         NCubeInfoDto record0 = mutableClient.loadCubeRecordById(rev0Id, null)
         NCubeInfoDto record1 = mutableClient.loadCubeRecordById(rev1Id, null)
         NCube rev0 = NCube.createCubeFromBytes(record0.bytes as byte[])

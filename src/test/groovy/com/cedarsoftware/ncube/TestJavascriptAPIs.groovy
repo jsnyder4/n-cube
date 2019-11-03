@@ -3,9 +3,7 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.servlet.JsonCommandServlet
-import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.JsonHttpProxy
-import com.cedarsoftware.util.StringUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import org.junit.Before
@@ -17,6 +15,9 @@ import java.lang.reflect.Method
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToLong
+import static com.cedarsoftware.util.StringUtilities.hasContent
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.assertTrue
 import static org.junit.Assert.fail
 
@@ -166,16 +167,16 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
 
         // test valid cube json calls
         String json = call('getJson', [BRANCH2, cubeName, [mode:'json']])
-        assert StringUtilities.hasContent(json)
+        assert hasContent(json)
         json = call('getJson', [BRANCH2, cubeName, [mode:'json-index']])
-        assert StringUtilities.hasContent(json)
+        assert hasContent(json)
 
         mutableClient.deleteBranch(BRANCH1)
         call('clearCache', [BRANCH2])
 
         // invalid cube json, but raw json should still load
         json = call('getJson', [BRANCH2, cubeName, [mode:'json']])
-        assert StringUtilities.hasContent(json)
+        assert hasContent(json)
 
         try
         { // invalid cube json should cause exception
@@ -286,13 +287,13 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> cubes = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
-        long origId = Converter.convert(origDto.id, Long.TYPE)
+        long origId = convertToLong(origDto.id)
         NCube foo = ncubeRuntime.getNCubeFromResource(BRANCH1, 'test.branch.2.json')
         mutableClient.updateCube(foo)
         List<NCubeInfoDto> cubes2 = ncubeRuntime.search(BRANCH1, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
-        long newId = Converter.convert(newDto.id, Long.TYPE)
+        long newId = convertToLong(newDto.id)
 
         List<Delta> result = call('fetchJsonRevDiffs', [newId, origId]) as List
         assert result.size() == 4
@@ -310,13 +311,13 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> cubes = ncubeRuntime.search(acme1, 'TestBranch', null, null)
         assert cubes.size() == 1
         NCubeInfoDto origDto = cubes[0]
-        long origId = Converter.convert(origDto.id, Long.TYPE)
+        long origId = convertToLong(origDto.id)
         NCube foo = ncubeRuntime.getNCubeFromResource(acme1, 'test.branch.2.json')
         mutableClient.updateCube(foo)
         List<NCubeInfoDto> cubes2 = ncubeRuntime.search(acme1, 'TestBranch', null, null)
         assert cubes2.size() == 1
         NCubeInfoDto newDto = cubes2[0]
-        long newId = Converter.convert(newDto.id, Long.TYPE)
+        long newId = convertToLong(newDto.id)
 
         try
         {
@@ -679,7 +680,7 @@ class TestJavascriptAPIs extends NCubeCleanupBaseTest
         List<NCubeInfoDto> revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List<NCubeInfoDto>
         assert revisions.size() == 2
         NCubeInfoDto record0 = revisions.find { it.revision == '0' }
-        long id = Converter.convert(record0.id, Long.TYPE)
+        long id = convertToLong(record0.id)
         call('promoteRevision', [id])
         revisions = call('getRevisionHistory', [BRANCH1, ncube.name]) as List
         assert revisions.size() == 3

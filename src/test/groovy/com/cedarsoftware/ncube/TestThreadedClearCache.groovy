@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -11,6 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
 import static org.junit.Assert.assertEquals
 
 /**
@@ -96,7 +96,7 @@ class TestThreadedClearCache extends NCubeCleanupBaseTest
                     }
                     catch (Exception e)
                     {
-                        Throwable t = ExceptionUtilities.getDeepestException(e)
+                        Throwable t = getDeepestException(e)
                         if (!(t.message?.contains('cleared while cell was executing')))
                         {
                             failed.set(true)

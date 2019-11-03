@@ -5,6 +5,7 @@ import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.*
 
 /**
@@ -117,9 +118,9 @@ class TestApplicationID
             new ApplicationID('Macys', 'Catalog', '1.2.3', 'CRAPSHOT', ApplicationID.TEST_BRANCH)
             fail 'should not make it here'
         }
-        catch (Exception ignored)
+        catch (Exception e)
         {
-            assertTrue ignored.message.contains('No enum constant')
+            assertContainsIgnoreCase(e.message, 'status must', 'RELEASE', 'SNAPSHOT')
         }
 
         try
@@ -282,8 +283,8 @@ class TestApplicationID
         assertEquals ReleaseStatus.SNAPSHOT.name(), snapshotId.status
         assertEquals releaseId.branch, snapshotId.branch
 
-        ApplicationID newSnapshotId = snapshotId.asSnapshot();
-        assertSame(snapshotId, newSnapshotId);
+        ApplicationID newSnapshotId = snapshotId.asSnapshot()
+        assertSame(snapshotId, newSnapshotId)
     }
 
     @Test
@@ -301,8 +302,8 @@ class TestApplicationID
         assertEquals versionId.status, newVersionId.status
         assertEquals versionId.branch, newVersionId.branch
 
-        ApplicationID newerVersion = newVersionId.asVersion('1.1.1');
-        assertSame(newerVersion, newVersionId);
+        ApplicationID newerVersion = newVersionId.asVersion('1.1.1')
+        assertSame(newerVersion, newVersionId)
     }
 
     @Test
@@ -331,16 +332,16 @@ class TestApplicationID
         assertEquals ApplicationID.HEAD, releaseId.branch
 
 
-        ApplicationID newReleaseId = releaseId.asRelease();
-        assertSame(releaseId, newReleaseId);
+        ApplicationID newReleaseId = releaseId.asRelease()
+        assertSame(releaseId, newReleaseId)
     }
 
     @Test
     void testAsHead()
     {
         ApplicationID snapshotId = new ApplicationID('Sears', 'Inventory', '1.0.0', ReleaseStatus.SNAPSHOT.name(), ApplicationID.TEST_BRANCH)
-        ApplicationID headId = snapshotId.asHead();
-        assertNotSame(headId, snapshotId);
+        ApplicationID headId = snapshotId.asHead()
+        assertNotSame(headId, snapshotId)
 
         assertEquals headId.tenant, snapshotId.tenant
         assertEquals headId.app, snapshotId.app
@@ -348,8 +349,8 @@ class TestApplicationID
         assertEquals headId.status, snapshotId.status
         assertEquals ApplicationID.HEAD, headId.branch
 
-        ApplicationID newHeadId = headId.asHead();
-        assertSame(headId, newHeadId);
+        ApplicationID newHeadId = headId.asHead()
+        assertSame(headId, newHeadId)
     }
 
     @Test
@@ -364,7 +365,7 @@ class TestApplicationID
         }
         catch (Exception e)
         {
-            assertTrue e.message.toLowerCase().contains('no enum constant')
+            assertContainsIgnoreCase(e.message, 'status must be', 'RELEASE', 'SNAPSHOT')
         }
     }
 
@@ -419,7 +420,7 @@ class TestApplicationID
     @Test
     void testValidateApp()
     {
-        String msg = 'App cannot be null or empty';
+        String msg = 'App cannot be null or empty'
         ApplicationID.validateApp 'foo'
         try
         {
@@ -445,7 +446,7 @@ class TestApplicationID
     @Test
     void testValidateVersionNumbers()
     {
-        String nullMessage = 'n-cube version cannot be null or empty';
+        String nullMessage = 'n-cube version cannot be null or empty'
 
         ApplicationID.validateVersion '0.0.0'
         ApplicationID.validateVersion '9.9.9'
@@ -563,27 +564,27 @@ class TestApplicationID
 
     @Test
     void testValidateIsNotRelease() {
-        ApplicationID snap = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "HEAD");
+        ApplicationID snap = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "HEAD")
         snap.validateStatusIsNotRelease()
 
-        ApplicationID rel = new ApplicationID("NONE", "app", "1.28.0", "RELEASE", "HEAD");
+        ApplicationID rel = new ApplicationID("NONE", "app", "1.28.0", "RELEASE", "HEAD")
         try {
             rel.validateStatusIsNotRelease()
         } catch (IllegalArgumentException e) {
-            assertEquals("Status cannot be 'RELEASE'", e.message);
+            assertEquals("Status cannot be 'RELEASE'", e.message)
         }
     }
 
     @Test
     void testValidateIsNotHead() {
-        ApplicationID snap = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "FOO");
+        ApplicationID snap = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "FOO")
         snap.validateBranchIsNotHead()
 
-        ApplicationID rel = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "HEAD");
+        ApplicationID rel = new ApplicationID("NONE", "app", "1.28.0", "SNAPSHOT", "HEAD")
         try {
             rel.validateBranchIsNotHead()
         } catch (IllegalArgumentException e) {
-            assertEquals("Branch cannot be 'HEAD'", e.message);
+            assertEquals("Branch cannot be 'HEAD'", e.message)
         }
     }
 
@@ -617,5 +618,81 @@ class TestApplicationID
         ApplicationID upper = new ApplicationID('FOO', 'BAR', '1.0.0', ReleaseStatus.SNAPSHOT.name(), 'BAZ')
         assert lower == upper
         assert lower.hashCode() == upper.hashCode()
+    }
+
+    @Test
+    void testBadAppIdFromString()
+    {
+        try
+        {
+            ApplicationID.convert('tenant/app/version/type/branch')
+            fail('should not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'unable', 'invalid version')
+        }
+    }
+
+    @Test
+    void testBadAppIdFromString2()
+    {
+        try
+        {
+            ApplicationID.convert('tenant/app/1.2.3/foo/branch')
+            fail('should not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'unable', 'status must be', 'RELEASE', 'SNAPSHOT')
+        }
+    }
+
+    @Test
+    void testBadAppIdFromString3TooShort()
+    {
+        try
+        {
+            ApplicationID.convert('tenant/app/1.2.3/SNAPSHOT')
+            fail('should not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'unable', 'must have 5')
+        }
+    }
+
+    @Test
+    void testAppIdFromNullString()
+    {
+        try
+        {
+            ApplicationID.convert(null)
+            fail('should not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'empty', 'null', 'cannot', 'convert')
+        }
+    }
+
+    @Test
+    void testAppIdFromTooManyPieces()
+    {
+        try
+        {
+            ApplicationID.convert('tenant/app/1.0.0/SNAPSHOT/foo/huh')
+            fail('should not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'unable', 'must have 5')
+        }
+    }
+
+    @Test
+    void testGoodAppIdFromString()
+    {
+        ApplicationID.convert('tenant/app/1.2.3/snapshot/branch')
     }
 }

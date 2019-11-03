@@ -11,13 +11,14 @@ import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonWriter
-import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
 
 import java.lang.reflect.Array
 
+import static com.cedarsoftware.util.StringUtilities.encode
+import static com.cedarsoftware.util.StringUtilities.hasContent
+import static com.cedarsoftware.util.io.MetaUtils.isPrimitive
 import static java.lang.Math.abs
 
 /**
@@ -313,7 +314,7 @@ class HtmlFormatter implements NCubeFormatter
     private static void buildColumnGuts(StringBuilder s, Column column)
     {
         final boolean isCmd = column.value instanceof CommandCell
-        final boolean isUrlCmd = isCmd && StringUtilities.hasContent(((CommandCell) column.value).url)
+        final boolean isUrlCmd = isCmd && hasContent(((CommandCell) column.value).url)
 
         addColumnPrefixText(s, column)
         if (isUrlCmd)
@@ -332,7 +333,7 @@ class HtmlFormatter implements NCubeFormatter
         if (column.value instanceof CommandCell)
         {
             String name = column.getMetaProperty("name") as String
-            if (StringUtilities.hasContent(name))
+            if (hasContent(name))
             {
                 s.append("""<span class="rule-name">${name}</span><hr class="hr-rule"/>""")
             }
@@ -491,7 +492,7 @@ th.ncube-dead:hover { background: #76A7FF; }
         if (col.value instanceof CommandCell)
         {
             CommandCell cmd = (CommandCell) col.value
-            if (StringUtilities.hasContent(cmd.url))
+            if (hasContent(cmd.url))
             {
                 return 'column column-url'
             }
@@ -514,7 +515,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             if (cell instanceof CommandCell)
             {
                 final CommandCell cmd = cell as CommandCell
-                if (StringUtilities.hasContent(cmd.url))
+                if (hasContent(cmd.url))
                 {
                     s.append("""cell cell-url"><a href="#">${cmd.url}</a>""")
                 }
@@ -551,7 +552,7 @@ th.ncube-dead:hover { background: #76A7FF; }
             if (defColVal instanceof CommandCell)
             {
                 final CommandCell cmd = defColVal as CommandCell
-                if (StringUtilities.hasContent(cmd.url))
+                if (hasContent(cmd.url))
                 {
                     s.append("""cell cell-url"><a class="${colorClass}" href="#">${cmd.url}</a>""")
                 }
@@ -611,9 +612,9 @@ th.ncube-dead:hover { background: #76A7FF; }
         }
         else if (cellValue instanceof byte[])
         {
-            return StringUtilities.encode(cellValue as byte[])
+            return encode(cellValue as byte[])
         }
-        else if (isArray && MetaUtils.isPrimitive(cellValue.class.componentType))
+        else if (isArray && isPrimitive(cellValue.class.componentType))
         {
             final StringBuilder str = new StringBuilder()
             str.append('[')

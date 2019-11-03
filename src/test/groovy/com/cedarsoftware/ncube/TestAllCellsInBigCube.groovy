@@ -1,12 +1,12 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
 
 import java.security.SecureRandom
 
+import static com.cedarsoftware.util.StringUtilities.getRandomString
 import static org.junit.Assert.assertTrue
 
 /**
@@ -203,7 +203,7 @@ class TestAllCellsInBigCube
 
     private static Object setRandomValue(NCube ncube, Random random, int i, String colName)
     {
-        ncube.setCell(StringUtilities.getRandomString(random, 5, 8), [key: i, row:1, attribute: colName])
+        ncube.setCell(getRandomString(random, 5, 8), [key: i, row:1, attribute: colName])
     }
 
     // Uncomment for memory size testing

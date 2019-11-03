@@ -8,10 +8,11 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.ExceptionUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.google.common.base.Splitter
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
 
 /**
  * Provides information to visualize a source rpm class, a target rpm class
@@ -381,7 +382,7 @@ class RpmVisualizerRelInfo extends VisualizerRelInfo implements RpmVisualizerCon
 		{
 			cubeLoaded = false
 			showCellValuesLink = false
-			Throwable t = ExceptionUtilities.getDeepestException(e)
+			Throwable t = getDeepestException(e)
 			if (t instanceof InvalidCoordinateException)
 			{
 				handleInvalidCoordinateException(t as InvalidCoordinateException, visInfo)

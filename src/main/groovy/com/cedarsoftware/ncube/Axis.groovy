@@ -5,7 +5,6 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.EncryptionUtilities
 import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
@@ -18,6 +17,7 @@ import java.util.regex.Matcher
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static com.cedarsoftware.util.Converter.*
+import static com.cedarsoftware.util.EncryptionUtilities.calculateSHA1Hash
 import static com.cedarsoftware.util.StringUtilities.hasContent
 import static com.cedarsoftware.util.StringUtilities.isEmpty
 import static java.lang.Math.abs
@@ -82,7 +82,7 @@ class Axis
         Random initialValue()
         {
             String s = convertToString(System.nanoTime())
-            s = EncryptionUtilities.calculateSHA1Hash(s.bytes)
+            s = calculateSHA1Hash(s.bytes)
             return new SecureRandom(s.bytes)
         }
     }
@@ -695,7 +695,7 @@ class Axis
     private long getValueBasedColumnId(Comparable value)
     {
         String s = value == null ? '' : value.toString()
-        long hash = abs(EncryptionUtilities.calculateSHA1Hash(s.getBytes('UTF-8')).hashCode()) % MAX_COLUMN_ID
+        long hash = abs(calculateSHA1Hash(s.getBytes('UTF-8')).hashCode()) % MAX_COLUMN_ID
         hash += id * BASE_AXIS_ID
         return hash
     }

@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnRouter
-import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -10,6 +9,9 @@ import org.springframework.util.FastByteArrayOutputStream
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.concurrent.ConcurrentHashMap
+
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.IOUtilities.transfer
 
 /**
  * This class represents any cell that needs to return content from a URL.
@@ -60,7 +62,7 @@ abstract class ContentCmdCell extends UrlCommandCell
 
     protected def fetchResult(Map<String, Object> ctx)
     {
-        Object data;
+        Object data
 
         if (url == null)
         {
@@ -210,14 +212,14 @@ abstract class ContentCmdCell extends UrlCommandCell
                 input = new CachingInputStream(input)
             }
             out = response.outputStream
-            IOUtilities.transfer(input, out)
+            transfer(input, out)
 
             return cacheable ? ((CachingInputStream) input).streamCache : null     // must call .getStreamCache() with CompileStatic
         }
         finally
         {
-            IOUtilities.close(input)
-            IOUtilities.close(out)
+            close(input)
+            close(out)
         }
     }
 

@@ -1,9 +1,9 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.proximity.Distance
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.util.StringUtilities.levenshteinDistance
 import static java.lang.Math.abs
 /**
  * Class used to compute distance (proximity) for many different
@@ -71,7 +71,7 @@ final class Proximity
         }
         else if (source instanceof String)
         {
-            return StringUtilities.levenshteinDistance(source as String, (String) target)
+            return levenshteinDistance(source as String, (String) target)
         }
         else if (source instanceof Distance)
         {

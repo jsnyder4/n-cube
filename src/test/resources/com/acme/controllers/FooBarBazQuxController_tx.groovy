@@ -16,7 +16,7 @@ class FooBarBazQuxController_tx extends NCubeGroovyController
 {
     def foo()
     {
-        return 3;
+        return 3
     }
 
     def bar()

@@ -7,11 +7,7 @@ import com.cedarsoftware.ncube.util.LocalFileCache
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CallableBean
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.GuavaCache
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.SystemUtilities
 import com.cedarsoftware.util.ThreadAwarePrintStream
 import com.cedarsoftware.util.ThreadAwarePrintStreamErr
 import com.cedarsoftware.util.TrackingMap
@@ -37,6 +33,11 @@ import java.util.regex.Pattern
 
 import static SnapshotPolicy.FORCE
 import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.util.Converter.convertToBoolean
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.IOUtilities.uncompressBytes
+import static com.cedarsoftware.util.StringUtilities.*
+import static com.cedarsoftware.util.SystemUtilities.getExternalVariable
 import static com.cedarsoftware.visualizer.RpmVisualizerConstants.RPM_CLASS
 
 /**
@@ -109,7 +110,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager
         this.adviceCacheManager = new GCacheManager()
-        if (StringUtilities.hasContent(beanName))
+        if (hasContent(beanName))
         {
             this.beanName = beanName
         }
@@ -141,7 +142,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                                 boolean evict = true
                                 if (cube.containsMetaProperty(CUBE_EVICT))
                                 {
-                                    evict = Converter.convert(cube.getMetaProperty(CUBE_EVICT), Boolean.class).booleanValue()
+                                    evict = convertToBoolean(cube.getMetaProperty(CUBE_EVICT))
                                 }
 
                                 if (cube.name == SYS_CLASSPATH || !evict)
@@ -438,7 +439,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             throw new IllegalArgumentException('ApplicationID cannot be null')
         }
-        if (StringUtilities.isEmpty(cubeName))
+        if (isEmpty(cubeName))
         {
             throw new IllegalArgumentException('cubeName cannot be null')
         }
@@ -693,7 +694,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             {
                 log.error(e.message, e)
                 NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
-                String json = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
+                String json = new String(uncompressBytes(record.bytes), 'UTF-8')
                 if ('json-pretty' == options.mode)
                 {
                     return JsonWriter.formatJson(json)
@@ -962,7 +963,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     ApplicationID getBootVersion(String tenant, String app)
     {
         String branch = getSystemParams()[NCUBE_PARAMS_BRANCH]
-        return new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), StringUtilities.isEmpty(branch) ? ApplicationID.HEAD : branch)
+        return new ApplicationID(tenant, app, "0.0.0", ReleaseStatus.SNAPSHOT.name(), isEmpty(branch) ? ApplicationID.HEAD : branch)
     }
 
     private void verifyAllowMutable(String methodName)
@@ -1441,7 +1442,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         current.put("${advice.name}/${wildcard}".toString(), advice)
 
         // Apply newly added advice to any fully loaded (hydrated) cubes.
-        String regex = StringUtilities.wildcardToRegexString(wildcard)
+        String regex = wildcardToRegexString(wildcard)
         Pattern pattern = Pattern.compile(regex)
 
         if (ncubeCacheManager instanceof GCacheManager)
@@ -1501,7 +1502,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             acm.applyToEntries(cacheKey, {String key, Object value ->
                 final Advice advice = value as Advice
                 final String wildcard = key.replace("${advice.name}/", "")
-                final String regex = StringUtilities.wildcardToRegexString(wildcard)
+                final String regex = wildcardToRegexString(wildcard)
                 final Axis axis = ncube.getAxis('method')
                 addAdviceToMatchedCube(advice, Pattern.compile(regex), ncube, axis)
             })
@@ -1547,7 +1548,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     URL getActualUrl(ApplicationID appId, String url, Map input)
     {
         ApplicationID.validateAppId(appId)
-        if (StringUtilities.isEmpty(url))
+        if (isEmpty(url))
         {
             throw new IllegalArgumentException("URL cannot be null or empty, attempting to resolve relative to absolute url for app: ${appId}")
         }
@@ -1605,8 +1606,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         // duplicate input coordinate - no need to validate, that will be done inside cpCube.getCell() later.
         Map copy = new LinkedHashMap(input)
 
-        final String envLevel = SystemUtilities.getExternalVariable('ENV_LEVEL')
-        if (StringUtilities.hasContent(envLevel) && !doesMapContainKey(copy, 'env'))
+        final String envLevel = getExternalVariable('ENV_LEVEL')
+        if (hasContent(envLevel) && !doesMapContainKey(copy, 'env'))
         {   // Add in the 'ENV_LEVEL" environment variable when looking up sys.* cubes,
             // if there was not already an entry for it.
             copy.env = envLevel
@@ -1665,10 +1666,10 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             if (systemParams == null)
             {
-                String jsonParams = SystemUtilities.getExternalVariable(NCUBE_PARAMS)
+                String jsonParams = getExternalVariable(NCUBE_PARAMS)
                 ConcurrentMap<String, Object> sysParamMap = new ConcurrentHashMap<>()
 
-                if (StringUtilities.hasContent(jsonParams))
+                if (hasContent(jsonParams))
                 {
                     try
                     {
@@ -1740,7 +1741,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         finally
         {
-            IOUtilities.close(reader)
+            close(reader)
         }
     }
 

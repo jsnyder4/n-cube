@@ -2,9 +2,10 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.DeepEquals
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.DeepEquals.deepEquals
+import static com.cedarsoftware.util.StringUtilities.hasContent
 
 /**
  * This class is used for comparing n-cubes, generating delta objects that
@@ -508,7 +509,7 @@ class DeltaProcessor
 
                 Delta delta1 = changes1.value
                 Delta delta2 = changes2[objName]
-                if (!DeepEquals.deepEquals(delta1.destVal, delta2.destVal))
+                if (!deepEquals(delta1.destVal, delta2.destVal))
                 {
                     return false
                 }
@@ -749,7 +750,7 @@ class DeltaProcessor
                     {   // has the same coord name
                         CellInfo oldTestCoord = oldTestCoords[key]
                         oldTestCoords.remove(key)
-                        if (!DeepEquals.deepEquals(newTestCoord, oldTestCoord))
+                        if (!deepEquals(newTestCoord, oldTestCoord))
                         {   // value changed
                             String s = "Change ${newCubeTestName} coord ${key}: ${oldTestCoord.value} ==> ${newTestCoord.value}"
                             MapEntry oldEntry = new MapEntry(key, oldTestCoord)
@@ -942,7 +943,7 @@ class DeltaProcessor
                             "column '${colName}'", [axis: newAxis.name, column: new Column(newCol)])
                     changes.addAll(metaChanges)
 
-                    if (!DeepEquals.deepEquals(oldCol.value, newCol.value))
+                    if (!deepEquals(oldCol.value, newCol.value))
                     {
                         String s = "Change column value from: ${oldCol.value} to: ${newCol.value}"
                         changes.add(new Delta(Delta.Location.COLUMN, Delta.Type.UPDATE, s, newAxis.name,
@@ -1017,7 +1018,7 @@ class DeltaProcessor
     private static String getDisplayColumnName(Column column)
     {
         String value = column.toString()
-        return StringUtilities.hasContent(column.columnName) ? "${column.columnName}:\n${value}" : value
+        return hasContent(column.columnName) ? "${column.columnName}:\n${value}" : value
     }
 
     private static void addMetaPropertiesToColumn(Column newCol, List<Delta> changes, Axis newAxis)
@@ -1073,7 +1074,7 @@ class DeltaProcessor
             if (oldCube.cellMap.containsKey(coord))
             {
                 Object oldCellValue = oldCube.cellMap[coord]
-                if (!DeepEquals.deepEquals(value, oldCellValue))
+                if (!deepEquals(value, oldCellValue))
                 {
                     Map<String, Object> properCoord = newCube.getDisplayCoordinateFromIds(colIds)
                     String s = "Change cell at: ${properCoord} from: ${oldCellValue} to: ${value}"
@@ -1214,7 +1215,7 @@ class DeltaProcessor
 
         for (String metaKey : sameKeys)
         {
-            if (!DeepEquals.deepEquals(oldMeta[metaKey], newMeta[metaKey]))
+            if (!deepEquals(oldMeta[metaKey], newMeta[metaKey]))
             {
                 Object oldVal = oldMeta[metaKey]
                 Object newVal = newMeta[metaKey]

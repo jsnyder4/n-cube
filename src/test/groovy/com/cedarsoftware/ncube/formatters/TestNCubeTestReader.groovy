@@ -1,11 +1,11 @@
 package com.cedarsoftware.ncube.formatters
 
 import com.cedarsoftware.ncube.NCubeTest
-import com.cedarsoftware.util.IOUtilities
 import groovy.transform.CompileStatic
 import org.junit.Test
 import org.springframework.util.FastByteArrayOutputStream
 
+import static com.cedarsoftware.util.IOUtilities.transfer
 import static org.junit.Assert.assertEquals
 
 /**
@@ -34,30 +34,30 @@ class TestNCubeTestReader
         String s = getResourceAsString 'n-cube-tests/test.json'
         NCubeTestReader reader = new NCubeTestReader()
         List<NCubeTest> list = reader.convert(s)
-        assertEquals 17, list.size()
+        assertEquals(17, list.size())
     }
 
     @Test
     void testEmptyString()
     {
         NCubeTestReader reader = new NCubeTestReader()
-        List<NCubeTest> list = reader.convert ''
-        assertEquals 0, list.size()
+        List<NCubeTest> list = reader.convert('')
+        assertEquals(0, list.size())
     }
 
     @Test
     void testNullString()
     {
         NCubeTestReader reader = new NCubeTestReader()
-        List<NCubeTest> list = reader.convert null
-        assertEquals 0, list.size()
+        List<NCubeTest> list = reader.convert(null)
+        assertEquals(0, list.size())
     }
 
     private static String getResourceAsString(String name) throws IOException
     {
         FastByteArrayOutputStream out = new FastByteArrayOutputStream(8192)
-        URL url = TestNCubeTestReader.class.getResource('/' + name)
-        IOUtilities.transfer new File(url.file), out
+        URL url = TestNCubeTestReader.class.getResource("/${name}")
+        transfer(new File(url.file), out)
         return new String(out.toByteArrayUnsafe(), 'UTF-8')
     }
 }

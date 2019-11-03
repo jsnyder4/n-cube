@@ -5,14 +5,16 @@ import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.IOUtilities
-import com.cedarsoftware.util.StringUtilities
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.IOUtilities.inputStreamToBytes
+import static com.cedarsoftware.util.StringUtilities.createUTF8String
+import static com.cedarsoftware.util.StringUtilities.equalsIgnoreCase
 
 NCube getCube(String name = ncube.name, boolean quiet = false)
 {
-    if (StringUtilities.equalsIgnoreCase(ncube.name, name))
+    if (equalsIgnoreCase(ncube.name, name))
     {
         return ncube
     }
@@ -129,14 +131,14 @@ String url(String url)
     {
         return null
     }
-    return StringUtilities.createUtf8String(bytes)
+    return createUTF8String(bytes)
 }
 
 byte[] urlToBytes(String url)
 {
     InputStream inStream = getClass().getResourceAsStream(url)
-    byte[] bytes = IOUtilities.inputStreamToBytes(inStream)
-    IOUtilities.close(inStream as Closeable)
+    byte[] bytes = inputStreamToBytes(inStream)
+    close(inStream as Closeable)
     return bytes
 }
 
@@ -147,7 +149,7 @@ def ruleStop()
 
 def jump(Map coord = [:])
 {
-    input.putAll(coord);
+    input.putAll(coord)
     throw new RuleJump(input)
 }
 

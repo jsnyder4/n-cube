@@ -5,16 +5,11 @@ import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
-import com.cedarsoftware.util.ExceptionUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_EXCEPTION
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_EXECUTED_CELL
-import static com.cedarsoftware.visualizer.VisualizerConstants.DETAILS_CLASS_WORD_WRAP
-import static com.cedarsoftware.visualizer.VisualizerConstants.DOUBLE_BREAK
-import static com.cedarsoftware.visualizer.VisualizerConstants.HTTP
-import static com.cedarsoftware.visualizer.VisualizerConstants.HTTPS
-import static com.cedarsoftware.visualizer.VisualizerConstants.FILE
+
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
+import static com.cedarsoftware.visualizer.VisualizerConstants.*
 
 /**
  * Provides information to visualize an n-cube cell.
@@ -105,7 +100,7 @@ class VisualizerCellInfo
 		StringBuilder sb = new StringBuilder()
 		StringBuilder mb = new StringBuilder()
 		String noExecuteValue = HtmlFormatter.getCellValueAsString(noExecuteCell)
-		Throwable t = ExceptionUtilities.getDeepestException(exception)
+		Throwable t = getDeepestException(exception)
 		String listItemClassName
 		String title
 

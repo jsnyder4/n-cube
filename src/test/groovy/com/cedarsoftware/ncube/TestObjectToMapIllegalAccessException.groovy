@@ -29,8 +29,8 @@ class TestObjectToMapIllegalAccessException
     static class dto
     {
         private Date when = new Date()
-        String fname = "Albert";
-        String lname = "Einstein";
+        String fname = "Albert"
+        String lname = "Einstein"
     }
 
     @Test
@@ -45,7 +45,7 @@ class TestObjectToMapIllegalAccessException
                 NCube.objectToMap new dto()
             }
             catch (RuntimeException e) {
-                assertEquals("foo", e.message);
+                assertEquals("foo", e.message)
                 assertTrue(e.message.toLowerCase().contains("failed to access field"))
                 assertTrue(e.cause.message.toLowerCase().contains("foo"))
             }

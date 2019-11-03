@@ -6,10 +6,7 @@ import com.cedarsoftware.util.AdjustableGZIPOutputStream
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
-import com.cedarsoftware.util.Converter
-import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
@@ -29,6 +26,9 @@ import java.util.regex.Pattern
 import java.util.zip.Deflater
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
+import static com.cedarsoftware.util.Converter.*
+import static com.cedarsoftware.util.IOUtilities.uncompressBytes
+import static com.cedarsoftware.util.StringUtilities.*
 
 /**
  * SQL Persister for n-cubes.  Manages all reads and writes of n-cubes to an SQL database.
@@ -72,13 +72,13 @@ class NCubeJdbcPersister
         List<NCubeInfoDto> list = []
         Pattern searchPattern = null
         Map<String, Object> copyOptions = new CaseInsensitiveMap<>(options)
-        boolean hasSearchContent = StringUtilities.hasContent(searchContent)
+        boolean hasSearchContent = hasContent(searchContent)
         boolean keepCubeData = (boolean)options[SEARCH_INCLUDE_CUBE_DATA] // look at original options value (not coerced value) for SEARCH_INCLUDE_CUBE_DATA
         boolean includeCubeData = hasSearchContent || keepCubeData
         
         if (hasSearchContent)
         {
-            String contentPattern = StringUtilities.wildcardToRegexString(searchContent)
+            String contentPattern = wildcardToRegexString(searchContent)
             contentPattern = contentPattern[1..-2]                   // remove ^ and $
             searchPattern = Pattern.compile(contentPattern, Pattern.CASE_INSENSITIVE)
         }
@@ -212,7 +212,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             s.setBytes(13, cubeData)
             s.setBytes(14, testData)
             String note = createNote(username, now, notes)
-            s.setBytes(15, StringUtilities.getUTF8Bytes(note))
+            s.setBytes(15, getUTF8Bytes(note))
             s.setInt(16, changed ? 1 : 0)
 
             NCubeInfoDto dto = new NCubeInfoDto()
@@ -277,7 +277,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             s.setBlob(13, blob)
             s.setBytes(14, testData)
             String note = createNote(username, now, notes)
-            s.setBytes(15, StringUtilities.getUTF8Bytes(note))
+            s.setBytes(15, getUTF8Bytes(note))
             s.setBoolean(16, changed)
 
             NCubeInfoDto dto = new NCubeInfoDto()
@@ -445,7 +445,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         stmt.setString(12, username)
         stmt.setBytes(13, jsonBytes)
         stmt.setBytes(14, testData)
-        stmt.setBytes(15, StringUtilities.getUTF8Bytes(createNote(username, now, action)))
+        stmt.setBytes(15, getUTF8Bytes(createNote(username, now, action)))
         stmt.setInt(16, 1)
         stmt.addBatch()
         if (count % EXECUTE_BATCH_CONSTANT == 0)
@@ -470,7 +470,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             for (int i = 0; i < cubeIds.length; i++)
             {
-                stmt.setLong(1, Converter.convertToLong(cubeIds[i]))
+                stmt.setLong(1, convertToLong(cubeIds[i]))
                 ResultSet row = stmt.executeQuery()
 
                 if (row.next())
@@ -483,7 +483,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                     byte[] testData = row.getBytes(TEST_DATA_BIN)
 
                     byte[] notes = row.getBytes(NOTES_BIN)
-                    String notesStr = StringUtilities.createUTF8String(notes)
+                    String notesStr = createUTF8String(notes)
                     String newNotes = "updated from ${branch}, txId: [${txId}]"
                     if (notesStr.contains(PR_NOTES_PREFIX))
                     {
@@ -538,7 +538,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
             {
-                byte[] updatedTestData = StringUtilities.getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
+                byte[] updatedTestData = getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
                 if ((updatedTestData || testData) && updatedTestData != testData)
                 {
                     cube.setMetaProperty(NCube.METAPROPERTY_TEST_UPDATED, UniqueIdGenerator.uniqueId)
@@ -546,13 +546,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                 }
             }
 
-            if (cubeActive && StringUtilities.equalsIgnoreCase(oldSha1, cube.sha1()))
+            if (cubeActive && equalsIgnoreCase(oldSha1, cube.sha1()))
             {
                 // SHA-1's are equal and both revision values are positive.  No need for new revision of record.
                 return
             }
 
-            boolean changed = !StringUtilities.equalsIgnoreCase(cube.sha1() ,headSha1)
+            boolean changed = !equalsIgnoreCase(cube.sha1() ,headSha1)
             insertCube(c, appId, cube, Math.abs(revision as long) + 1, testData, "updated", changed, headSha1, username, 'updateCube')
         })
 
@@ -625,7 +625,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             throw new IllegalArgumentException("Unable to duplicate cube, cube already exists with the new name, app:  ${newAppId}, name: ${newName}")
         }
 
-        boolean nameChanged = !StringUtilities.equalsIgnoreCase(oldName, newName)
+        boolean nameChanged = !equalsIgnoreCase(oldName, newName)
         boolean sameExceptBranch = oldAppId.equalsNotIncludingBranch(newAppId)
 
         // If names are different we need to recalculate the sha-1
@@ -716,7 +716,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                        (METHOD_NAME) : 'commitMergedCubeToBranch'] as Map
 
         NCubeInfoDto result = null
-        boolean changed = !StringUtilities.equalsIgnoreCase(cube.sha1(), headSha1)
+        boolean changed = !equalsIgnoreCase(cube.sha1(), headSha1)
 
         runSelectCubesStatement(c, appId, cube.name, options, 1, { ResultSet row ->
             Long revision = row.getLong('revision_number')
@@ -725,7 +725,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             byte[] testData = row.getBytes(TEST_DATA_BIN)
             if (cube.metaProperties.containsKey(NCube.METAPROPERTY_TEST_DATA))
             {
-                byte[] updatedTestData = StringUtilities.getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
+                byte[] updatedTestData = getUTF8Bytes(cube.metaProperties[NCube.METAPROPERTY_TEST_DATA] as String)
                 if ((updatedTestData || testData) && updatedTestData != testData)
                 {
                     testData = updatedTestData
@@ -733,7 +733,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             }
 
             byte[] notes = row.getBytes(NOTES_BIN)
-            String notesStr = StringUtilities.createUTF8String(notes)
+            String notesStr = createUTF8String(notes)
             String newNotes = "merged to branch, txId: [${txId}]"
             if (notesStr.contains(PR_NOTES_PREFIX))
             {
@@ -807,7 +807,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
         for (int i = 0; i < cubeIds.length; i++)
         {
             Object cubeId = cubeIds[i]
-            map.id = Converter.convertToLong(cubeId)
+            map.id = convertToLong(cubeId)
             sql.eachRow(searchStmt, map, 0, 1, { ResultSet row ->
                 byte[] jsonBytes = row.getBytes(CUBE_VALUE_BIN)
                 String sha1 = row.getString('sha1')
@@ -860,7 +860,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
                     sql1.executeUpdate(map1, commitStmt)
                     dto.changed = false
                     dto.changeType = changeType
-                    dto.id = Converter.convertToString(cubeId)
+                    dto.id = convertToString(cubeId)
                     dto.sha1 = sha1
                     dto.headSha1 = sha1
                     infoRecs.add(dto)
@@ -922,7 +922,7 @@ INSERT INTO n_cube (n_cube_id, tenant_cd, app_cd, version_no_cd, status_cd, bran
             long txId = UniqueIdGenerator.uniqueId
             Timestamp now = nowAsTimestamp()
             String note = createNote(username, now, "rolled back, txId: [${txId}]")
-            byte[] noteBytes = StringUtilities.getUTF8Bytes(note)
+            byte[] noteBytes = getUTF8Bytes(note)
 
             String stmt = """\
 /* rollbackCubes */
@@ -1012,7 +1012,7 @@ ORDER BY ABS(b.revision_number) DESC, ABS(h.revision_number) DESC"""
 
         sql.eachRow(map, stmt, 0, 1, { ResultSet row ->
             maxRev = row.getLong('revision_number')
-        });
+        })
         return maxRev != null && maxRev >= 0
     }
 
@@ -1031,7 +1031,7 @@ WHERE ${buildNameCondition('n_cube_nm')} = :cube AND app_cd = :app AND version_n
 AND tenant_cd = :tenant AND branch_id = :branch AND revision_number >= 0 AND sha1 = head_sha1
 ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             maxRev = row.getLong("revision_number")
-        });
+        })
         return maxRev
     }
 
@@ -1048,18 +1048,18 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             throw new IllegalArgumentException("Update branch cube's HEAD SHA-1, cube id cannot be empty")
         }
 
-        if (StringUtilities.isEmpty(branchSha1))
+        if (isEmpty(branchSha1))
         {
             throw new IllegalArgumentException("Update branch cube's SHA-1 cannot be empty")
         }
 
-        if (StringUtilities.isEmpty(headSha1))
+        if (isEmpty(headSha1))
         {
             throw new IllegalArgumentException("Update branch cube's HEAD SHA-1, SHA-1 cannot be empty")
         }
 
         Map map = [sha1:headSha1, id: cubeId]
-        int changed = StringUtilities.equalsIgnoreCase(branchSha1, headSha1) ? 0 : 1
+        int changed = equalsIgnoreCase(branchSha1, headSha1) ? 0 : 1
         Sql sql = getSql(c)
         int count = sql.executeUpdate(map, "/* updateBranchCubeHeadSha1 */ UPDATE n_cube set head_sha1 = :sha1, changed = ${changed} WHERE n_cube_id = :id")
         if (count == 0)
@@ -1180,7 +1180,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         {
             headSha1 = sourceSha1
         }
-        else if (StringUtilities.equalsIgnoreCase(sourceSha1, actualHeadSha1))
+        else if (equalsIgnoreCase(sourceSha1, actualHeadSha1))
         {
             headSha1 = actualHeadSha1
         }
@@ -1190,7 +1190,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
             changed = true
         }
 
-        if ((sourceRevision < 0 != newRevision < 0) && StringUtilities.equalsIgnoreCase(sourceSha1, sourceHeadSha1))
+        if ((sourceRevision < 0 != newRevision < 0) && equalsIgnoreCase(sourceSha1, sourceHeadSha1))
         {
             changed = true
         }
@@ -1214,17 +1214,17 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
      */
     protected static void runSelectCubesStatement(Connection c, ApplicationID appId, String namePattern, Map options, int max = 0, Closure closure)
     {
-        boolean includeCubeData = toBoolean(options[SEARCH_INCLUDE_CUBE_DATA])
-        boolean includeTestData = toBoolean(options[SEARCH_INCLUDE_TEST_DATA])
-        boolean onlyTestData = toBoolean(options[SEARCH_ONLY_TEST_DATA])
-        boolean changedRecordsOnly = toBoolean(options[SEARCH_CHANGED_RECORDS_ONLY])
-        boolean activeRecordsOnly = toBoolean(options[SEARCH_ACTIVE_RECORDS_ONLY])
-        boolean deletedRecordsOnly = toBoolean(options[SEARCH_DELETED_RECORDS_ONLY])
-        boolean exactMatchName = toBoolean(options[SEARCH_EXACT_MATCH_NAME])
-        Date createDateStart = toTimestamp(options[SEARCH_CREATE_DATE_START])
-        Date createDateEnd = toTimestamp(options[SEARCH_CREATE_DATE_END])
+        boolean includeCubeData = convertToBoolean(options[SEARCH_INCLUDE_CUBE_DATA])
+        boolean includeTestData = convertToBoolean(options[SEARCH_INCLUDE_TEST_DATA])
+        boolean onlyTestData = convertToBoolean(options[SEARCH_ONLY_TEST_DATA])
+        boolean changedRecordsOnly = convertToBoolean(options[SEARCH_CHANGED_RECORDS_ONLY])
+        boolean activeRecordsOnly = convertToBoolean(options[SEARCH_ACTIVE_RECORDS_ONLY])
+        boolean deletedRecordsOnly = convertToBoolean(options[SEARCH_DELETED_RECORDS_ONLY])
+        boolean exactMatchName = convertToBoolean(options[SEARCH_EXACT_MATCH_NAME])
+        Date createDateStart = convertToTimestamp(options[SEARCH_CREATE_DATE_START])
+        Date createDateEnd = convertToTimestamp(options[SEARCH_CREATE_DATE_END])
         String methodName = (String)options[METHOD_NAME]
-        if (StringUtilities.isEmpty(methodName))
+        if (isEmpty(methodName))
         {
             methodName = 'methodNameNotSet'
         }
@@ -1235,7 +1235,7 @@ ORDER BY revision_number desc""", 0, 1, { ResultSet row ->
         }
 
         namePattern = convertPattern(buildName(namePattern))
-        boolean hasNamePattern = StringUtilities.hasContent(namePattern)
+        boolean hasNamePattern = hasContent(namePattern)
         String nameCondition1 = ''
         String nameCondition2 = ''
         Map map = appId as Map
@@ -1340,7 +1340,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
+                insert.setBytes(10, getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))
@@ -1422,7 +1422,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
+                insert.setBytes(10, getUTF8Bytes("target ${targetAppId} copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, (row.getLong('revision_number') >= 0) ? 0 : -1)
@@ -1480,7 +1480,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
                 insert.setString(7, ReleaseStatus.SNAPSHOT.name())
                 insert.setString(8, targetAppId.app)
                 insert.setBytes(9, row.getBytes(TEST_DATA_BIN))
-                insert.setBytes(10, StringUtilities.getUTF8Bytes("target ${targetAppId} full copied from ${srcAppId} - ${oldNotes}"))
+                insert.setBytes(10, getUTF8Bytes("target ${targetAppId} full copied from ${srcAppId} - ${oldNotes}"))
                 insert.setString(11, targetAppId.tenant)
                 insert.setString(12, targetAppId.branch)
                 insert.setLong(13, row.getLong('revision_number'))
@@ -1517,7 +1517,7 @@ ${revisionCondition} ${changedCondition} ${nameCondition2} ${createDateStartCond
     protected static void runSelectAllCubesInBranch(Connection c, ApplicationID appId, Map options, Closure closure)
     {
         String methodName = (String)options[METHOD_NAME]
-        if (StringUtilities.isEmpty(methodName))
+        if (isEmpty(methodName))
         {
             methodName = 'methodNameNotSet'
         }
@@ -1541,7 +1541,7 @@ WHERE app_cd = :app AND version_no_cd = :version AND status_cd = :status AND ten
     {
         Map map = appId as Map
         map.tenant = padTenant(c, appId.tenant)
-        Sql sql = getSql(c);
+        Sql sql = getSql(c)
         sql.execute(map, "/* deleteBranch */ DELETE FROM n_cube WHERE app_cd = :app AND version_no_cd = :version AND tenant_cd = :tenant AND branch_id = :branch")
         GroovyRowResult row = sql.firstRow(map, "/* deleteBranch */ SELECT count(1) FROM n_cube WHERE app_cd = :app AND version_no_cd != '0.0.0' AND status_cd = 'SNAPSHOT' AND tenant_cd = :tenant AND branch_id = :branch")
         if (!row[0])
@@ -1680,7 +1680,7 @@ ORDER BY abs(revision_number) DESC"""
         }
 
         Map map = appId as Map
-        map.notes = StringUtilities.getUTF8Bytes(notes)
+        map.notes = getUTF8Bytes(notes)
         map.status = ReleaseStatus.SNAPSHOT.name()
         map.rev = maxRev
         map.cube = buildName(cubeName)
@@ -1697,7 +1697,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
 
     static List<String> getAppNames(Connection c, String tenant)
     {
-        if (StringUtilities.isEmpty(tenant))
+        if (isEmpty(tenant))
         {
             throw new IllegalArgumentException("error calling getAppVersions(), tenant cannot be null or empty")
         }
@@ -1713,7 +1713,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
 
     static Map<String, List<String>> getVersions(Connection c, String tenant, String app)
     {
-        if (StringUtilities.isEmpty(tenant) || StringUtilities.isEmpty(app))
+        if (isEmpty(tenant) || isEmpty(app))
         {
             throw new IllegalArgumentException("error calling getAppVersions() tenant: ${tenant} or app: ${app} cannot be null or empty")
         }
@@ -1820,9 +1820,9 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
 
         if (hasSearchPattern || includeFilter || excludeFilter)
         {   // Only read CUBE_VALUE_BIN if needed (searching content or filtering by cube_tags)
-            byte[] bytes = IOUtilities.uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
+            byte[] bytes = uncompressBytes(row.getBytes(CUBE_VALUE_BIN))
             blankOutName(bytes, row.getString('n_cube_nm'))
-            String cubeData = StringUtilities.createUtf8String(bytes)
+            String cubeData = createUTF8String(bytes)
             bytes = null // Clear out early (memory friendly for giant NCubes)
 
             if (includeFilter || excludeFilter)
@@ -1920,7 +1920,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         String json
         if (bytes.length < 4096)
         {
-            json = StringUtilities.createUTF8String(bytes)
+            json = createUTF8String(bytes)
         }
         else
         {   // Make new String out of partial piece of original (don't want to duplicate giant JSON strings)
@@ -2010,23 +2010,9 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         return "${DATE_TIME_FORMAT.format(date)} [${user}] ${notes}"
     }
 
-    protected static boolean toBoolean(Object value)
-    {
-        if (value == null)
-        {
-            return false
-        }
-        return ((Boolean)value).booleanValue()
-    }
-
-    protected static Timestamp toTimestamp(Object value)
-    {
-        return Converter.convertToTimestamp(value)
-    }
-
     private static String convertPattern(String pattern)
     {
-        if (StringUtilities.isEmpty(pattern) || '*' == pattern)
+        if (isEmpty(pattern) || '*' == pattern)
         {
             return null
         }
@@ -2166,11 +2152,11 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         }
         else if (tag instanceof Number)
         {
-            tags.add(Converter.convertToString(tag))
+            tags.add(convertToString(tag))
         }
         else if (tag instanceof Date)
         {
-            tags.add(Converter.convertToDate(tag))
+            tags.add(convertToDate(tag))
         }
         else if (tag instanceof Boolean)
         {

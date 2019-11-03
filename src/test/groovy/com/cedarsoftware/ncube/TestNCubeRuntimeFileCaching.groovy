@@ -37,7 +37,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     private static final String METHOD_LOAD_CUBE_RECORD = 'loadCubeRecord'
 
     @Rule
-    public final ExpectedException exception = ExpectedException.none();
+    public final ExpectedException exception = ExpectedException.none()
 
     @Before
     void setup()
@@ -638,13 +638,13 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         File file = getFileForCachedSha1(appId, cubeName)
 
         // this doesn't seem to work on Windows.
-        boolean successFullyChangedToReadable = file.setReadable(false);
+        boolean successFullyChangedToReadable = file.setReadable(false)
 
         // attempt for Windows
         if (!successFullyChangedToReadable)
         {
-            Executor executor = new Executor();
-            executor.exec("icacls ${file.absolutePath.replace('/', '\\\\')} /deny Everyone:R");
+            Executor executor = new Executor()
+            executor.exec("icacls ${file.absolutePath.replace('/', '\\\\')} /deny Everyone:R")
         }
 
         exception.expectMessage("Failed to load sha1 for cube: TestBranch from offline cache")

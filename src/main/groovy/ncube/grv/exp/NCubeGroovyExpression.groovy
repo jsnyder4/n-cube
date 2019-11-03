@@ -1,13 +1,26 @@
 package ncube.grv.exp
 
-import com.cedarsoftware.ncube.*
+
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.Axis
+import com.cedarsoftware.ncube.Column
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeAppContext
+import com.cedarsoftware.ncube.NCubeInfoDto
+import com.cedarsoftware.ncube.NCubeMutableClient
+import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.TrackingMap
 import groovy.transform.CompileStatic
 
 import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
 import static com.cedarsoftware.ncube.NCubeConstants.SEARCH_ACTIVE_RECORDS_ONLY
+import static com.cedarsoftware.util.StringUtilities.createUTF8String
+import static com.cedarsoftware.util.StringUtilities.equalsIgnoreCase
+import static com.cedarsoftware.util.UrlUtilities.getContentFromUrl
 
 /**
  * Base class for all GroovyExpression and GroovyMethod's within n-cube CommandCells.
@@ -46,7 +59,7 @@ class NCubeGroovyExpression
      */
     NCube getCube(String name = ncube.name, boolean quiet = false)
     {
-        if (StringUtilities.equalsIgnoreCase(ncube.name, name))
+        if (equalsIgnoreCase(ncube.name, name))
         {
             return ncube
         }
@@ -442,7 +455,7 @@ class NCubeGroovyExpression
         {
             return null
         }
-        return StringUtilities.createUtf8String(bytes)
+        return createUTF8String(bytes)
     }
 
     /**
@@ -455,7 +468,7 @@ class NCubeGroovyExpression
     byte[] urlToBytes(String url)
     {
         URL actualUrl = ncubeRuntime.getActualUrl(applicationID, url, input)
-        return UrlUtilities.getContentFromUrl(actualUrl, true)
+        return getContentFromUrl(actualUrl, true)
     }
 
     NCubeRuntimeClient getNcubeRuntime()

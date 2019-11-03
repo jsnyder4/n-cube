@@ -3,17 +3,14 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.util.Converter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.fail
+import static com.cedarsoftware.util.Converter.convertToLong
+import static org.junit.Assert.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -53,12 +50,12 @@ class TestProximity
     @Test
     void testConstructorIsPrivate()
     {
-        Class c = Proximity.class;
+        Class c = Proximity.class
         assertEquals Modifier.FINAL, c.modifiers & Modifier.FINAL
 
-        Constructor<Proximity> con = c.getDeclaredConstructor();
+        Constructor<Proximity> con = c.getDeclaredConstructor()
         assertEquals Modifier.PRIVATE, con.modifiers & Modifier.PRIVATE
-        con.accessible = true;
+        con.accessible = true
 
         assertNotNull con.newInstance()
     }
@@ -247,7 +244,7 @@ class TestProximity
         c2.clear()
         c1.set(2015, 0, 1)
         c2.set(2016, 0, 1)
-        long millis = Converter.convertToLong(Proximity.distance(c1.time, c2.time))
+        long millis = convertToLong(Proximity.distance(c1.time, c2.time))
         long seconds = (long)(millis / 1000)
         long minutes = (long)(seconds / 60)
         long hours = (long) (minutes / 60)

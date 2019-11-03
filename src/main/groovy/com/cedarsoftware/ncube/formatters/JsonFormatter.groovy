@@ -11,9 +11,10 @@ import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.encode
 
 /**
  * Format an NCube into an JSON document
@@ -615,7 +616,7 @@ class JsonFormatter extends BaseJsonFormatter implements NCubeFormatter
         else if (o instanceof byte[])
         {
             builder.append('"')
-            builder.append(StringUtilities.encode((byte[])o))
+            builder.append(encode((byte[])o))
             builder.append('"')
         }
         else if (o.class.array)

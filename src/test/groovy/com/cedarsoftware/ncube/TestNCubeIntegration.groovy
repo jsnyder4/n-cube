@@ -132,7 +132,7 @@ class TestNCubeIntegration extends NCubeCleanupBaseTest
         mutableClient.createCube(cpCube)
 
         FileOutputStream fo = new FileOutputStream(base + File.separator + "Abc.groovy")
-        String code = "import ncube.grv.exp.NCubeGroovyExpression; class Abc extends NCubeGroovyExpression { def run() { return 10 } }";
+        String code = "import ncube.grv.exp.NCubeGroovyExpression; class Abc extends NCubeGroovyExpression { def run() { return 10 } }"
         fo.write(code.bytes)
         fo.close()
 

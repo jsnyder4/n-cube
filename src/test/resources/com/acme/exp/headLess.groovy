@@ -1,6 +1,6 @@
 if (input.get('age') == null)
 {
-    output.price = 150.0d;
+    output.price = 150.0d
 }
 else
 {

@@ -5,7 +5,6 @@ import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import org.junit.Test
@@ -14,6 +13,8 @@ import java.security.SecureRandom
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToDate
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.*
 
 /**
@@ -1450,43 +1451,43 @@ class TestAxis extends NCubeBaseTest
     void testNearestDate()
     {
         Axis points = new Axis("Date", AxisType.NEAREST, AxisValueType.DATE, false)
-        points.addColumn(Converter.convert("2000/01/01", Date.class))
-        points.addColumn(Converter.convert("2016/06/06", Date.class))
-        points.addColumn(Converter.convert("1970/01/01", Date.class))
-        points.addColumn(Converter.convert("2005/05/31", Date.class))
-        points.addColumn(Converter.convert("1991/10/05", Date.class))
+        points.addColumn(convertToDate("2000/01/01"))
+        points.addColumn(convertToDate("2016/06/06"))
+        points.addColumn(convertToDate("1970/01/01"))
+        points.addColumn(convertToDate("2005/05/31"))
+        points.addColumn(convertToDate("1991/10/05"))
 
-        Column col = points.findColumn(Converter.convert("1930/07/09", Date.class))
+        Column col = points.findColumn(convertToDate("1930/07/09"))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1969/12/31", Date.class))
+        col = points.findColumn(convertToDate("1969/12/31"))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1970/01/01", Date.class))
+        col = points.findColumn(convertToDate("1970/01/01"))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1970/01/02", Date.class))
+        col = points.findColumn(convertToDate("1970/01/02"))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1980/11/17", Date.class))
+        col = points.findColumn(convertToDate("1980/11/17"))
         assert col.toString() == '1970-01-01'
 
-        col = points.findColumn(Converter.convert("1980/11/18", Date.class))
+        col = points.findColumn(convertToDate("1980/11/18"))
         assert col.toString() == '1991-10-05'
 
-        col = points.findColumn(Converter.convert("2010/08/10", Date.class))
+        col = points.findColumn(convertToDate("2010/08/10"))
         assert col.toString() == '2005-05-31'
 
-        col = points.findColumn(Converter.convert("2016/06/05", Date.class))
+        col = points.findColumn(convertToDate("2016/06/05"))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2016/06/06", Date.class))
+        col = points.findColumn(convertToDate("2016/06/06"))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2016/06/07", Date.class))
+        col = points.findColumn(convertToDate("2016/06/07"))
         assert col.toString() == '2016-06-06'
 
-        col = points.findColumn(Converter.convert("2316/12/25", Date.class))
+        col = points.findColumn(convertToDate("2316/12/25"))
         assert col.toString() == '2016-06-06'
     }
 
@@ -2333,7 +2334,7 @@ class TestAxis extends NCubeBaseTest
         ncube.addAxis(axis)
         def coord = [:]
 
-        int largeNumber = 100000;
+        int largeNumber = 100000
         long start = System.nanoTime()
         for (int i = 0; i < largeNumber; i ++)
         {
@@ -2421,10 +2422,10 @@ class TestAxis extends NCubeBaseTest
         Axis axis = new Axis('dates', AxisType.SET, AxisValueType.DATE, true, Axis.SORTED)
         RangeSet set = (RangeSet) axis.standardizeColumnValue('"10 Dec 1995", "1995/12/25", ["1996 dec 17", "2001-01-31"], "Jun 10th 2010"')
         assert set.size() == 4
-        assert set.get(0) == Converter.convert("10 Dec 1995", Date.class)
-        assert set.get(1) == Converter.convert("25 Dec 1995", Date.class)
-        assert set.get(2) == new Range(Converter.convert("1996 dec 17", Date.class), Converter.convert('2001-01-31', Date.class))
-        assert set.get(3) == Converter.convert("Jun 10th 2010", Date.class)
+        assert set.get(0) == convertToDate("10 Dec 1995")
+        assert set.get(1) == convertToDate("25 Dec 1995")
+        assert set.get(2) == new Range(convertToDate("1996 dec 17"), convertToDate('2001-01-31'))
+        assert set.get(3) == convertToDate("Jun 10th 2010")
     }
 
     @Test

@@ -1,14 +1,14 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.ExceptionUtilities
 import groovy.transform.CompileStatic
-import org.junit.Ignore
 import org.junit.Test
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+
+import static com.cedarsoftware.util.ExceptionUtilities.getDeepestException
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -99,7 +99,7 @@ class TestNCubeConcurrency extends NCubeBaseTest
             }
             catch (Exception e)
             {
-                Throwable t = ExceptionUtilities.getDeepestException(e)
+                Throwable t = getDeepestException(e)
                 if (!(t.message?.contains('cleared while cell was executing')))
                 {
                     failed.set(true)

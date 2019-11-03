@@ -9,6 +9,6 @@ class Foo extends NCubeGroovyController
 
     def foo2()
     {
-        "foo2";
+        "foo2"
     }
 }

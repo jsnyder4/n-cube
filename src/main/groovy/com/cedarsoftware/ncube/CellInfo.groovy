@@ -1,15 +1,17 @@
 package com.cedarsoftware.ncube
+
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point2D
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.util.Converter
 import com.cedarsoftware.util.SafeSimpleDateFormat
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 
 import java.text.DecimalFormat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
+import static com.cedarsoftware.util.Converter.*
+import static com.cedarsoftware.util.StringUtilities.*
 
 /**
  * Get information about a cell (makes it a uniform query-able object).  Optional method
@@ -73,19 +75,19 @@ class CellInfo
             if ('false'.equalsIgnoreCase(bool)) return false
             throw new IllegalArgumentException("Boolean must be 'true' or 'false'.  Case does not matter.")
         }
-        typeConversion['byte'] = { Object val, String type, boolean cache -> return Converter.convertToByte(val) }
-        typeConversion['short'] = { Object val, String type, boolean cache -> return Converter.convertToShort(val) }
-        typeConversion['int'] = { Object val, String type, boolean cache -> return Converter.convertToInteger(val) }
-        typeConversion['long'] = { Object val, String type, boolean cache -> return Converter.convertToLong(val) }
-        typeConversion['double'] = { Object val, String type, boolean cache -> return Converter.convertToDouble(val) }
-        typeConversion['float'] = { Object val, String type, boolean cache -> return Converter.convertToFloat(val) }
+        typeConversion['byte'] = { Object val, String type, boolean cache -> return convertToByte(val) }
+        typeConversion['short'] = { Object val, String type, boolean cache -> return convertToShort(val) }
+        typeConversion['int'] = { Object val, String type, boolean cache -> return convertToInteger(val) }
+        typeConversion['long'] = { Object val, String type, boolean cache -> return convertToLong(val) }
+        typeConversion['double'] = { Object val, String type, boolean cache -> return convertToDouble(val) }
+        typeConversion['float'] = { Object val, String type, boolean cache -> return convertToFloat(val) }
         typeConversion['exp'] = { Object val, String type, boolean cache -> return new GroovyExpression((String)val, null, cache) }
         typeConversion['method'] = { Object val, String type, boolean cache -> return new GroovyMethod((String) val, null, cache) }
         typeConversion['template'] = { Object val, String type, boolean cache -> return new GroovyTemplate((String)val, null, cache) }
         Closure stringToDate = { Object val, String type, boolean cache ->
             try
             {
-                Date date = Converter.convertToDate(val)
+                Date date = convertToDate(val)
                 return (date == null) ? val : date
             }
             catch (Exception ignored)
@@ -105,10 +107,10 @@ class CellInfo
             {
                 throw new IllegalArgumentException('Binary (hex) values must contain only the numbers 0 thru 9 and letters A thru F.')
             }
-            return StringUtilities.decode((String) val)
+            return decode((String) val)
         }
-        typeConversion['bigint'] = { Object val, String type, boolean cache -> return Converter.convertToBigInteger(val) }
-        typeConversion['bigdec'] = { Object val, String type, boolean cache -> return Converter.convertToBigDecimal(val) }
+        typeConversion['bigint'] = { Object val, String type, boolean cache -> return convertToBigInteger(val) }
+        typeConversion['bigdec'] = { Object val, String type, boolean cache -> return convertToBigDecimal(val) }
         typeConversion['latlon'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid2Doubles.matcher((String) val)
             if (!m.matches())
@@ -116,7 +118,7 @@ class CellInfo
                 throw new IllegalArgumentException(String.format('Invalid Lat/Long value (%s)', val))
             }
 
-            return new LatLon(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
+            return new LatLon(convertToDouble(m.group(1)), convertToDouble(m.group(2)))
         }
         typeConversion['point2d'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid2Doubles.matcher((String) val)
@@ -124,7 +126,7 @@ class CellInfo
             {
                 throw new IllegalArgumentException(String.format('Invalid Point2D value (%s)', val))
             }
-            return new Point2D(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
+            return new Point2D(convertToDouble(m.group(1)), convertToDouble(m.group(2)))
         }
         typeConversion['point3d'] = { Object val, String type, boolean cache ->
             Matcher m = Regexes.valid3Doubles.matcher((String) val)
@@ -132,9 +134,9 @@ class CellInfo
             {
                 throw new IllegalArgumentException(String.format('Invalid Point3D value (%s)', val))
             }
-            return new Point3D(Converter.convertToDouble(m.group(1)),
-                    Converter.convertToDouble(m.group(2)),
-                    Converter.convertToDouble(m.group(3)))
+            return new Point3D(convertToDouble(m.group(1)),
+                    convertToDouble(m.group(2)),
+                    convertToDouble(m.group(3)))
         }
     }
 
@@ -202,7 +204,7 @@ class CellInfo
         else if (cell instanceof GroovyExpression)
         {
             GroovyExpression exp = (GroovyExpression) cell
-            isUrl = StringUtilities.hasContent(exp.url)
+            isUrl = hasContent(exp.url)
             value = isUrl ? exp.url : exp.cmd
             dataType = 'exp'
             isCached = exp.cacheable
@@ -258,7 +260,7 @@ class CellInfo
         }
         else if (cell instanceof byte[])
         {
-            value = StringUtilities.encode((byte[])cell)
+            value = encode((byte[])cell)
             dataType = 'binary'
         }
         else if (cell instanceof Point2D)
@@ -279,7 +281,7 @@ class CellInfo
         else if (cell instanceof GroovyMethod)
         {
             GroovyMethod method = (GroovyMethod)cell
-            isUrl = StringUtilities.hasContent(method.url)
+            isUrl = hasContent(method.url)
             value = isUrl ? method.url : method.cmd
             dataType = 'method'
             isCached = method.cacheable
@@ -303,7 +305,7 @@ class CellInfo
         else if (cell instanceof GroovyTemplate)
         {
             GroovyTemplate templateCmd = (GroovyTemplate)cell
-            isUrl = StringUtilities.hasContent(templateCmd.url)
+            isUrl = hasContent(templateCmd.url)
             value = isUrl ? templateCmd.url : templateCmd.cmd
             dataType = 'template'
             isCached = templateCmd.cacheable
@@ -848,7 +850,7 @@ class CellInfo
         }
         else if (val instanceof Double || val instanceof Float || val instanceof BigDecimal)
         {
-            return Converter.convertToString(val)
+            return convertToString(val)
         }
         else if (val instanceof Range)
         {

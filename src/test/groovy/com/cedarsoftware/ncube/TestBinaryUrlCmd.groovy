@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-
 import groovy.transform.CompileStatic
 import org.junit.Assert
 import org.junit.Test
@@ -8,6 +7,7 @@ import org.junit.Test
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.fail
 
 /**
@@ -50,7 +50,7 @@ class TestBinaryUrlCmd extends NCubeBaseTest
             def args = [ncube: cube]
 
             cmd.simpleFetch(args)
-            fail();
+            fail()
         }
         catch (IllegalStateException e)
         {

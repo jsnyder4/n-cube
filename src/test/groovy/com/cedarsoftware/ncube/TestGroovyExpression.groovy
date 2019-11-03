@@ -51,7 +51,7 @@ class TestGroovyExpression extends NCubeBaseTest
         try
         {
             ncube.getCell(coord)
-            fail();
+            fail()
         }
         catch (RuntimeException e)
         {

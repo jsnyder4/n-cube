@@ -30,10 +30,10 @@ class TestStringUrlCmd
     @Test
     void testDefaultConstructorIsPrivateForSerialization()
     {
-        Class c = StringUrlCmd.class;
-        Constructor<StringUrlCmd> con = c.getDeclaredConstructor();
+        Class c = StringUrlCmd.class
+        Constructor<StringUrlCmd> con = c.getDeclaredConstructor()
         Assert.assertEquals Modifier.PRIVATE, con.modifiers & Modifier.PRIVATE
-        con.accessible = true;
+        con.accessible = true
         Assert.assertNotNull con.newInstance()
     }
 

@@ -1,13 +1,13 @@
 package com.cedarsoftware.ncube
 
-
-import com.cedarsoftware.util.Converter
 import groovy.transform.CompileStatic
 import org.junit.Test
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeClient
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToDate
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.fail
 
 /**
@@ -334,9 +334,9 @@ class TestTransforms extends NCubeCleanupBaseTest
     private static List<Date> getStandardDates()
     {
         List dates = [
-                Converter.convert('1/1/2017', Date.class),
-                Converter.convert('2/1/2017', Date.class),
-                Converter.convert('3/1/2017', Date.class),
+                convertToDate('1/1/2017'),
+                convertToDate('2/1/2017'),
+                convertToDate('3/1/2017'),
         ]
         return dates
     }

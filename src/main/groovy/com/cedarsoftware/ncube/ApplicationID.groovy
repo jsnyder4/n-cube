@@ -1,10 +1,12 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.StringUtilities
+
 import groovy.transform.CompileStatic
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
+import static com.cedarsoftware.util.StringUtilities.*
 
 /**
  * This class binds together Tenant, App, version, status, and branch.  These fields together
@@ -102,8 +104,23 @@ class ApplicationID
      */
     static ApplicationID convert(String appIdString)
     {
-        List<String> pieces = appIdString.tokenize('/')
-        return new ApplicationID(pieces[0].trim(), pieces[1].trim(), pieces[2].trim(), pieces[3].trim().toUpperCase(), pieces[4].trim())
+        if (isEmpty(appIdString))
+        {
+            throw new IllegalArgumentException('Empty or null string cannot be converted to an ApplicationID.')
+        }
+        try
+        {
+            List<String> pieces = appIdString.tokenize('/')
+            if (pieces.size() != 5)
+            {
+                throw new IllegalArgumentException('Must have 5 components to the appId string.')
+            }
+            return new ApplicationID(pieces[0].trim(), pieces[1].trim(), pieces[2].trim(), pieces[3].trim().toUpperCase(), pieces[4].trim())
+        }
+        catch (Exception e)
+        {
+            throw new IllegalArgumentException("Unable to convert: ${appIdString} to an ApplicationID. ApplicationID string must look like 'tenant/app/version/status/branch'. ${e.message}")
+        }
     }
 
     boolean equals(Object o)
@@ -119,7 +136,7 @@ class ApplicationID
         }
 
         ApplicationID that = (ApplicationID) o
-        return equalsNotIncludingBranch(that) && StringUtilities.equalsIgnoreCase(branch, that.branch)
+        return equalsNotIncludingBranch(that) && equalsIgnoreCase(branch, that.branch)
     }
 
     int hashCode()
@@ -267,7 +284,7 @@ class ApplicationID
 
     static void validateTenant(String tenant)
     {
-        if (StringUtilities.hasContent(tenant))
+        if (hasContent(tenant))
         {
             Matcher m = Regexes.validTenantName.matcher(tenant)
             if (m.find() && tenant.length() <= 10)
@@ -280,7 +297,7 @@ class ApplicationID
 
     static void validateApp(String appName)
     {
-        if (StringUtilities.isEmpty(appName))
+        if (isEmpty(appName))
         {
             throw new IllegalArgumentException("App cannot be null or empty")
         }
@@ -288,7 +305,7 @@ class ApplicationID
 
     static void validateVersion(String version)
     {
-        if (StringUtilities.isEmpty(version))
+        if (isEmpty(version))
         {
             throw new IllegalArgumentException("n-cube version cannot be null or empty")
         }
@@ -307,12 +324,19 @@ class ApplicationID
         {
             throw new IllegalArgumentException("status name cannot be null")
         }
-        ReleaseStatus.valueOf(status)
+        try
+        {
+            ReleaseStatus.valueOf(status)
+        }
+        catch (Exception e)
+        {
+            throw new IllegalArgumentException('status must be RELEASE or SNAPSHOT')
+        }
     }
 
     static void validateBranch(String branch)
     {
-        if (StringUtilities.isEmpty(branch))
+        if (isEmpty(branch))
         {
             throw new IllegalArgumentException("n-cube branch cannot be null or empty")
         }
@@ -347,10 +371,10 @@ class ApplicationID
 
     boolean equalsNotIncludingBranch(ApplicationID that)
     {
-        return StringUtilities.equalsIgnoreCase(tenant, that.tenant) &&
-                StringUtilities.equalsIgnoreCase(app, that.app) &&
-                StringUtilities.equalsIgnoreCase(status, that.status) &&
-                StringUtilities.equals(version, that.version)
+        return equalsIgnoreCase(tenant, that.tenant) &&
+                equalsIgnoreCase(app, that.app) &&
+                equalsIgnoreCase(status, that.status) &&
+                equals(version, that.version)
 
     }
 

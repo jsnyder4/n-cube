@@ -2,12 +2,13 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.proximity.Distance
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
-import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+
+import static com.cedarsoftware.util.StringUtilities.hasContent
+import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive
 
 /**
  * Holds the value of a 'column' on an axis.
@@ -175,7 +176,7 @@ class Column implements Comparable<Comparable>
     String getColumnName()
     {
         Object name = getMetaProperty('name')
-        if (name instanceof String && StringUtilities.hasContent((String)name))
+        if (name instanceof String && hasContent((String)name))
         {
             return (String) name
         }
@@ -299,7 +300,7 @@ class Column implements Comparable<Comparable>
             return null
         }
 
-        if (!MetaUtils.isLogicalPrimitive(value.class))
+        if (!isLogicalPrimitive(value.class))
         {   // don't attempt to intern null (NPE) or non-primitive instances
             return value
         }

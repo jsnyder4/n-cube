@@ -12,21 +12,21 @@ class FooBarBazQuxController extends NCubeGroovyController
 {
     def foo()
     {
-        return 2;
+        return 2
     }
 
     def bar()
     {
-        return foo() * 2;
+        return foo() * 2
     }
 
     def baz()
     {
-        return bar() * 2;
+        return bar() * 2
     }
 
     def qux()
     {
-        return baz() * 2;
+        return baz() * 2
     }
 }

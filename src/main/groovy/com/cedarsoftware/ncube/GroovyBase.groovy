@@ -1,11 +1,7 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.util.EncryptionUtilities
-import com.cedarsoftware.util.ReflectionUtils
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.TimedSynchronize
-import com.cedarsoftware.util.UrlUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -27,6 +23,10 @@ import java.util.regex.Matcher
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_DEBUG
 import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_VERSION
+import static com.cedarsoftware.util.EncryptionUtilities.calculateSHA1Hash
+import static com.cedarsoftware.util.ReflectionUtils.getClassNameFromByteCode
+import static com.cedarsoftware.util.StringUtilities.*
+import static com.cedarsoftware.util.UrlUtilities.getContentFromUrl
 
 /**
  * Base class for Groovy CommandCells.
@@ -277,7 +277,7 @@ abstract class GroovyBase extends UrlCommandCell
 
         if (root == null)
         {
-            if (StringUtilities.hasContent(url))
+            if (hasContent(url))
             {
                 throw new IllegalStateException("Unable to locate main compiled class: ${fullClassName} at url: ${url}.  Does it not extend NCubeGroovyExpression?")
             }
@@ -288,7 +288,7 @@ abstract class GroovyBase extends UrlCommandCell
         }
 
         // Load root (main class)
-        gcLoader.loadClass(ReflectionUtils.getClassNameFromByteCode(mainClassBytes), false, true, true)
+        gcLoader.loadClass(getClassNameFromByteCode(mainClassBytes), false, true, true)
         return root
     }
 
@@ -305,7 +305,7 @@ abstract class GroovyBase extends UrlCommandCell
         try {
             sourceFile = new File("${sourcesDir}/${className.replace('.',File.separator)}.groovy")
             if (ensureDirectoryExists(sourceFile.parent)) {
-                sourceFile.bytes = StringUtilities.getUTF8Bytes(groovySource)
+                sourceFile.bytes = getUTF8Bytes(groovySource)
             }
         }
         catch (Exception e) {
@@ -398,14 +398,14 @@ abstract class GroovyBase extends UrlCommandCell
         }
         catch (LinkageError ignored)
         {
-            Class clazz = Class.forName(ReflectionUtils.getClassNameFromByteCode(byteCode), false, loader)
+            Class clazz = Class.forName(getClassNameFromByteCode(byteCode), false, loader)
             return clazz
         }
         catch (Throwable t)
         {
             if (byteCode != null)
             {
-                log.warn("Unable to defineClass: ${ReflectionUtils.getClassNameFromByteCode(byteCode)}", t)
+                log.warn("Unable to defineClass: ${getClassNameFromByteCode(byteCode)}", t)
             }
             else
             {
@@ -418,7 +418,7 @@ abstract class GroovyBase extends UrlCommandCell
     protected Map getClassLoaderAndSource(Map<String, Object> ctx)
     {
         NCube cube = getNCube(ctx)
-        boolean isUrlUsed = StringUtilities.hasContent(url)
+        boolean isUrlUsed = hasContent(url)
         Map ret = [:]
 
         if (cube.name.toLowerCase().startsWith("sys."))
@@ -448,8 +448,8 @@ abstract class GroovyBase extends UrlCommandCell
             }
 
             URL groovySourceUrl = getActualUrl(ctx)
-            ret.source = StringUtilities.createUtf8String(UrlUtilities.getContentFromUrl(groovySourceUrl, true))
-            if (StringUtilities.isEmpty((String)ret.source))
+            ret.source = createUTF8String(getContentFromUrl(groovySourceUrl, true))
+            if (isEmpty((String)ret.source))
             {
                 throw new RuntimeException("Unable to fetch groovy source from url: ${groovySourceUrl}, app: ${cube.applicationID}, n-cube: ${cube.name}")
             }
@@ -536,7 +536,7 @@ abstract class GroovyBase extends UrlCommandCell
         if (url == null)
         {   // inline statement block (GroovyExpression)
             String content = expandNCubeShortCuts(buildGroovy(ctx, CLASS_NAME_FOR_L2_CALC, (data != null ? data.toString() : "")))
-            L2CacheKey = EncryptionUtilities.calculateSHA1Hash(StringUtilities.getUTF8Bytes(content))
+            L2CacheKey = calculateSHA1Hash(getUTF8Bytes(content))
             String packageName = null
             String className = null
 
@@ -561,7 +561,7 @@ abstract class GroovyBase extends UrlCommandCell
             String content = "${Joiner.on('|').join(urls)}.${url}"
             fullClassName = url - '.groovy'
             fullClassName = fullClassName.replace('/', '.')
-            L2CacheKey = EncryptionUtilities.calculateSHA1Hash(StringUtilities.getUTF8Bytes(content))
+            L2CacheKey = calculateSHA1Hash(getUTF8Bytes(content))
         }
     }
 
@@ -628,7 +628,7 @@ abstract class GroovyBase extends UrlCommandCell
 
     protected static void getCubeNamesFromText(final Set<String> cubeNames, final String text)
     {
-        if (StringUtilities.isEmpty(text))
+        if (isEmpty(text))
         {
             return
         }

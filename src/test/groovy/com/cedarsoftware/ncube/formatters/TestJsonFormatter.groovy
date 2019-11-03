@@ -1,7 +1,11 @@
 package com.cedarsoftware.ncube.formatters
 
-import com.cedarsoftware.ncube.*
-import com.cedarsoftware.util.IOUtilities
+
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeBaseTest
+import com.cedarsoftware.ncube.NCubeBuilder
+import com.cedarsoftware.ncube.NCubeRuntime
 import groovy.transform.CompileStatic
 import org.junit.Ignore
 import org.junit.Test
@@ -10,6 +14,8 @@ import org.springframework.util.FastByteArrayOutputStream
 import java.util.zip.GZIPInputStream
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.util.IOUtilities.close
+import static com.cedarsoftware.util.TestUtil.assertContainsIgnoreCase
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 import static org.mockito.Matchers.anyInt
@@ -191,7 +197,7 @@ class TestJsonFormatter extends NCubeBaseTest
         }
         finally
         {
-            IOUtilities.close((Closeable)input)
+            close((Closeable)input)
         }
     }
 

@@ -1,8 +1,10 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.ArrayUtilities
-import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.hasContent
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * Class used to carry the NCube meta-information
@@ -47,7 +49,7 @@ class NCubeInfoDto
 
     ApplicationID getApplicationID()
 	{
-        if (StringUtilities.isEmpty(tenant))
+        if (isEmpty(tenant))
         {
             tenant = ApplicationID.DEFAULT_TENANT
         }
@@ -67,6 +69,6 @@ class NCubeInfoDto
 
     boolean hasTestData()
     {
-        return StringUtilities.hasContent(testData)
+        return hasContent(testData)
     }
 }

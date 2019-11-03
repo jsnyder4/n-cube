@@ -1,6 +1,6 @@
 package com.cedarsoftware.ncube
 
-import groovy.transform.CompileStatic;
+import groovy.transform.CompileStatic
 
 /**
  * Process a String that is specified at a URL.

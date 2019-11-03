@@ -4,10 +4,11 @@ import com.cedarsoftware.ncube.CellInfo
 import com.cedarsoftware.ncube.NCubeTest
 import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CaseInsensitiveMap
-import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
+
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
  * @author Ken Partlow (kpartlow@gmail.com)
@@ -32,7 +33,7 @@ class NCubeTestReader
     static List<NCubeTest> convert(String s) throws IOException
     {
         List<NCubeTest> list = []
-        if (StringUtilities.isEmpty(s))
+        if (isEmpty(s))
         {
             return list
         }

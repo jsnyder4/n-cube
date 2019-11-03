@@ -1,6 +1,5 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.StringUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -11,6 +10,7 @@ import java.util.regex.Matcher
 
 import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import static com.cedarsoftware.ncube.NCubeConstants.SYS_PROTOTYPE
+import static com.cedarsoftware.util.StringUtilities.hasContent
 
 /**
  * This class is used to create NCubeGroovyExpressions.  This means that
@@ -158,7 +158,7 @@ class ${className} extends ${expClassName}
             Map input = new LinkedHashMap(getInput(ctx))
             input[SYS_PROPERTY] = EXP_CLASS
             Object className = prototype.getCell(input)
-            if (className instanceof String && StringUtilities.hasContent((String)className))
+            if (className instanceof String && hasContent((String)className))
             {
                 return (String) className
             }

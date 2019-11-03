@@ -1,6 +1,5 @@
 package com.cedarsoftware.controller
 
-import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.aspectj.lang.ProceedingJoinPoint
@@ -9,6 +8,7 @@ import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
+import static com.cedarsoftware.util.io.MetaUtils.getLogMessage
 
 /**
  * Before Advice that sets user ID on current thread.
@@ -58,11 +58,11 @@ class NCubeControllerAdvice
 
         if (time > 1000)
         {
-            log.info("[SLOW CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            log.info("[SLOW CALL - ${time} ms] [${username}] ${getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         else if (log.debugEnabled)
         {
-            log.debug("[CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            log.debug("[CALL - ${time} ms] [${username}] ${getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         return ret
     }
