@@ -1,7 +1,8 @@
 package com.cedarsoftware.config
 
-import com.cedarsoftware.ncube.GroovyBase
-import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.controller.NCubeController
+import com.cedarsoftware.controller.NCubeControllerAdvice
+import com.cedarsoftware.ncube.*
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
@@ -9,8 +10,6 @@ import com.cedarsoftware.util.JsonHttpProxy
 import com.cedarsoftware.util.ReflectiveProxy
 import groovy.transform.CompileStatic
 import org.apache.http.HttpHost
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -71,11 +70,11 @@ class NCubeConfiguration
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
 
+    @Value('${ncube.allow.mutable.methods}') Boolean allowMutableMethods
+
     // Limit size of coordinate displayed in each CommandCell exception list (--> [coordinate])
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
     
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeConfiguration)
-
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
     {   // Clear all compiled classes associated to this n-cube (so ClassLoader may be freed).
@@ -89,7 +88,7 @@ class NCubeConfiguration
         }
     }
 
-    @Bean(name = "ncubeCacheManager")
+    @Bean(name = 'ncubeCacheManager')
     GCacheManager getNcubeCacheManager()
     {
         GCacheManager cacheManager = new GCacheManager(ncubeRemoval, maxSizeNCubeCache, typeNCubeCache, durationNCubeCache, unitsNCubeCache, concurrencyNCubeCache)
@@ -103,26 +102,133 @@ class NCubeConfiguration
         return cacheManager
     }
     
-    @Bean(name = "ncubeHost")
+    @Bean(name = 'ncubeHost')
     @Profile(['ncube-client','runtime-server'])
     HttpHost getHttpHost()
     {
         return new HttpHost(host, port, scheme)
     }
 
-    @Bean(name = "callableBean")
+    @Bean(name = 'callableBean')
     @Profile(['ncube-client','runtime-server'])
     JsonHttpProxy getJsonHttpProxy()
     {
         return new JsonHttpProxy(getHttpHost(), context, username, password, numConnections)
     }
 
-    @Bean(name = "callableBean")
+    @Bean(name = 'callableBean')
     @Profile(['combined-client','combined-server'])
     ReflectiveProxy getReflectiveProxy()
     {
         return new ReflectiveProxy()
     }
+
+    @Bean('ncubeManager')
+    @Profile(['storage-server', 'combined-server', 'combined-client'])
+    NCubeManager getNCubeManager()
+    {
+        return new NCubeManager(getNCubePersister(), getPermCacheManager())
+    }
+
+    // v========== ncube-client ==========v
+
+    @Bean('ncubeRuntime')
+    @Profile('ncube-client')
+    NCubeRuntime getNCubeRuntime()
+    {
+        return new NCubeRuntime(getJsonHttpProxy(), getNcubeCacheManager(), allowMutableMethods)
+    }
+
+    // v========== combined-client ==========v
+
+    @Bean('ncubeRuntime')
+    @Profile('combined-client')
+    NCubeRuntime getNCubeRuntime1()
+    {
+        return new NCubeRuntime(getReflectiveProxy(), getNcubeCacheManager(), allowMutableMethods)
+    }
+
+    // v========== runtime-server ==========v
+
+    @Bean('ncubeControllerAdvice')
+    @Profile('runtime-server')
+    NCubeControllerAdvice getNCubeControllerAdvice2()
+    {
+        return new NCubeControllerAdvice(getNCubeController2())
+    }
+    
+    @Bean('ncubeRuntime')
+    @Profile('runtime-server')
+    NCubeRuntime getNCubeRuntime2()
+    {
+        return new NCubeRuntime(getJsonHttpProxy(), getNcubeCacheManager(), allowMutableMethods)
+    }
+
+    @Bean('ncubeController')
+    @Profile('runtime-server')
+    NCubeController getNCubeController2()
+    {
+        return new NCubeController(getNCubeRuntime2(), true)
+    }
+
+    // v========== storage-server ==========v
+
+    @Bean('ncubeControllerAdvice')
+    @Profile('storage-server')
+    NCubeControllerAdvice getNCubeControllerAdvice3()
+    {
+        return new NCubeControllerAdvice(getNCubeController3())
+    }
+
+    @Bean('ncubeController')
+    @Profile('storage-server')
+    NCubeController getNCubeController3()
+    {
+        return new NCubeController(getNCubeManager(), false)
+    }
+
+    // v========== combined-server ==========v
+    /**
+     *         <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
+     *             <constructor-arg ref="ncubeController"/>
+     *         </bean>
+     * @return
+     */
+    @Bean('ncubeControllerAdvice')
+    @Profile('combined-server')
+    NCubeControllerAdvice getNCubeControllerAdvice4()
+    {
+        return new NCubeControllerAdvice(getNCubeController4())
+    }
+
+    @Bean('ncubeRuntime')
+    @Profile('combined-server')
+    NCubeRuntime getNCubeRuntime4()
+    {
+        return new NCubeRuntime(getReflectiveProxy(), getNcubeCacheManager(), allowMutableMethods)
+    }
+
+    @Bean('ncubeController')
+    @Profile('combined-server')
+    NCubeController getNCubeController4()
+    {
+        return new NCubeController(getNCubeRuntime4(), true)
+    }
+    
+    // ========== Persistance Configuration ==========
+    
+    @Bean('persister')
+    NCubePersister getNCubePersister()
+    {
+        return new NCubeJdbcPersisterAdapter()
+    }
+
+    // ========== App Context ==========
+//    @Bean('appContext')
+//    NCubeAppContext getAppContext()
+//    {
+//        return new NCubeAppContext()
+//    }
 
     @PostConstruct
     void init()

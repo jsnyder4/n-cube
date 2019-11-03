@@ -1,9 +1,11 @@
 package com.cedarsoftware.ncube
 
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.jdbc.datasource.DataSourceUtils
 
+import javax.sql.DataSource
 import java.sql.Connection
 /**
  * This adapter could be replaced by an adapting proxy.  Then you could
@@ -25,27 +27,23 @@ import java.sql.Connection
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class NCubeJdbcPersisterAdapter implements NCubePersister
 {
+    @Autowired
+    private DataSource dataSource
     private final NCubeJdbcPersister persister = new NCubeJdbcPersister()
-    private final JdbcConnectionProvider connectionProvider
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeJdbcPersisterAdapter.class)
-
-    NCubeJdbcPersisterAdapter(JdbcConnectionProvider provider)
-    {
-        connectionProvider = provider
-    }
 
     Object jdbcOperation(Closure closure, String msg, String username = 'no user set')
     {
         long start = System.nanoTime()
-        Connection c = connectionProvider.connection
+        Connection c = DataSourceUtils.getConnection(dataSource)
         long end = System.nanoTime()
         long time = Math.round((end - start) / 1000000.0d)
         if (time > 1000)
         {
-            LOG.info("    [SLOW getting DB connection - ${time} ms] [${username}] ${msg}")
+            log.info("    [SLOW getting DB connection - ${time} ms] [${username}] ${msg}")
         }
         try
         {
@@ -55,17 +53,17 @@ class NCubeJdbcPersisterAdapter implements NCubePersister
             time = Math.round((end - start) / 1000000.0d)
             if (time > 1000)
             {
-                LOG.info("    [SLOW DB - ${time} ms] [${username}] ${msg}")
+                log.info("    [SLOW DB - ${time} ms] [${username}] ${msg}")
             }
-            else if (LOG.debugEnabled)
+            else if (log.debugEnabled)
             {
-                LOG.debug("    [DB - ${time} ms] [${username}] ${msg}")
+                log.debug("    [DB - ${time} ms] [${username}] ${msg}")
             }
             return ret
         }
         finally
         {
-            connectionProvider.releaseConnection(c)
+            DataSourceUtils.releaseConnection(c, dataSource)
         }
     }
 

@@ -2,108 +2,39 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
        xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
-       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
     <context:annotation-config />
     <context:component-scan base-package="com.cedarsoftware.config" />
     <aop:aspectj-autoproxy/>
 
+    <tx:advice id="ncubeTxAdvice">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="is*" read-only="true"/>
+            <tx:method name="has*" read-only="true"/>
+            <tx:method name="does*" read-only="true"/>
+            <tx:method name="search*" read-only="true"/>
+            <tx:method name="load*" read-only="true"/>
+            <tx:method name="resolveRelativeUrl" read-only="true"/>
+            <tx:method name="assert*" read-only="true"/>
+            <tx:method name="check*" read-only="true"/>
+            <tx:method name="*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config>
+
+        <aop:pointcut id="ncubeTransactedMethods" expression="execution(* com.cedarsoftware.ncube.NCubeManager.*(..))"/>
+        <aop:advisor advice-ref="ncubeTxAdvice" pointcut-ref="ncubeTransactedMethods"/>
+
+    </aop:config>
+
     <bean id="appContext" class="com.cedarsoftware.ncube.NCubeAppContext"/>
-
-    <beans profile="ncube-client">
-
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="callableBean"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
-        </bean>
-
-    </beans>
-
-    <beans profile="runtime-server">
-
-        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
-            <constructor-arg ref="ncubeController"/>
-        </bean>
-
-        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
-            <constructor-arg ref="ncubeRuntime"/>
-            <constructor-arg value="true"/>
-        </bean>
-
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="callableBean"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods:#{true}}"/>
-        </bean>
-        
-    </beans>
-
-    <beans profile="storage-server">
-
-        <import resource="ncube-beans-persister.xml"/>
-
-        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
-            <constructor-arg ref="ncubeController"/>
-        </bean>
-
-        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
-            <constructor-arg ref="ncubeManager"/>
-            <constructor-arg value="false"/>
-        </bean>
-
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
-    </beans>
-
-    <!-- Developer profiles, not for production -->
-    <beans profile="combined-client">
-
-        <import resource="ncube-beans-persister.xml"/>
-
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="callableBean"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods:#{false}}"/>
-        </bean>
-
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
-    </beans>
-
-    <beans profile="combined-server">
-
-        <import resource="ncube-beans-persister.xml"/>
-
-        <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
-            <constructor-arg ref="ncubeController"/>
-        </bean>
-
-        <bean id="ncubeController" class="com.cedarsoftware.controller.NCubeController">
-            <constructor-arg ref="ncubeRuntime"/>
-            <constructor-arg value="true"/>
-        </bean>
-
-        <bean id="ncubeRuntime" class="com.cedarsoftware.ncube.NCubeRuntime">
-            <constructor-arg ref="callableBean"/>
-            <constructor-arg ref="ncubeCacheManager"/>
-            <constructor-arg value="${ncube.allow.mutable.methods:#{true}}"/>
-        </bean>
-
-        <bean id="ncubeManager" class="com.cedarsoftware.ncube.NCubeManager">
-            <constructor-arg ref="persister"/>
-            <constructor-arg ref="permCacheManager"/>
-        </bean>
-
-    </beans>
-
+    
 </beans>

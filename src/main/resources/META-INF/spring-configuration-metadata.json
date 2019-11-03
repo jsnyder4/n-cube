@@ -13,10 +13,6 @@
       "description": "Permissions caching properties."
     },
     {
-      "name": "ncube.datasource",
-      "description": "NCube datasource properties."
-    },
-    {
       "name": "ncube.test",
       "description": "NCube testing properties."
     }
@@ -177,48 +173,6 @@
       "type": "java.lang.Integer",
       "description": "Guides the allowed concurrency among update operations. See Guava's CacheBuilder documentation.",
       "defaultValue": "16"
-    },
-    {
-      "name": "ncube.datasource.url",
-      "type": "java.lang.String",
-      "description": "Datasource URL.",
-      "defaultValue": "jdbc:hsqldb:mem:testdb"
-    },
-    {
-      "name": "ncube.datasource.username",
-      "type": "java.lang.String",
-      "description": "Datasource username.",
-      "defaultValue": "sa"
-    },
-    {
-      "name": "ncube.datasource.password",
-      "type": "",
-      "description": "Datasource password.",
-      "defaultValue": ""
-    },
-    {
-      "name": "ncube.datasource.connection-timeout",
-      "type": "java.lang.Integer",
-      "description": "Connection timeout in milliseconds.",
-      "defaultValue": "30000"
-    },
-    {
-      "name": "ncube.datasource.max-life-time",
-      "type": "java.lang.Integer",
-      "description": "Maximum full life time of a connection in the pool in milliseconds.  Default to 4 hours.",
-      "defaultValue": 14400000
-    },
-    {
-      "name": "ncube.datasource.maximum-pool-size",
-      "type": "java.lang.Integer",
-      "description": "Maximum number of JDBC connections.",
-      "defaultValue": "100"
-    },
-    {
-      "name": "ncube.datasource.pool-name",
-      "type": "java.lang.String",
-      "description": "JDBC Connection pool name.",
-      "defaultValue": "NCube JDBC Connection Pool"
     },
     {
       "name": "ncube.test.baseRemoteUrl",

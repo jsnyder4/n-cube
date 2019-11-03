@@ -2,12 +2,11 @@ package com.cedarsoftware.controller
 
 import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.MethodSignature
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
 
@@ -30,12 +29,12 @@ import static com.cedarsoftware.ncube.NCubeConstants.LOG_ARG_LENGTH
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 @Aspect
 class NCubeControllerAdvice
 {
     private final NCubeController controller
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeControllerAdvice.class)
 
     NCubeControllerAdvice(NCubeController controller)
     {
@@ -59,11 +58,11 @@ class NCubeControllerAdvice
 
         if (time > 1000)
         {
-            LOG.info("[SLOW CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            log.info("[SLOW CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
-        else if (LOG.debugEnabled)
+        else if (log.debugEnabled)
         {
-            LOG.debug("[CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
+            log.debug("[CALL - ${time} ms] [${username}] ${MetaUtils.getLogMessage(methodName, args, LOG_ARG_LENGTH)}")
         }
         return ret
     }
