@@ -11,12 +11,10 @@ import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.SafeSimpleDateFormat
 import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
-import gnu.trove.THashSet
 import groovy.sql.GroovyRowResult
 import groovy.sql.Sql
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 
 import java.sql.Blob
 import java.sql.Connection
@@ -51,10 +49,10 @@ import static com.cedarsoftware.ncube.NCubeConstants.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class NCubeJdbcPersister
 {
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeJdbcPersister.class)
     static final SafeSimpleDateFormat DATE_TIME_FORMAT = new SafeSimpleDateFormat('yyyy-MM-dd HH:mm:ss')
     static final String CUBE_VALUE_BIN = 'cube_value_bin'
     static final String TEST_DATA_BIN = 'test_data_bin'
@@ -472,7 +470,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
 
             for (int i = 0; i < cubeIds.length; i++)
             {
-                stmt.setLong(1, (Long) Converter.convertToLong(cubeIds[i]))
+                stmt.setLong(1, Converter.convertToLong(cubeIds[i]))
                 ResultSet row = stmt.executeQuery()
 
                 if (row.next())
@@ -937,7 +935,7 @@ AND tenant_cd = :tenant AND branch_id = :branch AND revision_number = :rev"""
                 Long madMaxRev = getMaxRevision(c, appId, cubeName, 'rollbackCubes')
                 if (madMaxRev == null)
                 {
-                    LOG.info("Attempt to rollback non-existing cube: ${cubeName}, app: ${appId}")
+                    log.info("Attempt to rollback non-existing cube: ${cubeName}, app: ${appId}")
                 }
                 else
                 {
@@ -1746,7 +1744,7 @@ AND status_cd = :status AND tenant_cd = :tenant AND branch_id = :branch AND revi
         map.tenant = padTenant(c, appId.tenant)
         map.sysinfo = SYS_INFO
         Sql sql = getSql(c)
-        Set<String> branches = new THashSet<>()
+        Set<String> branches = new TreeSet<>(String.CASE_INSENSITIVE_ORDER)
 
         sql.eachRow("/* getBranches.appVerStat */ SELECT DISTINCT branch_id FROM n_cube WHERE tenant_cd = :tenant AND app_cd = :app AND version_no_cd = :version AND status_cd = :status AND n_cube_nm = :sysinfo", map, { ResultSet row ->
             branches.add(row.getString('branch_id'))
@@ -1829,7 +1827,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
             if (includeFilter || excludeFilter)
             {
                 Matcher tagMatcher = cubeData =~ /"$CUBE_TAGS"\s*:\s*(?:"|\{.*?value":")?(?<tags>.*?)"/
-                Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new THashSet<String>()
+                Set<String> cubeTags = tagMatcher ? getFilter(tagMatcher.group('tags')) : new HashSet<String>()
 
                 Closure tagsMatchFilter = { Set<String> filter ->
                     Set<String> copyTags = new CaseInsensitiveSet<>(cubeTags)
@@ -1859,7 +1857,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
                         }
                         catch (IllegalStateException e)
                         {   // log the error, but keep searching
-                            LOG.error(e.message, e)
+                            log.error(e.message, e)
                             return null
                         }
                         for (Axis axis : cube.axes)
@@ -2069,7 +2067,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         if (isOracle == null)
         {
             isOracle = new AtomicBoolean(Regexes.isOraclePattern.matcher(c.metaData.driverName).find())
-            LOG.info("Oracle JDBC driver: ${isOracle.get()}")
+            log.info("Oracle JDBC driver: ${isOracle.get()}")
         }
         return isOracle.get()
     }
@@ -2084,7 +2082,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         if (isHSQLDB == null)
         {
             isHSQLDB = new AtomicBoolean(Regexes.isHSQLDBPattern.matcher(c.metaData.driverName).find())
-            LOG.info("HSQLDB JDBC driver: ${isHSQLDB.get()}")
+            log.info("HSQLDB JDBC driver: ${isHSQLDB.get()}")
         }
 
         return isHSQLDB.get()
@@ -2100,7 +2098,7 @@ ORDER BY abs(revision_number) DESC ${addLimitingClause(c)}"""
         if (isMySQL == null)
         {
             isMySQL = new AtomicBoolean(Regexes.isMySQLPattern.matcher(c.metaData.driverName).find())
-            LOG.info("MySQL JDBC driver: ${isMySQL.get()}")
+            log.info("MySQL JDBC driver: ${isMySQL.get()}")
         }
         return isMySQL.get()
     }

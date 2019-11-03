@@ -4,8 +4,7 @@ import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCube
 import com.cedarsoftware.ncube.SnapshotPolicy
 import com.cedarsoftware.ncube.formatters.JsonFormatter
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.Cache
 import org.springframework.cache.support.SimpleValueWrapper
@@ -16,10 +15,27 @@ import javax.annotation.PostConstruct
 import static com.cedarsoftware.ncube.SnapshotPolicy.OFFLINE
 import static com.cedarsoftware.ncube.SnapshotPolicy.RELEASE_ONLY
 
+/**
+ * @author Greg Morefield (morefigs@yahoo.com)
+ *         <br>
+ *         Copyright (c) Cedar Software LLC
+ *         <br><br>
+ *         Licensed under the Apache License, Version 2.0 (the "License")
+ *         you may not use this file except in compliance with the License.
+ *         You may obtain a copy of the License at
+ *         <br><br>
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *         <br><br>
+ *         Unless required by applicable law or agreed to in writing, software
+ *         distributed under the License is distributed on an "AS IS" BASIS,
+ *         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *         See the License for the specific language governing permissions and
+ *         limitations under the License.
+ */
+
+@Slf4j
 @Component
 class LocalFileCache {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalFileCache.class)
-
     @Value('${ncube.cache.dir:}') String cacheDir
     @Value('${ncube.cache.snapshotPolicy:RELEASE_ONLY}') SnapshotPolicy snapshotPolicy
 
@@ -35,11 +51,11 @@ class LocalFileCache {
     void init()
     {
         if (cacheDir) {
-            LOG.info("NCUBE file cache configured to use dir: {}", cacheDir)
-            LOG.info("NCUBE file cache snapshot policy set to: {}", snapshotPolicy.name())
+            log.info("NCUBE file cache configured to use dir: {}", cacheDir)
+            log.info("NCUBE file cache snapshot policy set to: {}", snapshotPolicy.name())
         }
         else {
-            LOG.info("NCUBE file cache disabled")
+            log.info("NCUBE file cache disabled")
         }
     }
 
@@ -100,7 +116,7 @@ class LocalFileCache {
                 valueWrapper = new SimpleValueWrapper(ncube)
             }
             catch (Exception e) {
-                LOG.warn("Unable to load ncube {} from {}", cubeName, cacheFile.path, e)
+                log.warn("Unable to load ncube {} from {}", cubeName, cacheFile.path, e)
                 if (OFFLINE==snapshotPolicy) {
                     throw new IllegalStateException("Failed to load cube: ${cubeName} from offline cache")
                 }
@@ -114,7 +130,7 @@ class LocalFileCache {
         }
         else {
             // allow valueWrapper to remain null so that a normal load is performed
-            LOG.debug("{} not found", cacheFile.name)
+            log.debug("{} not found", cacheFile.name)
         }
         return valueWrapper
     }
@@ -157,7 +173,7 @@ class LocalFileCache {
     {
         File cacheFile = getFileForCachedCube(appId, cubeName, sha1)
         if (ensureDirectoryExists(cacheFile.parent)) {
-            LOG.debug("Writing ${cacheFile.absolutePath}")
+            log.debug("Writing ${cacheFile.absolutePath}")
 
             try {
                 if (ncube) {
@@ -170,7 +186,7 @@ class LocalFileCache {
                 }
             }
             catch (Exception e) {
-                LOG.warn("Unable to write ncube {} to file {}", cubeName, cacheFile.path, e)
+                log.warn("Unable to write ncube {} to file {}", cubeName, cacheFile.path, e)
             }
         }
     }
@@ -184,13 +200,13 @@ class LocalFileCache {
     {
         File sha1File = getFileForCachedSha1(appId,cubeName)
         if (ensureDirectoryExists(sha1File.parent)) {
-            LOG.debug("Writing ${sha1File.absolutePath}")
+            log.debug("Writing ${sha1File.absolutePath}")
 
             try {
                 sha1File.bytes = sha1 ? sha1.bytes : ''.bytes
             }
             catch (Exception e) {
-                LOG.warn("Unable to write sha1 for ncube {} to file {}", cubeName, sha1File.path, e)
+                log.warn("Unable to write sha1 for ncube {} to file {}", cubeName, sha1File.path, e)
             }
         }
     }
@@ -214,7 +230,7 @@ class LocalFileCache {
                 }
             }
             catch (Exception e) {
-                LOG.warn("Unable to read sha1 for ncube {} from {}", cubeName, sha1File?.path, e)
+                log.warn("Unable to read sha1 for ncube {} from {}", cubeName, sha1File?.path, e)
                 if (OFFLINE==snapshotPolicy) {
                     throw new IllegalStateException("Failed to load sha1 for cube: ${cubeName} from offline cache")
                 }
@@ -263,7 +279,7 @@ class LocalFileCache {
         boolean valid = dir.directory
         if (!valid)
         {
-            LOG.warn("Failed to locate or create cache directory with path: ${dir.path}")
+            log.warn("Failed to locate or create cache directory with path: ${dir.path}")
         }
         return valid
     }

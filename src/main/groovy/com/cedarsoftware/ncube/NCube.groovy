@@ -1,22 +1,37 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.ncube.exception.*
+import com.cedarsoftware.ncube.exception.CommandCellException
+import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
+import com.cedarsoftware.ncube.exception.InvalidCoordinateException
+import com.cedarsoftware.ncube.exception.RuleJump
+import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.ncube.formatters.HtmlFormatter
 import com.cedarsoftware.ncube.formatters.JsonFormatter
 import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.formatters.NCubeTestWriter
 import com.cedarsoftware.ncube.util.CellMap
 import com.cedarsoftware.ncube.util.LongHashSet
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.AdjustableGZIPOutputStream
+import com.cedarsoftware.util.ByteUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.ExceptionUtilities
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.MapUtilities
+import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.util.io.MetaUtils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import gnu.trove.THashSet
 import gnu.trove.TLongObjectHashMap
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.util.FastByteArrayOutputStream
@@ -56,6 +71,7 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class NCube<T>
 {
@@ -915,30 +931,30 @@ class NCube<T>
 // Handy trick for debugging a failed binding (like space after an input)
 //            if (coordinate.containsKey("debug"))
 //            {   // Dump out all kinds of binding info
-//                LOG.info("*** DEBUG getCellById() ***")
-//                LOG.info("Axes:")
+//                log.info("*** DEBUG getCellById() ***")
+//                log.info("Axes:")
 //                for (Axis axis : axisList.values())
 //                {
-//                    LOG.info("  axis name: " + axis.name)
-//                    LOG.info("  axis ID: " + axis.getId())
-//                    LOG.info("  axis type: " + axis.getType())
-//                    LOG.info("  axis valueType: " + axis.getValueType())
-//                    LOG.info("  Columns:")
+//                    log.info("  axis name: " + axis.name)
+//                    log.info("  axis ID: " + axis.getId())
+//                    log.info("  axis type: " + axis.getType())
+//                    log.info("  axis valueType: " + axis.getValueType())
+//                    log.info("  Columns:")
 //                    for (Column column : axis.getColumns())
 //                    {
 //                        if (StringUtilities.hasContent(column.getColumnName()))
 //                        {
-//                            LOG.info("    column name: " + column.getColumnName())
+//                            log.info("    column name: " + column.getColumnName())
 //                        }
-//                        LOG.info("    column value: " + column.value)
-//                        LOG.info("    column id: " + column.getId())
+//                        log.info("    column value: " + column.value)
+//                        log.info("    column id: " + column.getId())
 //                    }
 //                }
-//                LOG.info("Cells:")
-//                LOG.info("  " + cells)
-//                LOG.info("Input:")
-//                LOG.info("  coord IDs: " + idCoord)
-//                LOG.info("  coord Map: " + coordinate)
+//                log.info("Cells:")
+//                log.info("  " + cells)
+//                log.info("Input:")
+//                log.info("  coord IDs: " + idCoord)
+//                log.info("  coord Map: " + coordinate)
 //            }
 
             cellValue = cells[colIds]
@@ -1026,7 +1042,7 @@ class NCube<T>
         catch (Exception e)
         {
             compileInfo.addException(input,e)
-            LOG.warn("Failed to compile cell for cube: ${name} with coords: ${input.toString()}", e)
+            log.warn("Failed to compile cell for cube: ${name} with coords: ${input.toString()}", e)
         }
     }
 
@@ -1749,7 +1765,7 @@ class NCube<T>
 
         for (coord in idArrays)
         {
-            Set<Long> key = new THashSet<>()
+            Set<Long> key = new LinkedHashSet<>()
             for (item in coord)
             {
                 key.add(Converter.convertToLong(item))
@@ -3114,7 +3130,7 @@ class NCube<T>
                                 }
                                 catch (InvalidCoordinateException ignore)
                                 {
-                                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, ids: ${colIds}")
+                                    log.debug("Orphaned cell on n-cube: ${ncube.name}, ids: ${colIds}")
                                 }
                             }
                             else
@@ -3129,7 +3145,7 @@ class NCube<T>
                                 }
                                 catch (CoordinateNotFoundException ignore)
                                 {
-                                    LOG.debug("Orphaned cell on n-cube: ${ncube.name}, coord: ${keyMapId}")
+                                    log.debug("Orphaned cell on n-cube: ${ncube.name}, coord: ${keyMapId}")
                                 }
                             }
                             break
@@ -3869,7 +3885,7 @@ class NCube<T>
     {
         Deque<Object> stack = new LinkedList<>()
         stack.addFirst(value)
-        Set<Object> visited = new THashSet<>()
+        Set<Object> visited = new HashSet<>()
 
         while (!stack.empty)
         {

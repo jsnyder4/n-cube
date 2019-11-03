@@ -2,8 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.TimedSynchronize
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
@@ -29,10 +28,10 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@Slf4j
 @CompileStatic
 abstract class UrlCommandCell implements CommandCell
 {
-    private static final Logger LOG = LoggerFactory.getLogger(UrlCommandCell.class)
     private String cmd
     private final String url
     private int hash
@@ -112,12 +111,12 @@ abstract class UrlCommandCell implements CommandCell
                 String where = "url: ${url}, cube: ${cube.name}, app: ${cube.applicationID}"
                 if (i == 1)
                 {   // Note: Error is marked, it will not be retried in the future
-                    LOG.warn("${getClass().simpleName}: failed 2nd attempt [will NOT retry in future] getActualUrl() - unable to resolve against sys.classpath, ${where}")
+                    log.warn("${getClass().simpleName}: failed 2nd attempt [will NOT retry in future] getActualUrl() - unable to resolve against sys.classpath, ${where}")
                     throw new IllegalStateException("Invalid URL in cell (unable to resolve against sys.classpath), ${where}", e)
                 }
                 else
                 {
-                    LOG.warn("${getClass().simpleName}: retrying getActualUrl() - unable to resolve against sys.classpath, ${where}")
+                    log.warn("${getClass().simpleName}: retrying getActualUrl() - unable to resolve against sys.classpath, ${where}")
                     Thread.sleep(100)
                 }
             }

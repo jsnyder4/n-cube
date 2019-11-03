@@ -1,9 +1,8 @@
 package com.cedarsoftware.ncube.util
 
 import com.cedarsoftware.ncube.NCubeRuntime
-
-import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.codehaus.groovy.GroovyBugError
 import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
@@ -11,10 +10,10 @@ import org.codehaus.groovy.control.ClassNodeResolver
 import org.codehaus.groovy.control.CompilationFailedException
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.SourceUnit
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
+
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 
 /**
  *  @author Ken Partlow (kpartlow@gmail.com)
@@ -35,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class CdnClassLoader extends GroovyClassLoader
 {
@@ -47,7 +47,6 @@ class CdnClassLoader extends GroovyClassLoader
     private ClassNodeResolver classNodeResolver = new PreferClassNodeResolver()
 
     private static String generatedClassesDir = ''
-    private static final Logger LOG = LoggerFactory.getLogger(CdnClassLoader.class)
 
     /**
      * Create a GroovyClassLoader using the given ClassLoader as parent
@@ -116,7 +115,7 @@ class CdnClassLoader extends GroovyClassLoader
             Class existing = this.findLoadedClass(name)
             if (existing)
             {
-                LOG.warn("Attempting to define duplicate class with name: ${name}")
+                log.warn("Attempting to define duplicate class with name: ${name}")
                 return existing
             }
         }
@@ -147,7 +146,7 @@ class CdnClassLoader extends GroovyClassLoader
         }
         catch (Exception e)
         {
-            LOG.warn("Failed to write class file with path=${classFile?.path}",e)
+            log.warn("Failed to write class file with path=${classFile?.path}",e)
         }
     }
 
@@ -434,12 +433,12 @@ class CdnClassLoader extends GroovyClassLoader
 
             if (generatedClassesDir)
             {
-                LOG.info("Generated classes configured to use path=${generatedClassesDir}")
+                log.info("Generated classes configured to use path=${generatedClassesDir}")
             }
         }
         catch (Exception e)
         {
-            LOG.warn("Unable to set classes directory to ${classesDir}", e)
+            log.warn("Unable to set classes directory to ${classesDir}", e)
             generatedClassesDir = ''
         }
     }
@@ -469,7 +468,7 @@ class CdnClassLoader extends GroovyClassLoader
         boolean valid = dir.directory
         if (!valid)
         {
-            LOG.warn("Failed to locate or create generated classes directory with path=${dir.path}")
+            log.warn("Failed to locate or create generated classes directory with path=${dir.path}")
         }
         return valid
     }

@@ -4,18 +4,25 @@ import com.cedarsoftware.ncube.formatters.TestResultsFormatter
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.ncube.util.LocalFileCache
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.ArrayUtilities
+import com.cedarsoftware.util.CallableBean
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.GuavaCache
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.SystemUtilities
+import com.cedarsoftware.util.ThreadAwarePrintStream
+import com.cedarsoftware.util.ThreadAwarePrintStreamErr
+import com.cedarsoftware.util.TrackingMap
 import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.visualizer.RpmVisualizer
 import com.cedarsoftware.visualizer.Visualizer
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import ncube.grv.method.NCubeGroovyController
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -49,6 +56,7 @@ import static com.cedarsoftware.visualizer.RpmVisualizerConstants.RPM_CLASS
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestClient, DisposableBean
 {
@@ -57,7 +65,6 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
     private final CacheManager adviceCacheManager
     private final ConcurrentMap<ApplicationID, GroovyClassLoader> localClassLoaders = new ConcurrentHashMap<>()
     private static AtomicInteger instanceCount = new AtomicInteger(0)
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeRuntime.class)
     // not private in case we want to tweak things for testing.
     protected volatile ConcurrentMap<String, Object> systemParams = null
     protected final CallableBean bean
@@ -147,7 +154,8 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                 }
             }
         }
-        if (ncubeCacheManager instanceof GCacheManager) {
+        if (ncubeCacheManager instanceof GCacheManager)
+        {
             Thread t = new Thread(refresh)
             t.name = "NcubeCacheRefresher${instanceCount.incrementAndGet()}"
             t.daemon = true
@@ -250,7 +258,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         catch (Exception e)
         {
-            LOG.debug("Unable to load ${SYS_MENU} (${SYS_MENU} cube likely not in appId: ${appId}, exception: ${e.message}")
+            log.debug("Unable to load ${SYS_MENU} (${SYS_MENU} cube likely not in appId: ${appId}, exception: ${e.message}")
             if (!globalMenu)
             {
                 appMenu = [(MENU_TITLE):MENU_TITLE_DEFAULT,
@@ -683,7 +691,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         {
             if (['json','json-pretty'].contains(options.mode))
             {
-                LOG.error(e.message, e)
+                log.error(e.message, e)
                 NCubeInfoDto record = loadCubeRecord(appId, cubeName, options)
                 String json = new String(IOUtilities.uncompressBytes(record.bytes), 'UTF-8')
                 if ('json-pretty' == options.mode)
@@ -791,7 +799,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             throw new IllegalStateException("Missing ${SYS_BOOTSTRAP} cube in the 0.0.0 version for the app: ${app}")
         }
 
-        Map copy = new THashMap(coord)
+        Map copy = new LinkedHashMap(coord)
         ApplicationID bootAppId = (ApplicationID) bootCube.getCell(copy, [:])
         String version = bootAppId.version
         String status = bootAppId.status
@@ -799,12 +807,12 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
         if (!tenant.equalsIgnoreCase(bootAppId.tenant))
         {
-            LOG.warn("sys.bootstrap cube for tenant: ${tenant}, app: ${app} is returning a different tenant: ${bootAppId.tenant} than requested. Using ${tenant} instead.")
+            log.warn("sys.bootstrap cube for tenant: ${tenant}, app: ${app} is returning a different tenant: ${bootAppId.tenant} than requested. Using ${tenant} instead.")
         }
 
         if (!app.equalsIgnoreCase(bootAppId.app))
         {
-            LOG.warn("sys.bootstrap cube for tenant: ${tenant}, app: ${app} is returning a different app: ${bootAppId.app} than requested. Using ${app} instead.")
+            log.warn("sys.bootstrap cube for tenant: ${tenant}, app: ${app} is returning a different app: ${bootAppId.app} than requested. Using ${app} instead.")
         }
 
         return new ApplicationID(tenant, app, version, status, branch)
@@ -1013,7 +1021,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
             Properties props = System.properties
             String server = props.getProperty("http.proxyHost")
             String port = props.getProperty("http.proxyPort")
-            LOG.info("proxy server: ${server}, proxy port: ${port}".toString())
+            log.info("proxy server: ${server}, proxy port: ${port}".toString())
 
             NCube ncube = getCube(appId, cubeName)
             if (ncube == null)
@@ -1348,7 +1356,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                     }
                     else
                     {
-                        LOG.info('Updating n-cube cache entry on a non-existing cube (cached = false) to an n-cube.')
+                        log.info('Updating n-cube cache entry on a non-existing cube (cached = false) to an n-cube.')
                         cubeCache.put(loName, ncube)
                     }
                 }
@@ -1520,7 +1528,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
         for (Column column : adviceAxis.columns)
         {
-            Map map = sysAdviceCube.getMap([advice: column.value, attribute: new THashSet()])
+            Map map = sysAdviceCube.getMap([advice: column.value, attribute: new LinkedHashSet()])
             addAdvice(appId, (String)map.pattern, (Advice)map.expression)
         }
     }
@@ -1595,7 +1603,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         }
 
         // duplicate input coordinate - no need to validate, that will be done inside cpCube.getCell() later.
-        Map copy = new THashMap(input)
+        Map copy = new LinkedHashMap(input)
 
         final String envLevel = SystemUtilities.getExternalVariable('ENV_LEVEL')
         if (StringUtilities.hasContent(envLevel) && !doesMapContainKey(copy, 'env'))
@@ -1668,7 +1676,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
                     }
                     catch (Exception ignored)
                     {
-                        LOG.warn("Parsing of NCUBE_PARAMS failed: ${jsonParams}")
+                        log.warn("Parsing of NCUBE_PARAMS failed: ${jsonParams}")
                     }
                 }
                 systemParams = sysParamMap
@@ -1761,7 +1769,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         catch (Exception e)
         {
             String s = "Failed to load cubes from resource: ${name}, last successful cube: ${lastSuccessful}"
-            LOG.warn(s)
+            log.warn(s)
             throw new RuntimeException(s, e)
         }
     }

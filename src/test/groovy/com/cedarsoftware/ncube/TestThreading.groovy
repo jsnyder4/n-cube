@@ -3,14 +3,13 @@ package com.cedarsoftware.ncube
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.codehaus.groovy.runtime.StackTraceUtils
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.test.context.TestContextManager
 
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -36,6 +35,7 @@ import static org.junit.Assert.assertNotNull
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @RunWith(Parameterized.class)
 @CompileStatic
 class TestThreading extends NCubeCleanupBaseTest
@@ -45,7 +45,6 @@ class TestThreading extends NCubeCleanupBaseTest
     private Map testArgs
     private NCube cp
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestThreading.class)
     private static String savedSourcesDir
     private static String savedClassesDir
 
@@ -195,7 +194,7 @@ class TestThreading extends NCubeCleanupBaseTest
         boolean preCache = args.get('preCache',false)
         boolean ifc = args.get('interface',false)
 
-        LOG.info "Running test with load=${load}, threads=${maxThreads}, count=${count}, loopCount=${loopCount}, clearCache=${clearCache}, loopTest=${loopTest}, preCache=${preCache}, sleep=${sleepTime}, sync=${sync}, remove=${remove}, warm=${warm}"
+        log.info "Running test with load=${load}, threads=${maxThreads}, count=${count}, loopCount=${loopCount}, clearCache=${clearCache}, loopTest=${loopTest}, preCache=${preCache}, sleep=${sleepTime}, sync=${sync}, remove=${remove}, warm=${warm}"
         Queue<Throwable> allFailures = new ConcurrentLinkedQueue<Throwable>()
         buildAccessCube(maxThreads,count,warm, allFailures)
         NCube cube = ncubeRuntime.getCube(ApplicationID.testAppId, 'thread')
@@ -204,9 +203,9 @@ class TestThreading extends NCubeCleanupBaseTest
         long totalDuration = 0
         loopTest.times { i ->
             long start = System.currentTimeMillis()
-            if (i>0) LOG.debug "->loop: ${i}"
+            if (i>0) log.debug "->loop: ${i}"
             if (clearCache) {
-                LOG.debug '==>clear cache'
+                log.debug '==>clear cache'
                 ncubeRuntime.clearCache(ApplicationID.testAppId)
 
                 NCube ncube1 = NCube.fromSimpleJson(cp.toFormattedJson())
@@ -224,10 +223,10 @@ class TestThreading extends NCubeCleanupBaseTest
                 long startCache = System.currentTimeMillis()
                 ncubeRuntime.getCube(ApplicationID.testAppId,'thread').compile()
                 ncubeRuntime.getCube(ApplicationID.testAppId,'threadCount').compile()
-                LOG.info "==>pre-cache, took ${System.currentTimeMillis()-startCache}ms"
+                log.info "==>pre-cache, took ${System.currentTimeMillis()-startCache}ms"
             }
 
-            LOG.debug '==>creating threads'
+            log.debug '==>creating threads'
             Queue<Thread> threads = new ConcurrentLinkedQueue<>()
             Queue<Throwable> failures = new ConcurrentLinkedQueue<>()
             load.times {
@@ -259,12 +258,12 @@ class TestThreading extends NCubeCleanupBaseTest
                 }
             }
 
-            LOG.debug '==>starting threads'
+            log.debug '==>starting threads'
             threads.each { thread ->
                 thread.start()
             }
 
-            LOG.debug '==>waiting for threads'
+            log.debug '==>waiting for threads'
             int aliveCount = threads.size()
             while (aliveCount > 0) {
                 aliveCount = 0
@@ -280,12 +279,12 @@ class TestThreading extends NCubeCleanupBaseTest
 
             long duration = System.currentTimeMillis() - start
             totalDuration += duration
-            LOG.info "Loop ${i} took ${duration}ms with failure rate of ${failures.size()}/${maxThreads * count*loopCount * load}"
+            log.info "Loop ${i} took ${duration}ms with failure rate of ${failures.size()}/${maxThreads * count*loopCount * load}"
             dumpFailures(failures)
             allFailures.addAll(failures)
         }
 
-        LOG.info "total time of ${totalDuration}ms and average of ${totalDuration/loopTest}ms with failure rate of ${allFailures.size()}/${loopTest * (maxThreads * count * loopCount * load)}"
+        log.info "total time of ${totalDuration}ms and average of ${totalDuration/loopTest}ms with failure rate of ${allFailures.size()}/${loopTest * (maxThreads * count * loopCount * load)}"
         dumpFailures(allFailures)
         assertEquals(0,allFailures.size())
         return allFailures as List
@@ -330,13 +329,13 @@ class TestThreading extends NCubeCleanupBaseTest
             }
         }
         uniqueFailures.each { k,v ->
-            LOG.info "${v}: ${k}"
+            log.info "${v}: ${k}"
         }
     }
 
     private NCube buildAccessCube(int maxThreads, int maxCount, boolean warm, Queue<Throwable> failures)
     {
-        LOG.info '==>Creating cube...'
+        log.info '==>Creating cube...'
         NCube threadCube = NCube.fromSimpleJson(threadDef)
         assertNotNull(threadCube)
         NCube cube = NCube.fromSimpleJson(threadCountDef)
@@ -346,12 +345,12 @@ class TestThreading extends NCubeCleanupBaseTest
         assertNotNull(axisTid)
         assertNotNull(axisCnt)
 
-        LOG.debug 'columns...'
+        log.debug 'columns...'
         maxThreads.times { int tid -> threadCube.getAxis('tid').addColumn(tid)}
         maxThreads.times { int tid -> axisTid.addColumn(tid) }
         maxCount.times { int cnt -> axisCnt.addColumn(cnt) }
 
-        LOG.debug 'cells...'
+        log.debug 'cells...'
         maxThreads.times { tid ->
             threadCube.setCell(new GroovyExpression('@threadCount[:]', null, false), ['tid':tid])
             maxCount.times { cnt ->
@@ -373,7 +372,7 @@ class TestThreading extends NCubeCleanupBaseTest
             }
         }
 
-        LOG.debug 'recreating...'
+        log.debug 'recreating...'
         cube = NCube.fromSimpleJson(cube.toFormattedJson())
         threadCube = NCube.fromSimpleJson(threadCube.toFormattedJson())
         cube.applicationID = ApplicationID.testAppId
@@ -382,7 +381,7 @@ class TestThreading extends NCubeCleanupBaseTest
         ncubeRuntime.addCube(cube)
 
         if (warm) {
-            LOG.info 'warming...'
+            log.info 'warming...'
             maxThreads.times { int tid ->
                 maxCount.times { int cnt ->
                     String nm = "test-${tid}-${cnt}"
@@ -396,14 +395,14 @@ class TestThreading extends NCubeCleanupBaseTest
                         if (!rootCause.message.toLowerCase().contains('code cleared while'))
                         {
                             failures.add(rootCause)
-                            LOG.error("Outer Exception (${e.class.name}, msg=${e.message}) occurred in TestThreading, root cause:", rootCause)
+                            log.error("Outer Exception (${e.class.name}, msg=${e.message}) occurred in TestThreading, root cause:", rootCause)
                         }
                     }
                 }
             }
         }
 
-        LOG.debug 'done'
+        log.debug 'done'
         return cube
     }
 

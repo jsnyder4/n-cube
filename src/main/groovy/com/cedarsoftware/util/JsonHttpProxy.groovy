@@ -5,6 +5,7 @@ import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.cedarsoftware.util.io.MetaUtils
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
 import org.apache.http.auth.AuthScope
@@ -17,10 +18,12 @@ import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.conn.routing.HttpRoute
 import org.apache.http.entity.ByteArrayEntity
 import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.*
+import org.apache.http.impl.client.BasicAuthCache
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.StandardHttpRequestRetryHandler
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.util.FastByteArrayOutputStream
 
@@ -50,6 +53,7 @@ import static org.apache.http.entity.ContentType.APPLICATION_JSON
  *         limitations under the License.
  */
 
+@Slf4j
 @CompileStatic
 class JsonHttpProxy implements CallableBean
 {
@@ -65,7 +69,6 @@ class JsonHttpProxy implements CallableBean
     private final String username
     private final String password
     private final int numConnections
-    private static final Logger LOG = LoggerFactory.getLogger(JsonHttpProxy.class)
 
     JsonHttpProxy(HttpHost httpHost, String context, String username = null, String password = null, int numConnections = 100)
     {
@@ -133,9 +136,9 @@ class JsonHttpProxy implements CallableBean
         writer.flush()
         writer.close()
 
-        if (LOG.debugEnabled)
+        if (log.debugEnabled)
         {
-            LOG.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
+            log.debug("${bean}.${MetaUtils.getLogMessage(methodName, params, LOG_ARG_LENGTH)}")
         }
 
         HttpClientContext clientContext = HttpClientContext.create()
@@ -197,7 +200,7 @@ class JsonHttpProxy implements CallableBean
         {
             if (!parsedJsonOk)
             {
-                LOG.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}")
+                log.warn("Failed to process response (code: ${response.statusLine.statusCode}) from server with call: ${bean}.${MetaUtils.getLogMessage(methodName, args.toArray(), LOG_ARG_LENGTH)}, headers: ${request.allHeaders}")
             }
             throw e
         }
@@ -230,7 +233,7 @@ class JsonHttpProxy implements CallableBean
 
     private void createAuthCache()
     {
-        LOG.info("NCUBE storage-server: ${httpHost.schemeName}://${httpHost.hostName}:${httpHost.port}/${context}")
+        log.info("NCUBE storage-server: ${httpHost.schemeName}://${httpHost.hostName}:${httpHost.port}/${context}")
         if (username && password)
         {
             credsProvider = new BasicCredentialsProvider()

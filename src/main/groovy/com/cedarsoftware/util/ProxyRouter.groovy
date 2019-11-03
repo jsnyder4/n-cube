@@ -10,8 +10,7 @@ import com.cedarsoftware.ncube.StringUrlCmd
 import com.cedarsoftware.ncube.util.CdnRouter
 import com.cedarsoftware.util.io.JsonReader
 import groovy.transform.CompileStatic
-import org.slf4j.LoggerFactory
-import org.slf4j.Logger
+import groovy.util.logging.Slf4j
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -35,12 +34,11 @@ import javax.servlet.http.HttpServletResponse
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class ProxyRouter
 {
     static final String SYS_CLASSPATH_PREFIX = 'sys.classpath.prefix'
-
-    private static final Logger LOG = LoggerFactory.getLogger(ProxyRouter.class)
 
     /**
      * Route the given request based on configured routing within n-cube
@@ -53,7 +51,7 @@ class ProxyRouter
             try
             {
                 String msg = '"appId" parameter missing - it is required and should contain the ApplicationID fields app, verison, status, branch in JSON format.'
-                LOG.error(msg)
+                log.error(msg)
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
             }
             catch (Exception ignore)
@@ -80,7 +78,7 @@ class ProxyRouter
             String msg = "'appId' parameter not parsing as valid JSON: ${requestParams.appId}"
             try
             {
-                LOG.error(msg, e)
+                log.error(msg, e)
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
             }
             catch (Exception ignore)

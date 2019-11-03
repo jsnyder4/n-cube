@@ -2,7 +2,12 @@ package com.cedarsoftware.config
 
 import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.controller.NCubeControllerAdvice
-import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.GroovyBase
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeJdbcPersisterAdapter
+import com.cedarsoftware.ncube.NCubeManager
+import com.cedarsoftware.ncube.NCubePersister
+import com.cedarsoftware.ncube.NCubeRuntime
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
@@ -188,12 +193,6 @@ class NCubeConfiguration
     }
 
     // v========== combined-server ==========v
-    /**
-     *         <bean id="ncubeControllerAdvice" class="com.cedarsoftware.controller.NCubeControllerAdvice">
-     *             <constructor-arg ref="ncubeController"/>
-     *         </bean>
-     * @return
-     */
     @Bean('ncubeControllerAdvice')
     @Profile('combined-server')
     NCubeControllerAdvice getNCubeControllerAdvice4()

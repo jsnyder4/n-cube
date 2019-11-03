@@ -2,11 +2,9 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.util.StringUtilities
 import com.google.common.base.Joiner
-import gnu.trove.THashMap
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import ncube.grv.exp.NCubeGroovyExpression
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import java.lang.reflect.InvocationTargetException
 import java.util.regex.Matcher
@@ -49,13 +47,13 @@ import static com.cedarsoftware.ncube.NCubeConstants.SYS_PROTOTYPE
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class GroovyExpression extends GroovyBase
 {
     public static final String EXP_IMPORTS = "exp.imports"
     public static final String EXP_CLASS = "exp.class"
     public static final String SYS_PROPERTY = "sys.property"
-    private static final Logger LOG = LoggerFactory.getLogger(GroovyExpression.class)
 
     //  Private constructor only for serialization.
     private GroovyExpression() { }
@@ -131,7 +129,7 @@ class ${className} extends ${expClassName}
         {
             StringBuilder text = new StringBuilder()
             Map<String, Object> input = getInput(ctx)
-            Map<String, Object> copy = new THashMap<>(input)
+            Map<String, Object> copy = new LinkedHashMap<>(input)
             copy[SYS_PROPERTY] = EXP_IMPORTS
             Object importList = prototype.getCell(copy)
             if (importList instanceof Collection)
@@ -148,7 +146,7 @@ class ${className} extends ${expClassName}
         }
         catch (Exception e)
         {
-            LOG.info("Exception occurred fetching imports from ${SYS_PROTOTYPE}", e)
+            log.info("Exception occurred fetching imports from ${SYS_PROTOTYPE}", e)
             return ''
         }
     }
@@ -157,7 +155,7 @@ class ${className} extends ${expClassName}
     {
         try
         {
-            Map input = new THashMap(getInput(ctx))
+            Map input = new LinkedHashMap(getInput(ctx))
             input[SYS_PROPERTY] = EXP_CLASS
             Object className = prototype.getCell(input)
             if (className instanceof String && StringUtilities.hasContent((String)className))
@@ -167,7 +165,7 @@ class ${className} extends ${expClassName}
         }
         catch (Exception e)
         {
-            LOG.info("Exception occurred fetching base class for Groovy Expression cells from ${SYS_PROTOTYPE}", e)
+            log.info("Exception occurred fetching base class for Groovy Expression cells from ${SYS_PROTOTYPE}", e)
         }
         return null
     }
@@ -226,7 +224,7 @@ class ${className} extends ${expClassName}
                 }
                 catch (Throwable e)
                 {
-                    LOG.error("An exception occurred calling 'after' advice: ${advice.name}", e)
+                    log.error("An exception occurred calling 'after' advice: ${advice.name}", e)
                 }
             }
         }

@@ -6,8 +6,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 
@@ -32,10 +31,10 @@ import java.util.concurrent.TimeUnit
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class GCacheManager implements CacheManager
 {
-    private static final Logger LOG = LoggerFactory.getLogger(GCacheManager.class)
     private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<>()
     private final int concurrencyLevel
     private final int maximumSize
@@ -162,11 +161,11 @@ class GCacheManager implements CacheManager
                 if (removalNotification.value instanceof NCube)
                 {
                     NCube ncube = (NCube) removalNotification.value
-                    LOG.info("Cache eviction: n-cube: ${ncube.name}, app: ${ncube.applicationID}")
+                    log.info("Cache eviction: n-cube: ${ncube.name}, app: ${ncube.applicationID}")
                 }
                 else
                 {
-                    LOG.info("Cache eviction: key=${removalNotification.key}, value=${removalNotification?.value?.toString()}")
+                    log.info("Cache eviction: key=${removalNotification.key}, value=${removalNotification?.value?.toString()}")
                 }
                 closure(removalNotification.value)
             }

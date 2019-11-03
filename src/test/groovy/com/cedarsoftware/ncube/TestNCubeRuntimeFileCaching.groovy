@@ -80,7 +80,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
                     dto.sha1 = resultCube.sha1()
                     if (options[NCubeConstants.SEARCH_INCLUDE_CUBE_DATA])
                     {
-                        dto.bytes = options[NCubeConstants.SEARCH_CHECK_SHA1]==resultCube.sha1 ? (byte[])null : resultCube.toFormattedJson().bytes
+                        dto.bytes = options[NCubeConstants.SEARCH_CHECK_SHA1]==resultCube.sha1() ? (byte[])null : resultCube.toFormattedJson().bytes
                     }
                     return dto
                 }

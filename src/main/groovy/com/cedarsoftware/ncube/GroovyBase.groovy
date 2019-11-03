@@ -1,9 +1,14 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.ncube.util.CdnClassLoader
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.ReflectionUtils
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.TimedSynchronize
+import com.cedarsoftware.util.UrlUtilities
 import com.google.common.base.Joiner
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import ncube.grv.exp.NCubeGroovyExpression
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.CompilerConfiguration
@@ -11,8 +16,6 @@ import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.codehaus.groovy.tools.GroovyClass
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -45,10 +48,10 @@ import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_PARAMS_BYTE_CODE_VERS
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 abstract class GroovyBase extends UrlCommandCell
 {
-    private static final Logger LOG = LoggerFactory.getLogger(GroovyBase.class)
     public static final String CLASS_NAME_FOR_L2_CALC = 'N_null'
     protected transient String L2CacheKey  // in-memory cache of (SHA-1(source) || SHA-1(URL + classpath.urls)) to compiled class
     protected transient String fullClassName  // full name of compiled class
@@ -306,7 +309,7 @@ abstract class GroovyBase extends UrlCommandCell
             }
         }
         catch (Exception e) {
-            LOG.warn("Failed to write source file with path=${sourceFile.path}",e)
+            log.warn("Failed to write source file with path=${sourceFile.path}",e)
         }
     }
 
@@ -343,12 +346,12 @@ abstract class GroovyBase extends UrlCommandCell
 
             if (generatedSourcesDir)
             {
-                LOG.info("Generated sources configured to use path: ${generatedSourcesDir}")
+                log.info("Generated sources configured to use path: ${generatedSourcesDir}")
             }
         }
         catch (Exception e)
         {
-            LOG.warn("Unable to set sources directory to: ${sourcesDir}", e)
+            log.warn("Unable to set sources directory to: ${sourcesDir}", e)
             generatedSourcesDir = ''
         }
     }
@@ -371,7 +374,7 @@ abstract class GroovyBase extends UrlCommandCell
         boolean valid = dir.directory
         if (!valid)
         {
-            LOG.warn("Failed to locate or create generated sources directory with path: ${dir.path}")
+            log.warn("Failed to locate or create generated sources directory with path: ${dir.path}")
         }
         return valid
     }
@@ -390,7 +393,7 @@ abstract class GroovyBase extends UrlCommandCell
         }
         catch (ClassCircularityError e)
         {
-            LOG.warn("Attempting to defineClass() in GroovyBase", e)
+            log.warn("Attempting to defineClass() in GroovyBase", e)
             return null
         }
         catch (LinkageError ignored)
@@ -402,11 +405,11 @@ abstract class GroovyBase extends UrlCommandCell
         {
             if (byteCode != null)
             {
-                LOG.warn("Unable to defineClass: ${ReflectionUtils.getClassNameFromByteCode(byteCode)}", t)
+                log.warn("Unable to defineClass: ${ReflectionUtils.getClassNameFromByteCode(byteCode)}", t)
             }
             else
             {
-                LOG.warn("Unable to defineClass, null byte code", t)
+                log.warn("Unable to defineClass, null byte code", t)
             }
             return null
         }
@@ -505,13 +508,13 @@ abstract class GroovyBase extends UrlCommandCell
             Class loadedClass = loader.loadClass(className,false,true,true)
             if (NCubeGroovyExpression.class.isAssignableFrom(loadedClass))
             {
-                LOG.trace("Loaded class: ${className}")
+                log.trace("Loaded class: ${className}")
                 return loadedClass
             }
         }
         catch (LinkageError error)
         {
-            LOG.warn("Failed to load class :${className}. Will attempt to compile.",error)
+            log.warn("Failed to load class :${className}. Will attempt to compile.",error)
         }
         catch (Exception ignored)
         { }

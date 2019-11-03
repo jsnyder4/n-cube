@@ -5,13 +5,19 @@ import com.cedarsoftware.ncube.formatters.NCubeTestReader
 import com.cedarsoftware.ncube.util.BranchComparator
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.ncube.util.VersionComparator
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.ArrayUtilities
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.CaseInsensitiveSet
+import com.cedarsoftware.util.Converter
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.IOUtilities
+import com.cedarsoftware.util.StringUtilities
+import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import gnu.trove.THashSet
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.jdbc.datasource.DataSourceUtils
@@ -24,6 +30,8 @@ import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.NCubeConstants.*
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToLong
+import static java.lang.Math.abs
 
 /**
  * This class manages a list of NCubes.  This class is referenced
@@ -50,13 +58,13 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class NCubeManager implements NCubeMutableClient, NCubeTestServer
 {
     // Maintain cache of 'wildcard' patterns to Compiled Pattern instance
     private final ConcurrentMap<String, Pattern> wildcards = new ConcurrentHashMap<>()
     private NCubePersister nCubePersister
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeManager.class)
     private final CacheManager permCacheManager
 
     private final ThreadLocal<String> userId = new ThreadLocal<String>() {
@@ -384,7 +392,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         ApplicationID.validateAppId(appId)
         NCube.validateCubeName(cubeName)
         assertPermissions(appId, cubeName)
-        List<NCubeInfoDto> revisions = persister.getRevisions(appId, cubeName, ignoreVersion,getUserId()).sort(true, {NCubeInfoDto rev -> rev.revision as long})
+        List<NCubeInfoDto> revisions = persister.getRevisions(appId, cubeName, ignoreVersion, getUserId()).sort(true, { NCubeInfoDto rev -> abs(convertToLong(rev.revision)) })
         List<NCubeInfoDto> relevantRevDtos = []
         NCubeInfoDto prevDto
         NCube oldCube
@@ -2016,7 +2024,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         {
             head.branch = appId.branch  // using HEAD's DTO as return value, therefore setting the branch to the passed in AppId's branch
             NCubeInfoDto info = branchRecordMap[head.name]
-            long headRev = (long) Converter.convertToLong(head.revision)
+            long headRev = (long) convertToLong(head.revision)
 
             if (info == null)
             {   // HEAD has cube that branch does not have
@@ -2025,7 +2033,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
                 continue
             }
 
-            long infoRev = (long) Converter.convertToLong(info.revision)
+            long infoRev = (long) convertToLong(info.revision)
             boolean activeStatusMatches = (infoRev < 0) == (headRev < 0)
             boolean branchHeadSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.headSha1, head.sha1)
             boolean branchSha1MatchesHeadSha1 = StringUtilities.equalsIgnoreCase(info.sha1, head.sha1)
@@ -2155,7 +2163,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         // Loop through changed (added, deleted, created, restored, updated) records
         for (NCubeInfoDto updateCube : branchList)
         {
-            long revision = Converter.convertToLong(updateCube.revision)
+            long revision = convertToLong(updateCube.revision)
             NCubeInfoDto head = headMap[updateCube.name]
 
             if (head == null)
@@ -2530,7 +2538,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             return attemptMergePullRequest(prId)
         }
         catch (IllegalStateException | BranchMergeException e)
-        {
+        {   // Prevent advice from rolling back transaction.  Instead, manually rollback what was done thus far,
+            // and then do a completely different operation and manuall commit it (still instead advice).  Finally,
+            // throw the exception, which will cause a rollback, but it will have no effect because we already
+            // committed the [converted] transaction.
             Connection connection = threadBoundConnection
             connection.rollback() // rollback in case any work was done before this point
             try
@@ -2539,7 +2550,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
             }
             catch (IllegalArgumentException e1)
             {
-                LOG.info("${e1.message}, pull request ID: ${prId}")
+                log.info("${e1.message}, pull request ID: ${prId}")
             }
             connection.commit() // force database changes before throwing exception
             throw e
@@ -2547,7 +2558,8 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     }
 
     private static Connection getThreadBoundConnection()
-    {
+    {   // This looks like it would get a new Connection, however, if you read the JavaDoc on this API, you will
+        // see it returns the thread-bound transaction when using DataSourceTransactionManager.
         return DataSourceUtils.getConnection(NCubeAppContext.getBean(DATA_SOURCE_BEAN) as DataSource)
     }
 

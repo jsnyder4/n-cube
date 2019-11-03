@@ -4,8 +4,7 @@ import com.cedarsoftware.ncube.util.CdnRouter
 import com.cedarsoftware.util.IOUtilities
 import com.cedarsoftware.util.UrlUtilities
 import groovy.transform.CompileStatic
-import org.slf4j.LoggerFactory
-import org.slf4j.Logger
+import groovy.util.logging.Slf4j
 import org.springframework.util.FastByteArrayOutputStream
 
 import javax.servlet.http.HttpServletRequest
@@ -32,11 +31,11 @@ import java.util.concurrent.ConcurrentHashMap
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 abstract class ContentCmdCell extends UrlCommandCell
 {
     private static Map<String, String> extToMimeType = new ConcurrentHashMap<>()
-    private static final Logger LOG = LoggerFactory.getLogger(ContentCmdCell.class)
 
     static
     {
@@ -112,12 +111,12 @@ abstract class ContentCmdCell extends UrlCommandCell
                 if (i == 1)
                 {   // Note: Error is not marked - it will be retried in the future
                     String msg = 'Unable to load content from ' + errorMsg
-                    LOG.warn(className + ': failed 2nd attempt [will retry on future attempts] unable to fetch contents, ' + errorMsg)
+                    log.warn(className + ': failed 2nd attempt [will retry on future attempts] unable to fetch contents, ' + errorMsg)
                     throw new IllegalStateException(msg, e)
                 }
                 else
                 {
-                    LOG.warn(className + ': retrying fetch, ' + errorMsg)
+                    log.warn(className + ': retrying fetch, ' + errorMsg)
                     Thread.sleep(150)
                 }
             }
@@ -181,7 +180,7 @@ abstract class ContentCmdCell extends UrlCommandCell
         {
             try
             {
-                LOG.warn("Socket time out occurred fetching: " + actualUrl, e)
+                log.warn("Socket time out occurred fetching: " + actualUrl, e)
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found: " + actualUrl.toString())
             }
             catch (IOException ignore) { }
@@ -190,7 +189,7 @@ abstract class ContentCmdCell extends UrlCommandCell
         {
             try
             {
-                LOG.error("Error occurred fetching: " + actualUrl, e)
+                log.error("Error occurred fetching: " + actualUrl, e)
                 UrlUtilities.readErrorResponse(conn)
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.message)
             }

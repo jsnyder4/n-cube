@@ -2,8 +2,7 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.servlet.JsonCommandServlet
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.web.servlet.FilterRegistrationBean
@@ -38,13 +37,12 @@ import org.springframework.web.servlet.resource.PathResourceResolver
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @ImportResource('classpath:config/ncube-beans.xml')
 @SpringBootApplication
 @CompileStatic
 class NCubeApplication implements WebMvcConfigurer
 {
-    private static final Logger LOG = LoggerFactory.getLogger(NCubeApplication)
-
     static void main(String[] args)
     {
         try
@@ -53,12 +51,12 @@ class NCubeApplication implements WebMvcConfigurer
         }
         catch (Throwable t)
         {
-            LOG.error('Exception occurred', t)
+            log.error('Exception occurred', t)
         }
         finally
         {
-            LOG.info('NCUBE server started.')
-            LOG.info("Groovy version: ${GroovySystem.version}")
+            log.info('NCUBE server started.')
+            log.info("Groovy version: ${GroovySystem.version}")
         }
     }
 

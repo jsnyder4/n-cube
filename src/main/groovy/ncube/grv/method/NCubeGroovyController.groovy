@@ -3,9 +3,8 @@ package ncube.grv.method
 import com.cedarsoftware.ncube.Advice
 import com.cedarsoftware.ncube.ApplicationID
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import ncube.grv.exp.NCubeGroovyExpression
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -32,11 +31,10 @@ import java.util.concurrent.ConcurrentMap
  *         limitations under the License.
  * @see com.cedarsoftware.ncube.GroovyBase
  */
+@Slf4j
 @CompileStatic
 class NCubeGroovyController extends NCubeGroovyExpression
 {
-    protected static final Logger LOG = LoggerFactory.getLogger(NCubeGroovyController.class)
-
     // Cache reflective method look ups
     private static final ConcurrentMap<ApplicationID, ConcurrentMap<String, Method>> methodCache = new ConcurrentHashMap<>()
 
@@ -139,7 +137,7 @@ class NCubeGroovyController extends NCubeGroovyExpression
                 }
                 catch (Throwable e)
                 {
-                    LOG.error("An exception occurred calling 'after' advice: ${advice.name} on method: ${method.name}", e)
+                    log.error("An exception occurred calling 'after' advice: ${advice.name} on method: ${method.name}", e)
                 }
             }
         }

@@ -7,8 +7,7 @@ import com.cedarsoftware.ncube.NCubeClient
 import com.cedarsoftware.ncube.Regexes
 import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -33,12 +32,12 @@ import java.util.regex.Matcher
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
+@Slf4j
 @CompileStatic
 class CdnRouter
 {
     private static NCubeClient ncubeClient
     private static CdnRoutingProvider provider
-    private static final Logger LOG = LoggerFactory.getLogger(CdnRouter.class)
     public static final String TENANT = 'router.tenant'
     public static final String APP = 'router.app'
     public static final String CUBE_VERSION = 'router.version'
@@ -153,7 +152,7 @@ class CdnRouter
         }
         catch (Exception e)
         {
-            LOG.error("CdnRouter exception occurred", e)
+            log.error("CdnRouter exception occurred", e)
             // Required, so that error message is not double logged.
             try
             {
@@ -171,7 +170,7 @@ class CdnRouter
     {
         try
         {
-            LOG.error(msg)
+            log.error(msg)
             response.sendError(error, msg)
         }
         catch (Exception ignore)
