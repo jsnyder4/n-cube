@@ -32,8 +32,6 @@ import com.fasterxml.jackson.core.JsonToken
 import gnu.trove.TLongObjectHashMap
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.util.FastByteArrayOutputStream
 
 import java.lang.reflect.Array
@@ -75,7 +73,6 @@ import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
 @CompileStatic
 class NCube<T>
 {
-    private static final Logger LOG = LoggerFactory.getLogger(NCube.class)
     public static final String DEFAULT_CELL_VALUE_TYPE = 'defaultCellValueType'
     public static final String DEFAULT_CELL_VALUE = 'defaultCellValue'
     public static final String DEFAULT_CELL_VALUE_URL = 'defaultCellValueUrl'

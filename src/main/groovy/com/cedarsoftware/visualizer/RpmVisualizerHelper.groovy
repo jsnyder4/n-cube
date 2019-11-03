@@ -1,12 +1,14 @@
 package com.cedarsoftware.visualizer
 
-import com.cedarsoftware.ncube.*
+import com.cedarsoftware.ncube.ApplicationID
+import com.cedarsoftware.ncube.Axis
+import com.cedarsoftware.ncube.Column
+import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeRuntimeClient
 import com.cedarsoftware.ncube.exception.InvalidCoordinateException
 import com.cedarsoftware.util.CaseInsensitiveMap
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.StringUtilities
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 
 import java.util.regex.Matcher
@@ -161,15 +163,15 @@ class RpmVisualizerHelper extends VisualizerHelper
 			// short circuit the fields that don't exist
 			Boolean exist = (Boolean) fieldTraits.get(R_EXISTS);
 			if (Boolean.FALSE.equals(exist)) {
-				continue;
+				continue
 			}
 			else if (fieldAxis.findColumn(fieldName)==null) {
-				continue;
+				continue
 			}
 
 			// gather traits for current field that haven't already been populated
-			Map<String, Object> coord = new THashMap<>(scope);
-			coord.put(axisName,fieldName);
+			Map<String, Object> coord = new LinkedHashMap<>(scope)
+			coord.put(axisName,fieldName)
 			loadTraitsForField(classCube, traitNames, fieldTraits, coord, output);
 
 			// eliminate scoped fields
@@ -211,8 +213,8 @@ class RpmVisualizerHelper extends VisualizerHelper
 	{
 		String classType = cubeType==RPM_CLASS ? "RpmClass" : "RpmEnum";
 		LinkedList<String> defsToProcess = new LinkedList<String>();
-		Set<String> visited = new THashSet<String>();	// list of visited definitions pulled from traits using class_name or class_name[field_name] format
-		Set<String> fqVisited = new THashSet<String>();	// list of visited definitions which have been fully qualified, e.g. class_name[field_name]
+		Set<String> visited = new HashSet<>()	// list of visited definitions pulled from traits using class_name or class_name[field_name] format
+		Set<String> fqVisited = new HashSet<>()	// list of visited definitions which have been fully qualified, e.g. class_name[field_name]
 		final String exceptionFormat = "%s for field='%s' of %s='%s': definition(s)='%s'";
 
 		defsToProcess.add(masterDefinition);
@@ -322,7 +324,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 				classesToProcess.push(mixinName.trim());
 			}
 
-			if (!matcher.find()) { //condition to break, oppossite to while
+			if (!matcher.find()) { //condition to break, opposite to while
 				break
 			}
 		}
@@ -499,7 +501,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 			return;
 		}
 
-		Map<String, Object> coord = new THashMap<>(scope);
+		Map<String, Object> coord = new LinkedHashMap<>(scope);
 		coord.put(TRAIT_AXIS, R_EXISTS);
 		for (Column c : classCube.getAxis(axisName).getColumns()) {
 			String fieldName = (String) c.getValue();

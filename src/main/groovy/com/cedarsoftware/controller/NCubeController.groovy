@@ -31,7 +31,6 @@ import com.cedarsoftware.util.io.JsonObject
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import com.google.common.util.concurrent.AtomicDouble
-import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -45,6 +44,7 @@ import java.lang.management.ManagementFactory
 import java.util.regex.Pattern
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.convertToLong
 
 /**
  * NCubeController API.
@@ -1113,7 +1113,7 @@ class NCubeController implements NCubeConstants
         {
             for (item in coord)
             {
-                key.add(Converter.convertToLong(item))
+                key.add(convertToLong(item))
             }
             if (ncube.containsCellById(key))
             {
@@ -1770,7 +1770,7 @@ class NCubeController implements NCubeConstants
             {
                 try
                 {
-                    return Converter.convertToLong(value)
+                    return convertToLong(value)
                 }
                 catch (Exception ignored) { }
             }
@@ -1866,10 +1866,10 @@ class NCubeController implements NCubeConstants
     private static Set<Long> getCoordinate(Object[] ids)
     {
         // Convert String column IDs to Longs
-        Set<Long> colIds = new THashSet()
+        Set<Long> colIds = new LinkedHashSet<>()
         for (Object id : ids)
         {
-            colIds.add(Converter.convertToLong(id))
+            colIds.add(convertToLong(id))
         }
         return colIds
     }

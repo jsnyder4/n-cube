@@ -54,12 +54,12 @@ import static com.cedarsoftware.ncube.NCubeConstants.*
 class NCubeJdbcPersister
 {
     static final SafeSimpleDateFormat DATE_TIME_FORMAT = new SafeSimpleDateFormat('yyyy-MM-dd HH:mm:ss')
+    static final String PR_NOTES_PREFIX = 'PR notes: '
     static final String CUBE_VALUE_BIN = 'cube_value_bin'
     static final String TEST_DATA_BIN = 'test_data_bin'
     static final String NOTES_BIN = 'notes_bin'
     static final String HEAD_SHA_1 = 'head_sha1'
     static final String CHANGED = 'changed'
-    static final String PR_NOTES_PREFIX = 'PR notes: '
     private static final long EXECUTE_BATCH_CONSTANT = 35
     private static final int FETCH_SIZE = 1000
     private static final String METHOD_NAME = '~method~'
@@ -737,7 +737,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""")
             String newNotes = "merged to branch, txId: [${txId}]"
             if (notesStr.contains(PR_NOTES_PREFIX))
             {
-                newNotes += ", ${notesStr.substring(notesStr.indexOf(PR_NOTES_PREFIX))}"
+                int pos = notesStr.indexOf('PR notes: ')    // If I put PR_NOTES_PREFIX here, I receive red error in Intellij
+                newNotes += ", ${notesStr.substring(pos)}"
             }
 
             result = insertCube(c, appId, cube, revision, testData, newNotes, changed, headSha1, username, 'commitMergedCubeToBranch')

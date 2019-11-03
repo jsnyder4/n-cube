@@ -4,7 +4,9 @@ import com.cedarsoftware.ncube.exception.AxisOverlapException
 import com.cedarsoftware.ncube.exception.CoordinateNotFoundException
 import com.cedarsoftware.ncube.proximity.LatLon
 import com.cedarsoftware.ncube.proximity.Point3D
-import com.cedarsoftware.util.*
+import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.util.EncryptionUtilities
+import com.cedarsoftware.util.MapUtilities
 import com.cedarsoftware.util.io.JsonReader
 import com.google.common.collect.RangeMap
 import com.google.common.collect.TreeRangeMap
@@ -15,6 +17,9 @@ import java.security.SecureRandom
 import java.util.regex.Matcher
 
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
+import static com.cedarsoftware.util.Converter.*
+import static com.cedarsoftware.util.StringUtilities.hasContent
+import static com.cedarsoftware.util.StringUtilities.isEmpty
 import static java.lang.Math.abs
 
 /**
@@ -76,7 +81,7 @@ class Axis
     private static final ThreadLocal<Random> LOCAL_RANDOM = new ThreadLocal<Random>() {
         Random initialValue()
         {
-            String s = Converter.convertToString(System.nanoTime())
+            String s = convertToString(System.nanoTime())
             s = EncryptionUtilities.calculateSHA1Hash(s.bytes)
             return new SecureRandom(s.bytes)
         }
@@ -111,7 +116,7 @@ class Axis
         this.id = id
         this.name = name
         this.type = type
-        this.valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
+        this.valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap(String.CASE_INSENSITIVE_ORDER) : new TreeMap()
         preferredOrder = order
         this.fireAll = fireAll
         if (type == AxisType.RULE)
@@ -316,11 +321,11 @@ class Axis
     {
         String status = (getMetaProperty(TRANSFORM_STATUS) as String) ?: ReleaseStatus.RELEASE
         String branch = (getMetaProperty(TRANSFORM_BRANCH) as String) ?: ApplicationID.HEAD
-        return isRef && StringUtilities.hasContent(getMetaProperty(TRANSFORM_APP) as String) &&
-                StringUtilities.hasContent(getMetaProperty(TRANSFORM_VERSION) as String) &&
-                StringUtilities.hasContent(status) &&
-                StringUtilities.hasContent(branch) &&
-                StringUtilities.hasContent(transformCubeName)
+        return isRef && hasContent(getMetaProperty(TRANSFORM_APP) as String) &&
+                hasContent(getMetaProperty(TRANSFORM_VERSION) as String) &&
+                hasContent(status) &&
+                hasContent(branch) &&
+                hasContent(transformCubeName)
     }
 
     /**
@@ -510,7 +515,7 @@ class Axis
 
         // 2: Index columns by name (if they have one) - held in CaseInsensitiveMap
         String colName = column.columnName
-        if (StringUtilities.hasContent(colName))
+        if (hasContent(colName))
         {
             colNameToCol[colName] = column
         }
@@ -571,14 +576,14 @@ class Axis
     String getAxisPropString()
     {
         StringBuilder s = new StringBuilder()
-        s.append("Axis: ")
+        s.append('Axis: ')
         s.append(name)
-        s.append(" [")
+        s.append(' [')
         s.append(type)
-        s.append(", ")
+        s.append(', ')
         s.append(valueType)
-        s.append(hasDefaultColumn() ? ", default-column" : ", no-default-column")
-        s.append(SORTED == preferredOrder ? ", sorted" : ", unsorted")
+        s.append(hasDefaultColumn() ? ', default-column' : ', no-default-column')
+        s.append(SORTED == preferredOrder ? ', sorted' : ', unsorted')
         s.append(']')
         return s.toString()
     }
@@ -588,7 +593,7 @@ class Axis
         StringBuilder s = new StringBuilder(axisPropString)
         if (!MapUtilities.isEmpty(metaProps))
         {
-            s.append("\n")
+            s.append('\n')
             s.append("  metaProps: ${metaProps}")
         }
 
@@ -634,7 +639,7 @@ class Axis
     {
         valueType = newValueType
         NavigableMap<Comparable, Column> existing = valueToCol
-        valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
+        valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap(String.CASE_INSENSITIVE_ORDER) : new TreeMap()
         if (existing)
         {
             valueToCol.putAll(existing)
@@ -763,7 +768,7 @@ class Axis
     Column addColumn(Comparable value, String colName = null, Long suggestedId = null, Map<String, Object> colMetaProps = null)
     {
         final Column column = createColumnFromValue(value, suggestedId, colMetaProps)
-        if (StringUtilities.hasContent(colName))
+        if (hasContent(colName))
         {
             column.columnName = colName
         }
@@ -801,7 +806,7 @@ class Axis
         if (type == AxisType.RULE && !column.default)
         {
             String colName = column.columnName
-            if (StringUtilities.isEmpty(colName))
+            if (isEmpty(colName))
             {
                 throw new IllegalArgumentException('Rule name cannot be empty.')
             }
@@ -921,7 +926,7 @@ class Axis
         Column column = idToCol.get(colId)
         deleteColumnById(colId)
 
-        if (StringUtilities.hasContent(name))
+        if (hasContent(name))
         {
             column.columnName = name
         }
@@ -1031,7 +1036,7 @@ class Axis
                 Column realColumn = existingColumns[existingId]
                 if (realColumn == null)
                 {
-                    throw new IllegalArgumentException("Columns to be added should have negative ID values.")
+                    throw new IllegalArgumentException('Columns to be added should have negative ID values.')
                 }
                 realColumn.displayOrder = dispOrder++
             }
@@ -1056,14 +1061,14 @@ class Axis
         while (true) {
             madeChange = false
             // Place in loop to allow url|cache|http://... OR cache|url|http://...   OR url|http://  OR  cache|http://...
-            if (value.startsWith("url|"))
+            if (value.startsWith('url|'))
             {
                 isUrl = true
                 value = value.substring(4)
                 madeChange = true
             }
 
-            if (value.startsWith("cache|"))
+            if (value.startsWith('cache|'))
             {
                 cache = true
                 value = value.substring(6)
@@ -1086,7 +1091,7 @@ class Axis
     private Range parseRange(String value)
     {
         value = value.trim()
-        if (value.startsWith("[") && value.endsWith("]"))
+        if (value.startsWith('[') && value.endsWith(']'))
         {   // Remove surrounding brackets (1st and last characters)
             value = value[1..-2]
         }
@@ -1118,14 +1123,14 @@ class Axis
                     Object[] subList = (Object[]) item
                     if (subList.length != 2)
                     {
-                        throw new IllegalArgumentException("Range inside set must have exactly two (2) entries.")
+                        throw new IllegalArgumentException('Range inside set must have exactly two (2) entries.')
                     }
                     Range range = promoteRange(new Range((Comparable)subList[0], (Comparable)subList[1]))
                     set.add(range)
                 }
                 else if (item == null)
                 {
-                    throw new IllegalArgumentException("Set cannot have null value inside.")
+                    throw new IllegalArgumentException('Set cannot have null value inside.')
                 }
                 else
                 {
@@ -1263,14 +1268,14 @@ class Axis
         else if (type == AxisType.NEAREST)
         {	// Standardizing a NEAREST axis entails ensuring conformity amongst values (must all be Point2D, LatLon, Date, Long, String, etc.)
             value = promoteValue(valueType, value)
-            if (!columnsWithoutDefault.empty)
+            if ((defaultCol != null && size() == 1) || (defaultCol == null && size() == 0))
+            {   // Empty - first column added
+                return value
+            }
+            Column col = (Column) displayOrder.get(displayOrder.firstKey())
+            if (value.class != col.value.class)
             {
-                Object[] values = idToCol.values
-                Column col = (Column) values[0]
-                if (value.class != col.value.class)
-                {
-                    throw new IllegalArgumentException("Value '${value.class.name}' cannot be added to axis '${name}' where the values are of type: ${col.value.class.name}")
-                }
+                throw new IllegalArgumentException("Value '${value.class.name}' cannot be added to axis '${name}' where the values are of type: ${col.value.class.name}")
             }
             return value	// First value added does not need to be checked
         }
@@ -1318,23 +1323,23 @@ class Axis
     {
         if (AxisValueType.STRING == srcValueType || AxisValueType.CISTRING == srcValueType)
         {
-            return Converter.convertToString(value)
+            return convertToString(value)
         }
         else if (AxisValueType.LONG == srcValueType)
         {
-            return Converter.convertToLong(value)
+            return convertToLong(value)
         }
         else if (AxisValueType.BIG_DECIMAL == srcValueType)
         {
-            return Converter.convertToBigDecimal(value)
+            return convertToBigDecimal(value)
         }
         else if (AxisValueType.DATE == srcValueType)
         {
-            return Converter.convertToDate(value)
+            return convertToDate(value)
         }
         else if (AxisValueType.DOUBLE == srcValueType)
         {
-            return Converter.convertToDouble(value)
+            return convertToDouble(value)
         }
         else if (AxisValueType.EXPRESSION == srcValueType)
         {
@@ -1347,13 +1352,13 @@ class Axis
                 Matcher m = Regexes.valid2Doubles.matcher((String) value)
                 if (m.matches())
                 {   // No way to determine if it was supposed to be a Point2D. Specify as JSON for Point2D
-                    return new LatLon(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)))
+                    return new LatLon(convertToDouble(m.group(1)), convertToDouble(m.group(2)))
                 }
 
                 m = Regexes.valid3Doubles.matcher((String) value)
                 if (m.matches())
                 {
-                    return new Point3D(Converter.convertToDouble(m.group(1)), Converter.convertToDouble(m.group(2)), Converter.convertToDouble(m.group(3)))
+                    return new Point3D(convertToDouble(m.group(1)), convertToDouble(m.group(2)), convertToDouble(m.group(3)))
                 }
 
                 try
@@ -1411,7 +1416,7 @@ class Axis
      */
     protected List<Column> getRuleColumnsStartingAt(String ruleName)
     {
-        if (StringUtilities.isEmpty(ruleName))
+        if (isEmpty(ruleName))
         {   // Since no rule name specified, all rule columns are returned to have their conditions evaluated.
             return columns
         }
@@ -1578,7 +1583,7 @@ class Axis
     {
         if (type == AxisType.RULE)
         {
-            return StringUtilities.hasContent(column.columnName) ? column.columnName : column.id
+            return hasContent(column.columnName) ? column.columnName : column.id
         }
         return column.valueThatMatches
     }
@@ -1867,7 +1872,7 @@ class Axis
      */
     protected static String getDisplayColumnName(Column column)
     {
-        String colName = StringUtilities.hasContent(column.columnName) ? column.columnName : column.value
+        String colName = hasContent(column.columnName) ? column.columnName : column.value
         return colName ?: 'default'
     }
 
@@ -1899,7 +1904,7 @@ class Axis
     {
         if (valueToCol == null)
         {
-            valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap<>(String.CASE_INSENSITIVE_ORDER) : new TreeMap<>()
+            valueToCol = valueType == AxisValueType.CISTRING ? new TreeMap(String.CASE_INSENSITIVE_ORDER) : new TreeMap()
         }
         return valueToCol
     }

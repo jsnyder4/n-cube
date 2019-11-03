@@ -15,7 +15,6 @@ import com.cedarsoftware.util.StringUtilities
 import com.cedarsoftware.util.UniqueIdGenerator
 import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
-import gnu.trove.THashSet
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.cache.Cache
@@ -1077,7 +1076,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
 
     private static Set<ApplicationID> getReferenceAxesAppIds(Object[] axisRefs, boolean source)
     {
-        Set<ApplicationID> uniqueAppIds = new THashSet()
+        Set<ApplicationID> uniqueAppIds = new LinkedHashSet<>()
         for (Object obj : axisRefs)
         {
             AxisRef axisRef = obj as AxisRef
@@ -1593,7 +1592,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     private Set<String> getRolesForUser(NCube userGroups)
     {
         Axis role = userGroups.getAxis(AXIS_ROLE)
-        Set<String> groups = new THashSet<>()
+        Set<String> groups = new TreeSet<>(String.CASE_INSENSITIVE_ORDER)
         for (Column column : role.columns)
         {
             if (userGroups.getCell([(AXIS_ROLE): column.value, (AXIS_USER): getUserId()]))
