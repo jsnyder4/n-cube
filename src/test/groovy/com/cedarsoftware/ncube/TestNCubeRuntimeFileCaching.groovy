@@ -20,6 +20,8 @@ import static com.cedarsoftware.ncube.ApplicationID.testAppId
 import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeRuntime
 import static com.cedarsoftware.ncube.SnapshotPolicy.*
 import static org.junit.Assert.*
+import static org.mockito.ArgumentMatchers.*
+import static org.mockito.Mockito.*
 
 @CompileStatic
 class TestNCubeRuntimeFileCaching extends NCubeBaseTest
@@ -33,7 +35,6 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     ApplicationID snapshotId = testAppId
     ApplicationID releaseId = testAppId.asRelease()
 
-    private static final String MOCK_BEAN_NAME = 'mockCallable'
     private static final String METHOD_LOAD_CUBE_RECORD = 'loadCubeRecord'
 
     @Rule
@@ -51,8 +52,8 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         cacheDir = new File ('target/ncubeFileCacheTests')
         clearDirectory(cacheDir)
 
-        callableBean = Mockito.mock CallableBean.class
-        Mockito.when(callableBean.call(Mockito.eq(MOCK_BEAN_NAME),Mockito.anyString(),Mockito.anyListOf(String.class))).then(new Answer<Object>() {
+        callableBean = mock(CallableBean.class)
+        when(callableBean.call(eq(MANAGER_BEAN), anyString(), anyListOf(String.class))).then(new Answer<Object>() {
             @Override
             Object answer(InvocationOnMock invocation) throws Throwable {
                 String method = invocation.arguments[1]
@@ -92,7 +93,7 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
         cacheManager.setCaches([new ConcurrentMapCache(snapshotId.cacheKey()),new ConcurrentMapCache(releaseId.cacheKey())])
         cacheManager.initializeCaches()
 
-        cacheRuntime = new NCubeRuntime(callableBean, cacheManager, false, MOCK_BEAN_NAME)
+        cacheRuntime = new NCubeRuntime(callableBean, cacheManager, false)
         cacheRuntime.localFileCache = new LocalFileCache(cacheDir.path,RELEASE_ONLY)
         
         // Otherwise NPE - this test does not setup spring fully, so Spring Environment is null inside the NCubeRuntime.
@@ -723,11 +724,11 @@ class TestNCubeRuntimeFileCaching extends NCubeBaseTest
     }
 
     private Object verifyMockLoad(ApplicationID appId, String cubeName, int times) {
-        return Mockito.verify(callableBean, Mockito.times(times)).call(Mockito.eq(MOCK_BEAN_NAME), Mockito.eq(METHOD_LOAD_CUBE_RECORD), Mockito.eq([appId, cubeName, null]))
+        return verify(callableBean, Mockito.times(times)).call(eq(MANAGER_BEAN), eq(METHOD_LOAD_CUBE_RECORD), eq([appId, cubeName, null]))
     }
 
     private Object verifyMockLoadWithSha1(ApplicationID appId, String cubeName, String sha1, int times) {
-        return Mockito.verify(callableBean, Mockito.times(times)).call(Mockito.eq(MOCK_BEAN_NAME), Mockito.eq(METHOD_LOAD_CUBE_RECORD), Mockito.eq([appId, cubeName, [includeCubeData:true, checkSha1:'D71891F6BD1CE8644F6BF5E2E553E2ECA652E785']]))
+        return verify(callableBean, Mockito.times(times)).call(eq(MANAGER_BEAN), eq(METHOD_LOAD_CUBE_RECORD), eq([appId, cubeName, [includeCubeData:true, checkSha1:'D71891F6BD1CE8644F6BF5E2E553E2ECA652E785']]))
     }
 
     private static void clearDirectory(File dir) {

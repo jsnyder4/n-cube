@@ -4,6 +4,7 @@ import com.cedarsoftware.controller.NCubeController
 import com.cedarsoftware.controller.NCubeControllerAdvice
 import com.cedarsoftware.ncube.GroovyBase
 import com.cedarsoftware.ncube.NCube
+import com.cedarsoftware.ncube.NCubeAppContext
 import com.cedarsoftware.ncube.NCubeJdbcPersisterAdapter
 import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.ncube.NCubePersister
@@ -125,7 +126,7 @@ class NCubeConfiguration
     @Profile(['combined-client','combined-server'])
     ReflectiveProxy getReflectiveProxy()
     {
-        return new ReflectiveProxy()
+        return new ReflectiveProxy(getNCubeManager())
     }
 
     @Bean('ncubeManager')
@@ -223,11 +224,11 @@ class NCubeConfiguration
     }
 
     // ========== App Context ==========
-//    @Bean('appContext')
-//    NCubeAppContext getAppContext()
-//    {
-//        return new NCubeAppContext()
-//    }
+    @Bean('appContext')
+    NCubeAppContext getAppContext()
+    {
+        return new NCubeAppContext()
+    }
 
     @PostConstruct
     void init()

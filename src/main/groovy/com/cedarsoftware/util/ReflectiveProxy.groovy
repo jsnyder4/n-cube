@@ -1,12 +1,12 @@
 package com.cedarsoftware.util
 
+import com.cedarsoftware.ncube.NCubeMutableClient
 import groovy.transform.CompileStatic
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
 
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com), Josh Snyder (joshsnyder@gmail.com)
@@ -27,28 +27,27 @@ import java.util.concurrent.ConcurrentHashMap
  */
 
 @CompileStatic
-class ReflectiveProxy implements CallableBean, ApplicationContextAware
+class ReflectiveProxy implements CallableBean
 {
-    private static ApplicationContext ctx
-    private static final Map<String, Method> METHOD_MAP = new ConcurrentHashMap<>()
+    NCubeMutableClient ncubeManager
+    private static final ConcurrentMap<String, Method> METHOD_MAP = new ConcurrentHashMap<>()
+    
+    ReflectiveProxy(NCubeMutableClient manager)
+    {
+        ncubeManager = manager
+    }
 
     Object call(String beanName, String methodName, List args)
     {
-        Object bean = ctx.getBean(beanName)
-        Method method = getMethod(bean, beanName, methodName, args.size())
+        Method method = getMethod(ncubeManager, beanName, methodName, args.size())
         try
         {
-            return method.invoke(bean, args.toArray())
+            return method.invoke(ncubeManager, args.toArray())
         }
         catch (InvocationTargetException e)
         {
             throw e.targetException
         }
-    }
-
-    void setApplicationContext(ApplicationContext applicationContext)
-    {
-        ctx = applicationContext
     }
 
     /**
@@ -69,11 +68,11 @@ class ReflectiveProxy implements CallableBean, ApplicationContextAware
         if (method == null)
         {
             method = getMethod(bean.class, methodName, argCount)
-            if (method == null)
+            Method other = METHOD_MAP.putIfAbsent(methodKey, method)
+            if (other != null)
             {
-                throw new IllegalArgumentException("Cannot call method: ${methodName} on bean: ${beanName}")
+                method = other
             }
-            METHOD_MAP[methodKey] = method
         }
         return method
     }

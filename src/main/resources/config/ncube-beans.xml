@@ -34,7 +34,5 @@
         <aop:advisor advice-ref="ncubeTxAdvice" pointcut-ref="ncubeTransactedMethods"/>
 
     </aop:config>
-
-    <bean id="appContext" class="com.cedarsoftware.ncube.NCubeAppContext"/>
     
 </beans>

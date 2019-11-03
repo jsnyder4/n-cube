@@ -8,6 +8,7 @@ import com.cedarsoftware.util.ArrayUtilities
 import com.cedarsoftware.util.CallableBean
 import com.cedarsoftware.util.CaseInsensitiveSet
 import com.cedarsoftware.util.GuavaCache
+import com.cedarsoftware.util.JsonHttpProxy
 import com.cedarsoftware.util.ThreadAwarePrintStream
 import com.cedarsoftware.util.ThreadAwarePrintStreamErr
 import com.cedarsoftware.util.TrackingMap
@@ -105,19 +106,17 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         this.localFileCache = localFileCache
     }
 
-    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods, String beanName = null)
+    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods)
     {
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager
         this.adviceCacheManager = new GCacheManager()
-        if (hasContent(beanName))
-        {
-            this.beanName = beanName
-        }
-        else
-        {
-            this.beanName = NCubeAppContext.containsBean(MANAGER_BEAN) ? MANAGER_BEAN : CONTROLLER_BEAN
-        }
+        // Set the 'beanName' that the CallableBean will call.  When NCubeRuntime is targeting JsonHttpProxy,
+        // the name will be 'ncubeController' - the name JsonCommandServlet will use to find the controller
+        // from Spring.  When NCubeRuntime is targeting ReflectiveProxy(NCubeManager), the name is not used
+        // to locate the NCubeManager - that is bound directly to the ReflectProxy.  In this case, the name is
+        // used as part of a key in a the method cache: beanName.methodName.numberOfArgs -> Method.
+        this.beanName = bean instanceof JsonHttpProxy ? CONTROLLER_BEAN : MANAGER_BEAN
 
         // This thread below is periodically accessing particular NCube's in the cache so that they are not evicted
         // by Guava's cache (which evicts 4 hours after last access).  The SYS_CLASSPATH cube is always accessed to
