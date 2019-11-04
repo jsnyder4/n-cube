@@ -106,7 +106,7 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         this.localFileCache = localFileCache
     }
 
-    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean allowMutableMethods)
+    NCubeRuntime(CallableBean bean, CacheManager ncubeCacheManager, boolean unused = false)
     {
         this.bean = bean
         this.ncubeCacheManager = ncubeCacheManager

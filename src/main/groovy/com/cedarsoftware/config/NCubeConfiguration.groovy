@@ -75,9 +75,7 @@ class NCubeConfiguration
     // Location for generated source (optional) and compiled classes (optional)
     @Value('${ncube.sources.dir:#{null}}') String sourcesDirectory
     @Value('${ncube.classes.dir:#{null}}') String classesDirectory
-
-    @Value('${ncube.allow.mutable.methods}') Boolean allowMutableMethods
-
+    
     // Limit size of coordinate displayed in each CommandCell exception list (--> [coordinate])
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
     
@@ -129,29 +127,25 @@ class NCubeConfiguration
         return new ReflectiveProxy(getNCubeManager())
     }
 
+    @Bean('ncubeRuntime')
+    @Profile(['combined-server', 'combined-client'])
+    NCubeRuntime getNCubeRuntimeLocal()
+    {
+        return new NCubeRuntime(getReflectiveProxy(), getNcubeCacheManager())
+    }
+
+    @Bean('ncubeRuntime')
+    @Profile(['ncube-client', 'runtime-server'])
+    NCubeRuntime getNCubeRuntimeRemote()
+    {
+        return new NCubeRuntime(getJsonHttpProxy(), getNcubeCacheManager())
+    }
+
     @Bean('ncubeManager')
     @Profile(['storage-server', 'combined-server', 'combined-client'])
     NCubeManager getNCubeManager()
     {
         return new NCubeManager(getNCubePersister(), getPermCacheManager())
-    }
-
-    // v========== ncube-client ==========v
-
-    @Bean('ncubeRuntime')
-    @Profile('ncube-client')
-    NCubeRuntime getNCubeRuntime()
-    {
-        return new NCubeRuntime(getJsonHttpProxy(), getNcubeCacheManager(), allowMutableMethods)
-    }
-
-    // v========== combined-client ==========v
-
-    @Bean('ncubeRuntime')
-    @Profile('combined-client')
-    NCubeRuntime getNCubeRuntime1()
-    {
-        return new NCubeRuntime(getReflectiveProxy(), getNcubeCacheManager(), allowMutableMethods)
     }
 
     // v========== runtime-server ==========v
@@ -163,18 +157,11 @@ class NCubeConfiguration
         return new NCubeControllerAdvice(getNCubeController2())
     }
     
-    @Bean('ncubeRuntime')
-    @Profile('runtime-server')
-    NCubeRuntime getNCubeRuntime2()
-    {
-        return new NCubeRuntime(getJsonHttpProxy(), getNcubeCacheManager(), allowMutableMethods)
-    }
-
     @Bean('ncubeController')
     @Profile('runtime-server')
     NCubeController getNCubeController2()
     {
-        return new NCubeController(getNCubeRuntime2(), true)
+        return new NCubeController(getNCubeRuntimeRemote(), true)
     }
 
     // v========== storage-server ==========v
@@ -194,6 +181,7 @@ class NCubeConfiguration
     }
 
     // v========== combined-server ==========v
+    
     @Bean('ncubeControllerAdvice')
     @Profile('combined-server')
     NCubeControllerAdvice getNCubeControllerAdvice4()
@@ -201,18 +189,11 @@ class NCubeConfiguration
         return new NCubeControllerAdvice(getNCubeController4())
     }
 
-    @Bean('ncubeRuntime')
-    @Profile('combined-server')
-    NCubeRuntime getNCubeRuntime4()
-    {
-        return new NCubeRuntime(getReflectiveProxy(), getNcubeCacheManager(), allowMutableMethods)
-    }
-
     @Bean('ncubeController')
     @Profile('combined-server')
     NCubeController getNCubeController4()
     {
-        return new NCubeController(getNCubeRuntime4(), true)
+        return new NCubeController(getNCubeRuntimeLocal(), true)
     }
     
     // ========== Persistance Configuration ==========
@@ -238,20 +219,16 @@ class NCubeConfiguration
         NCube.stackEntryCoordinateValueMaxSize = stackEntryCoordinateValueMaxSize
     }
 
-    @Configuration
     @Profile('test-database')
-    class TestDatabase
+    @Bean(name = 'hsqlSetup')
+    HsqlSchemaCreator getSchemaCreator()
     {
-        @Bean(name = 'hsqlSetup')
-        HsqlSchemaCreator getSchemaCreator()
-        {
-            HsqlSchemaCreator schemaCreator = new HsqlSchemaCreator(
-                    'org.hsqldb.jdbcDriver',
-                    'jdbc:hsqldb:mem:testdb',
-                    'sa',
-                    '',
-                    '/config/hsqldb-schema.sql')
-            return schemaCreator
-        }
+        HsqlSchemaCreator schemaCreator = new HsqlSchemaCreator(
+                'org.hsqldb.jdbcDriver',
+                'jdbc:hsqldb:mem:testdb',
+                'sa',
+                '',
+                '/config/hsqldb-schema.sql')
+        return schemaCreator
     }
 }
