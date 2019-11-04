@@ -2,16 +2,18 @@ package com.cedarsoftware.ncube
 
 import com.cedarsoftware.servlet.JsonCommandServlet
 import com.cedarsoftware.util.ArrayUtilities
+import com.cedarsoftware.util.StringUtilities
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.SpringBootVersion
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.boot.web.servlet.ServletRegistrationBean
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ImportResource
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Profile
 import org.springframework.core.SpringVersion
 import org.springframework.web.filter.FormContentFilter
@@ -47,9 +49,8 @@ import static java.util.Arrays.asList
  *         limitations under the License.
  */
 @Slf4j
-@ImportResource("classpath:config/ncube-beans.xml")
-//@SpringBootApplication(exclude = [DataSourceAutoConfiguration, DataSourceTransactionManagerAutoConfiguration, HibernateJpaAutoConfiguration])
-@SpringBootApplication
+@ComponentScan(basePackages = ['com.cedarsoftware.config','com.cedarsoftware.ncube.util'])
+@SpringBootApplication(exclude = [HibernateJpaAutoConfiguration])
 @CompileStatic
 class NCubeApplication
 {
@@ -85,7 +86,9 @@ class NCubeApplication
         }
 
         // Display server type and key versions
-        log.info("NCUBE ${serverType}-server started")
+        byte[] mug = [0xf0, 0x9f, 0x8d, 0xba]
+        String beer = StringUtilities.createUTF8String(mug)
+        log.info("NCUBE ${serverType}-server started ${beer}")
         log.info("  Groovy version: ${GroovySystem.version}")
         log.info("  Java version: ${System.getProperty('java.version')}")
         log.info("  Spring version: ${SpringVersion.version}")

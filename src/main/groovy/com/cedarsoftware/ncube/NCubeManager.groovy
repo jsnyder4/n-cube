@@ -15,6 +15,7 @@ import groovy.util.logging.Slf4j
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.jdbc.datasource.DataSourceUtils
+import org.springframework.transaction.annotation.Transactional
 
 import javax.sql.DataSource
 import java.sql.Connection
@@ -114,6 +115,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * on the source axis, those newly created cells will be empty.  Finally, for columns that existed on the
      * original source axis as well as exist on the existing referenced axis, they will be kept.
      */
+    @Transactional
     void createRefAxis(ApplicationID appId, String cubeName, String axisName, ApplicationID refAppId, String refCubeName, String refAxisName)
     {
         NCube cube = getCube(appId, cubeName)
@@ -145,6 +147,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * this method should not be called and instead that loadCube() should be called, when it is being called in a
      * situation where it is known the target is an NCubeManager.
      */
+    @Transactional(readOnly = true)
     NCube getCube(ApplicationID appId, String cubeName)
     {
         assertPermissions(appId, cubeName)
@@ -157,6 +160,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * cache.  Any advices in the manager will be applied to the n-cube.
      * @return NCube of the specified name from the specified AppID, or null if not found.
      */
+    @Transactional(readOnly = true)
     NCubeInfoDto loadCubeRecord(ApplicationID appId, String cubeName, Map options = null)
     {
         assertPermissions(appId, cubeName)
@@ -178,6 +182,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return ncube
     }
 
+    @Transactional(readOnly = true)
     NCubeInfoDto loadCubeRecordById(long id, Map options = null)
     {
         NCubeInfoDto record = persister.loadCubeRecordById(id, options, getUserId())
@@ -236,12 +241,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return records.first()
     }
 
+    @Transactional
     void createCube(NCube ncube)
     {
         createPermissionsCubesIfNewAppId(ncube.applicationID)
         persister.createCube(ncube, getUserId())
     }
 
+    @Transactional
     void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
         NCube ncube = NCube.createCubeFromBytes(cubeBytes)
@@ -254,6 +261,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Retrieve all cube names that are deeply referenced by ApplicationID + n-cube name.
      */
+    @Transactional(readOnly = true)
     Set<String> getReferencesFrom(ApplicationID appId, String name, Set<String> refs = new CaseInsensitiveSet<>())
     {
         ApplicationID.validateAppId(appId)
@@ -284,6 +292,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Restore a previously deleted n-cube.
      */
+    @Transactional
     Boolean restoreCubes(ApplicationID appId, Object[] cubeNames)
     {
         ApplicationID.validateAppId(appId)
@@ -312,6 +321,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Get a List<NCubeInfoDto> containing all history for the given cube.
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> getRevisionHistory(ApplicationID appId, String cubeName, boolean ignoreVersion = false)
     {
         ApplicationID.validateAppId(appId)
@@ -328,6 +338,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * NCubeInfDto does not contain bytes or testData
      * Note: the restored dto and the dto to restore from differ only in revision number
      */
+    @Transactional
     NCubeInfoDto promoteRevision(long cubeId)
     {
         NCubeInfoDto record = loadCubeRecordById(cubeId, [(SEARCH_INCLUDE_TEST_DATA): true])
@@ -344,6 +355,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param oldCubeId long
      * @return List<Delta>
      */
+    @Transactional(readOnly = true)
     List<Delta> fetchJsonRevDiffs(long newCubeId, long oldCubeId)
     {
         Map options = [(SEARCH_INCLUDE_TEST_DATA):true]
@@ -360,6 +372,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param oldInfoDto NCubeInfoDto
      * @return List<Delta>
      */
+    @Transactional(readOnly = true)
     List<Delta> fetchJsonBranchDiffs(NCubeInfoDto newInfoDto, NCubeInfoDto oldInfoDto)
     {
         Map options = [(SEARCH_INCLUDE_TEST_DATA):true]
@@ -386,6 +399,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Get a List<NCubeInfoDto> containing all history for the given cell of a cube.
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> getCellAnnotation(ApplicationID appId, String cubeName, Set<Long> ids, boolean ignoreVersion = false)
     {
         ApplicationID.validateAppId(appId)
@@ -422,6 +436,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Return a List of Strings containing all unique App names for the given tenant.
      */
+    @Transactional(readOnly = true)
     Object[] getAppNames()
     {
         List<String> appNames = persister.getAppNames(tenant, getUserId())
@@ -438,6 +453,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * Get all of the versions that exist for the given ApplicationID (app name).
      * @return Object[] version numbers.
      */
+    @Transactional(readOnly = true)
     Object[] getVersions(String app)
     {
         ApplicationID.validateApp(app)
@@ -462,6 +478,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @return String version number in the form "major.minor.patch" where each of the
      * values (major, minor, patch) is numeric.
      */
+    @Transactional(readOnly = true)
     String getLatestVersion(ApplicationID appId)
     {
         String tenant = appId.tenant
@@ -477,6 +494,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Duplicate the given n-cube specified by oldAppId and oldName to new ApplicationID and name,
      */
+    @Transactional
     Boolean duplicate(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName)
     {
         ApplicationID.validateAppId(oldAppId)
@@ -513,6 +531,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param ncube NCube to be updated.
      * @return boolean true on success, false otherwise
      */
+    @Transactional
     Boolean updateCube(NCube ncube, boolean updateHead = false)
     {
         if (ncube == null)
@@ -541,6 +560,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return true
     }
 
+    @Transactional
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
         if (cubeBytes == null)
@@ -559,6 +579,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param targetAppId Branch copied to (must not exist)
      * @return int number of n-cubes in branch (number copied - revision depth is not copied, will not include "hidden" n-cubes like sys.info)
      */
+    @Transactional
     Integer copyBranch(ApplicationID srcAppId, ApplicationID targetAppId, boolean copyWithHistory = false)
     {
         Closure checkForExistingCubes = { ApplicationID appId, String message ->
@@ -593,8 +614,9 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param appId ApplicationID containing the named n-cube.
      * @param cubeName String name of the n-cube into which the Delta's will be merged.
      * @param deltas List of Delta instances
-     * @return the NCube t
+     * @return the NCube
      */
+    @Transactional
     Boolean mergeDeltas(ApplicationID appId, String cubeName, List<Delta> deltas)
     {
         assertPermissions(appId, cubeName)
@@ -643,6 +665,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param newSnapVer String version to move cubes to
      * @return number of rows moved (count includes revisions per cube).
      */
+    @Transactional
     Integer moveBranch(ApplicationID appId, String newSnapVer)
     {
         ApplicationID.validateAppId(appId)
@@ -667,6 +690,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Perform release (SNAPSHOT to RELEASE) for the given ApplicationIDs n-cubes.
      */
+    @Transactional
     Integer releaseVersion(ApplicationID appId, String newSnapVer = null)
     {
         ApplicationID.validateAppId(appId)
@@ -699,6 +723,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     /**
      * Perform release (SNAPSHOT to RELEASE) for the given ApplicationIDs n-cubes.
      */
+    @Transactional
     Integer releaseCubes(ApplicationID appId, String newSnapVer = null)
     {
         assertPermissions(appId, null, Action.RELEASE)
@@ -793,6 +818,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         }
     }
 
+    @Transactional
     void changeVersionValue(ApplicationID appId, String newVersion)
     {
         ApplicationID.validateAppId(appId)
@@ -808,6 +834,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         updateOpenPullRequestVersions(appId, newVersion, true)
     }
 
+    @Transactional
     Boolean renameCube(ApplicationID appId, String oldName, String newName)
     {
         ApplicationID.validateAppId(appId)
@@ -835,6 +862,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return result
     }
 
+    @Transactional
     Boolean deleteBranch(ApplicationID appId)
     {
         appId.validateBranchIsNotHead()
@@ -843,6 +871,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return persister.deleteBranch(appId, getUserId())
     }
 
+    @Transactional
     Boolean deleteApp(ApplicationID appId)
     {
         appId.validate()
@@ -858,6 +887,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      *
      * @param cubeNames  Object[] of String cube names to be deleted (soft deleted)
      */
+    @Transactional
     Boolean deleteCubes(ApplicationID appId, Object[] cubeNames)
     {
         appId.validateBranchIsNotHead()
@@ -869,6 +899,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return deleteCubes(appId, cubeNames, false)
     }
 
+    @Transactional
     Boolean deleteCubes(ApplicationID appId, Object[] cubeNames, boolean allowDelete)
     {
         ApplicationID.validateAppId(appId)
@@ -893,6 +924,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return false
     }
 
+    @Transactional(readOnly = true)
     Map getAppTests(ApplicationID appId)
     {
         Map ret = new CaseInsensitiveMap()
@@ -908,6 +940,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return ret
     }
 
+    @Transactional(readOnly = true)
     Object[] getTests(ApplicationID appId, String cubeName)
     {
         ApplicationID.validateAppId(appId)
@@ -927,6 +960,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return tests.toArray()
     }
 
+    @Transactional
     Boolean updateNotes(ApplicationID appId, String cubeName, String notes)
     {
         ApplicationID.validateAppId(appId)
@@ -936,6 +970,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return persister.updateNotes(appId, cubeName, notes, getUserId())
     }
 
+    @Transactional(readOnly = true)
     String getNotes(ApplicationID appId, String cubeName)
     {
         ApplicationID.validateAppId(appId)
@@ -954,6 +989,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return infos[0].notes
     }
 
+    @Transactional(readOnly = true)
     Object[] getBranches(ApplicationID appId)
     {
         appId.validate()
@@ -965,12 +1001,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
         return realBranches.toArray()
     }
 
+    @Transactional(readOnly = true)
     Integer getBranchCount(ApplicationID appId)
     {
         Object[] branches = getBranches(appId)
         return branches.length
     }
 
+    @Transactional(readOnly = true)
     String getJson(ApplicationID appId, String cubeName, Map options)
     {
         throw new IllegalStateException("getJson(${appId}, ${cubeName}) should not be called on a storage server")
@@ -986,6 +1024,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param options map with possible keys.  See NCubeConstants.SEARCH_*
      * @return List<NCubeInfoDto>
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> search(ApplicationID appId, String cubeNamePattern, String content, Map options)
     {
         ApplicationID.validateAppId(appId)
@@ -1027,6 +1066,7 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
      * @param appId ApplicationID of the cube-set from which to fetch all the reference axes.
      * @return List<AxisRef>
      */
+    @Transactional(readOnly = true)
     List<AxisRef> getReferenceAxes(ApplicationID appId)
     {
         ApplicationID.validateAppId(appId)
@@ -1186,6 +1226,7 @@ transform app: ${transformApp}/${transformVersion}/${transformStatus}/${transfor
         }
     }
 
+    @Transactional
     void updateReferenceAxes(Object[] axisRefs)
     {
         Map<ApplicationID, Map<String, Set<AxisRef>>> appIdCubeNames = [:]
@@ -1297,6 +1338,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     /**
      * Update an Axis meta-properties
      */
+    @Transactional
     void updateAxisMetaProperties(ApplicationID appId, String cubeName, String axisName, Map<String, Object> newMetaProperties)
     {
         NCube.transformMetaProperties(newMetaProperties)
@@ -1312,20 +1354,12 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         updateCube(ncube)
     }
 
-    // ---------------------- Broadcast APIs for notifying other services in cluster of cache changes ------------------
-    protected void broadcast(ApplicationID appId)
-    {
-        // Write to 'system' tenant, 'NCE' app, version 0.0.0, SNAPSHOT, cube: sys.cache
-        // Separate thread reads from this table every 1 second, for new commands, for
-        // example, clear cache
-        appId.toString()
-    }
-
     // --------------------------------------- Permissions -------------------------------------------------------------
 
     /**
      * Assert that the requested permission is allowed.  Throw a SecurityException if not.
      */
+    @Transactional(readOnly = true)
     Boolean assertPermissions(ApplicationID appId, String resource, Action action = Action.READ)
     {
         action = action ?: Action.READ
@@ -1383,6 +1417,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return item?.get()
     }
 
+    @Transactional(readOnly = true)
     Map checkMultiplePermissions(ApplicationID appId, String resource, Object[] actions)
     {
         Map ret = [:]
@@ -1402,6 +1437,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * @return boolean true if allowed, false if not.  If the permissions cubes restricting access have not yet been
      * added to the same App, then all access is granted.
      */
+    @Transactional(readOnly = true)
     Boolean checkPermissions(ApplicationID appId, String resource, Action action)
     {
         Cache permCache = permCacheManager.getCache(appId.cacheKey())
@@ -1672,11 +1708,13 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return allowed
     }
 
+    @Transactional(readOnly = true)
     Boolean isSysAdmin()
     {
         return isTypeOfAdmin(sysAppId)
     }
 
+    @Transactional(readOnly = true)
     Boolean isAppAdmin(ApplicationID appId)
     {
         if (sysAdmin)
@@ -1776,6 +1814,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Determine if the ApplicationID is locked.  This is an expensive call because it
      * always hits the database.  Use judiciously (obtain value before loops, etc.)
      */
+    @Transactional(readOnly = true)
     String getAppLockedBy(ApplicationID appId)
     {
         NCube sysLockCube = loadCubeInternal(getBootAppId(appId), SYS_LOCK)
@@ -1791,6 +1830,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * @param appId ApplicationID to lock
      * @param shouldLock - true to lock, false to unlock
      */
+    @Transactional
     Boolean lockApp(ApplicationID appId, boolean shouldLock)
     {
         assertPermissions(appId, null, Action.RELEASE)
@@ -1999,6 +2039,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * supplied branch.  If the merge cannot be done perfectly, an exception is
      * thrown indicating the cubes that are in conflict.
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> getHeadChangesForBranch(ApplicationID appId)
     {
         ApplicationID.validateAppId(appId)
@@ -2138,6 +2179,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Get a list of NCubeInfoDto's that represent the n-cubes that have been made to
      * this branch.  This is the source of n-cubes for the 'Commit' and 'Rollback' lists.
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> getBranchChangesForHead(ApplicationID appId)
     {
         ApplicationID.validateAppId(appId)
@@ -2241,6 +2283,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * supplied branch.  If the merge cannot be done perfectly, an exception is
      * thrown indicating the cubes that are in conflict.
      */
+    @Transactional(readOnly = true)
     List<NCubeInfoDto> getBranchChangesForMyBranch(ApplicationID appId, String branch)
     {
         ApplicationID branchAppId = appId.asBranch(branch)
@@ -2356,6 +2399,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * 'headSha1' --> SHA-1 of HEAD (or source branch n-cube being merged from)<br>
      * 'diff'     --> List[Delta's]
      */
+    @Transactional
     Map<String, Object> updateBranch(ApplicationID appId, Object[] cubeDtos = null)
     {
         if (cubeDtos != null && cubeDtos.length == 0)
@@ -2460,10 +2504,11 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
     }
 
     String getTenant()
-    {
+    {   // TODO: This will need to return the 'configured' TENANT for the given server (cluster)
         return ApplicationID.DEFAULT_TENANT
     }
 
+    @Transactional
     String generatePullRequestHash(ApplicationID appId, Object[] infoDtos, String notes = '')
     {
         List<Map<String, String>> commitRecords = getCommitRecords(appId, infoDtos)
@@ -2530,6 +2575,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
     }
 
+    @Transactional
     Map<String, Object> mergePullRequest(String prId)
     {
         try
@@ -2624,6 +2670,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return ret
     }
 
+    @Transactional
     void obsoletePullRequest(String prId)
     {
         Closure exceptionTest = { String status ->
@@ -2633,6 +2680,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         updatePullRequest(prId, exceptionTest, exceptionText, PR_OBSOLETE)
     }
 
+    @Transactional
     void cancelPullRequest(String prId)
     {
         Closure exceptionTest = { String status ->
@@ -2642,6 +2690,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         updatePullRequest(prId, exceptionTest, exceptionText, PR_CANCEL)
     }
 
+    @Transactional
     void reopenPullRequest(String prId)
     {
         Closure exceptionTest = { String status ->
@@ -2695,6 +2744,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         } as NCube
     }
 
+    @Transactional(readOnly = true)
     Object[] getPullRequests(Date startDate = null, Date endDate = null, String prId = null)
     {
         List<Map> results = []
@@ -2744,6 +2794,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * Commit the passed in changed cube records identified by NCubeInfoDtos.
      * @return array of NCubeInfoDtos that are to be committed.
      */
+    @Transactional
     Map<String, Object> commitBranch(ApplicationID appId, Object[] inputCubes = null, String notes = null)
     {
         String prId = generatePullRequestHash(appId, inputCubes, notes)
@@ -2911,6 +2962,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * when the branch was created.  This is an insert cube (maintaining revision history) for
      * each cube passed in.
      */
+    @Transactional
     Integer rollbackBranch(ApplicationID appId, Object[] names)
     {
         ApplicationID.validateAppId(appId)
@@ -2936,6 +2988,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * @param cubeNames Object[] of String names of n-cube
      * @return int the number of n-cubes merged.
      */
+    @Transactional
     Integer acceptMine(ApplicationID appId, Object[] cubeNames)
     {
         ApplicationID.validateAppId(appId)
@@ -2964,6 +3017,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
      * @param Object[] of String SHA-1's for each of the cube names in the branch.
      * @return int the number of n-cubes merged.
      */
+    @Transactional
     Integer acceptTheirs(ApplicationID appId, Object[] cubeNames, String sourceBranch = ApplicationID.HEAD)
     {
         ApplicationID.validateAppId(appId)
@@ -2984,6 +3038,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         return count
     }
 
+    @Transactional(readOnly = true)
     Boolean isCubeUpToDate(ApplicationID appId, String cubeName)
     {
         if (appId.branch == ApplicationID.HEAD)
@@ -3013,6 +3068,7 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         // no-op
     }
 
+    @Transactional
     void clearTestDatabase()
     {
         if (NCubeAppContext.test)

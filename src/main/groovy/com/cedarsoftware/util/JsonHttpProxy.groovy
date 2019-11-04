@@ -233,7 +233,9 @@ class JsonHttpProxy implements CallableBean
 
     private void createAuthCache()
     {
-        log.info("NCUBE storage-server: ${httpHost.schemeName}://${httpHost.hostName}:${httpHost.port}/${context}")
+        byte[] rocketBytes = [0xf0, 0x9f, 0x9a, 0x80]
+        String rocket = StringUtilities.createUTF8String(rocketBytes)
+        log.info("NCUBE storage-server: ${rocket} ${httpHost.schemeName}://${httpHost.hostName}:${httpHost.port}/${context}")
         if (username && password)
         {
             credsProvider = new BasicCredentialsProvider()
