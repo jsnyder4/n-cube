@@ -220,7 +220,7 @@ class NCubeConfiguration
     }
 
     @Profile('test-database')
-    @Bean(name = 'hsqlSetup')
+    @Bean('hsqlSetup')
     HsqlSchemaCreator getSchemaCreator()
     {
         HsqlSchemaCreator schemaCreator = new HsqlSchemaCreator(

@@ -482,7 +482,14 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
 
     Boolean updateCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
-        throw new IllegalStateException('This should never be called. Call updateCube(NCube) instead.')
+        verifyAllowMutable('updateCube')
+        Boolean result = bean.call(beanName, 'updateCube', [appId, cubeName, cubeBytes]) as Boolean
+        if (SYS_CLASSPATH.equalsIgnoreCase(cubeName))
+        {   // If the sys.classpath cube is changed, then the entire class loader must be dropped.  It will be lazily rebuilt.
+            clearCache(appId)
+        }
+        clearCache(appId, [cubeName])
+        return result
     }
 
     NCube loadCubeById(long id, Map options = null)
@@ -501,6 +508,11 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         return ncube
     }
 
+    /**
+     * Called from Tests to create NCubes from resource (.json) files.  Also could be called from a Java client
+     * that is running with 'ncube.allow.mutable' true.
+     * @param ncube NCube to create.
+     */
     void createCube(NCube ncube)
     {
         verifyAllowMutable('createCube')
@@ -509,9 +521,13 @@ class NCubeRuntime implements NCubeMutableClient, NCubeRuntimeClient, NCubeTestC
         prepareCube(ncube)
     }
 
-    void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    NCube createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
-        throw new IllegalStateException('This should never be called. Call createCube(NCube) instead.')
+        verifyAllowMutable('createCube')
+        NCube ncube = (NCube)bean.call(beanName, 'createCube', [appId, cubeName, cubeBytes])
+        ncube.removeMetaProperty(NCube.METAPROPERTY_TEST_DATA)
+        prepareCube(ncube)
+        return ncube
     }
 
     Boolean duplicate(ApplicationID oldAppId, ApplicationID newAppId, String oldName, String newName)

@@ -73,11 +73,11 @@
 
     <properties>
         <version.json-io>4.11.0</version.json-io>
-        <version.java-util>1.37.0</version.java-util>
+        <version.java-util>1.38.0</version.java-util>
         <version.json-command-servlet>1.8.3</version.json-command-servlet>
         <version.guava>28.1-jre</version.guava>
         <version.httpclient>4.5.10</version.httpclient>
-        <version.spring>5.1.10.RELEASE</version.spring>
+        <version.spring>5.2.1.RELEASE</version.spring>
         <version.mysql.connector.java>8.0.17</version.mysql.connector.java>
         <version.hsqldb>2.5.0</version.hsqldb>
         <version.apache.ivy>2.4.0</version.apache.ivy>

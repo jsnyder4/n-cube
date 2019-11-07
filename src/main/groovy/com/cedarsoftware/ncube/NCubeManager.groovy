@@ -249,13 +249,14 @@ class NCubeManager implements NCubeMutableClient, NCubeTestServer
     }
 
     @Transactional
-    void createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
+    NCube createCube(ApplicationID appId, String cubeName, byte[] cubeBytes)
     {
         NCube ncube = NCube.createCubeFromBytes(cubeBytes)
         ncube.applicationID = appId
         ncube.name = cubeName
         createPermissionsCubesIfNewAppId(ncube.applicationID)
         persister.createCube(ncube, getUserId())
+        return ncube
     }
 
     /**
