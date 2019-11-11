@@ -6,7 +6,7 @@ import com.cedarsoftware.ncube.exception.RuleJump
 import com.cedarsoftware.ncube.exception.RuleStop
 import com.cedarsoftware.util.CaseInsensitiveMap
 
-import static com.cedarsoftware.ncube.NCubeAppContext.ncubeRuntime
+import static com.cedarsoftware.ncube.NCubeAppContext.getNcubeClient
 import static com.cedarsoftware.util.IOUtilities.close
 import static com.cedarsoftware.util.IOUtilities.inputStreamToBytes
 import static com.cedarsoftware.util.StringUtilities.createUTF8String
@@ -18,7 +18,7 @@ NCube getCube(String name = ncube.name, boolean quiet = false)
     {
         return ncube
     }
-    NCube cube = ncubeRuntime.getCube(ncube.applicationID, name)
+    NCube cube = ncubeClient.getCube(ncube.applicationID, name)
     if (cube == null && !quiet)
     {
         throw new IllegalArgumentException("getCube() in templated cell, n-cube: ${name} not found.")
@@ -55,7 +55,7 @@ def at(Map coord, NCube cube, def defaultValue = null)
 
 def at(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
-    NCube target = ncubeRuntime.getCube(appId, cubeName)
+    NCube target = ncubeClient.getCube(appId, cubeName)
     if (target == null)
     {
         throw new IllegalArgumentException("at() within template cell attempted, n-cube: ${name} not found, app: ${appId}.")
@@ -76,7 +76,7 @@ def go(Map coord, NCube cube, def defaultValue = null)
 
 def go(Map coord, String cubeName, def defaultValue, ApplicationID appId)
 {
-    NCube target = ncubeRuntime.getCube(appId, cubeName)
+    NCube target = ncubeClient.getCube(appId, cubeName)
     if (target == null)
     {
         throw new IllegalArgumentException("go() within template cell attempted, n-cube: ${name} not found, app: ${appId}.")
@@ -93,7 +93,7 @@ def use(Map altInput, String cubeName = ncube.name, def defaultValue = null)
 
 def use(Map altInput, String cubeName, def defaultValue, ApplicationID appId)
 {
-    NCube target = ncubeRuntime.getCube(appId, cubeName)
+    NCube target = ncubeClient.getCube(appId, cubeName)
     if (target == null)
     {
         throw new IllegalArgumentException("use() within template cell attempted, n-cube: ${cubeName} not found, app: ${appId}")
@@ -109,7 +109,7 @@ Map mapReduce(String colAxisName, Closure where = { true }, Map options = [:], S
     if (cubeName)
     {
         appId = appId ?: applicationID
-        target = ncubeRuntime.getCube(appId, cubeName)
+        target = ncubeClient.getCube(appId, cubeName)
         if (target == null)
         {
             throw new IllegalArgumentException("mapReduce() attempted within template cell, but n-cube: ${cubeName} not found in app: ${appId}")

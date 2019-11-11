@@ -437,6 +437,7 @@ class NCubeController implements NCubeConstants
 
     Object[] getAppVersions(String app, String status)
     {
+        ApplicationID.validateApp(app)
         Object[] vers = getVersions(app)
         if (ArrayUtilities.isEmpty(vers))
         {
@@ -459,6 +460,7 @@ class NCubeController implements NCubeConstants
 
     Object[] getVersions(String app)
     {
+        ApplicationID.validateApp(app)
         Object[] versions = mutableClient.getVersions(app)
         return versions
     }
@@ -1895,6 +1897,7 @@ class NCubeController implements NCubeConstants
 
     private String getTenant()
     {
+        // TODO: Should be based on authentication
         return ApplicationID.DEFAULT_TENANT
     }
 

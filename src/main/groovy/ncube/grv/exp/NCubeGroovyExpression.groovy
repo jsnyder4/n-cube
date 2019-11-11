@@ -1,6 +1,5 @@
 package ncube.grv.exp
 
-
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.Axis
 import com.cedarsoftware.ncube.Column
@@ -476,6 +475,7 @@ class NCubeGroovyExpression
         return NCubeAppContext.ncubeRuntime
     }
 
+    @Deprecated
     NCubeMutableClient getMutableClient()
     {
         return NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeMutableClient

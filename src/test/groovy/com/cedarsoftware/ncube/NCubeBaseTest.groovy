@@ -1,7 +1,6 @@
 package com.cedarsoftware.ncube
 
 import com.cedarsoftware.config.NCubeConfiguration
-import com.cedarsoftware.controller.NCubeController
 import groovy.transform.CompileStatic
 import org.junit.After
 import org.junit.Ignore
@@ -59,16 +58,6 @@ class NCubeBaseTest implements NCubeConstants
     static NCubeTestClient getTestClient()
     {
         return NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeTestClient
-    }
-
-    static NCubeTestServer getTestServer()
-    {
-        return NCubeAppContext.getBean(MANAGER_BEAN) as NCubeTestServer
-    }
-
-    static NCubeController getNcubeController()
-    {
-        return NCubeAppContext.getBean(CONTROLLER_BEAN) as NCubeController
     }
 
     /**
