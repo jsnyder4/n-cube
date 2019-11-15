@@ -4,9 +4,7 @@ import groovy.transform.CompileStatic
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 
-import static com.cedarsoftware.ncube.NCubeConstants.MANAGER_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.RUNTIME_BEAN
-import static com.cedarsoftware.ncube.NCubeConstants.NCUBE_CLIENT_BEAN
+import static com.cedarsoftware.ncube.NCubeConstants.*
 
 /**
  * @author John DeRegnaucourt (jdereg@gmail.com)
@@ -36,11 +34,6 @@ class NCubeAppContext implements ApplicationContextAware
     static Object getBean(String beanName)
     {
         return ctx.getBean(beanName)
-    }
-
-    static boolean containsBean(String beanName)
-    {
-        return ctx.containsBean(beanName)
     }
 
     static NCubeClient getNcubeClient()

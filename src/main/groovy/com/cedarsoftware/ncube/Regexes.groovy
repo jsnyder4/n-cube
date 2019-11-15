@@ -28,10 +28,10 @@ import static com.cedarsoftware.ncube.ReferenceAxisLoader.REF_APP
 @CompileStatic
 interface Regexes
 {
-    String invalidNames = "(?!\\b(?:Author|Autowired|Basic|Column|Configuration|Controller|ControllerClass|" +
+    String invalidNames = "(?!\\b(?:Author|Autowired|Basic|Column|Configuration|Component|Controller|ControllerClass|" +
             "ControllerMethod|DiscriminatorValue|Documented|Entity|Enumerated|IdClass|InitBinder|Interface|" +
-            "JoinColumns|JoinColumn|Overrride|ModelAttribute|PackageScope|PreAuthorize|RequestMapping|" +
-            "RequestParam|Resource|Retention|SessionAttributes|SmartCacheCmd|SuppressFBWarnings|SuppressWarnings|" +
+            "JoinColumns|JoinColumn|Overrride|ModelAttribute|PackageScope|PreAuthorize|Repository|RequestMapping|" +
+            "RequestParam|Resource|Retention|Service|SessionAttributes|SmartCacheCmd|SuppressFBWarnings|SuppressWarnings|" +
             "Table|Target|Temporal|XmlAnyElement|XStreamAlias)\\b.*)"
     String validNameChars = NCube.validCubeNameChars
     String bracketMatch = '\\s*\\[.*?:.*?\\]'

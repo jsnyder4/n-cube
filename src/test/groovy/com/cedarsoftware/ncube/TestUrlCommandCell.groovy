@@ -168,7 +168,7 @@ class TestUrlCommandCell extends NCubeBaseTest
     @Test
     void testProxyFetchSocketTimeout()
     {
-        UrlCommandCell cell = new StringUrlCmd('http://www.google.com', false)
+        UrlCommandCell cell = new StringUrlCmd('http://json.org', false)
 
         NCube ncube = mock(NCube.class)
         HttpServletResponse response = mock HttpServletResponse.class
@@ -184,7 +184,7 @@ class TestUrlCommandCell extends NCubeBaseTest
         Map input = [(CdnRouter.HTTP_RESPONSE):response, (CdnRouter.HTTP_REQUEST):request]
         args.input = input
         cell.proxyFetch args
-        verify(response, times(1)).sendError(HttpServletResponse.SC_NOT_FOUND, 'File not found: http://www.google.com')
+        verify(response, times(1)).sendError(HttpServletResponse.SC_NOT_FOUND, 'File not found: http://json.org')
     }
 
     @Test

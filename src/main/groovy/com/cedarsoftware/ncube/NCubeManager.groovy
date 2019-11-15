@@ -12,6 +12,7 @@ import com.cedarsoftware.util.io.JsonReader
 import com.cedarsoftware.util.io.JsonWriter
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.jdbc.datasource.DataSourceUtils
@@ -62,6 +63,8 @@ import static java.lang.Math.abs
 @CompileStatic
 class NCubeManager implements NCubeMutableClient, NCubeTestServer
 {
+    @Autowired
+    private DataSource dataSource
     // Maintain cache of 'wildcard' patterns to Compiled Pattern instance
     private final ConcurrentMap<String, Pattern> wildcards = new ConcurrentHashMap<>()
     private NCubePersister nCubePersister
@@ -2603,10 +2606,10 @@ target axis: ${transformApp} / ${transformVersion} / ${transformCubeName}, user:
         }
     }
 
-    private static Connection getThreadBoundConnection()
+    private Connection getThreadBoundConnection()
     {   // This looks like it would get a new Connection, however, if you read the JavaDoc on this API, you will
         // see it returns the thread-bound transaction when using DataSourceTransactionManager.
-        return DataSourceUtils.getConnection(NCubeAppContext.getBean(DATA_SOURCE_BEAN) as DataSource)
+        return DataSourceUtils.getConnection(dataSource)
     }
 
     private Map<String, Object> attemptMergePullRequest(String prId)

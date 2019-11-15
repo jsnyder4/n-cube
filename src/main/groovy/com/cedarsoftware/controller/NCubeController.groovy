@@ -9,7 +9,6 @@ import com.cedarsoftware.ncube.CellInfo
 import com.cedarsoftware.ncube.Column
 import com.cedarsoftware.ncube.Delta
 import com.cedarsoftware.ncube.NCube
-import com.cedarsoftware.ncube.NCubeAppContext
 import com.cedarsoftware.ncube.NCubeConstants
 import com.cedarsoftware.ncube.NCubeInfoDto
 import com.cedarsoftware.ncube.NCubeManager
@@ -41,6 +40,7 @@ import javax.servlet.http.HttpServletRequest
 import java.lang.management.ManagementFactory
 import java.util.regex.Pattern
 
+import static com.cedarsoftware.ncube.NCubeAppContext.testServer
 import static com.cedarsoftware.ncube.ReferenceAxisLoader.*
 import static com.cedarsoftware.util.Converter.*
 import static com.cedarsoftware.util.StringUtilities.isEmpty
@@ -71,6 +71,9 @@ class NCubeController implements NCubeConstants
     @Autowired
     private InfoEndpoint infoEndpoint
 
+    @Autowired
+    NCubeManager ncubeManager   // optional (on runtime-server will be null, on combined-server and storage-server will be valid)
+    
     @Value('${server.tomcat.max-connections:1000}') int tomcatMaxConnections
     @Value('${server.tomcat.max-threads:200}') int tomcatMaxThreads
 
@@ -115,10 +118,9 @@ class NCubeController implements NCubeConstants
             user = System.getProperty('user.name')
         }
 
-        if (NCubeAppContext.containsBean(MANAGER_BEAN))
+        if (ncubeManager)
         {
-            NCubeManager manager = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeManager
-            manager.userId = user
+            ncubeManager.userId = user
         }
         return user
     }
@@ -1577,13 +1579,13 @@ class NCubeController implements NCubeConstants
     @SuppressWarnings("GroovyUnusedDeclaration")
     void clearTestDatabase()
     {
-        NCubeAppContext.testServer.clearTestDatabase()
+        testServer.clearTestDatabase()
     }
 
     @SuppressWarnings("GroovyUnusedDeclaration")
     void clearPermCache()
     {
-        NCubeAppContext.testServer.clearPermCache()
+        testServer.clearPermCache()
     }
 
     @SuppressWarnings("GroovyUnusedDeclaration")

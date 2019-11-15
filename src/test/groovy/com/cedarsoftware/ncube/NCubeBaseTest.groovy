@@ -36,28 +36,46 @@ import static com.cedarsoftware.util.StringUtilities.hasContent
 @ContextConfiguration(classes = [NCubeApplication, NCubeConfiguration])
 @TestPropertySource(properties = ['ncube.allow.mutable.methods=true', 'ncube.accepted.domains='])
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@ActiveProfiles(profiles = ['ncube-client'])  // requires server running
-@ActiveProfiles(profiles = ['combined-server','test-database'])
+@ActiveProfiles(profiles = ['ncube-client'])  // requires server running
+//@ActiveProfiles(profiles = ['combined-server','test-database'])
 @Ignore
 class NCubeBaseTest implements NCubeConstants
 {
     static String baseRemoteUrl
-    
+    private static NCubeTestClient testClient = null
+    private static NCubeMutableClient mutableClient = null
+
     @After
     void teardown()
     {
-        testClient.clearCache()
+        getTestClient().clearCache()
     }
     
     static NCubeMutableClient getMutableClient()
     {
-        String beanName = NCubeAppContext.containsBean(RUNTIME_BEAN) ? RUNTIME_BEAN : MANAGER_BEAN
-        return NCubeAppContext.getBean(beanName) as NCubeMutableClient
+        if (mutableClient)
+        {
+            return mutableClient
+        }
+
+        try
+        {
+            mutableClient = NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeMutableClient
+        }
+        catch (Exception ignored)
+        {
+            mutableClient = NCubeAppContext.getBean(MANAGER_BEAN) as NCubeMutableClient
+        }
+        return mutableClient
     }
 
     static NCubeTestClient getTestClient()
     {
-        return NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeTestClient
+        if (testClient)
+        {
+            return testClient
+        }
+        return testClient = NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeTestClient
     }
 
     /**

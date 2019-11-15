@@ -47,6 +47,7 @@ class NCubeGroovyExpression
     public Map input
     public Map output
     public NCube ncube
+    private static NCubeMutableClient mutableClient = null
 
     /**
      * Fetch the named n-cube from the NCubeRuntime.  It looks at the same
@@ -475,10 +476,14 @@ class NCubeGroovyExpression
         return NCubeAppContext.ncubeRuntime
     }
 
-    @Deprecated
     NCubeMutableClient getMutableClient()
     {
-        return NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeMutableClient
+        if (mutableClient)
+        {
+            return mutableClient
+        }
+        mutableClient = NCubeAppContext.getBean(RUNTIME_BEAN) as NCubeMutableClient
+        return mutableClient
     }
 
     /**
