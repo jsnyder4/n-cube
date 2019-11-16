@@ -7,12 +7,12 @@
   * Eliminated out-dated beans.xml spring configuration by employing `@Configuration` [NCubeConfiguration], `@Transactional`, and only a few `@AutoWire` annotations.
   * Eliminated all uses of `NCubeAppContext.getBean()` within non-test code.
   * Eliminated `NCubeAppContext.containsBean()`
-  * Updated to consume spring boot 2.2.1  
+  * Updated to consume `Spring boot 2.2.1.RELEASE`  
 * 4.5.1
   * Spring Environment Property `ncube.track.bindings` added.  If `true`, all coordinate bindings to a cell will be added to output map (existing behavior).  If `false`, these bindings are not written.  Defaults to `true`.
   * Using groovy-all.jar 2.4.17.
-  * Updated to spring boot 2.2.0
-  * Updated to tomcat 9.0.27 (brought in by spring boot 2.2.0)
+  * Updated to `Spring Boot 2.2.0.RELEASE`
+  * Updated to `tomcat 9.0.27` (brought in by spring boot 2.2.0)
 * 4.5.0
   * Bug fix: When using `at()`, if the destination cell changed values on the input `Map`, then those changes were reflected on the input `Map` upon return.  Going forward, all calls to `at()`, `go()`, and `use()` all protect input from being modified by the target cell (unpon return) - no side effects to input `Map` keys or values.  Keep in mind, that although the value associated to a key cannot be changed, fields on a structured value-side object could be changed.
   * Bug fix: When compile Groovy cells, the compilation is synchronized on `L2CacheKey` - meaning that all compilation is in parallel except of the exact same cell (SHA-1 of source or SHA-1 of URL).
