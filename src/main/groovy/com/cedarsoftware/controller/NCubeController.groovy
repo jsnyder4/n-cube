@@ -71,7 +71,7 @@ class NCubeController implements NCubeConstants
     @Autowired
     private InfoEndpoint infoEndpoint
 
-    @Autowired
+    @Autowired(required = false)
     NCubeManager ncubeManager   // optional (on runtime-server will be null, on combined-server and storage-server will be valid)
     
     @Value('${server.tomcat.max-connections:1000}') int tomcatMaxConnections
