@@ -1,4 +1,13 @@
 ### Revision History
+* 4.5.2
+  * Reference axis transforms provide more detailed error messages for `addaxis` type when the given appId, n-cube name, or axis name is not found.
+  * Using `@Transactional` to manage transactions, no longer using a beans.xml type specification for database transaction boundaries.
+  * ApplicationID constructor that takes a string specification (e.g. `tenant/app/version/branch/release`) now performs detailed validation on passed in string.
+  * Logging is now exclusively done via Spring's `@Slf4j` throughout entire code base.
+  * Eliminated out-dated beans.xml spring configuration by employing `@Configuration` [NCubeConfiguration], `@Transactional`, and only a few `@AutoWire` annotations.
+  * Eliminated all uses of `NCubeAppContext.getBean()` within non-test code.
+  * Eliminated `NCubeAppContext.containsBean()`
+  * Updated to consume spring boot 2.2.1  
 * 4.5.1
   * Spring Environment Property `ncube.track.bindings` added.  If `true`, all coordinate bindings to a cell will be added to output map (existing behavior).  If `false`, these bindings are not written.  Defaults to `true`.
   * Using groovy-all.jar 2.4.17.
