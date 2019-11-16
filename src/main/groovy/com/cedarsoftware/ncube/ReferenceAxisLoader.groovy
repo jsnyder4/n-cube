@@ -181,6 +181,7 @@ ${getTransformInfo(axis)}. Transform type 'add' only supports adding one column 
                     Comparable newValue = Axis.promoteValue(axis.valueType, values[0])
                     columns.add(new Column(newValue, Integer.MAX_VALUE - (column.value as Long)))
                     break
+
                 case 'remove':
                     values.each { String val ->
                         Comparable newValue = Axis.promoteValue(axis.valueType, val)
@@ -188,6 +189,7 @@ ${getTransformInfo(axis)}. Transform type 'add' only supports adding one column 
                         columns.remove(columnToRemove)
                     }
                     break
+
                 case 'subset':
                     Set<Column> columnsToKeep = new LinkedHashSet<>()
                     columns.each { Column col ->
@@ -203,6 +205,7 @@ ${getTransformInfo(axis)}. Transform type 'add' only supports adding one column 
                     }
                     columns = columnsToKeep as List
                     break
+
                 case 'addaxis':
                     if (values.size() != 4)
                     {
@@ -210,11 +213,34 @@ ${getTransformInfo(axis)}. Transform type 'add' only supports adding one column 
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
 ${getTransformInfo(axis)}. Transform type addAxis must have a value with format 'app name, version, cube name, axis name' in transform id: ${column.value} found: ${value}.""")
                     }
-                    ApplicationID appId = new ApplicationID(transformCube.applicationID.tenant, values[0], values[1], ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)
+                    ApplicationID appId
+                    try
+                    {
+                        appId = new ApplicationID(transformCube.applicationID.tenant, values[0], values[1], ReleaseStatus.RELEASE.name(), ApplicationID.HEAD)
+                    }
+                    catch (Exception e)
+                    {
+                        throw new IllegalStateException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type addAxis must use a valid version and app name. Invalid version: ${values[1]} or app name: ${values[0]} found.""", e)
+                    }
                     NCube ncube = ncubeClient.getCube(appId, values[2])
+                    if (ncube == null)
+                    {
+                        throw new IllegalStateException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type addAxis must reference an existing ncube.  Could not find cube: ${values[2]}, appId: {$appId}""")
+                    }
                     Axis cubeAxis = ncube.getAxis(values[3])
+                    if (cubeAxis == null)
+                    {
+                        throw new IllegalStateException("""${getFailMessage(axis.name)} \
+It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
+${getTransformInfo(axis)}. Transform type addAxis could not find axis: ${values[3]}""")
+                    }
                     columns.addAll(cubeAxis.columnsWithoutDefault)
                     break
+                
                 default:
                     throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \

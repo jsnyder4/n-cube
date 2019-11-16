@@ -104,6 +104,54 @@ class TestTransforms extends NCubeCleanupBaseTest
     }
 
     @Test
+    void testAddAxisBadReference()
+    {
+        createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, ['CA', 'WA'], 'Reference2')
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addAxis', value: 'Library, 1.0.1, Reference2, reference'] as Map<String, Object>]
+        try
+        {
+            setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
+            fail('show not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'not', 'find', '1.0.1')
+        }
+    }
+
+    @Test
+    void testAddAxisBadReference2()
+    {
+        createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, ['CA', 'WA'], 'Reference2')
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addAxis', value: 'Library, 1.0.0, Reference2, reference-x'] as Map<String, Object>]
+        try
+        {
+            setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
+            fail('show not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, 'reference-x')
+        }
+    }
+
+    @Test
+    void testAddAxisBadReference3()
+    {
+        createLibraryCube(AxisType.DISCRETE, AxisValueType.STRING, ['CA', 'WA'], 'Reference2')
+        List<Map<String, Object>> transformSpec = [[transform: 1, type: 'addAxis', value: 'Library, 1.0-0, Reference2, reference'] as Map<String, Object>]
+        try
+        {
+            setupDatabase(AxisType.DISCRETE, AxisValueType.STRING, standardStates, transformSpec)
+            fail('show not make it here')
+        }
+        catch (Exception e)
+        {
+            assertContainsIgnoreCase(e.message, '1.0-0')
+        }
+    }
+
+    @Test
     void testMultipleTransforms()
     {
         List<Map<String, Object>> transformSpec = [

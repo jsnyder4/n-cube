@@ -1255,7 +1255,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         NCube cube = createCube()
         List<NCubeInfoDto> his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[])his.toArray(new NCubeInfoDto[0])
+        NCubeInfoDto[] empty = new NCubeInfoDto[0]
+        NCubeInfoDto[] history = (NCubeInfoDto[])his.toArray(empty)
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
@@ -1267,7 +1268,7 @@ class TestNCubeManager extends NCubeCleanupBaseTest
 
         mutableClient.updateCube(cube)
         his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        history = (NCubeInfoDto[])his.toArray(new NCubeInfoDto[0])
+        history = (NCubeInfoDto[])his.toArray(empty)
         assertEquals(2, history.length)
         assert history[1].name == 'test.Age-Gender'
         assert history[0].revision == '1'
@@ -1290,7 +1291,8 @@ class TestNCubeManager extends NCubeCleanupBaseTest
     {
         NCube cube = createCube()
         List<NCubeInfoDto> his = mutableClient.getRevisionHistory(defaultSnapshotApp, cube.name)
-        NCubeInfoDto[] history = (NCubeInfoDto[]) his.toArray(new NCubeInfoDto[0])
+        NCubeInfoDto[] empty = new NCubeInfoDto[0]
+        NCubeInfoDto[] history = (NCubeInfoDto[])his.toArray(empty)
         assertEquals(1, history.length)
         assert history[0].name == 'test.Age-Gender'
         assert history[0].revision == '0'
