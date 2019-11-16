@@ -7,7 +7,8 @@
   * Eliminated out-dated beans.xml spring configuration by employing `@Configuration` [NCubeConfiguration], `@Transactional`, and only a few `@AutoWire` annotations.
   * Eliminated all uses of `NCubeAppContext.getBean()` within non-test code.
   * Eliminated `NCubeAppContext.containsBean()`
-  * Updated to consume `Spring boot 2.2.1.RELEASE`  
+  * Updated to consume `Spring boot 2.2.1.RELEASE`
+  * Updated to consume `json-io 4.11.1`  
 * 4.5.1
   * Spring Environment Property `ncube.track.bindings` added.  If `true`, all coordinate bindings to a cell will be added to output map (existing behavior).  If `false`, these bindings are not written.  Defaults to `true`.
   * Using groovy-all.jar 2.4.17.
