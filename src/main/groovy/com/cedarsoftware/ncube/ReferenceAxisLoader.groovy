@@ -1,9 +1,9 @@
 package com.cedarsoftware.ncube
 
-import com.cedarsoftware.util.CaseInsensitiveMap
 import com.google.common.base.Splitter
 import groovy.transform.CompileStatic
 
+import static com.cedarsoftware.ncube.NCubeAppContext.ncubeClient
 import static com.cedarsoftware.util.StringUtilities.isEmpty
 
 /**
@@ -36,7 +36,6 @@ import static com.cedarsoftware.util.StringUtilities.isEmpty
 @CompileStatic
 class ReferenceAxisLoader implements Axis.AxisRefProvider
 {
-    private static NCubeClient ncubeClient
     public static final String REF_TENANT = 'referenceTenant'
     public static final String REF_APP = 'referenceApp'
     public static final String REF_VERSION = 'referenceVersion'
@@ -58,7 +57,7 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
     /**
      * @param containingCubeName String name of cube that holds the 'pointer' (referring) axis
      * @param sourceAxisName String name of the referring axis
-     * @param refAxisArgs Map containing all the key-value pairs to describe the referenced n-cube + axis
+     * @param args Map containing all the key-value pairs to describe the referenced n-cube + axis
      * and an optional reference to a transformation cube.<br>
      * required keys: sourceTenant, sourceApp, sourceVersion, sourceStatus, sourceBranch, referenceCubeName, referenceAxisName
      * optional keys (transformer): transformApp, transformVersion, transformStatus, transformBranch, transformCubeName
@@ -68,16 +67,10 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         cubeName = containingCubeName
         axisName = sourceAxisName
         this.args = args
-        ncubeClient = NCubeAppContext.ncubeClient
     }
 
     /**
      * Axis calls this method to load itself from this AxisRefProvider.
-     * Keys that are added to input for the transformer to use:
-     *  input.refCube = refCube
-     *  input.refAxis = refAxis
-     *  input.columns = refAxis.columnsWithoutDefault
-     *  input.referencingAxis = axis
      * @param axis Axis to 'fill-up' from the reference and 'transform' from the optional transformer.
      */
     void load(Axis axis)
@@ -97,27 +90,21 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 
         Axis refAxis = getReferencedAxis(refCube, args[REF_AXIS_NAME] as String, axis)
 
-        Map<String, Object> input = new CaseInsensitiveMap<>()
         // Allow the transformer access to the referenced n-cube (from which they can get ApplicationID and another reference axis for combining)
-        input.refCube = refCube
-        input.refAxis = refAxis
-        input.columns = refAxis.columnsWithoutDefault
-        input.referencingAxis = axis
-        Map<String, Object> output = new CaseInsensitiveMap<>()
-
         axis.name = axisName
         axis.type = refAxis.type
         axis.valueType = refAxis.valueType
         axis.fireAll = refAxis.fireAll
+        List<Column> columns
 
         if (transformCube != null)
         {   // Allow this cube to manipulate the passed in Axis.
             ensureTransformCubeIsCorrect(transformCube, axis)
-            transform(transformCube, input, output, axis)
+            columns = transform(transformCube, refAxis.columnsWithoutDefault, axis)
         }
         else
         {
-            output.columns = input.columns
+            columns = refAxis.columnsWithoutDefault
         }
 
         // Bring over referenced axis meta properties
@@ -130,25 +117,14 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
         }
 
         // Bring over columns
-        List<Column> columns = output.columns as List<Column>
         for (Column column : columns)
         {
-            Column colAdded = axis.addColumn(column)
-
-            // Bring over referenced column meta properties
-            for (Map.Entry<String, Object> entry : column.metaProperties.entrySet())
-            {
-                if (colAdded.getMetaProperty(entry.key) == null)
-                {   // only override properties not already set.
-                    colAdded.setMetaProperty(entry.key, entry.value)
-                }
-            }
+            axis.addColumn(column)
         }
     }
 
-    private void transform(NCube transformCube, Map<String, Object> input, Map<String, Object> output, Axis axis)
+    private List<Column> transform(NCube transformCube, List<Column> columns, Axis axis)
     {
-        List<Column> columns = input.columns as List<Column>
         transformCube.getAxis('transform').columnsWithoutDefault.each { Column column ->
             def typeCell = transformCube.getCellNoExecute([transform: column.value, property: 'type'])
             if (!(typeCell instanceof String) || isEmpty(typeCell as String))
@@ -157,18 +133,20 @@ class ReferenceAxisLoader implements Axis.AxisRefProvider
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
 ${getTransformInfo(axis)}. Please enter a String for type in transform id: ${column.value}.""")
             }
-            String type = (typeCell as String).toLowerCase()
 
+            String type = (typeCell as String).toLowerCase()
             def valueCell = transformCube.getCellNoExecute([transform: column.value, property: 'value'])
+            
             if (!(valueCell instanceof String) || isEmpty(valueCell as String))
             {
                 throw new IllegalArgumentException("""${getFailMessage(axis.name)} \
 It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
 ${getTransformInfo(axis)}. Please enter a String for value in transform id: ${column.value}.""")
             }
+            
             String value = valueCell as String
-
             List<String> values = Splitter.on(',').trimResults().splitToList(value)
+            
             switch (type)
             {
                 case 'add':
@@ -247,7 +225,7 @@ It referenced axis: ${getReferencedAxisInfo(axis)} using transform n-cube: \
 ${getTransformInfo(axis)}. Transform type must be one of [add, remove, subset, addAxis] in transform id: ${column.value} found: ${type}.""")
             }
         }
-        output.columns = columns
+        return columns
     }
 
     private boolean ensureTransformCubeIsCorrect(NCube transformCube, Axis axis)

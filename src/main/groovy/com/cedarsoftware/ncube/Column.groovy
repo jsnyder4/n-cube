@@ -48,7 +48,7 @@ class Column implements Comparable<Comparable>
     protected Map<String, Object> metaProps = null
     private static ConcurrentMap primitives = new ConcurrentHashMap()
 
-    Column(Comparable value, long id = 0L, Map metaProps = null, int order = -1)
+    Column(Comparable value, long id = 0L, Map metaP = null, int order = -1)
     {
         this.value = internValue(value)
         this.id = id
@@ -62,9 +62,9 @@ class Column implements Comparable<Comparable>
             displayOrder = order
         }
 
-        if (metaProps)
+        if (metaP)
         {
-            addMetaProperties(metaProps)
+            addMetaProperties(metaP)
         }
     }
 
@@ -125,7 +125,12 @@ class Column implements Comparable<Comparable>
         {
             return null
         }
-        return metaProps.remove(key)
+        Object prev = metaProps.remove(key)
+        if (metaProps.isEmpty())
+        {
+            metaProps = null
+        }
+        return prev
     }
 
     /**
