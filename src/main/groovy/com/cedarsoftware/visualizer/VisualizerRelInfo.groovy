@@ -99,7 +99,7 @@ class VisualizerRelInfo
 		//reloaded with updated available scope values for the removed scope.
 		else
 		{
-			Set<String> scopeKeys = new CaseInsensitiveSet(availableTargetScope.keySet())
+			Set<String> scopeKeys = (Set<String>)new CaseInsensitiveSet(availableTargetScope.keySet())
 			scopeKeys.each {String scopeKey ->
 				if (!isDerivedScopeKey(visInfo, scopeKey))
 				{
@@ -118,7 +118,7 @@ class VisualizerRelInfo
 		cubeLoaded = true
 		if (showCellValues)
 		{
-			Map<Set<Long>, Object> cellMap = targetCube.cellMap
+			Map<Set<Long>, Object> cellMap = (Map<Set<Long>, Object>) targetCube.cellMap
 			cellMap.each { Set<Long> ids, Object noExecuteCell ->
 				Map<String, Object> coordinate = availableTargetScope as CaseInsensitiveMap ?: new CaseInsensitiveMap()
 				coordinate.putAll(targetCube.getCoordinateFromIds(ids))

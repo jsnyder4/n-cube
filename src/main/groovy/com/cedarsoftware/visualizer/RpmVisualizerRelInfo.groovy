@@ -123,7 +123,7 @@ class RpmVisualizerRelInfo extends VisualizerRelInfo implements RpmVisualizerCon
 
 	private void addTraits(StringBuilder sb, String fieldName)
 	{
-		Map<String, Object> traits = targetTraits[fieldName].sort() as Map
+		Map<String, Object> traits = (Map<String, Object>) targetTraits[fieldName].sort()
 		sb.append("<pre><ul>")
 		traits.each { String traitName, Object traitValue ->
 			if (traitValue != null)

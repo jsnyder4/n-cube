@@ -40,10 +40,10 @@ class RpmVisualizerInfo extends VisualizerInfo implements RpmVisualizerConstants
     {
         typesToAddMap = [:]
         NCube typesToAddCube = runtimeClient.getNCubeFromResource(appId, JSON_FILE_PREFIX + TYPES_TO_ADD_CUBE_NAME + JSON_FILE_SUFFIX)
-        Set<String> allTypes = configCube.getCell([(CONFIG_ITEM): CONFIG_ALL_TYPES, (CUBE_TYPE): cubeType]) as Set
+        Set<String> allTypes = configCube.getCell([(CONFIG_ITEM): CONFIG_ALL_TYPES, (CUBE_TYPE): cubeType]) as Set<String>
 
         allTypes.each { String sourceType ->
-            Map<String, Boolean> map = typesToAddCube.getMap([(SOURCE_TYPE): sourceType, (TARGET_TYPE): new LinkedHashSet()]) as Map
+            Map<String, Boolean> map = typesToAddCube.getMap([(SOURCE_TYPE): sourceType, (TARGET_TYPE): new LinkedHashSet()]) as Map<String, Boolean>
             List<String> typesToAdd = map.findAll { String type, Boolean available ->
                 available
             }.keySet() as List

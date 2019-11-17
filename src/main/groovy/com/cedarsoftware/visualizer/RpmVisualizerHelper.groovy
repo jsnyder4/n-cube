@@ -308,23 +308,26 @@ class RpmVisualizerHelper extends VisualizerHelper
 	 * parses the value of the r:extends trait and adds all mixins to the list of classes to process
 	 */
 	private static void processClassMixins(String className, String mixins, LinkedList<String> classesToProcess) {
-		if (classesToProcess==null) {
+		if (classesToProcess == null)
+		{
 			return
         }
 
 		Matcher matcher = PATTERN_CLASS_EXTENDS_TRAIT.matcher(mixins)
         if (isEmpty(mixins) || !matcher.find())
 		{
-			throw new IllegalArgumentException("Invalid mixin format specified for class='" + className + "': mixin='" + mixins + "'")
+			throw new IllegalArgumentException("Invalid mixin format specified for class='${className}': mixin='${mixins}'")
         }
 
 		for (; ;) { // infinite for
 			String mixinName = matcher.group(0)
-            if (!isEmpty(mixinName)) {
-				classesToProcess.push(mixinName.trim())
+            if (!isEmpty(mixinName))
+			{
+				classesToProcess.addFirst(mixinName.trim())
             }
 
-			if (!matcher.find()) { //condition to break, opposite to while
+			if (!matcher.find())
+			{ //condition to break, opposite to while
 				break
 			}
 		}
@@ -623,7 +626,7 @@ class RpmVisualizerHelper extends VisualizerHelper
 						return 1 // 1.1 > 1-1
 
 					default:
-						throw new RuntimeException("invalid item: " + item.getClass())
+						throw new RuntimeException("invalid item: ${item.class.name}")
                 }
 			}
 
@@ -812,44 +815,52 @@ class RpmVisualizerHelper extends VisualizerHelper
 			parseVersion(version)
         }
 
-        final void parseVersion(String version) {
+        final void parseVersion(String version)
+		{
 			this.value = version
-
             items = new ListItem()
-
             version = version.toLowerCase(Locale.ENGLISH)
-
             ListItem list = items
-
-            Stack<Item> stack = new Stack<>()
+            Stack stack = new Stack<>()
             stack.push(list)
-
             boolean isDigit = false
-
             int startIndex = 0
 
-            for (int i = 0; i < version.length(); i++) {
+            for (int i = 0; i < version.length(); i++)
+			{
 				char c = version.charAt(i)
 
-                if (c == '.') {
-					if (i == startIndex) {
+                if (c == '.' as char)
+				{
+					if (i == startIndex)
+					{
 						list.add(IntegerItem.ZERO)
-                    } else {
+                    }
+					else
+					{
 						list.add(parseItem(isDigit, version.substring(startIndex, i)))
                     }
 					startIndex = i + 1
-                } else if (c == '-') {
-					if (i == startIndex) {
+                }
+				else if (c == '-' as char)
+				{
+					if (i == startIndex)
+					{
 						list.add(IntegerItem.ZERO)
-                    } else {
+                    }
+					else
+					{
 						list.add(parseItem(isDigit, version.substring(startIndex, i)))
                     }
 					startIndex = i + 1
 
                     list.add(list = new ListItem())
                     stack.push(list)
-                } else if (Character.isDigit(c)) {
-					if (!isDigit && i > startIndex) {
+                }
+				else if (Character.isDigit(c))
+				{
+					if (!isDigit && i > startIndex)
+					{
 						list.add(new StringItem(version.substring(startIndex, i), true))
                         startIndex = i
 
@@ -858,8 +869,11 @@ class RpmVisualizerHelper extends VisualizerHelper
                     }
 
 					isDigit = true
-                } else {
-					if (isDigit && i > startIndex) {
+                }
+				else
+				{
+					if (isDigit && i > startIndex)
+					{
 						list.add(parseItem(true, version.substring(startIndex, i)))
                         startIndex = i
 
@@ -871,11 +885,13 @@ class RpmVisualizerHelper extends VisualizerHelper
                 }
 			}
 
-			if (version.length() > startIndex) {
+			if (version.length() > startIndex)
+			{
 				list.add(parseItem(isDigit, version.substring(startIndex)))
             }
 
-			while (!stack.empty) {
+			while (!stack.empty)
+			{
 				list = (ListItem) stack.pop()
                 list.normalize()
             }
