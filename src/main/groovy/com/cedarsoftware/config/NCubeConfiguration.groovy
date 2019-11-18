@@ -81,8 +81,6 @@ class NCubeConfiguration
     // Limit size of coordinate displayed in each CommandCell exception list (--> [coordinate])
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
 
-    List<Map<String, String>> engines
-
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
     {   // Clear all compiled classes associated to this n-cube (so ClassLoader may be freed).
