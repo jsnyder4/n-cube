@@ -1,0 +1,24 @@
+ncube:
+  rules:
+    engines:
+      -
+        name: foo
+        tenant: NONE
+        app: DEFAULT_APP
+        version: 999.99.9
+        status: SNAPSHOT
+        branch: TEST
+        rules: app.rules
+        categories: app.rules.categories
+      -
+        name: bar
+        app: DEFAULT_APP
+        version: 999.99.9
+        status: SNAPSHOT
+        branch: SomeBranch
+        rules: app.rules
+      -
+        name: baz
+        app: DEFAULT_APP
+        version: 999.99.9
+        rules: app.rules

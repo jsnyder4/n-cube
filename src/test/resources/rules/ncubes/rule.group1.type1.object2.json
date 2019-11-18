@@ -1,0 +1,44 @@
+{
+  "ncube":"rule.group1.type1.object2",
+  "axes":[
+    {
+      "id":3,
+      "name":"rule",
+      "hasDefault":false,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":3000361744439,
+          "type":"exp",
+          "name":"Rule 2",
+          "value":"true"
+        },
+        {
+          "id":3000366027111,
+          "type":"exp",
+          "name":"Rule 3",
+          "value":"true"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        3000361744439
+      ],
+      "type":"exp",
+      "value":"input.rule.rule2()"
+    },
+    {
+      "id":[
+        3000366027111
+      ],
+      "type":"exp",
+      "value":"input.rule.rule3()"
+    }
+  ]
+}

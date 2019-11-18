@@ -9,6 +9,8 @@ import com.cedarsoftware.ncube.NCubeJdbcPersisterAdapter
 import com.cedarsoftware.ncube.NCubeManager
 import com.cedarsoftware.ncube.NCubePersister
 import com.cedarsoftware.ncube.NCubeRuntime
+import com.cedarsoftware.ncube.rules.RulesConfiguration
+import com.cedarsoftware.ncube.rules.RulesController
 import com.cedarsoftware.ncube.util.CdnClassLoader
 import com.cedarsoftware.ncube.util.GCacheManager
 import com.cedarsoftware.util.HsqlSchemaCreator
@@ -78,7 +80,9 @@ class NCubeConfiguration
     
     // Limit size of coordinate displayed in each CommandCell exception list (--> [coordinate])
     @Value('${ncube.stackEntry.coordinate.value.max:1000}') int stackEntryCoordinateValueMaxSize
-    
+
+    List<Map<String, String>> engines
+
     @Bean(name = 'ncubeRemoval')
     Closure getNcubeRemoval()
     {   // Clear all compiled classes associated to this n-cube (so ClassLoader may be freed).
@@ -146,6 +150,20 @@ class NCubeConfiguration
     NCubeManager getNCubeManager()
     {
         return new NCubeManager(getNCubePersister(), getPermCacheManager())
+    }
+
+    @Bean(name = 'rulesController')
+    @Profile(['ncube-client'])
+    RulesController getRulesController()
+    {
+        return new RulesController(getRulesConfiguration())
+    }
+
+    @Bean(name = 'rulesConfiguration')
+    @Profile(['ncube-client'])
+    RulesConfiguration getRulesConfiguration()
+    {
+        return new RulesConfiguration()
     }
 
     // v========== runtime-server ==========v
