@@ -153,6 +153,35 @@ class TestLongHashSet
     }
 
     @Test
+    void testNotEqualsElements()
+    {
+        LongHashSet set1 = new LongHashSet()
+        set1.add(7L)
+        set1.add(8L)
+        set1.add(9L)
+
+        LongHashSet set2 = new LongHashSet()
+        set2.add(7L)
+        set2.add(8L)
+        set2.add(10L)
+
+        assert set1 != set2
+    }
+
+    @Test
+    void testClear()
+    {
+        LongHashSet set1 = new LongHashSet()
+        set1.add(9L)
+        set1.add(8L)
+        set1.add(7L)
+        assert set1.size() == 3
+        assert set1.first() == 7L
+        set1.clear()
+        assert set1.empty
+    }
+
+    @Test
     void testEmptyStuff()
     {
         LongHashSet set1 = new LongHashSet()

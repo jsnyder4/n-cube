@@ -35,7 +35,14 @@ class LongHashSet implements Set<Long>
 
     LongHashSet(Set<Long> col)
     {
-        addAll(col)
+        long[] items = new long[col.size()]
+        int i = 0
+        for (o in col)
+        {
+            items[i++] = o
+        }
+        Arrays.sort(items)
+        elems = items
     }
 
     int size()
@@ -55,17 +62,7 @@ class LongHashSet implements Set<Long>
             return false
         }
 
-        long[] local = elems
-        int len = local.length
-
-        for (int i=0; i < len; i++)
-        {
-            if (item == local[i])
-            {
-                return true
-            }
-        }
-        return false
+        return Arrays.binarySearch(elems, item as long) >= 0
     }
 
     Iterator iterator()
@@ -137,6 +134,7 @@ class LongHashSet implements Set<Long>
             long[] newElems = new long[origSize + 1]
             System.arraycopy(elems, 0, newElems, 0, origSize)
             newElems[origSize] = o
+            Arrays.sort(newElems)
             elems = newElems
             return size() != origSize
         }
@@ -232,15 +230,30 @@ class LongHashSet implements Set<Long>
         return toArray()
     }
 
-    boolean equals(Object other)
+    boolean equals(def other)
     {
-        Set<Long> that = other as Set<Long>
-        if (that.size() != size() || that.hashCode() != hashCode())
+        if (!(other instanceof Set))
+        {
+            return false
+        }
+        Set that = (Set)other
+        if (that.size() != size())
         {
             return false
         }
 
-        return that.containsAll(this)
+        Iterator i = that.iterator()
+        int pos = 0
+
+        while (i.hasNext())
+        {
+            if (elems[pos++] != i.next())
+            {
+                return false
+            }
+        }
+
+        return true
     }
 
     int hashCode()
