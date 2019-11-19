@@ -43,7 +43,7 @@ Expressions can be a simple as: `input.age > 17`, which would return `true` if t
 
 A cell in an n-cube can reference another cell within the same n-cube, like you might do in Excel.  For example, you may have a formula in Excel like this: `=b25 + b32 * 2`, stored say in `A1`.  The value for `A1` would be computed using the formula stored in `A1`.  N-cube allows these same capabilities, plus more (code / business logic).  A cell could have an `if` statement in it, a `for-loop`, `switch statement`, reference other cells within the same cube, or it can reference cells within different n-cubes.  The referenced cell can then be another formula, reference other cells, and so on.
 
-### Rule Engine
+### Rule Engine ([Developer Guide](README-rules.md))
 When used as a rule engine, at least one axis within the n-cube is marked as as 'Rule' axis type.  In that case, each column is written as a condition (in Groovy).  For example, `input.age < 18`.  When a Rules n-cube is executed, each condition on the Rule axis is evaluated.  If the value is `true` (as how Groovy considers truth: http://www.groovy-lang.org/semantics.html#Groovy-Truth), then the associated cell is executed.  If no conditions are executed, and there is a default column on the rule axis, then the statement associated to the default column is executed.
 
 To kick off the Rule execution, `ncube.getCell(coord, output)` is called. The conditions along the Rule axis are executed linearly, in order. Condition columns can reference values passed in on the input map (using `input.age`, `input.state`, etc.) as well as cells within other cubes.

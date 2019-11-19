@@ -1,0 +1,31 @@
+{
+  "ncube":"rule.group2.type1.object1",
+  "axes":[
+    {
+      "id":3,
+      "name":"rule",
+      "hasDefault":false,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":3000361744439,
+          "type":"exp",
+          "name":"Rule 5",
+          "value":"true"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        3000361744439
+      ],
+      "type":"exp",
+      "value":"Map root = input.rule.root\nroot['rule5'] = true"
+    }
+  ]
+}
