@@ -75,11 +75,11 @@ class CdnRouter
             }
 
             // Peel off mime type and logical file name
-            final String servletPath = request.getServletPath()
+            final String servletPath = request.servletPath
             String[] info = getPathComponents(servletPath)
             if (info == null)
             {
-                String msg = "CdnRouter - Invalid ServletPath request: " + servletPath
+                String msg = "CdnRouter - Invalid ServletPath request: ${servletPath}"
                 sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, msg)
                 return
             }
@@ -89,7 +89,7 @@ class CdnRouter
             // Check for authorization
             if (!provider.isAuthorized(type))
             {
-                String msg = "CdnRouter - Unauthorized access, request: " + request.getRequestURL()
+                String msg = "CdnRouter - Unauthorized access, request: ${request.requestURL}"
                 sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, msg)
                 return
             }
@@ -133,7 +133,7 @@ class CdnRouter
 
             if (msg != null)
             {
-                msg = "CdnRouter - CdnRoutingProvider did not set up '" + msg + "' in the Map coordinate."
+                msg = "CdnRouter - CdnRoutingProvider did not set up '${msg}' in the Map coordinate."
                 sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg)
                 return
             }
@@ -147,7 +147,7 @@ class CdnRouter
             NCube routingCube = ncubeClient.getCube(appId, cubeName)
             if (routingCube == null)
             {
-                throw new IllegalStateException("Could not load routing cube using app: " + appId + ", cube name: " + cubeName)
+                throw new IllegalStateException("Could not load routing cube using app: ${appId}, cube name: ${cubeName}")
             }
             routingCube.getCell(coord)
         }
@@ -157,7 +157,7 @@ class CdnRouter
             // Required, so that error message is not double logged.
             try
             {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "CdnRouter - Error occurred: " + e.message)
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "CdnRouter - Error occurred: ${e.message}")
             }
             catch (Exception ignore)
             { }

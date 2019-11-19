@@ -35,7 +35,8 @@ import static com.cedarsoftware.ncube.SnapshotPolicy.RELEASE_ONLY
 
 @Slf4j
 @Component
-class LocalFileCache {
+class LocalFileCache
+{
     @Value('${ncube.cache.dir:}') String cacheDir
     @Value('${ncube.cache.snapshotPolicy:RELEASE_ONLY}') SnapshotPolicy snapshotPolicy
 

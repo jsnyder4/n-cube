@@ -1605,7 +1605,7 @@ class Axis
 
         if (type == AxisType.DISCRETE)
         {
-            Column colToFind = valueToColumn[promotedValue]
+            Column colToFind = valueToColumn.get(promotedValue)
             return colToFind == null ? defaultCol : colToFind
         }
         else if (type == AxisType.RANGE || type == AxisType.SET)

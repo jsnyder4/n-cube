@@ -208,7 +208,7 @@ class TestAllCellsInBigCube
 
     // Uncomment for memory size testing
     @Test
-    @Ignore
+//    @Ignore
     void testLarge1D()
     {
         long start = System.nanoTime()

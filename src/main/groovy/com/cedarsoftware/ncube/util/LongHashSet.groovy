@@ -27,19 +27,15 @@ import groovy.transform.CompileStatic
 class LongHashSet implements Set<Long>
 {
     private long[] elems = (long[]) null
-    private Integer hash = null
+    private int hash
+    private boolean hashSet = false
 
     LongHashSet()
     { }
 
     LongHashSet(Set<Long> col)
     {
-        elems = new long[col.size()]
-        int i = 0
-        for (o in col)
-        {
-            elems[i++] = o
-        }
+        addAll(col)
     }
 
     int size()
@@ -124,7 +120,7 @@ class LongHashSet implements Set<Long>
 
     boolean add(Long o)
     {
-        hash = null
+        hashSet = false
         if (elems == null)
         {
             elems = new long[1]
@@ -148,7 +144,7 @@ class LongHashSet implements Set<Long>
 
     boolean remove(Object o)
     {
-        hash = null
+        hashSet = false
         if (empty || o == null)
         {
             return false
@@ -183,7 +179,7 @@ class LongHashSet implements Set<Long>
 
     void clear()
     {
-        hash = null
+        hashSet = false
         elems = (long[])null
     }
 
@@ -199,7 +195,7 @@ class LongHashSet implements Set<Long>
 
     boolean retainAll(Collection col)
     {
-        hash = null
+        hashSet = false
         int origSize = size()
         Set<Long> keep = new LinkedHashSet<Long>()
         for (item in col)
@@ -239,7 +235,7 @@ class LongHashSet implements Set<Long>
     boolean equals(Object other)
     {
         Set<Long> that = other as Set<Long>
-        if (that.size() != size())
+        if (that.size() != size() || that.hashCode() != hashCode())
         {
             return false
         }
@@ -249,11 +245,10 @@ class LongHashSet implements Set<Long>
 
     int hashCode()
     {
-        if (hash != null)
+        if (hashSet)
         {
             return hash
         }
-
         // This must be an order insensitive hash
         int h = 0
 
@@ -261,6 +256,8 @@ class LongHashSet implements Set<Long>
         {
             h += i.hashCode()
         }
-        return hash = h
+        hash = h
+        hashSet = true
+        return h
     }
 }

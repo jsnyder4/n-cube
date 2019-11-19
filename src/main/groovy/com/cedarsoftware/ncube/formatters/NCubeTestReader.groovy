@@ -47,7 +47,8 @@ class NCubeTestReader
             String name = (String) item['name']
             Map<String, CellInfo> coord = createCoord((Object[]) item['coord'])
             List<CellInfo> assertions = createAssertions((Object[]) item['assertions'])
-            NCubeTest test = new NCubeTest(name, coord, assertions.toArray(new CellInfo[assertions.size()]))
+            CellInfo[] cellInfos = assertions.toArray(new CellInfo[0]) as CellInfo[]
+            NCubeTest test = new NCubeTest(name, coord, cellInfos)
             list.add(test)
         }
         return list

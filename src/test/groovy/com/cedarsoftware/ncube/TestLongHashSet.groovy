@@ -73,6 +73,7 @@ class TestLongHashSet
 
         set.remove(9)
         assert set.size() == 0
+        assert set.hashCode() == 0
     }
 
     @Test
