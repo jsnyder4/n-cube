@@ -14,7 +14,6 @@ class RulesError
         this.category = category
         this.code = code
         this.message = message
-
     }
 
     String toString()
