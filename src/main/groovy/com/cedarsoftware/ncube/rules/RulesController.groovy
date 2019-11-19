@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube.rules
 import com.cedarsoftware.ncube.ApplicationID
 import com.cedarsoftware.ncube.NCube
 import groovy.transform.CompileStatic
-import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping

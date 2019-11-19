@@ -3,7 +3,6 @@ package com.cedarsoftware.ncube.rules
 import com.cedarsoftware.ncube.ApplicationID
 import groovy.transform.CompileStatic
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Configuration
 
 import javax.annotation.PostConstruct

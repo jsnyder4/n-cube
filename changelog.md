@@ -1,4 +1,7 @@
 ### Revision History
+* 4.6.0
+  * RulesEngine added.  See [Rule Engine Developer Guide.](README-rules.md)
+  * Small reduction in memory used by coordinate keys.
 * 4.5.2
   * Reference axis transforms provide more detailed error messages for `addaxis` type when the given appId, n-cube name, or axis name is not found.
   * Using `@Transactional` to manage transactions, no longer using a beans.xml type specification for database transaction boundaries.

@@ -73,6 +73,7 @@ class TestLongHashSet
 
         set.remove(9)
         assert set.size() == 0
+        assert set.hashCode() == 0
     }
 
     @Test
@@ -152,6 +153,35 @@ class TestLongHashSet
     }
 
     @Test
+    void testNotEqualsElements()
+    {
+        LongHashSet set1 = new LongHashSet()
+        set1.add(7L)
+        set1.add(8L)
+        set1.add(9L)
+
+        LongHashSet set2 = new LongHashSet()
+        set2.add(7L)
+        set2.add(8L)
+        set2.add(10L)
+
+        assert set1 != set2
+    }
+
+    @Test
+    void testClear()
+    {
+        LongHashSet set1 = new LongHashSet()
+        set1.add(9L)
+        set1.add(8L)
+        set1.add(7L)
+        assert set1.size() == 3
+        assert set1.first() == 7L
+        set1.clear()
+        assert set1.empty
+    }
+
+    @Test
     void testEmptyStuff()
     {
         LongHashSet set1 = new LongHashSet()
@@ -202,10 +232,14 @@ class TestLongHashSet
 
         set = new LongHashSet([1, 2, 3, 3, 4, 5] as Set<Long>)
         assert set.size() == 5
+        set.addAll([0, 7, 0, 7] as Set<Long>)
+        assert set.size() == 7
 
         set = new LongHashSet()
-        set.addAll([1, 2, 3, 3, 4, 5] as Set<Long>)
+        set.addAll([1, 2, 3, 3, 4, 5] as List<Long>)
         assert set.size() == 5
+        set.addAll([0, 7, 0, 7] as Set<Long>)
+        assert set.size() == 7
     }
 
     @Test

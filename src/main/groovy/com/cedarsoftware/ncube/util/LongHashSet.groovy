@@ -27,19 +27,22 @@ import groovy.transform.CompileStatic
 class LongHashSet implements Set<Long>
 {
     private long[] elems = (long[]) null
-    private Integer hash = null
+    private int hash
+    private boolean hashSet = false
 
     LongHashSet()
     { }
 
     LongHashSet(Set<Long> col)
     {
-        elems = new long[col.size()]
+        long[] items = new long[col.size()]
         int i = 0
         for (o in col)
         {
-            elems[i++] = o
+            items[i++] = o
         }
+        Arrays.sort(items)
+        elems = items
     }
 
     int size()
@@ -59,17 +62,7 @@ class LongHashSet implements Set<Long>
             return false
         }
 
-        long[] local = elems
-        int len = local.length
-
-        for (int i=0; i < len; i++)
-        {
-            if (item == local[i])
-            {
-                return true
-            }
-        }
-        return false
+        return Arrays.binarySearch(elems, item as long) >= 0
     }
 
     Iterator iterator()
@@ -124,7 +117,7 @@ class LongHashSet implements Set<Long>
 
     boolean add(Long o)
     {
-        hash = null
+        hashSet = false
         if (elems == null)
         {
             elems = new long[1]
@@ -141,6 +134,7 @@ class LongHashSet implements Set<Long>
             long[] newElems = new long[origSize + 1]
             System.arraycopy(elems, 0, newElems, 0, origSize)
             newElems[origSize] = o
+            Arrays.sort(newElems)
             elems = newElems
             return size() != origSize
         }
@@ -148,7 +142,7 @@ class LongHashSet implements Set<Long>
 
     boolean remove(Object o)
     {
-        hash = null
+        hashSet = false
         if (empty || o == null)
         {
             return false
@@ -174,16 +168,31 @@ class LongHashSet implements Set<Long>
     boolean addAll(Collection<? extends Long> col)
     {
         int origSize = size()
-        for (o in col)
+
+        Set<Long> newSet = new HashSet<>()
+        newSet.addAll(col)
+
+        Iterator<Long> i = iterator()
+        while (i.hasNext())
         {
-            add(o)
+            newSet.addAll(i.next())
         }
+
+        long[] items = new long[newSet.size()]
+        int j = 0
+        for (o in newSet)
+        {
+            items[j++] = o
+        }
+        Arrays.sort(items)
+        elems = items
+
         return size() != origSize
     }
 
     void clear()
     {
-        hash = null
+        hashSet = false
         elems = (long[])null
     }
 
@@ -199,7 +208,7 @@ class LongHashSet implements Set<Long>
 
     boolean retainAll(Collection col)
     {
-        hash = null
+        hashSet = false
         int origSize = size()
         Set<Long> keep = new LinkedHashSet<Long>()
         for (item in col)
@@ -236,31 +245,49 @@ class LongHashSet implements Set<Long>
         return toArray()
     }
 
-    boolean equals(Object other)
+    boolean equals(def other)
     {
-        Set<Long> that = other as Set<Long>
+        if (!(other instanceof Set))
+        {
+            return false
+        }
+        Set that = (Set)other
         if (that.size() != size())
         {
             return false
         }
 
-        return that.containsAll(this)
+        Iterator i = that.iterator()
+        int pos = 0
+
+        while (i.hasNext())
+        {
+            if (elems[pos++] != i.next())
+            {
+                return false
+            }
+        }
+
+        return true
     }
 
     int hashCode()
     {
-        if (hash != null)
+        if (hashSet)
         {
             return hash
         }
-
         // This must be an order insensitive hash
         int h = 0
-
-        for (i in elems)
+        long[] local = elems
+        int len = elems.length
+        for (int i=0; i < len; i++)
         {
-            h += i.hashCode()
+            long value = local[i]
+            h += (int)(value ^ (value >>> 32))
         }
-        return hash = h
+        hash = h
+        hashSet = true
+        return h
     }
 }
