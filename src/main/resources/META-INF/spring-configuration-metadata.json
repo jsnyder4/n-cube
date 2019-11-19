@@ -185,6 +185,11 @@
       "type": "java.lang.Boolean",
       "description": "Turn on to include all input bindings per cell hop within an n-cube execution path.",
       "defaultValue": "true"
+    },
+    {
+      "name": "ncube.rules.engines",
+      "type": "java.util.List<Map<String, String>>",
+      "description": "List of rules engines. See README.md for more information."
     }
   ]
 }
