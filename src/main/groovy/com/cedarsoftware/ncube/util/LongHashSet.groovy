@@ -168,10 +168,25 @@ class LongHashSet implements Set<Long>
     boolean addAll(Collection<? extends Long> col)
     {
         int origSize = size()
-        for (o in col)
+
+        Set<Long> newSet = new HashSet<>()
+        newSet.addAll(col)
+
+        Iterator<Long> i = iterator()
+        while (i.hasNext())
         {
-            add(o)
+            newSet.addAll(i.next())
         }
+
+        long[] items = new long[newSet.size()]
+        int j = 0
+        for (o in newSet)
+        {
+            items[j++] = o
+        }
+        Arrays.sort(items)
+        elems = items
+
         return size() != origSize
     }
 
@@ -264,10 +279,12 @@ class LongHashSet implements Set<Long>
         }
         // This must be an order insensitive hash
         int h = 0
-
-        for (i in elems)
+        long[] local = elems
+        int len = elems.length
+        for (int i=0; i < len; i++)
         {
-            h += i.hashCode()
+            long value = local[i]
+            h += (int)(value ^ (value >>> 32))
         }
         hash = h
         hashSet = true

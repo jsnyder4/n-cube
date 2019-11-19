@@ -955,7 +955,7 @@ class NCube<T>
 //                log.info("  coord Map: " + coordinate)
 //            }
 
-            cellValue = cells[colIds]
+            cellValue = cells.get(colIds)
             if (cellValue == null && !cells.containsKey(colIds))
             {   // No cell, look for default
                 cellValue = (T) getColumnDefault(colIds, columnDefaultCache)
@@ -1525,11 +1525,11 @@ class NCube<T>
         RuleInfo ruleInfo
         if (output.containsKey(RULE_EXEC_INFO))
         {   // RULE_EXEC_INFO Map already exists, must be a recursive call.
-            return (RuleInfo) output[RULE_EXEC_INFO]
+            return (RuleInfo) output.get(RULE_EXEC_INFO)
         }
         // RULE_EXEC_INFO Map does not exist, create it.
         ruleInfo = new RuleInfo()
-        output[RULE_EXEC_INFO] = ruleInfo
+        output.put(RULE_EXEC_INFO, ruleInfo)
         return ruleInfo
     }
 
@@ -1991,14 +1991,14 @@ class NCube<T>
             safeCoord = (coordinate == null) ? new CaseInsensitiveMap<>() : new CaseInsensitiveMap<>(coordinate)
         }
 
-        Set<Long> ids = new LongHashSet()
+        Set<Long> ids = new HashSet<>()
         Iterator<Axis> i = axisList.values().iterator()
 
         while (i.hasNext())
         {
             Axis axis = (Axis) i.next()
             String axisName = axis.name
-            Comparable value = (Comparable) safeCoord[axisName]
+            Comparable value = (Comparable) safeCoord.get(axisName)
             Column column = (Column) axis.findColumn(value)
 
             if (column == null || column.default)
@@ -2012,8 +2012,7 @@ class NCube<T>
             }
             ids.add(column.id)
         }
-
-        return ids
+        return new LongHashSet(ids)
     }
 
     /**
@@ -2716,7 +2715,7 @@ class NCube<T>
         {
             return new CaseInsensitiveSet<>()
         }
-        Object value = metaProps[NCubeConstants.REQUIRED_SCOPE]
+        Object value = metaProps.get(NCubeConstants.REQUIRED_SCOPE)
         Collection<String> declaredRequiredScope = (Collection<String>) extractMetaPropertyValue(value, input, output)
         return declaredRequiredScope == null ? new CaseInsensitiveSet<String>() : new CaseInsensitiveSet<>(declaredRequiredScope)
     }

@@ -232,10 +232,14 @@ class TestLongHashSet
 
         set = new LongHashSet([1, 2, 3, 3, 4, 5] as Set<Long>)
         assert set.size() == 5
+        set.addAll([0, 7, 0, 7] as Set<Long>)
+        assert set.size() == 7
 
         set = new LongHashSet()
-        set.addAll([1, 2, 3, 3, 4, 5] as Set<Long>)
+        set.addAll([1, 2, 3, 3, 4, 5] as List<Long>)
         assert set.size() == 5
+        set.addAll([0, 7, 0, 7] as Set<Long>)
+        assert set.size() == 7
     }
 
     @Test
