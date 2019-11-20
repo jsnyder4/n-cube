@@ -169,6 +169,14 @@ class TestLongHashSet
     }
 
     @Test
+    void testEqualsEmpty()
+    {
+        LongHashSet set1 = new LongHashSet()
+        LongHashSet set2 = new LongHashSet()
+        assert set1.equals(set2)
+    }
+
+    @Test
     void testClear()
     {
         LongHashSet set1 = new LongHashSet()

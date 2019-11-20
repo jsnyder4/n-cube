@@ -257,12 +257,9 @@ class LongHashSet implements Set<Long>
             return false
         }
 
-        Iterator i = that.iterator()
-        int pos = 0
-
-        while (i.hasNext())
+        for (item in that)
         {
-            if (elems[pos++] != i.next())
+            if (Arrays.binarySearch(elems, item as long) < 0)
             {
                 return false
             }
