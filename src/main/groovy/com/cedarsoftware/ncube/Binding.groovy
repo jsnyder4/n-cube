@@ -49,7 +49,7 @@ class Binding
 
     void bind(String axisName, Column column)
     {
-        coord[axisName] = column
+        coord.put(axisName, column)
         idCoord.add(column.id)
     }
 

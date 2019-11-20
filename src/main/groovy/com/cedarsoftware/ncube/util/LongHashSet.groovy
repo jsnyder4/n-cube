@@ -257,20 +257,21 @@ class LongHashSet implements Set<Long>
             return other.equals(this)
         }
 
-        Set that = (Set)other
-        if (that.size() != size())
+        int len = size()
+        LongHashSet that = (LongHashSet) other
+        if (that.size() != len)
         {
             return false
         }
 
-        for (item in that)
+        // Compare all elements in O(1) because we have two LongHashSets, and they order their elements.
+        for (int i=0; i < len; i++)
         {
-            if (Arrays.binarySearch(elems, item as long) < 0)
+            if (elems[i] != that.elems[i])
             {
                 return false
             }
         }
-
         return true
     }
 
