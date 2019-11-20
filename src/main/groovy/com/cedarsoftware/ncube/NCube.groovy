@@ -1180,6 +1180,8 @@ class NCube<T>
      *                     pinpointed by the input coordinate.  Normally, the defaulValue of the
      *                     n-cube is returned, but if this parameter is passed a non-null value,
      *                     then it will be returned.  Optional.
+     *    - MAP_REDUCE_SHOULD_EXECUTE null or true means that each cell is executed, otherwise each cell is returned
+     *      as though a getCellNoExecute() is called on it.
      * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
      * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
      * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
@@ -1214,7 +1216,7 @@ class NCube<T>
         trackInputKeysUsed(commandInput,output)
 
         final Set<Long> ids = new LinkedHashSet<>(boundColumns)
-        final Map matchingRows = new LinkedHashMap()
+        final Map matchingRows = [:]
         final Map whereVars = new LinkedHashMap(input)
 
         Collection<Column> rowColumns
@@ -1247,7 +1249,7 @@ class NCube<T>
                 def val
                 try
                 {
-                    val = shouldExecute ? getCellById(ids, commandInput, output, defaultValue, columnDefaultCache) : cells[ids]
+                    val = shouldExecute ? getCellById(ids, commandInput, output, defaultValue, columnDefaultCache) : cells.get(ids)
                 }
                 catch (Exception e)
                 {
@@ -1299,6 +1301,8 @@ class NCube<T>
      *                     pinpointed by the input coordinate.  Normally, the defaulValue of the
      *                     n-cube is returned, but if this parameter is passed a non-null value,
      *                     then it will be returned.  Optional.
+     *    - MAP_REDUCE_SHOULD_EXECUTE null or true means that each cell is executed, otherwise each cell is returned
+     *      as though a getCellNoExecute() is called on it.
      * @return Map of Maps - The outer Map is keyed by the column values of all row columns.  If the row Axis is a discrete
      * axis, then the keys of the map are all the values of the columns.  If a non-discrete axis is used, then the keys
      * are the name meta-key for each column.  If a non-discrete axis is used and there are no name attributes on the columns,
@@ -1991,7 +1995,7 @@ class NCube<T>
             safeCoord = (coordinate == null) ? new CaseInsensitiveMap<>() : new CaseInsensitiveMap<>(coordinate)
         }
 
-        Set<Long> ids = new HashSet<>()
+        Set<Long> ids = new LinkedHashSet<>()
         Iterator<Axis> i = axisList.values().iterator()
 
         while (i.hasNext())
