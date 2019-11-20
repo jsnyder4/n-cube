@@ -27,8 +27,6 @@ import groovy.transform.CompileStatic
 class LongHashSet implements Set<Long>
 {
     private long[] elems = (long[]) null
-    private int hash
-    private boolean hashSet = false
 
     LongHashSet()
     { }
@@ -117,7 +115,6 @@ class LongHashSet implements Set<Long>
 
     boolean add(Long o)
     {
-        hashSet = false
         if (elems == null)
         {
             elems = new long[1]
@@ -142,7 +139,6 @@ class LongHashSet implements Set<Long>
 
     boolean remove(Object o)
     {
-        hashSet = false
         if (empty || o == null)
         {
             return false
@@ -192,7 +188,6 @@ class LongHashSet implements Set<Long>
 
     void clear()
     {
-        hashSet = false
         elems = (long[])null
     }
 
@@ -208,12 +203,11 @@ class LongHashSet implements Set<Long>
 
     boolean retainAll(Collection col)
     {
-        hashSet = false
         int origSize = size()
         Set<Long> keep = new LinkedHashSet<Long>()
         for (item in col)
         {
-            if (contains(item))
+            if (Arrays.binarySearch(elems, item as long) < 0)
             {
                 keep.add((Long) item)
             }
@@ -247,7 +241,7 @@ class LongHashSet implements Set<Long>
 
     boolean equals(def other)
     {
-        if (!(other instanceof Set) || hashCode() != other.hashCode())
+        if (!(other instanceof Set))
         {
             return false
         }
@@ -265,9 +259,10 @@ class LongHashSet implements Set<Long>
         }
 
         // Compare all elements in O(1) because we have two LongHashSets, and they order their elements.
+        long[] local = elems
         for (int i=0; i < len; i++)
         {
-            if (elems[i] != that.elems[i])
+            if (local[i] != that.elems[i])
             {
                 return false
             }
@@ -277,10 +272,6 @@ class LongHashSet implements Set<Long>
 
     int hashCode()
     {
-        if (hashSet)
-        {
-            return hash
-        }
         // This must be an order insensitive hash
         int h = 0
         long[] local = elems
@@ -290,8 +281,6 @@ class LongHashSet implements Set<Long>
             long value = local[i]
             h += (int)(value ^ (value >>> 32))
         }
-        hash = h
-        hashSet = true
         return h
     }
 }
