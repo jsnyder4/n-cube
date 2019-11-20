@@ -232,7 +232,7 @@ class LongHashSet implements Set<Long>
     {
         for (item in col)
         {
-            if (!contains(item))
+            if (Arrays.binarySearch(elems, item as long) < 0)
             {
                 return false
             }
@@ -247,10 +247,16 @@ class LongHashSet implements Set<Long>
 
     boolean equals(def other)
     {
-        if (!(other instanceof Set))
+        if (!(other instanceof Set) || hashCode() != other.hashCode())
         {
             return false
         }
+        
+        if (!(other instanceof LongHashSet))
+        {   // Use normal Set equals (let 'them' iterate this set, getting O(1) on each check against 'their' Set)
+            return other.equals(this)
+        }
+
         Set that = (Set)other
         if (that.size() != size())
         {
