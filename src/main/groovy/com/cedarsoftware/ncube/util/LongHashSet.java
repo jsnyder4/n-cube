@@ -260,7 +260,7 @@ public class LongHashSet implements Set<Long>
             return false;
         }
 
-        // Compare all elements in O(1) because we have two LongHashSets, and they order their elements.
+        // Compare all elements in O(n) because we have two LongHashSets, and they order their elements.
         long[] local = elems;
         for (int i=0; i < len; i++)
         {
