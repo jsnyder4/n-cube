@@ -456,6 +456,14 @@
             <artifactId>javax.annotation-api</artifactId>
             <version>${version.annotation}</version>
         </dependency>
+
+        <!-- use for measuring object layout and sizes -->
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>0.9</version>
+            <scope>test</scope>
+        </dependency>
         
     </dependencies>
 </project>

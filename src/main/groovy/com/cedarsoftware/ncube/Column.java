@@ -1,14 +1,15 @@
-package com.cedarsoftware.ncube
+package com.cedarsoftware.ncube;
 
-import com.cedarsoftware.ncube.proximity.Distance
-import com.cedarsoftware.util.CaseInsensitiveMap
-import groovy.transform.CompileStatic
+import com.cedarsoftware.ncube.proximity.Distance;
+import com.cedarsoftware.util.CaseInsensitiveMap;
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static com.cedarsoftware.util.StringUtilities.hasContent
-import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive
+import static com.cedarsoftware.util.StringUtilities.hasContent;
+import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive;
 
 /**
  * Holds the value of a 'column' on an axis.
@@ -37,68 +38,82 @@ import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive
  *         See the License for the specific language governing permissions and
  *         limitations under the License.
  */
-@CompileStatic
-class Column implements Comparable<Comparable>
+public class Column implements Comparable<Comparable>
 {
-    public static final String NAME = 'name'
-    public static final String DEFAULT_VALUE = 'default_value'
-    protected long id
-    private int displayOrder
-    private Comparable value
-    protected Map<String, Object> metaProps = null
-    private static ConcurrentMap primitives = new ConcurrentHashMap()
+    public static final String NAME = "name";
+    public static final String DEFAULT_VALUE = "default_value";
+    protected long id;
+    private int displayOrder;
+    private Comparable value;
+    protected Map<String, Object> metaProps = null;
+    private static ConcurrentMap<Comparable, Comparable> primitives = new ConcurrentHashMap<>();
 
-    Column(Comparable value, long id = 0L, Map metaP = null, int order = -1)
+    public Column(Comparable value)
     {
-        this.value = internValue(value)
-        this.id = id
+        this(value, 0L);
+    }
+
+    public Column(Comparable value, long id)
+    {
+        this(value, id, null);
+    }
+
+    public Column(Comparable value, long id, Map metaP)
+    {
+        this(value, id, metaP, -1);
+    }
+
+    public Column(Comparable value, long id, Map metaP, int order)
+    {
+        this.value = internValue(value);
+        this.id = id;
         if (value == null)
         {
-            displayOrder = Integer.MAX_VALUE
+            displayOrder = Integer.MAX_VALUE;
         }
 
         if (order != -1)
         {
-            displayOrder = order
+            displayOrder = order;
         }
 
-        if (metaP)
+        if (metaP != null)
         {
-            addMetaProperties(metaP)
+            addMetaProperties(metaP);
         }
     }
 
-    Column(Column source)
+    public Column(Column source)
     {
-        value = internValue(source.value)
-        id = source.id
-        displayOrder = source.displayOrder
-        if (source.metaProps)
+        value = internValue(source.value);
+        id = source.id;
+        displayOrder = source.displayOrder;
+        if (source.metaProps != null)
         {
-            addMetaProperties(source.metaProps)
+            addMetaProperties(source.metaProps);
         }
     }
 
     /**
      * @return Map (case insensitive keys) containing meta (additional) properties for the n-cube.
      */
-    Map<String, Object> getMetaProperties()
+    public Map<String, Object> getMetaProperties()
     {
-        Map ret = metaProps == null ? new CaseInsensitiveMap() : metaProps
-        return Collections.unmodifiableMap(ret)
+        Map ret = metaProps == null ? new CaseInsensitiveMap() : metaProps;
+        return Collections.unmodifiableMap(ret);
     }
 
     /**
      * Fetch the value associated to the passed in Key from the MetaProperties (if any exist).  If
      * none exist, null is returned.
      */
-    Object getMetaProperty(String key)
+    public Object getMetaProperty(String key)
     {
         if (metaProps == null)
         {
-            return null
+            return null;
         }
-        return metaProps[key]
+        return metaProps.get(key);
     }
 
     /**
@@ -107,54 +122,54 @@ class Column implements Comparable<Comparable>
      * @param metaPropValue Object value to associate to key
      * @return prior value associated to key or null if none was associated prior
      */
-    Object setMetaProperty(String key, Object metaPropValue)
+    public Object setMetaProperty(String key, Object metaPropValue)
     {
         if (metaProps == null)
         {
-            metaProps = new CaseInsensitiveMap<>()
+            metaProps = new CaseInsensitiveMap<>();
         }
-        return metaProps[key] = metaPropValue
+        return metaProps.put(key, metaPropValue);
     }
 
     /**
      * Remove a meta-property entry
      */
-    Object removeMetaProperty(String key)
+    public Object removeMetaProperty(String key)
     {
         if (metaProps == null)
         {
-            return null
+            return null;
         }
-        Object prev = metaProps.remove(key)
+        Object prev = metaProps.remove(key);
         if (metaProps.isEmpty())
         {
-            metaProps = null
+            metaProps = null;
         }
-        return prev
+        return prev;
     }
 
     /**
      * Add a Map of meta properties all at once.
      * @param allAtOnce Map of meta properties to add
      */
-    void addMetaProperties(Map<String, Object> allAtOnce)
+    public void addMetaProperties(Map<String, Object> allAtOnce)
     {
         if (metaProps == null)
         {
-            metaProps = new CaseInsensitiveMap<>()
+            metaProps = new CaseInsensitiveMap<>();
         }
-        metaProps.putAll(allAtOnce)
+        metaProps.putAll(allAtOnce);
     }
 
     /**
      * Remove all meta properties associated to this Column.
      */
-    void clearMetaProperties()
+    public void clearMetaProperties()
     {
         if (metaProps != null)
         {
-            metaProps.clear()
-            metaProps = null
+            metaProps.clear();
+            metaProps = null;
         }
     }
 
@@ -162,14 +177,14 @@ class Column implements Comparable<Comparable>
      * @return long ID of this column.  Note that the ID of a column is guaranteed to by unique within
      * a given n-cube, but not across n-cubes.
      */
-    long getId()
+    public long getId()
     {
-        return id
+        return id;
     }
 
     protected void setId(long id)
     {
-        this.id = id
+        this.id = id;
     }
 
     /**
@@ -178,14 +193,14 @@ class Column implements Comparable<Comparable>
      *
      * @return String name of Column if one is set, otherwise return null.
      */
-    String getColumnName()
+    public String getColumnName()
     {
-        Object name = getMetaProperty('name')
+        Object name = getMetaProperty(NAME);
         if (name instanceof String && hasContent((String)name))
         {
-            return (String) name
+            return (String) name;
         }
-        return null
+        return null;
     }
 
     /**
@@ -194,31 +209,31 @@ class Column implements Comparable<Comparable>
      *
      * @param name String name for column.
      */
-    void setColumnName(String name)
+    public void setColumnName(String name)
     {
-        setMetaProperty(NAME, name)
+        setMetaProperty(NAME, name);
     }
 
-    int hashCode()
+    public int hashCode()
     {
-        long x = id
-        x ^= x >> 23
-        x *= 0x2127599bf4325c37L
-        x ^= x >> 47
-        return (int)(x)
+        long x = id;
+        x ^= x >> 23;
+        x *= 0x2127599bf4325c37L;
+        x ^= x >> 47;
+        return (int)(x);
     }
 
-    boolean equals(Object that)
+    public boolean equals(Object that)
     {
-        return that instanceof Column && id == ((Column) that).id
+        return that instanceof Column && id == ((Column) that).id;
     }
 
     /**
      * @return Comparable value of the column.
      */
-    Comparable getValue()
+    public Comparable getValue()
     {
-        return value
+        return value;
     }
 
     /**
@@ -227,16 +242,16 @@ class Column implements Comparable<Comparable>
      */
     protected void setValue(Comparable v)
     {
-        value = internValue(v)
+        value = internValue(v);
     }
 
     /**
      * @return boolean true if this is the Default column, false otherwise.  The Default Column's value is always
      * null.
      */
-    boolean isDefault()
+    public boolean isDefault()
     {
-        return value == null
+        return value == null;
     }
 
     /**
@@ -248,49 +263,65 @@ class Column implements Comparable<Comparable>
      * value can be used to match against an axis including this column and the returned
      * value will match this column.
      */
-    Comparable getValueThatMatches()
+    public Comparable getValueThatMatches()
     {
         if (value instanceof Range)
         {
-            return ((Range)value).low
+            return ((Range)value).getLow();
         }
         else if (value instanceof RangeSet)
         {
-            RangeSet set = (RangeSet) value
-            Comparable v = set.get(0)
-            return v instanceof Range ? ((Range) v).low : v
+            RangeSet set = (RangeSet) value;
+            Comparable v = set.get(0);
+            return v instanceof Range ? ((Range) v).getLow() : v;
         }
 
-        return value
+        return value;
     }
 
     protected void setDisplayOrder(int order)
     {
-        displayOrder = order
+        displayOrder = order;
     }
 
-    int getDisplayOrder()
+    public int getDisplayOrder()
     {
-        return displayOrder
+        return displayOrder;
     }
 
-    int compareTo(Comparable that)
+    public int compareTo(Comparable that)
     {
+        if (value == null)
+        {
+            return -1;
+        }
         if (that instanceof Column)
         {
-            that = ((Column)that).value
+            that = ((Column)that).value;
         }
-
-        return value <=> that
+        if (that == null)
+        {
+            return 1;
+        }
+        int comp = value.compareTo(that);
+        if (comp < 0)
+        {
+            return -1;
+        }
+        else if (comp > 0)
+        {
+            return 1;
+        }
+        return 0;
     }
 
-    String toString()
+    public String toString()
     {
         if (value instanceof Range || value instanceof RangeSet || value instanceof Distance)
         {
-            return value.toString()
+            return value.toString();
         }
-        return CellInfo.formatForDisplay(value)
+        return CellInfo.formatForDisplay(value);
     }
 
     /**
@@ -302,24 +333,24 @@ class Column implements Comparable<Comparable>
     {
         if (value == null)
         {
-            return null
+            return null;
         }
 
-        if (!isLogicalPrimitive(value.class))
+        if (!isLogicalPrimitive(value.getClass()))
         {   // don't attempt to intern null (NPE) or non-primitive instances
-            return value
+            return value;
         }
 
         if (primitives.containsKey(value))
         {   // intern it (re-use instance)
-            return primitives[value]
+            return primitives.get(value);
         }
 
-        Comparable singletonInstance = primitives.putIfAbsent(value, value)
+        Comparable singletonInstance = primitives.putIfAbsent(value, value);
         if (singletonInstance != null)
         {
-            return singletonInstance
+            return singletonInstance;
         }
-        return value
+        return value;
     }
 }
