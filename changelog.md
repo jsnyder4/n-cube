@@ -1,4 +1,9 @@
 ### Revision History
+* 4.6.1
+  * Enhancement: LongHashSet now always keeps its elements in order from lowest to highest. Consider part of API contract.
+  * Performance: LongHashSet reduced from 32 bytes in memory to 16 bytes.  Removed caching of hash (8 byte savings) and converted from Groovy to Java (another 8 bytes saved).
+  * Performance: LongHashSet performance further improved.  Keeping elements ordered allows equals to always perform in O(N).  Contains() now uses Binary search (log n).
+  * Performance: Column reduced from 40 bytes to 32 bytes by converting from Groovy to Java.  Again, because so many instances are created. 
 * 4.6.0
   * RulesEngine added.  See [Rule Engine Developer Guide.](README-rules.md)
   * Small reduction in memory used by coordinate keys.

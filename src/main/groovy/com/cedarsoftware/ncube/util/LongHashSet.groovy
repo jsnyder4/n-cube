@@ -1,12 +1,4 @@
-package com.cedarsoftware.ncube.util;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
+package com.cedarsoftware.ncube.util
 /**
  * Special Set instance that hashes the Set<Long> column IDs with excellent dispersion,
  * while at the same time, using only a single primitive long (8 bytes) per entry.
@@ -98,7 +90,7 @@ public class LongHashSet implements Set<Long>
     {
         if (isEmpty())
         {
-            return new Object[]{};
+            return new Object[0]
         }
 
         long[] local = elems;

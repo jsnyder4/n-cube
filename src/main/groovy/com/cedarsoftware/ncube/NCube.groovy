@@ -661,10 +661,17 @@ class NCube<T>
                     for (axis in axisList.values())
                     {
                         final String axisName = axis.name
-                        final Column boundColumn = selectedColumns[axisName][counters[axisName] - 1]
+                        final Column boundColumn = selectedColumns.get(axisName).get(counters[axisName] - 1)
 
                         if (axis.type == AxisType.RULE)
                         {
+                            if (input.get(axisName) == null)
+                            {   // If rule axis name is unbound (common case - executing all rules), then temporarily
+                                // bind the rule condition's column name to input[axisName] as a GString.  This will
+                                // be unbound later.  Why? This allows cells that call back into the same rule cube
+                                // to start on the rule from which they are running.
+                                input.put(axisName, "${boundColumn.columnName}")
+                            }
                             Object conditionValue
                             if (!cachedConditionValues.containsKey(boundColumn.id))
                             {   // Has the condition on the Rule axis been run this execution?  If not, run it and cache it.
@@ -672,27 +679,27 @@ class NCube<T>
 
                                 // If the cmd == null, then we are looking at a default column on a rule axis.
                                 // the conditionValue becomes 'true' for Default column when ruleAxisBindCount = 0
-                                final Integer count = conditionsFiredCountPerAxis[axisName]
+                                final Integer count = conditionsFiredCountPerAxis.get(axisName)
                                 conditionValue = cmd == null ? isZero(count) : executeExpression(ctx, cmd)
-                                cachedConditionValues[boundColumn.id] = conditionValue as boolean
+                                cachedConditionValues.put(boundColumn.id, conditionValue as boolean)
 
                                 if (conditionValue)
                                 {   // Rule fired
-                                    conditionsFiredCountPerAxis[axisName] = count == null ? 1 : count + 1
+                                    conditionsFiredCountPerAxis.put(axisName, count == null ? 1 : count + 1)
                                     if (!axis.fireAll)
                                     {   // Only fire one condition on this axis (fireAll is false)
-                                        counters[axisName] = 1
-                                        selectedColumns[axisName] = [boundColumn]
+                                        counters.put(axisName, 1)
+                                        selectedColumns.put(axisName, [boundColumn])
                                     }
                                     if (cmd == null)
                                     {
-                                        trackUnboundAxis(output, name, axisName, coordinate[axisName])
+                                        trackUnboundAxis(output, name, axisName, coordinate.get(axisName))
                                     }
                                 }
                             }
                             else
                             {   // re-use condition on this rule axis (happens when more than one rule axis on an n-cube)
-                                conditionValue = cachedConditionValues[boundColumn.id]
+                                conditionValue = cachedConditionValues.get(boundColumn.id)
                             }
 
                             // A rule column on a given axis can be accessed more than once (example: A, B, C on
@@ -790,19 +797,6 @@ class NCube<T>
         try
         {
             final Set<Long> colIds = binding.idCoordinate
-            for (Long id : binding.idCoordinate)
-            {
-                Axis axis = getAxisFromColumnId(id)
-                if (axis != null && axis.type == AxisType.RULE)
-                {
-                    Column column = axis.getColumnById(id)
-                    if (column != null && !input.containsKey(axis.name))
-                    {   // Rule name is not bound - temporarily bind it during rule statement execution
-                        input[axis.name] = "${column.columnName}"
-                    }
-                }
-            }
-
             T statementValue = getCellById(colIds, input, output)
             binding.value = statementValue
             return statementValue
@@ -831,11 +825,14 @@ class NCube<T>
             {
                 msg = t.class.name
             }
-            binding.value = "[${msg}]"
+            binding.value = "[${msg}]".toString()
             throw e
         }
         finally
         {
+            // Remove temporarily bound rule condition name (that was bound to the input[axisName]).  This was
+            // bound because no rulename was set, and a call back into the rule cube will then start on the same
+            // rule.
             for (Long id : binding.idCoordinate)
             {
                 Axis axis = getAxisFromColumnId(id)
@@ -843,8 +840,8 @@ class NCube<T>
                 {
                     Column column = axis.getColumnById(id)
                     if (column != null)
-                    {   // Rule name is not bound - temporarily bind it during rule statement execution
-                        if (input[axis.name] instanceof GString)
+                    {   // If rule name was bound above (but not originally there), remove it.
+                        if (input.get(axis.name) instanceof GString)
                         {
                             input.remove(axis.name)
                         }
@@ -1220,7 +1217,7 @@ class NCube<T>
         final Map whereVars = new LinkedHashMap(input)
 
         Collection<Column> rowColumns
-        Object rowAxisValue = input[rowAxisName]
+        Object rowAxisValue = input.get(rowAxisName)
         if (rowAxisValue)
         {
             rowColumns = selectColumns(rowAxis, rowAxisValue instanceof Collection ? rowAxisValue as Set : [rowAxisValue] as Set)
@@ -1612,34 +1609,34 @@ class NCube<T>
         {
             final String axisName = entry.key
             final Axis axis = entry.value
-            final Object value = input[axisName]
+            final Object value = input.get(axisName)
 
             if (AxisType.RULE == axis.type)
             {   // For RULE axis, all possible columns must be added (they are tested later during execution)
                 if (value instanceof String)
                 {
-                    bindings[axisName] = axis.getRuleColumnsStartingAt((String) value)
+                    bindings.put(axisName, axis.getRuleColumnsStartingAt((String) value))
                 }
                 else if (value instanceof Collection)
                 {   // Collection of rule names to select (orchestration)
                     Collection<String> orchestration = (Collection)value
-                    bindings[axisName] = axis.findColumns(orchestration)
-                    assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, rule names ${orchestration}, cube: ${name}")
+                    bindings.put(axisName, axis.findColumns(orchestration))
+                    assertAtLeast1Rule(bindings.get(axisName), "No rule selected on rule-axis: ${axis.name}, rule names ${orchestration}, cube: ${name}")
                 }
                 else if (value instanceof Map)
                 {   // key-value pairs that meta-properties of rule columns must match to select rules.
                     Map<String, Object> required = (Map)value
-                    bindings[axisName] = axis.findColumns(required)
+                    bindings.put(axisName, axis.findColumns(required))
                     assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match ${required}, cube: ${name}")
                 }
                 else if (value instanceof Closure)
                 {
-                    bindings[axisName] = axis.findColumns((Closure)value)
-                    assertAtLeast1Rule(bindings[axisName], "No rule selected on rule-axis: ${axis.name}, meta-properties must match closure, cube: ${name}")
+                    bindings.put(axisName, axis.findColumns((Closure)value))
+                    assertAtLeast1Rule(bindings.get(axisName), "No rule selected on rule-axis: ${axis.name}, meta-properties must match closure, cube: ${name}")
                 }
                 else
                 {
-                    bindings[axisName] = axis.columns
+                    bindings.put(axisName, axis.columns)
                 }
             }
             else
@@ -1654,7 +1651,7 @@ class NCube<T>
                     throw new CoordinateNotFoundException("Value '${value}' not found on axis: ${axisName}, cube: ${name}",
                             name, input, axisName, value)
                 }
-                bindings[axisName] = [column]    // Binding is a List of one column on non-rule axis
+                bindings.put(axisName, [column])    // Binding is a List of one column on non-rule axis
             }
         }
 
@@ -1821,7 +1818,7 @@ class NCube<T>
                     Column column = axis.getColumnById(id)
                     if (column)
                     {
-                        input[axis.name] = axis.getValueToLocateColumn(column)
+                        input.put(axis.name, axis.getValueToLocateColumn(column))
                     }
                 }
             }
@@ -3015,14 +3012,14 @@ class NCube<T>
         ncubeToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
             if (input.containsKey(DEFAULT_CELL_VALUE) || input.containsKey(DEFAULT_CELL_VALUE_URL))
             {
-                Object value = input[DEFAULT_CELL_VALUE]
-                String defUrl = (String)input[DEFAULT_CELL_VALUE_URL]
-                String defType = (String)input[DEFAULT_CELL_VALUE_TYPE]
+                Object value = input.get(DEFAULT_CELL_VALUE)
+                String defUrl = (String)input.get(DEFAULT_CELL_VALUE_URL)
+                String defType = (String)input.get(DEFAULT_CELL_VALUE_TYPE)
                 boolean defCache = getBoolean(input, DEFAULT_CELL_VALUE_CACHE)
                 ncube.setDefaultCellValue(CellInfo.parseJsonValue(value, defUrl, defType, defCache))
             }
-            transformMetaProperties((Map)input[(PARSE_NCUBE_PROPS)])
-            ncube.addMetaProperties((Map)input[(PARSE_NCUBE_PROPS)])
+            transformMetaProperties((Map)input.get(PARSE_NCUBE_PROPS))
+            ncube.addMetaProperties((Map)input.get(PARSE_NCUBE_PROPS))
             ncube.removeMetaProperty('ruleMode')
             ncube.removeMetaProperty('sha1')
             return state
@@ -3044,7 +3041,7 @@ class NCube<T>
             {
                 throw new IllegalStateException("Expecting start array '[' for cells but instead found: ${token}")
             }
-            Map userIdToUniqueId = (Map)input[(PARSE_USERID_TO_UNIQUE)]
+            Map userIdToUniqueId = (Map)input.get(PARSE_USERID_TO_UNIQUE)
             while (!parser.closed)
             {
                 token = parser.nextToken()
@@ -3210,30 +3207,30 @@ class NCube<T>
             return state
         }
         ncubeField[DEFAULT_CELL_VALUE] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[DEFAULT_CELL_VALUE] = getParserValue(parser, token)
+            input.put(DEFAULT_CELL_VALUE, getParserValue(parser, token))
             return state
         }
         ncubeField[DEFAULT_CELL_VALUE_TYPE] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[DEFAULT_CELL_VALUE_TYPE] = parser.text
+            input.put(DEFAULT_CELL_VALUE_TYPE, parser.text)
             return state
         }
         ncubeField[DEFAULT_CELL_VALUE_URL] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[DEFAULT_CELL_VALUE_URL] = parser.text
+            input.put(DEFAULT_CELL_VALUE_URL, parser.text)
             return state
         }
         ncubeField[DEFAULT_CELL_VALUE_CACHE] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[DEFAULT_CELL_VALUE_CACHE] = getParserValue(parser, token)
+            input.put(DEFAULT_CELL_VALUE_CACHE, getParserValue(parser, token))
             return state
         }
         ncubeField[(PARSE_META_PROPERTY)] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input, String fieldName ->
-            ((Map)input[(PARSE_NCUBE_PROPS)])[fieldName] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_NCUBE_PROPS)).put(fieldName, getParserValue(parser, token))
             return state
         }
 
         axisToken[JsonToken.START_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[(PARSE_AXIS_OBJ)] = [:]
-            input[(PARSE_TEMP_COLS)] = []
-            input[(PARSE_AXIS_PROPS)] = [:]
+            input.put(PARSE_AXIS_OBJ, [:])
+            input.put(PARSE_TEMP_COLS, [])
+            input.put(PARSE_AXIS_PROPS, [:])
             return state
         }
         axisToken[JsonToken.FIELD_NAME] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
@@ -3243,12 +3240,12 @@ class NCube<T>
         }
         axisToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
             Axis axis
-            Map axisObj = (Map)input[(PARSE_AXIS_OBJ)]
-            Map axisProps = (Map)input[(PARSE_AXIS_PROPS)]
+            Map axisObj = (Map)input.get(PARSE_AXIS_OBJ)
+            Map axisProps = (Map)input.get(PARSE_AXIS_PROPS)
             transformMetaProperties(axisProps)
             AxisType type = (AxisType)axisObj['type']
-            List<Map> tempColumns = (List<Map>)input[(PARSE_TEMP_COLS)]
-            Map<Object, Long> userIdToUniqueId = (Map)input[(PARSE_USERID_TO_UNIQUE)]
+            List<Map> tempColumns = (List<Map>)input.get(PARSE_TEMP_COLS)
+            Map<Object, Long> userIdToUniqueId = (Map)input.get(PARSE_USERID_TO_UNIQUE)
             boolean isRef = getBoolean(axisProps, 'isRef')
             String axisName = (String)axisObj['name']
             boolean hasDefault = getBoolean(axisObj, 'hasDefault')
@@ -3261,9 +3258,9 @@ class NCube<T>
             }
             else
             {    // Older n-cube format with no 'id' on the 'axes' in the JSON
-                long idBase = (long)input[(PARSE_BASE_AXIS_ID)]
+                long idBase = (long)input.get(PARSE_BASE_AXIS_ID)
                 axisId = idBase++
-                input[(PARSE_BASE_AXIS_ID)] = idBase
+                input.put(PARSE_BASE_AXIS_ID, idBase)
             }
 
             axisProps.remove('id')
@@ -3388,31 +3385,31 @@ class NCube<T>
         }
 
         axisField['id'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['id'] = parser.valueAsLong
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('id', parser.valueAsLong)
             return state
         }
         axisField['name'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['name'] = parser.text
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('name', parser.text)
             return state
         }
         axisField['type'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['type'] = AxisType.valueOf(parser.text)
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('type', AxisType.valueOf(parser.text))
             return state
         }
         axisField['valueType'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['valueType'] = AxisValueType.valueOf(parser.text)
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('valueType', AxisValueType.valueOf(parser.text))
             return state
         }
         axisField['hasDefault'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['hasDefault'] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('hasDefault', getParserValue(parser, token))
             return state
         }
         axisField['preferredOrder'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['preferredOrder'] = parser.valueAsInt
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('preferredOrder', parser.valueAsInt)
             return state
         }
         axisField['fireAll'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_AXIS_OBJ)])['fireAll'] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_AXIS_OBJ)).put('fireAll', getParserValue(parser, token))
             return state
         }
         axisField['columns'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
@@ -3423,13 +3420,13 @@ class NCube<T>
             return columnToken
         }
         axisField[(PARSE_META_PROPERTY)] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input, String fieldName ->
-            ((Map)input[(PARSE_AXIS_PROPS)])[fieldName] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_AXIS_PROPS)).put(fieldName, getParserValue(parser, token))
             return state
         }
 
         columnToken[JsonToken.START_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            input[(PARSE_COL_OBJ)] = [:]
-            input[(PARSE_COL_PROPS)] = [:]
+            input.put(PARSE_COL_OBJ, [:])
+            input.put(PARSE_COL_PROPS, [:])
             return state
         }
         columnToken[JsonToken.FIELD_NAME] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
@@ -3438,17 +3435,17 @@ class NCube<T>
             return fieldClosure(ncube, state, parser, token, input, columnField, fieldName)
         }
         columnToken[JsonToken.END_OBJECT] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            Map column = (Map)input[(PARSE_COL_OBJ)]
+            Map column = (Map)input.get(PARSE_COL_OBJ)
             // Put column's prop map inside column_obj map so that it is together when tempColumns is processed on end axis
-            column[(PARSE_COL_PROPS)] = input[(PARSE_COL_PROPS)]
-            List<Map> tempColumns = (List)input[(PARSE_TEMP_COLS)]
+            column.put(PARSE_COL_PROPS, input.get(PARSE_COL_PROPS))
+            List<Map> tempColumns = (List)input.get(PARSE_TEMP_COLS)
             tempColumns.add(column)
 
             if (column['value'] == null)
             {
                 if (column['id'] == null)
                 {
-                    Map axisMap = (Map)input[(PARSE_AXIS_OBJ)]
+                    Map axisMap = (Map)input.get(PARSE_AXIS_OBJ)
                     throw new IllegalArgumentException("Missing 'value' field on column or it is null, axis: ${axisMap.name}, cube: ${ncube.name}")
                 }
                 else
@@ -3463,36 +3460,36 @@ class NCube<T>
         }
 
         columnField['id'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_COL_OBJ)])['id'] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_COL_OBJ)).put('id', getParserValue(parser, token))
             return state
         }
         columnField['value'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
             Object key = token
-            if (((Map)input[(PARSE_AXIS_OBJ)])['type'] == AxisType.SET)
+            if (((Map)input.get(PARSE_AXIS_OBJ)).get('type') == AxisType.SET)
             {
                 key = "${AxisType.SET}_${token.name()}".toString()
             }
-            ((Map)input[(PARSE_COL_OBJ)])['value'] = getParserValue(parser, key)
+            ((Map)input.get(PARSE_COL_OBJ)).put('value', getParserValue(parser, key))
             return state
         }
         columnField['name'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_COL_OBJ)])['name'] = parser.text
+            ((Map)input.get(PARSE_COL_OBJ)).put('name', parser.text)
             return state
         }
         columnField['url'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_COL_OBJ)])['url'] = parser.text
+            ((Map)input.get(PARSE_COL_OBJ)).put('url', parser.text)
             return state
         }
         columnField['type'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_COL_OBJ)])['type'] =  parser.text
+            ((Map)input.get(PARSE_COL_OBJ)).put('type', parser.text)
             return state
         }
         columnField['cache'] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input ->
-            ((Map)input[(PARSE_COL_OBJ)])['cache'] = parser.text
+            ((Map)input.get(PARSE_COL_OBJ)).put('cache', parser.text)
             return state
         }
         columnField[(PARSE_META_PROPERTY)] = { NCube ncube, Map state, JsonParser parser, JsonToken token, Map input, String fieldName ->
-            ((Map)input[(PARSE_COL_PROPS)])[fieldName] = getParserValue(parser, token)
+            ((Map)input.get(PARSE_COL_PROPS)).put(fieldName, getParserValue(parser, token))
             return state
         }
     }
