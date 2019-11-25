@@ -1,6 +1,6 @@
 ### Revision History
-* 4.6.3-SNAPSHOT
-  * 
+* 4.6.3
+  * Made `groovy-all` api not implementation, because `Closure` is part of NCube API.
 * 4.6.2
   * Updated build from Maven to Gradle. 
 * 4.6.1
