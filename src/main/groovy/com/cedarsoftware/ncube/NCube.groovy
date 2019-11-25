@@ -22,7 +22,6 @@ import com.cedarsoftware.util.io.JsonWriter
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
-import gnu.trove.TLongObjectHashMap
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import org.springframework.util.FastByteArrayOutputStream
@@ -99,7 +98,7 @@ class NCube<T>
     private String name
     private String sha1
     private final Map<String, Axis> axisList = new CaseInsensitiveMap<>()
-    private final TLongObjectHashMap idToAxis = new TLongObjectHashMap<>()
+    private final Map<Long, Axis> idToAxis = new HashMap<>()
     protected final Map<Set<Long>, T> cells = new CellMap<T>()
     private T defaultCellValue
     private final Map<String, Advice> advices = [:]

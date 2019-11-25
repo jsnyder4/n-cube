@@ -35,6 +35,7 @@ repositories {
 }
 
 dependencies {
+    api 'org.codehaus.groovy:groovy-all:2.4.17'
     implementation 'org.springframework.boot:spring-boot-starter-web:2.2.1.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-actuator:2.2.1.RELEASE'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.2.1.RELEASE'
@@ -48,7 +49,6 @@ dependencies {
     implementation 'com.cedarsoftware:java-util:1.38.0'
     implementation 'org.apache.httpcomponents:httpclient:4.5.10'
     implementation 'org.apache.ivy:ivy:2.4.0'
-    implementation 'org.codehaus.groovy:groovy-all:2.4.17'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
     implementation 'com.google.guava:guava:28.1-jre'
     implementation 'org.jetbrains.intellij.deps:trove4j:1.0.20190514'
@@ -115,30 +115,30 @@ uploadArchives {
             }
 
             pom.project {
-                name 'n-cube'
-                packaging 'jar'
+                name = 'n-cube'
+                packaging = 'jar'
                 // optionally artifactId can be defined here
-                description 'Multi-dimensional Rule Engine'
-                url 'https://github.com/jdereg/n-cube'
+                description = 'Multi-dimensional Rule Engine'
+                url = 'https://github.com/jdereg/n-cube'
 
                 scm {
-                    connection 'scm:git:git://github.com/jdereg/n-cube.git'
-                    developerConnection 'scm:git:git@github.com:jdereg/n-cube.git'
-                    url 'https://github.com/jdereg/n-cub'
+                    connection = 'scm:git:git://github.com/jdereg/n-cube.git'
+                    developerConnection = 'scm:git:git@github.com:jdereg/n-cube.git'
+                    url = 'https://github.com/jdereg/n-cub'
                 }
 
                 licenses {
                     license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
 
                 developers {
                     developer {
-                        id 'jdereg'
-                        name 'John DeRegnaucourt'
-                        email 'jdereg@gmail.com'
+                        id = 'jdereg'
+                        name = 'John DeRegnaucourt'
+                        email = 'jdereg@gmail.com'
                     }
                 }
             }
