@@ -1,13 +1,15 @@
-package com.cedarsoftware.ncube
+package com.cedarsoftware.ncube;
 
-import com.cedarsoftware.ncube.proximity.Distance
-import com.cedarsoftware.util.CaseInsensitiveMap
+import com.cedarsoftware.ncube.proximity.Distance;
+import com.cedarsoftware.util.CaseInsensitiveMap;
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static com.cedarsoftware.util.StringUtilities.hasContent
-import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive
+import static com.cedarsoftware.util.StringUtilities.hasContent;
+import static com.cedarsoftware.util.io.MetaUtils.isLogicalPrimitive;
 
 /**
  * Holds the value of a 'column' on an axis.
@@ -104,6 +106,8 @@ public class Column implements Comparable<Comparable>
     /**
      * Fetch the value associated to the passed in Key from the MetaProperties (if any exist).  If
      * none exist, null is returned.
+     * @param key String key
+     * @return Value associated to meta-property key
      */
     public Object getMetaProperty(String key)
     {
@@ -131,6 +135,8 @@ public class Column implements Comparable<Comparable>
 
     /**
      * Remove a meta-property entry
+     * @param key String
+     * @return Value associated to meta-property key
      */
     public Object removeMetaProperty(String key)
     {
