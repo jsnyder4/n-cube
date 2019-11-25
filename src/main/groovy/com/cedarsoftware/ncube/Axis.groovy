@@ -211,7 +211,7 @@ class Axis
         // Backup meta-properties
         Map<Long, Map> metaMap = [:] as Map
         columns.each { Column column ->
-            metaMap[column.id] = column.metaProperties
+            metaMap.put(column.id, column.metaProperties)
         }
 
         clearMetaProperties()
@@ -232,7 +232,7 @@ class Axis
         columns.each { Column column ->
             if (metaMap.containsKey(column.id))
             {
-                Map map = metaMap[column.id]
+                Map map = metaMap.get(column.id)
                 column.addMetaProperties(map)
             }
         }
@@ -426,7 +426,7 @@ class Axis
         {
             metaProps = new CaseInsensitiveMap<>()
         }
-        return metaProps[key] = value
+        return metaProps.put(key, value)
     }
 
     /**
@@ -439,7 +439,7 @@ class Axis
         {
             return null
         }
-        return metaProps[key]
+        return metaProps.get(key)
     }
 
     /**
@@ -517,7 +517,7 @@ class Axis
         String colName = column.columnName
         if (hasContent(colName))
         {
-            colNameToCol[colName] = column
+            colNameToCol.put(colName, column)
         }
 
         // 3. Index column by value
@@ -532,11 +532,11 @@ class Axis
         {   // collision - move it to end
             order = displayOrder.lastKey() + 1
         }
-        displayOrder[order] = column
+        displayOrder.put(order, column)
 
         if (type == AxisType.DISCRETE || type == AxisType.NEAREST)
         {
-            valueToColumn[standardizeColumnValue(column.value)] = column
+            valueToColumn.put(standardizeColumnValue(column.value), column)
         }
         else if (type == AxisType.RANGE)
         {
@@ -961,7 +961,7 @@ class Axis
         for (Column col : newCols)
         {
             Column newColumn = createColumnFromValue(col.value, col.id, col.metaProperties)
-            newColumnMap[col.id] = newColumn
+            newColumnMap.put(col.id, newColumn)
         }
 
         // Step 2.  Build list of columns that no longer exist (add to deleted list)
@@ -974,7 +974,7 @@ class Axis
             Column col = i.next()
             if (newColumnMap.containsKey(col.id))
             {   // Update case - matches existing column
-                Column newCol = newColumnMap[col.id]
+                Column newCol = newColumnMap.get(col.id)
                 col.value = newCol.value
                 Map<String, Object> metaProperties = newCol.metaProperties
                 
@@ -999,7 +999,7 @@ class Axis
 
         for (Column column : tempCol)
         {
-            existingColumns[column.id] = column
+            existingColumns.put(column.id, column)
             if (!column.default)
             {
                 ensureUnique(column.value)
@@ -1030,10 +1030,10 @@ class Axis
                 {   // Add case - negative id, add new column to 'columns' List.
                     Column newCol = addColumnInternal(newColumnMap[col.id])
                     existingId = newCol.id
-                    existingColumns[existingId] = newCol
+                    existingColumns.put(existingId, newCol)
                 }
 
-                Column realColumn = existingColumns[existingId]
+                Column realColumn = existingColumns.get(existingId)
                 if (realColumn == null)
                 {
                     throw new IllegalArgumentException('Columns to be added should have negative ID values.')
@@ -1554,7 +1554,7 @@ class Axis
             Map.Entry<String, Object> entry = i.next()
             if (metaProps.containsKey(entry.key))
             {
-                Object value = metaProps[entry.key]
+                Object value = metaProps.get(entry.key)
                 if (DONT_CARE != entry.value)
                 {
                     if (value != entry.value)
@@ -1621,7 +1621,7 @@ class Axis
             }
             else if (promotedValue instanceof String || promotedValue instanceof GString)
             {
-                Column colToFind = colNameToCol[promotedValue as String]
+                Column colToFind = colNameToCol.get(promotedValue as String)
                 return colToFind == null ? defaultCol : colToFind
             }
             else
@@ -1648,7 +1648,7 @@ class Axis
      */
     Column findColumnByName(String colName)
     {
-        return colNameToCol[colName]
+        return colNameToCol.get(colName)
     }
 
     private Column findNearest(final Comparable promotedValue)

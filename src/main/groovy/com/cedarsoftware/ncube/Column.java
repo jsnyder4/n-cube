@@ -106,6 +106,8 @@ public class Column implements Comparable<Comparable>
     /**
      * Fetch the value associated to the passed in Key from the MetaProperties (if any exist).  If
      * none exist, null is returned.
+     * @param key String key
+     * @return Value associated to meta-property key
      */
     public Object getMetaProperty(String key)
     {
@@ -133,6 +135,8 @@ public class Column implements Comparable<Comparable>
 
     /**
      * Remove a meta-property entry
+     * @param key String
+     * @return Value associated to meta-property key
      */
     public Object removeMetaProperty(String key)
     {
