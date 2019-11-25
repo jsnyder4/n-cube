@@ -1,6 +1,8 @@
 ### Revision History
-* 4.6.2-SNAPSHOT
+* 4.6.3-SNAPSHOT
   * 
+* 4.6.2
+  * Updated build from Maven to Gradle. 
 * 4.6.1
   * Enhancement: `LongHashSet` now always keeps its elements in order from lowest to highest. Consider part of API contract.
   * Performance: `LongHashSet` reduced from 32 bytes in memory to 16 bytes.  Removed caching of hash (8 byte savings) and converted from Groovy to Java (another 8 bytes saved).
