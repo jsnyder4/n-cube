@@ -1,4 +1,6 @@
 ### Revision History
+* 4.6.4
+  * Updated `RulesEngine` to have the option of throwing `RulesException` after each rule group or continuing on and simply accumulating errors.
 * 4.6.3
   * Made `groovy-all` api not implementation, because `Closure` is part of NCube API.
 * 4.6.2

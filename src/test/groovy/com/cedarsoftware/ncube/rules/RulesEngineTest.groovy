@@ -251,7 +251,7 @@ class RulesEngineTest extends NCubeBaseTest
     void testExecuteGroups_Group3()
     {
         Map root = [:]
-        rulesEngine.executeGroups(['group3'], root)
+        rulesEngine.executeGroups(['group3'], root, false)
         assert 1 == root.keySet().size()
         assert root['rule4']
     }
@@ -260,7 +260,7 @@ class RulesEngineTest extends NCubeBaseTest
     void testExecute_AllGroups()
     {
         Map root = [:]
-        rulesEngine.executeGroups(['group1', 'group2', 'group3'], root)
+        rulesEngine.executeGroups(['group1', 'group2', 'group3'], root, false)
         assert 5 == root.keySet().size()
         assert root['rule1']
         assert root['rule2']
@@ -340,7 +340,7 @@ class RulesEngineTest extends NCubeBaseTest
         Map root = [:]
         Map input = [:]
         Map output = [count: 0]
-        rulesEngine.execute([[category1: 'foo'] as Map, [category2: 'apple'] as Map], root, input, output)
+        rulesEngine.execute([[category1: 'foo'] as Map, [category2: 'apple'] as Map], root, true, input, output)
         assert 4 == root.keySet().size()
         assert 2 == output['count']
     }
@@ -483,6 +483,30 @@ class RulesEngineTest extends NCubeBaseTest
         {
             assertContainsIgnoreCase(e.message, 'rulesengine', 'appid', 'ncube', 'axis', 'type', RULE.name())
         }
+    }
+
+    @Test
+    void testExecute_ThrowException()
+    {
+        Map root = [:]
+        try
+        {
+            rulesEngine.execute('group3', root)
+            fail()
+        }
+        catch (RulesException e)
+        {
+            assert 1 == e.errors.size()
+        }
+
+    }
+
+    @Test
+    void testExecute_NoException()
+    {
+        Map root = [:]
+        List<RulesError> errors = rulesEngine.execute('group3', root, false)
+        assert 1 == errors.size()
     }
 
 }

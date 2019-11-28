@@ -37,6 +37,7 @@ class TestRule extends BusinessRule
     void rule4()
     {
         root['rule4'] = true
+        addError('category', 'code', 'message')
     }
 
 }
