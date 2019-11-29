@@ -3,6 +3,7 @@
   * Groovydoc now includes both Groovy and Java sources.
   * Removed unused `spring` / `spring-boot` libraries from Gradle build.
   * `java-util` added to API
+  * `json-io` added tp API
   * `trove4j` added to API   
 * 4.6.3
   * Made `groovy-all` api not implementation, because `Closure` is part of NCube API.
