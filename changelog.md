@@ -1,4 +1,9 @@
 ### Revision History
+* 4.6.4
+  * Groovydoc now includes both Groovy and Java sources.
+  * Removed unused `spring` / `spring-boot` libraries from Gradle build.
+  * `java-util` added to API
+  * `trove4j` added to API   
 * 4.6.3
   * Made `groovy-all` api not implementation, because `Closure` is part of NCube API.
 * 4.6.2
