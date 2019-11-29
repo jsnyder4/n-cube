@@ -1,0 +1,31 @@
+{
+  "ncube":"rule.group4.object1",
+  "axes":[
+    {
+      "id":3,
+      "name":"rule",
+      "hasDefault":false,
+      "type":"RULE",
+      "valueType":"EXPRESSION",
+      "preferredOrder":1,
+      "fireAll":true,
+      "columns":[
+        {
+          "id":3000361744439,
+          "type":"exp",
+          "name":"Rule 4",
+          "value":"true"
+        }
+      ]
+    }
+  ],
+  "cells":[
+    {
+      "id":[
+        3000361744439
+      ],
+      "type":"exp",
+      "value":"input.rule.rule10()"
+    }
+  ]
+}

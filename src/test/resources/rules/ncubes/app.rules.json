@@ -19,6 +19,12 @@
           "id":5000290003816,
           "type":"string",
           "value":"ncube"
+        },
+        {
+          "id":5000971085946,
+          "type":"string",
+          "default_value":false,
+          "value":"throwException"
         }
       ]
     },
@@ -45,11 +51,24 @@
           "id":4001177849162,
           "type":"string",
           "value":"group3"
+        },
+        {
+          "id":4001308413854,
+          "type":"string",
+          "value":"group4"
         }
       ]
     }
   ],
   "cells":[
+    {
+      "id":[
+        5000290003816,
+        4001308413854
+      ],
+      "type":"string",
+      "value":"rule.group4.object1"
+    },
     {
       "id":[
         5001514718226,
@@ -73,6 +92,22 @@
       ],
       "type":"string",
       "value":"rule.group1.type2.object1"
+    },
+    {
+      "id":[
+        5000971085946,
+        4001308413854
+      ],
+      "type":"boolean",
+      "value":true
+    },
+    {
+      "id":[
+        5001514718226,
+        4001308413854
+      ],
+      "type":"string",
+      "value":"com.cedarsoftware.ncube.rules.TestRule"
     },
     {
       "id":[

@@ -33,6 +33,7 @@ class RulesEngine
     static final String AXIS_RULE = 'rule'
     static final String COL_CLASS = 'className'
     static final String COL_NCUBE = 'ncube'
+    static final String COL_EXCEPTION = 'throwException'
 
     private static final Set IGNORED_METHODS = ['equals', 'toString', 'hashCode', 'annotationType'] as Set
     private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(".*input.rule.((?:[^(]+))\\(.*")
@@ -80,13 +81,12 @@ class RulesEngine
      * will not proceed to the next group.
      * @param ruleGroups List<String>
      * @param root Object
-     * @param boolean throwException (optional) throw RulesException if there are errors after a rule group
      * @param input Map (optional)
      * @param output Map (optional)
      * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    List<RulesError> executeGroups(List<String> ruleGroups, Object root, boolean throwException = true, Map input = [:], Map output = [:])
+    List<RulesError> executeGroups(List<String> ruleGroups, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
 
@@ -109,6 +109,7 @@ class RulesEngine
             Map ruleInfo = ncubeRules.getMap([(AXIS_RULE_GROUP): ruleGroup, (AXIS_ATTRIBUTE): [] as Set])
             String className = ruleInfo[COL_CLASS]
             String ncubeName = ruleInfo[COL_NCUBE]
+            Boolean throwException = ruleInfo[COL_EXCEPTION]
             if (!hasContent(className) || !hasContent(ncubeName))
             {
                 throw new IllegalStateException("RulesEngine: ${name}, AppId: ${appId}, NCube: ${ncubeRules.name}, rule group: ${ruleGroup} must have className and ncube name defined.")
@@ -137,20 +138,19 @@ class RulesEngine
      * Execute rules for a named group on a given root object.
      * @param ruleGroups String
      * @param root Object
-     * @param boolean throwException (optional) throw RulesException if there are errors after a rule group
      * @param input Map (optional)
      * @param output Map (optional)
      * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    List<RulesError> execute(String ruleGroup, Object root, boolean throwException = true, Map input = [:], Map output = [:])
+    List<RulesError> execute(String ruleGroup, Object root, Map input = [:], Map output = [:])
     {
         if (ruleGroup == null)
         {
             throw new IllegalArgumentException("Rule group must not be null.")
         }
         verifyNCubeSetup()
-        executeGroups([ruleGroup], root, throwException, input, output)
+        executeGroups([ruleGroup], root, input, output)
     }
 
     /**
@@ -158,13 +158,12 @@ class RulesEngine
      * Example Closure: {Map input -> input['product'] == 'workerscompensation' && input['type'] == 'validation'}
      * @param where
      * @param root Object
-     * @param boolean throwException (optional) throw RulesException if there are errors after a rule group
      * @param input Map (optional)
      * @param output Map (optional)
      * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    List<RulesError> execute(Closure where, Object root, boolean throwException = true, Map input = [:], Map output = [:])
+    List<RulesError> execute(Closure where, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)
@@ -172,7 +171,7 @@ class RulesEngine
             throw new IllegalStateException("Categories ncube not setup in app: ${appId}.")
         }
         List<String> ruleGroups = getRuleGroupsFromClosure(where)
-        executeGroups(ruleGroups, root, throwException, input, output)
+        executeGroups(ruleGroups, root, input, output)
     }
 
     /**
@@ -182,13 +181,12 @@ class RulesEngine
      * Example Map: [product: 'workerscompensation', type: ['composition', 'validation']]
      * @param categories Map
      * @param root Object
-     * @param boolean throwException (optional) throw RulesException if there are errors after a rule group
      * @param input Map (optional)
      * @param output Map (optional)
      * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    List<RulesError> execute(Map<String, Object> categories, Object root, boolean throwException = true, Map input = [:], Map output = [:])
+    List<RulesError> execute(Map<String, Object> categories, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)
@@ -196,7 +194,7 @@ class RulesEngine
             throw new IllegalStateException("Categories ncube not setup in app: ${appId}.")
         }
         List<String> ruleGroups = getRuleGroupsFromMap(categories)
-        executeGroups(ruleGroups, root, throwException, input, output)
+        executeGroups(ruleGroups, root, input, output)
     }
 
     /**
@@ -204,13 +202,12 @@ class RulesEngine
      * Similar to executeGroups() which takes a Map, but provides an additional way to specify multiple groups.
      * @param categories List
      * @param root Object
-     * @param boolean throwException (optional) throw RulesException if there are errors after a rule group
      * @param input Map (optional)
      * @param output Map (optional)
      * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    List<RulesError> execute(List<Map<String, Object>> categoryList, Object root, boolean throwException = true, Map input = [:], Map output = [:])
+    List<RulesError> execute(List<Map<String, Object>> categoryList, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)
@@ -222,7 +219,7 @@ class RulesEngine
         {
             ruleGroups.addAll(getRuleGroupsFromMap(categories))
         }
-        executeGroups(ruleGroups, root, throwException, input, output)
+        executeGroups(ruleGroups, root, input, output)
     }
 
     /**

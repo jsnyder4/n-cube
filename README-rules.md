@@ -78,10 +78,11 @@ An NCube used to define rule groups must have the following:
 - Axis `ruleGroup`, type `DISCRETE`, data type `STRING` or `CISTRING`
   - Columns - set to unique rule group names
 - Axis `attribute`, type `DISCRETE`, data type `STRING` or `CISTRING`
-  - Columns `className` and `ncube`
+  - Columns `className`, `ncube`, and `throwException`
 
 The `className` cells should contain a String of the fully qualified class name.  
 The `ncube` cells should contain a String of the name of the NCube where the rules are orchestrated.  
+The `throwException` column is optional. Cells should be true if the rule group should throw a `RulesException` if any errors are recorded.  
 No cells should be empty.  
 
 ##### Example rule groups
