@@ -33,6 +33,7 @@ class RulesEngine
     static final String AXIS_RULE = 'rule'
     static final String COL_CLASS = 'className'
     static final String COL_NCUBE = 'ncube'
+    static final String COL_EXCEPTION = 'throwException'
 
     private static final Set IGNORED_METHODS = ['equals', 'toString', 'hashCode', 'annotationType'] as Set
     private static final Pattern PATTERN_METHOD_NAME = Pattern.compile(".*input.rule.((?:[^(]+))\\(.*")
@@ -82,10 +83,10 @@ class RulesEngine
      * @param root Object
      * @param input Map (optional)
      * @param output Map (optional)
+     * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    // TODO add boolean for throwing exception or not
-    void executeGroups(List<String> ruleGroups, Object root, Map input = [:], Map output = [:])
+    List<RulesError> executeGroups(List<String> ruleGroups, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
 
@@ -108,6 +109,7 @@ class RulesEngine
             Map ruleInfo = ncubeRules.getMap([(AXIS_RULE_GROUP): ruleGroup, (AXIS_ATTRIBUTE): [] as Set])
             String className = ruleInfo[COL_CLASS]
             String ncubeName = ruleInfo[COL_NCUBE]
+            Boolean throwException = ruleInfo[COL_EXCEPTION]
             if (!hasContent(className) || !hasContent(ncubeName))
             {
                 throw new IllegalStateException("RulesEngine: ${name}, AppId: ${appId}, NCube: ${ncubeRules.name}, rule group: ${ruleGroup} must have className and ncube name defined.")
@@ -123,11 +125,13 @@ class RulesEngine
             verifyOrchestration(ncube)
             ncube.getCell(input, output)
             errors.addAll(rule.errors)
-            if (!errors.empty)
+            
+            if (throwException && !errors.empty)
             {
                 throw new RulesException(errors)
             }
         }
+        return errors
     }
 
     /**
@@ -136,9 +140,10 @@ class RulesEngine
      * @param root Object
      * @param input Map (optional)
      * @param output Map (optional)
+     * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    void execute(String ruleGroup, Object root, Map input = [:], Map output = [:])
+    List<RulesError> execute(String ruleGroup, Object root, Map input = [:], Map output = [:])
     {
         if (ruleGroup == null)
         {
@@ -155,9 +160,10 @@ class RulesEngine
      * @param root Object
      * @param input Map (optional)
      * @param output Map (optional)
+     * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    void execute(Closure where, Object root, Map input = [:], Map output = [:])
+    List<RulesError> execute(Closure where, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)
@@ -177,9 +183,10 @@ class RulesEngine
      * @param root Object
      * @param input Map (optional)
      * @param output Map (optional)
+     * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    void execute(Map<String, Object> categories, Object root, Map input = [:], Map output = [:])
+    List<RulesError> execute(Map<String, Object> categories, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)
@@ -197,9 +204,10 @@ class RulesEngine
      * @param root Object
      * @param input Map (optional)
      * @param output Map (optional)
+     * @return List<RulesError>
      * @throws RulesException if any errors are recorded during execution
      */
-    void execute(List<Map<String, Object>> categoryList, Object root, Map input = [:], Map output = [:])
+    List<RulesError> execute(List<Map<String, Object>> categoryList, Object root, Map input = [:], Map output = [:])
     {
         verifyNCubeSetup()
         if (!ncubeCategories)

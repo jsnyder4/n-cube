@@ -37,6 +37,7 @@ class RulesEngineTest extends NCubeBaseTest
         createAndCacheNCube('rules/ncubes/rule.group1.type1.object2.json')
         createAndCacheNCube('rules/ncubes/rule.group2.type1.object1.json')
         createAndCacheNCube('rules/ncubes/rule.group1.type2.object1.json')
+        createAndCacheNCube('rules/ncubes/rule.group4.object1.json')
     }
 
     @After
@@ -223,7 +224,7 @@ class RulesEngineTest extends NCubeBaseTest
     void testExecuteGroups_InvalidGroup()
     {
         Map root = [:]
-        rulesEngine.executeGroups(['group4'], root)
+        rulesEngine.executeGroups(['group5'], root)
         assert root.isEmpty()
     }
 
@@ -366,7 +367,7 @@ class RulesEngineTest extends NCubeBaseTest
     @Test
     void testGenerateDocumentation_InvalidGroups()
     {
-        Map rules = rulesEngine.generateDocumentationForGroups(['group4'])
+        Map rules = rulesEngine.generateDocumentationForGroups(['group5'])
         assert rules.isEmpty()
     }
 
@@ -483,6 +484,30 @@ class RulesEngineTest extends NCubeBaseTest
         {
             assertContainsIgnoreCase(e.message, 'rulesengine', 'appid', 'ncube', 'axis', 'type', RULE.name())
         }
+    }
+
+    @Test
+    void testExecute_ThrowException()
+    {
+        Map root = [:]
+        try
+        {
+            rulesEngine.execute('group4', root)
+            fail()
+        }
+        catch (RulesException e)
+        {
+            assert 1 == e.errors.size()
+        }
+
+    }
+
+    @Test
+    void testExecute_NoException()
+    {
+        Map root = [:]
+        List<RulesError> errors = rulesEngine.execute('group3', root)
+        assert 1 == errors.size()
     }
 
 }
