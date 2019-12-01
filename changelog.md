@@ -2,6 +2,7 @@
 * 4.6.5-SNAPSHOT
   * 
 * 4.6.4
+  * Updated `RulesEngine` to have the option of throwing `RulesException` after each rule group or continuing on and simply accumulating errors.
   * Groovydoc now includes both Groovy and Java sources.
   * Removed unused `spring` / `spring-boot` libraries from Gradle build.
   * `java-util` added to API
