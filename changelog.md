@@ -1,6 +1,7 @@
 ### Revision History
-* 4.6.5-SNAPSHOT
-  * 
+* 4.6.5
+  * `RulesEngine` now allows each rule group to be declared to throw or not throw an exception if an error is added during that rule groups execution.
+  * Bug fix: Groovy/Java doc was not publishing correctly.
 * 4.6.4
   * Updated `RulesEngine` to have the option of throwing `RulesException` after each rule group or continuing on and simply accumulating errors.
   * Groovydoc now includes both Groovy and Java sources.
